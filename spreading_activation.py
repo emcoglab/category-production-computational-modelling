@@ -1,6 +1,6 @@
 """
 ===========================
-Proof of concept for linguistic spreading activation model.
+Spreading activation classes
 ===========================
 
 Dr. Cai Wingfield
@@ -15,9 +15,8 @@ caiwingfield.net
 ---------------------------
 """
 
+
 import logging
-import sys
-from typing import Set
 
 from networkx import Graph
 
@@ -27,6 +26,9 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 class SpreadingActivation(object):
+    """
+    Represents a graph equipped with a spreading activation process.
+    """
     def __init__(self,
                  decay_factor: float,
                  firing_threshold: float):
@@ -44,10 +46,14 @@ class SpreadingActivation(object):
         # Nodes which have has_fired
         self.has_fired = dict()
 
-        # Whether the graph has been is_frozen yet
+        # Whether the graph has been frozen yet
         self.is_frozen = False
 
     def add_edge(self, n1, n2, weight: float):
+        """
+        Add a weighted edge, including both endpoints, to the graph.
+        Will not duplicate or replace endpoints.
+        """
         if self.is_frozen:
             raise Exception("Graph is_frozen, can't update structure!")
         self.graph.add_edge(n1, n2, weight=weight)
@@ -59,9 +65,13 @@ class SpreadingActivation(object):
                 self.has_fired[n] = False
 
     def freeze(self):
+        """
+        Freeze the structure of the graph so spreading activation can begin.
+        """
         self.is_frozen = True
 
     def activate_node(self, n):
+        """Fully activate a node."""
         if not self.is_frozen:
             raise Exception("Freeze graph before activating a node")
         if n not in self.activations:
@@ -69,6 +79,7 @@ class SpreadingActivation(object):
         self.activations[n] = 1
 
     def spread_once(self):
+        """One iteration of the spreading loop."""
         # Spread activations to unfired neighbours of unfired nodes
         for n, neighbours in self.graph.adjacency():
             for neighbour, edge_attributes in neighbours.items():
@@ -92,42 +103,16 @@ class SpreadingActivation(object):
                     self.has_fired[n] = True
 
     def spread_n_times(self, n):
+        """N iterations of the spreading loop."""
         for i in range(n):
             self.spread_once()
 
     def print_graph(self):
+        """Print all nodes in the graph, and their activations."""
         for n in self.graph.nodes:
-            logger.info(f"{n}, {self.activations[n]}")
+            logger.info(f"{n}, {self.activations[n]} ({'fired' if self.has_fired[n] else 'not fired'})")
 
     @staticmethod
     def _clamp01(x):
+        """Bounds a value between 0 and 1."""
         return max(0, min(1, x))
-
-
-def main():
-    sa = SpreadingActivation(decay_factor=0.85, firing_threshold=0.01)
-    sa.add_edge(1, 2, weight=0.9)
-    sa.add_edge(2, 3, weight=0.9)
-    sa.add_edge(3, 4, weight=0.9)
-    sa.add_edge(3, 11, weight=0.9)
-    sa.add_edge(4, 5, weight=0.9)
-    sa.add_edge(5, 6, weight=0.9)
-    sa.add_edge(11, 12, weight=0.9)
-    sa.add_edge(12, 13, weight=0.9)
-    sa.freeze()
-
-    sa.activate_node(1)
-
-    sa.spread_n_times(4)
-    sa.print_graph()
-
-
-def get_vocabulary() -> Set[str]:
-    pass
-
-
-if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
-    logger.info("Running %s" % " ".join(sys.argv))
-    main()
-    logger.info("Done!")
