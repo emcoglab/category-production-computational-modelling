@@ -15,150 +15,115 @@ caiwingfield.net
 ---------------------------
 """
 
-import sys
 import logging
-from typing import List, Set, Dict
+import sys
+from typing import Set
 
-import networkx as nx
-
-from ldm.core.utils.exceptions import WordNotFoundError
-from ldm.core.utils.maths import DistanceType
-from ldm.core.corpus.indexing import TokenIndexDictionary, FreqDist
-from ldm.core.model.count import PPMIModel
-from ldm.preferences.preferences import Preferences as CorpusPreferences
+from networkx import Graph
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main():
-    # corpus_meta = CorpusPreferences.source_corpus_metas[0]
-    # distributional_model = PPMIModel(
-    #     corpus_meta,
-    #     window_radius=1,
-    #     token_indices=TokenIndexDictionary.load(corpus_meta.index_path),
-    #     freq_dist=FreqDist.load(corpus_meta.freq_dist_path))
-    #
-    # distributional_model.train()
+class SpreadingActivation(object):
+    def __init__(self,
+                 decay_factor: float,
+                 firing_threshold: float):
 
-    # word_list = get_vocabulary()
+        self.decay_factor = decay_factor
+        self.firing_threshold = firing_threshold
 
-    # Initialise grpah
+        # The a weighted, undirected graph
+        self.graph: Graph() = Graph()
 
-    # # Build unactivated graph
-    # graph = nx.Graph()
-    # for word_1 in word_list:
-    #     for word_2 in word_list:
-    #         try:
-    #             # cosine similarity is 1 - cosine distance
-    #             similarity = 1 - distributional_model.distance_between(word_1, word_2, DistanceType.cosine)
-    #         # Skip words not in the model
-    #         except WordNotFoundError():
-    #             continue
-    #         graph.add_nodes_from([word_1, word_2],
-    #                              activation=0.0,
-    #                              will_fire=False,
-    #                              has_fired=False)
-    #         graph.add_edge(word_1, word_2, weight=similarity)
-    #
-    # logger.info(f"Graph built! {graph.number_of_nodes()} node, {graph.number_of_edges()} edges.")
-    #
-    # # Activate initial source
-    # source_word = "fruit"
-    # logger.info(f"Activating source word {source_word}")
-    # graph.nodes[source_word]["activation"] = 1
+        # The activations of each node
+        self.activations = dict()
+        # The additional activations gained in a cycle
+        self._delta_activations = dict()
+        # Nodes which have has_fired
+        self.has_fired = dict()
 
-    graph = nx.Graph()
-    graph.add_nodes_from(range(1, 17),
-                         activation=0,
-                         new_activation=0,
-                         will_fire=False,
-                         has_fired=False)
-    graph.nodes[1]["activation"] = 1
-    graph.nodes[1]["new_activation"] = 1
-    graph.add_edges_from([
-        (1, 2),
-        (2, 3),
-        (3, 4),
-        (3, 11),
-        (4, 5),
-        (5, 6),
-        (6, 7),
-        (7, 8),
-        (8, 9),
-        (9, 10),
-        (11, 12),
-        (12, 13),
-        (13, 14),
-        (14, 15),
-        (15, 16)
-    ], weight=0.9)
+        # Whether the graph has been is_frozen yet
+        self.is_frozen = False
 
-    THRESHOLD = 0.01
-    DECAY = 0.85
+    def add_edge(self, n1, n2, weight: float):
+        if self.is_frozen:
+            raise Exception("Graph is_frozen, can't update structure!")
+        self.graph.add_edge(n1, n2, weight=weight)
 
-    # Start spreading activation
-    n_ticks = 4
-    logger.info(f"Starting spreading activation, {n_ticks} ticks")
-    for tick in range(n_ticks):
-        logger.info(f"Tick {tick}")
+        for n in [n1, n2]:
+            if n not in self.activations:
+                self.activations[n] = 0
+                self._delta_activations[n] = 0
+                self.has_fired[n] = False
 
-        # Node loop
+    def freeze(self):
+        self.is_frozen = True
 
-        for node, neighbours in graph.adjacency():
-            if graph.nodes[node]["has_fired"]:
-                continue
+    def activate_node(self, n):
+        if not self.is_frozen:
+            raise Exception("Freeze graph before activating a node")
+        if n not in self.activations:
+            raise Exception(f"{n} not found in graph!")
+        self.activations[n] = 1
 
-            # Fire unfired nodes
-            if graph.nodes[node]["will_fire"]:
-                graph.nodes[node]["has_fired"] = True
-
-            source_activation = graph.nodes[node]["activation"]
-            if source_activation <= THRESHOLD:
-                continue
-
-            # neighbour loop
+    def spread_once(self):
+        # Spread activations to unfired neighbours of unfired nodes
+        for n, neighbours in self.graph.adjacency():
             for neighbour, edge_attributes in neighbours.items():
-                # Update activations
+                if self.has_fired[neighbour]:
+                    continue
                 weight = edge_attributes["weight"]
-                activation = graph.nodes[neighbour]["activation"]
-                activation += source_activation * weight * DECAY
-                graph.nodes[neighbour]["new_activation"] = activation
-                # Cap activations at 0 and 1
-                if graph.nodes[neighbour]["activation"] > 1:
-                    graph.nodes[neighbour]["activation"] = 1
-                if graph.nodes[neighbour]["activation"] < 0:
-                    graph.nodes[neighbour]["activation"] = 0
+                self._delta_activations[neighbour] += self._clamp01(
+                    self.activations[n] * weight * self.decay_factor
+                )
 
-        # Mark for firing
-        for node in graph.nodes:
-            if graph.nodes[node]["has_fired"]:
-                continue
-            graph.nodes[node]["activation"] = graph.nodes[node]["new_activation"]
-            if graph.nodes[node]["activation"] > THRESHOLD:
-                graph.nodes[node]["will_fire"] = True
+        # Update activations of unfired nodes
+        for n in self.graph.nodes:
+            if not self.has_fired[n]:
+                self.activations[n] += self._delta_activations[n]
+                self._delta_activations[n] = 0
 
-    for node in graph.nodes:
-        logger.info(f"{node}, {graph.nodes[node]['activation']}")
+        # Fire unfired nodes
+        for n in self.graph.nodes:
+            if not self.has_fired[n]:
+                if self.activations[n] > self.firing_threshold:
+                    self.has_fired[n] = True
+
+    def spread_n_times(self, n):
+        for i in range(n):
+            self.spread_once()
+
+    def print_graph(self):
+        for n in self.graph.nodes:
+            logger.info(f"{n}, {self.activations[n]}")
+
+    @staticmethod
+    def _clamp01(x):
+        return max(0, min(1, x))
+
+
+def main():
+    sa = SpreadingActivation(decay_factor=0.85, firing_threshold=0.01)
+    sa.add_edge(1, 2, weight=0.9)
+    sa.add_edge(2, 3, weight=0.9)
+    sa.add_edge(3, 4, weight=0.9)
+    sa.add_edge(3, 11, weight=0.9)
+    sa.add_edge(4, 5, weight=0.9)
+    sa.add_edge(5, 6, weight=0.9)
+    sa.add_edge(11, 12, weight=0.9)
+    sa.add_edge(12, 13, weight=0.9)
+    sa.freeze()
+
+    sa.activate_node(1)
+
+    sa.spread_n_times(4)
+    sa.print_graph()
 
 
 def get_vocabulary() -> Set[str]:
     pass
-
-
-# class WordActivation(object):
-#
-#     def __init__(self, word: str):
-#         self.word: str = word
-#         self.activation: float = 0
-#         self.will_fire: bool = False
-#         self.has_fired: bool = False
-#
-#     def set_to_fire_if_exceeding_threshold(self):
-#         if not self.has_fired:
-#             if self.activation > WordActivation.threshold:
-#                 self.will_fire = True
 
 
 if __name__ == '__main__':
