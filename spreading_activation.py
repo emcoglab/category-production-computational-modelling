@@ -11,7 +11,7 @@ University of Lancaster
 c.wingfield@lancaster.ac.uk
 caiwingfield.net
 ---------------------------
-2017
+2018
 ---------------------------
 """
 
@@ -70,6 +70,14 @@ class SpreadingActivation(object):
         """
         self.is_frozen = True
 
+    def reset(self):
+        if not self.is_frozen:
+            raise Exception("Freeze graph first!")
+        for n in self.graph.nodes:
+            self.activations[n] = 0
+            self._delta_activations[n] = 0
+            self.has_fired[n] = False
+
     def activate_node(self, n):
         """Fully activate a node."""
         if not self.is_frozen:
@@ -80,26 +88,25 @@ class SpreadingActivation(object):
 
     def spread_once(self):
         """One iteration of the spreading loop."""
-        # Spread activations to unfired neighbours of unfired nodes
+        # Spread activations to unfired neighbours
         for n, neighbours in self.graph.adjacency():
             for neighbour, edge_attributes in neighbours.items():
                 if self.has_fired[neighbour]:
                     continue
                 weight = edge_attributes["weight"]
-                self._delta_activations[neighbour] += self._clamp01(
-                    self.activations[n] * weight * self.decay_factor
-                )
+                self._delta_activations[neighbour] += self.activations[n] * weight * self.decay_factor
 
         # Update activations of unfired nodes
         for n in self.graph.nodes:
             if not self.has_fired[n]:
-                self.activations[n] += self._delta_activations[n]
+                self.activations[n] = self._clamp01(self.activations[n] + self._delta_activations[n])
                 self._delta_activations[n] = 0
 
         # Fire unfired nodes
         for n in self.graph.nodes:
             if not self.has_fired[n]:
                 if self.activations[n] > self.firing_threshold:
+                    logger.info(f"Node fired: {n} ({self.activations[n]})")
                     self.has_fired[n] = True
 
     def spread_n_times(self, n):
