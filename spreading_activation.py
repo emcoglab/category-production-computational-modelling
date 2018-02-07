@@ -105,7 +105,7 @@ class SpreadingActivation(object):
         # Fire unfired nodes
         for n in self.graph.nodes:
             if not self.has_fired[n]:
-                if self.activations[n] > self.firing_threshold:
+                if self.activations[n] >= self.firing_threshold:
                     logger.info(f"Node fired: {n} ({self.activations[n]})")
                     self.has_fired[n] = True
 

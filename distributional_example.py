@@ -42,15 +42,15 @@ def main():
         window_radius=1,
         token_indices=TokenIndexDictionary.from_freqdist(freq_dist))
 
-    distributional_model.train(memory_map=True)
+    distributional_model.train()
 
-    word_list = set([word for word, _ in freq_dist.most_common(top_n)])
+    word_list = [word for word, _ in freq_dist.most_common(top_n)]
 
     # Initialise graph
 
     logger.info("Building graph...")
 
-    sa = SpreadingActivation(decay_factor=0.01, firing_threshold=0.5)
+    sa = SpreadingActivation(decay_factor=0.001, firing_threshold=1)
     for i, word_pair in enumerate(combinations(word_list, 2)):
         word_1, word_2 = word_pair
         sa.add_edge(word_1, word_2,
@@ -67,9 +67,12 @@ def main():
     sa.activate_node(initial_word)
 
     logger.info("Running spreading activation")
-    for i in range(1, 5):
+    for i in range(100):
         logger.info(f"Step {i}:")
         sa.spread_once()
+        # logger.info("\nCurrent graph state:\n")
+        # sa.print_graph()
+
 
 
 if __name__ == '__main__':
