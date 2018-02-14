@@ -17,14 +17,16 @@ caiwingfield.net
 
 import logging
 import sys
-from itertools import combinations
+
+from networkx import convert_matrix, relabel_nodes
+from numpy import ones
+from sklearn.metrics.pairwise import pairwise_distances
 
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.core.utils.maths import DistanceType
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-
-from spreading_activation import SpreadingActivation
+from spreading_activation import SpreadingActivationCleglowski
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -32,47 +34,73 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
-
-    top_n = 300
+    logger.info("Training distributional model")
 
     corpus_meta = CorpusPreferences.source_corpus_metas[0]
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    distributional_model = LogCoOccurrenceCountModel(
-        corpus_meta,
-        window_radius=1,
-        token_indices=TokenIndexDictionary.from_freqdist(freq_dist))
+    distributional_model_index = TokenIndexDictionary.from_freqdist(freq_dist)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
+    distributional_model.train(memory_map=True)
 
-    distributional_model.train()
+    filtered_words = get_word_list(freq_dist, top_n=2000)
+    filtered_indices = [distributional_model_index.token2id[w] for w in filtered_words]
+    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
 
-    word_list = [word for word, _ in freq_dist.most_common(top_n)]
+    logger.info("Constructing weight matrix")
+
+    # First coordinate (row index) points to
+    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :]
+
+    # Convert to distance matrix
+    distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
+
+    # Convert to weight matrix
+    # For cosine, similarity = 1 - distance
+    weight_matrix = ones(distance_matrix.shape) - distance_matrix
 
     # Initialise graph
 
-    logger.info("Building graph...")
+    logger.info("Building graph")
 
-    sa = SpreadingActivation(decay_factor=0.001, firing_threshold=1)
-    for i, word_pair in enumerate(combinations(word_list, 2)):
-        word_1, word_2 = word_pair
-        sa.add_edge(word_1, word_2,
-                    # cosine similarity is 1- cosine distance
-                    1-distributional_model.distance_between(word_1, word_2, DistanceType.cosine))
-        if i % 1000 == 0:
-            logger.info(f"\tAdded {i} word pairs ({word_1} and {word_2})")
-    sa.freeze()
+    graph = convert_matrix.from_numpy_array(weight_matrix)
+
+    relabelling_dict = build_relabelling_dictionary(ldm_to_matrix, distributional_model_index)
+
+    graph = relabel_nodes(graph, relabelling_dict, copy=False)
+
+    logger.info("Setting up spreading output")
+
+    sa = SpreadingActivationCleglowski(graph, decay_factor=0.8, firing_threshold=0.5)
 
     # Pick initial node
 
     initial_word = "school"
     logger.info(f"Activating initial node {initial_word}")
-    sa.activate_node(initial_word)
+    sa.activate_node("school")
 
-    logger.info("Running spreading activation")
-    for i in range(100):
-        logger.info(f"Step {i}:")
-        sa.spread_once()
-        # logger.info("\nCurrent graph state:\n")
-        # sa.print_graph()
+    logger.info("Running spreading output")
+    sa.spread_n_times(10)
+    sa.print_graph()
 
+
+def filtering_dictionaries(filtered_indices):
+    ldm_to_matrix_index = {}
+    matrix_to_ldm_index = {}
+    for i, filtered_index in enumerate(filtered_indices):
+        ldm_to_matrix_index[filtered_index] = i
+        matrix_to_ldm_index[i] = filtered_index
+    return ldm_to_matrix_index, matrix_to_ldm_index
+
+
+def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
+    relabelling_dictinoary = dict()
+    for token_index, matrix_index in ldm_to_matrix.items():
+        relabelling_dictinoary[matrix_index] = distributional_model_index.id2token[token_index]
+    return relabelling_dictinoary
+
+
+def get_word_list(freq_dist, top_n):
+    return [word for word, _ in freq_dist.most_common(top_n)]
 
 
 if __name__ == '__main__':
