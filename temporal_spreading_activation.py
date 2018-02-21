@@ -134,10 +134,24 @@ class TemporalSpreadingActivation(object):
             else:
                 raise ValueError()
 
-            # TODO: this can be called multiple times per tick
-            e_data[EdgeDataKey.IMPULSES].append(
-                Impulse(target_node,
-                        e_data[EdgeDataKey.WEIGHT] * self.graph.nodes[n][NodeDataKey.ACTIVATION]))
+            # TODO: This still doesn't seem like the most efficient way to do this, as we may make the same check
+            # TODO: multiple times.
+            # TODO: Perhaps instead have a separate place to accumulate new emissions, and do the agglomeration there
+            # TODO: before putting them in the pipes.
+            new_impulse = Impulse(target_node,
+                                  e_data[EdgeDataKey.WEIGHT] * self.graph.nodes[n][NodeDataKey.ACTIVATION])
+            # Check if another impulse was released this tick
+            existing_impulses = [i for i in e_data[EdgeDataKey.IMPULSES]
+                                 if i.age == new_impulse.age
+                                 and i.target_node == new_impulse.target_node
+                                 and not i.is_expired]
+            if len(existing_impulses) == 1:
+                existing_impulses[0].activation += new_impulse.activation
+            # If there are no existing ones, add the new one
+            elif len(existing_impulses) == 0:
+                e_data[EdgeDataKey.IMPULSES].append(new_impulse)
+            else:
+                raise Exception("There should only ever be 0 or 1 existing impulse released this turn")
 
     def __str__(self):
         string_builder = ""
