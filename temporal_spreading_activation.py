@@ -18,6 +18,7 @@ caiwingfield.net
 import logging
 from math import ceil
 from typing import List
+from numpy import exp
 
 from networkx import Graph
 
@@ -37,10 +38,12 @@ class NodeDataKey(object):
 
 
 class Impulse(object):
-    def __init__(self, target_node, activation: float):
-        self.age = 0
+    def __init__(self, target_node, activation: float, decay_function: callable, age: int = 0):
+        self.age: int = age
         self.target_node = target_node
-        self.activation: float = activation
+        self._original_activation: float = activation
+
+        self._decay_function: callable = decay_function
 
         self._expired: bool = False
 
@@ -48,8 +51,15 @@ class Impulse(object):
     def is_expired(self):
         return self._expired
 
+    @property
+    def activation(self):
+        return self._decay_function(self.age, self._original_activation)
+
     def expire(self):
         self._expired = True
+
+    def propagate(self):
+        self.age += 1
 
     def __str__(self) -> str:
         return f"Impulse: {self.activation} -> {self.target_node} ({self.age})"
@@ -59,16 +69,16 @@ class TemporalSpreadingActivation(object):
 
     def __init__(self,
                  graph: Graph,
-                 decay: float,
                  threshold: float,
                  weight_coefficient: float,
-                 granularity: int):
+                 granularity: int,
+                 decay_function: callable):
 
         # Parameters
-        self.decay = decay
         self.threshold = threshold
         self.weight_coefficient = weight_coefficient
         self.granularity = granularity
+        self.decay_function: callable = decay_function
 
         # Underlying graph: weighted, undirected
         self.graph: Graph = graph
@@ -76,6 +86,18 @@ class TemporalSpreadingActivation(object):
         self._initialise_graph()
 
         self.reset()
+
+    @staticmethod
+    def create_decay_function_exponential_with_params(decay_factor) -> callable:
+        def decay_function(age, original_activation):
+            return original_activation * (decay_factor ** age)
+        return decay_function
+
+    @staticmethod
+    def create_decay_function_gaussian_with_params(sd, height=1, centre=0) -> callable:
+        def decay_function(age, original_activation):
+            return height * original_activation * exp((-1) * ((age - centre) ** 2) / (2 * sd * sd))
+        return decay_function
 
     def _initialise_graph(self):
         for _n1, _n2, e_data in self.graph.edges(data=True):
@@ -94,6 +116,7 @@ class TemporalSpreadingActivation(object):
 
     def _node_decay(self):
         for n, n_data in self.graph.nodes(data=True):
+            # TODO: how to apply activation function here? Do nodes need ages too?
             n_data[NodeDataKey.ACTIVATION] *= self.decay
 
     def _propagate_impulses(self):
@@ -101,8 +124,7 @@ class TemporalSpreadingActivation(object):
         for _n1, _n2, e_data in self.graph.edges(data=True):
             for impulse in e_data[EdgeDataKey.IMPULSES]:
 
-                impulse.activation *= self.decay
-                impulse.age += 1
+                impulse.propagate()
 
                 # Expire if below threshold
                 if impulse.activation < self.threshold:
@@ -138,8 +160,9 @@ class TemporalSpreadingActivation(object):
             # TODO: multiple times.
             # TODO: Perhaps instead have a separate place to accumulate new emissions, and do the agglomeration there
             # TODO: before putting them in the pipes.
-            new_impulse = Impulse(target_node,
-                                  e_data[EdgeDataKey.WEIGHT] * self.graph.nodes[n][NodeDataKey.ACTIVATION])
+            new_impulse = Impulse(target_node=target_node,
+                                  activation=e_data[EdgeDataKey.WEIGHT] * self.graph.nodes[n][NodeDataKey.ACTIVATION],
+                                  decay_function=self.decay_function)
             # Check if another impulse was released this tick
             existing_impulses = [i for i in e_data[EdgeDataKey.IMPULSES]
                                  if i.age == new_impulse.age

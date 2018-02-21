@@ -35,10 +35,10 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
 
         sa = TemporalSpreadingActivation(
             graph=graph,
-            decay=.90,
             threshold=.2,
             weight_coefficient=1,
             granularity=10,
+            decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90)
         )
 
         sa.activate_node("lion", 1)
