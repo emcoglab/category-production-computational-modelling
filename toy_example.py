@@ -42,7 +42,7 @@ def main():
 
     sa = TemporalSpreadingActivation(
         graph=graph,
-        decay=.9,
+        decay=.90,
         threshold=.2,
         weight_coefficient=1,
         granularity=10,
