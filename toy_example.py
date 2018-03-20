@@ -45,7 +45,8 @@ def main():
         threshold=.2,
         weight_coefficient=1,
         granularity=10,
-        decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90)
+        node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.9),
+        edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(sd=2),
     )
 
     logger.info("Activating node...")

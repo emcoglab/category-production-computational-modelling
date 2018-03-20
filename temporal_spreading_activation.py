@@ -1,6 +1,11 @@
 """
 ===========================
 Temporal spreading activation.
+
+Terminology:
+
+`Node` and `Edge` refer to the underlying graph.
+`Charge` and `Impulse` refer to activations within nodes and edges respectively.
 ===========================
 
 Dr. Cai Wingfield
@@ -28,20 +33,43 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 class EdgeDataKey(object):
-    WEIGHT = "weight"
-    LENGTH = "length"
+    WEIGHT   = "weight"
+    LENGTH   = "length"
     IMPULSES = "impulses"
 
 
 class NodeDataKey(object):
-    ACTIVATION = "activation"
+    CHARGE   = "charge"
+
+
+class Charge(object):
+    """An activation living in a node."""
+    def __init__(self, node, initial_activation: float, decay_function: callable, age: int = 0):
+        self.node = node
+        self._original_activation = initial_activation
+        self.age = age
+
+        self._decay_function = decay_function
+
+    @property
+    def activation(self):
+        """Current activation."""
+        return self._decay_function(self.age, self._original_activation)
+
+    def decay(self):
+        # Decay is handled by the `self.activation` property; all we need to do is increment the age.
+        self.age += 1
+
+    def __str__(self):
+        return f"{self.node}: {self.activation} ({self.age})"
 
 
 class Impulse(object):
-    def __init__(self, target_node, activation: float, decay_function: callable, age: int = 0):
+    """An activation travelling through an edge."""
+    def __init__(self, target_node, initial_activation: float, decay_function: callable, age: int = 0):
         self.age: int = age
         self.target_node = target_node
-        self._original_activation: float = activation
+        self._original_activation: float = initial_activation
 
         self._decay_function: callable = decay_function
 
@@ -53,13 +81,15 @@ class Impulse(object):
 
     @property
     def activation(self):
+        """Current activation."""
         return self._decay_function(self.age, self._original_activation)
+
+    def propagate_and_decay(self):
+        # Decay is handled by the `self.activation` property; all we need to do is increment the age.
+        self.age += 1
 
     def expire(self):
         self._expired = True
-
-    def propagate(self):
-        self.age += 1
 
     def __str__(self) -> str:
         return f"Impulse: {self.activation} -> {self.target_node} ({self.age})"
@@ -72,19 +102,23 @@ class TemporalSpreadingActivation(object):
                  threshold: float,
                  weight_coefficient: float,
                  granularity: int,
-                 decay_function: callable):
+                 node_decay_function: callable,
+                 edge_decay_function: callable,
+                 ):
 
         # Parameters
         self.threshold = threshold
         self.weight_coefficient = weight_coefficient
         self.granularity = granularity
-        self.decay_function: callable = decay_function
+        # These decay functions should be stateless, and convert an original activation and an age into a current
+        # activation.
+        self.node_decay_function: callable = node_decay_function
+        self.edge_decay_function: callable = edge_decay_function
 
         # Underlying graph: weighted, undirected
         self.graph: Graph = graph
 
         self._initialise_graph()
-
         self.reset()
 
     @staticmethod
@@ -94,9 +128,9 @@ class TemporalSpreadingActivation(object):
         return decay_function
 
     @staticmethod
-    def create_decay_function_gaussian_with_params(sd, height=1, centre=0) -> callable:
+    def create_decay_function_gaussian_with_params(sd, height_coef=1, centre=0) -> callable:
         def decay_function(age, original_activation):
-            return height * original_activation * exp((-1) * ((age - centre) ** 2) / (2 * sd * sd))
+            return original_activation * height_coef * exp((-1) * ((age - centre) ** 2) / (2 * sd * sd))
         return decay_function
 
     def _initialise_graph(self):
@@ -107,24 +141,28 @@ class TemporalSpreadingActivation(object):
             e_data[EdgeDataKey.WEIGHT] = (1 - e_data[EdgeDataKey.WEIGHT]) * self.weight_coefficient
 
     def reset(self):
+        """Reset SA graph so it looks as if it's just been built."""
         # Set all node activations to zero
-        for _n, n_data in self.graph.nodes(data=True):
-            n_data[NodeDataKey.ACTIVATION] = 0
+        for n, n_data in self.graph.nodes(data=True):
+            n_data[NodeDataKey.CHARGE] = Charge(n, 0, self.node_decay_function)
         # Delete all activations
         for _n1, _n2, e_data in self.graph.edges(data=True):
             e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
 
-    def _node_decay(self):
+    def _decay_nodes(self):
+        """Decays activation in each node."""
         for n, n_data in self.graph.nodes(data=True):
-            # TODO: how to apply activation function here? Do nodes need ages too?
-            n_data[NodeDataKey.ACTIVATION] *= self.decay
+            charge = n_data[NodeDataKey.CHARGE]
+            if charge is not None:
+                charge.decay()
 
     def _propagate_impulses(self):
+        """Propagates impulses along connections."""
         impulses_at_destination_nodes = []
         for _n1, _n2, e_data in self.graph.edges(data=True):
             for impulse in e_data[EdgeDataKey.IMPULSES]:
 
-                impulse.propagate()
+                impulse.propagate_and_decay()
 
                 # Expire if below threshold
                 if impulse.activation < self.threshold:
@@ -146,8 +184,13 @@ class TemporalSpreadingActivation(object):
 
     def activate_node(self, n, activation: float):
         # Accumulate activation
-        self.graph.nodes[n][NodeDataKey.ACTIVATION] += activation
+        existing_charge: Charge = self.graph.nodes[n][NodeDataKey.CHARGE]
+        new_charge = Charge(n, activation + existing_charge.activation, self.node_decay_function)
+        self.graph.nodes[n][NodeDataKey.CHARGE] = new_charge
+
         # Rebroadcast
+
+        # For each incident edge
         for n1, n2, e_data in self.graph.edges(n, data=True):
             if n == n1:
                 target_node = n2
@@ -160,27 +203,38 @@ class TemporalSpreadingActivation(object):
             # TODO: multiple times.
             # TODO: Perhaps instead have a separate place to accumulate new emissions, and do the agglomeration there
             # TODO: before putting them in the pipes.
-            new_impulse = Impulse(target_node=target_node,
-                                  activation=e_data[EdgeDataKey.WEIGHT] * self.graph.nodes[n][NodeDataKey.ACTIVATION],
-                                  decay_function=self.decay_function)
-            # Check if another impulse was released this tick
+
+            initial_activation = e_data[EdgeDataKey.WEIGHT] * new_charge.activation
+
+            # Check if another impulse has been released into this edge this tick
             existing_impulses = [i for i in e_data[EdgeDataKey.IMPULSES]
-                                 if i.age == new_impulse.age
-                                 and i.target_node == new_impulse.target_node
+                                 if i.age == 0
+                                 and i.target_node == target_node
                                  and not i.is_expired]
-            if len(existing_impulses) == 1:
-                existing_impulses[0].activation += new_impulse.activation
-            # If there are no existing ones, add the new one
-            elif len(existing_impulses) == 0:
-                e_data[EdgeDataKey.IMPULSES].append(new_impulse)
-            else:
+
+            # If there are no existing ones, we don't need to do anything
+            if len(existing_impulses) == 0:
+                pass
+            # If one has been released this tick, we add its activation to the existing one and delete it
+            elif len(existing_impulses) == 1:
+                initial_activation += existing_impulses[0].activation
+                existing_impulses[0].expire()
+            # We are performing this check for each impulse released, so there should only ever be 0 or 1 existing
+            # impulse (if there were more, we already would have combined them.
+            elif len(existing_impulses) > 1:
                 raise Exception("There should only ever be 0 or 1 existing impulse released this turn")
+
+            new_impulse = Impulse(target_node=target_node,
+                                  initial_activation=initial_activation,
+                                  decay_function=self.edge_decay_function)
+
+            e_data[EdgeDataKey.IMPULSES].append(new_impulse)
 
     def __str__(self):
         string_builder = ""
         string_builder += "Nodes:\n"
         for node, n_data in self.graph.nodes(data=True):
-            string_builder += f"\t{node}: {n_data[NodeDataKey.ACTIVATION]}\n"
+            string_builder += f"\t{str(n_data[NodeDataKey.CHARGE])}\n"
         string_builder += "Edges:\n"
         for n1, n2, e_data in self.graph.edges(data=True):
             impulse_list = [str(i) for i in e_data[EdgeDataKey.IMPULSES]]
@@ -193,5 +247,5 @@ class TemporalSpreadingActivation(object):
         [logger.info(f"{line}") for line in str(self).strip().split('\n')]
 
     def tick(self):
-        self._node_decay()
+        self._decay_nodes()
         self._propagate_impulses()

@@ -38,7 +38,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             threshold=.2,
             weight_coefficient=1,
             granularity=10,
-            decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90)
+            node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90),
+            edge_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90)
         )
 
         sa.activate_node("lion", 1)
@@ -46,9 +47,9 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         for i in range(1, 13):
             sa.tick()
 
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["activation"], 0.7654122868171584)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["activation"], 0.49227468208638314)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["activation"], 0.23159221991442014)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.7654122868171584)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.49227468208638314)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.23159221991442014)
 
 
 if __name__ == '__main__':
