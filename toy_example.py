@@ -65,6 +65,8 @@ def main():
             sa.tick()
             # sa.log_graph()
             sa.draw_graph(pdf=pdf, pos=pos, frame_label=str(i))
+            # for im in sa.iter_impulses():
+            #     logger.info(f"\t{str(im)}")
 
 
 if __name__ == '__main__':

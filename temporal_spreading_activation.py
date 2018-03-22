@@ -263,7 +263,7 @@ class TemporalSpreadingActivation(object):
 
         # Use supplied position, or recompute
         if pos is None:
-            pos = networkx.spring_layout(self.graph)
+            pos = networkx.spring_layout(self.graph, iterations=500)
 
         cmap = pyplot.get_cmap("autumn")
 
@@ -273,12 +273,12 @@ class TemporalSpreadingActivation(object):
         for n, n_data in self.graph.nodes(data=True):
             node_labels[n] = f"{n}\n{n_data[NodeDataKey.CHARGE].activation:.3g}"
 
-        # edge_labels = {}
-        # for v1, v2, e_data in self.graph.edges(data=True):
-        #     weight = e_data[EdgeDataKey.WEIGHT]
-        #     length = e_data[EdgeDataKey.LENGTH]
-        #     impulses = e_data[EdgeDataKey.IMPULSES]
-        #     edge_labels[(v1, v2)] = f"w={weight:.3g}, l={length}\ni={impulses}"
+        edge_labels = {}
+        for v1, v2, e_data in self.graph.edges(data=True):
+            weight = e_data[EdgeDataKey.WEIGHT]
+            length = e_data[EdgeDataKey.LENGTH]
+            impulses = e_data[EdgeDataKey.IMPULSES]
+            edge_labels[(v1, v2)] = f"w={weight:.3g}; l={length}"
 
         # Prepare impulse points and labels
         impulse_data = []
@@ -323,7 +323,7 @@ class TemporalSpreadingActivation(object):
         networkx.draw_networkx_edges(
             self.graph, pos=pos, with_labels=False,
         )
-        # networkx.draw_networkx_edge_labels(self.graph, pos=pos, labels=edge_labels, font_size=6)
+        networkx.draw_networkx_edge_labels(self.graph, pos=pos, edge_labels=edge_labels, font_size=6)
 
         # Draw impulses
         for x, y, c, i, l in impulse_data:
