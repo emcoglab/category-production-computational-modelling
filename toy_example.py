@@ -18,6 +18,7 @@ caiwingfield.net
 import logging
 import sys
 
+from matplotlib.backends.backend_pdf import PdfPages
 from networkx import convert_matrix, relabel_nodes
 from numpy import array
 
@@ -44,21 +45,26 @@ def main():
         graph=graph,
         threshold=.2,
         weight_coefficient=1,
-        granularity=10,
-        node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.9),
-        edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(sd=2),
+        granularity=100,
+        node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(
+            decay_factor=0.99),
+        edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(
+            sd=40),
     )
 
-    logger.info("Activating node...")
-    sa.activate_node("lion", 1)
-    sa.log_graph()
+    with PdfPages("/Users/caiwingfield/Desktop/graph.pdf") as pdf:
 
-    logger.info("Running spreading activation...")
-    for i in range(1, 13):
-        logger.info(f"")
-        logger.info(f"CLOCK = {i}")
-        sa.tick()
-        sa.log_graph()
+        logger.info("Activating node...")
+        sa.activate_node("lion", 1)
+        # sa.log_graph()
+        pos = sa.draw_graph(pdf=pdf, frame_label=str(0))
+
+        logger.info("Running spreading activation...")
+        for i in range(1, 200):
+            logger.info(f"CLOCK = {i}")
+            sa.tick()
+            # sa.log_graph()
+            sa.draw_graph(pdf=pdf, pos=pos, frame_label=str(i))
 
 
 if __name__ == '__main__':

@@ -23,9 +23,11 @@ caiwingfield.net
 import logging
 from math import ceil
 from typing import List
-from numpy import exp
 
+from numpy import exp
+import networkx
 from networkx import Graph
+from matplotlib import pyplot
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -44,36 +46,36 @@ class NodeDataKey(object):
 
 class Charge(object):
     """An activation living in a node."""
-    def __init__(self, node, initial_activation: float, decay_function: callable, age: int = 0):
+    def __init__(self, node, initial_activation: float, decay_function: callable):
         self.node = node
         self._original_activation = initial_activation
-        self.age = age
-
         self._decay_function = decay_function
+
+        self.time_since_last_activation = 0
 
     @property
     def activation(self):
         """Current activation."""
-        return self._decay_function(self.age, self._original_activation)
+        return self._decay_function(self.time_since_last_activation, self._original_activation)
 
     def decay(self):
         # Decay is handled by the `self.activation` property; all we need to do is increment the age.
-        self.age += 1
+        self.time_since_last_activation += 1
 
     def __str__(self):
-        return f"{self.node}: {self.activation} ({self.age})"
+        return f"{self.node}: {self.activation} ({self.time_since_last_activation})"
 
 
 class Impulse(object):
     """An activation travelling through an edge."""
-    def __init__(self, target_node, initial_activation: float, decay_function: callable, age: int = 0):
-        self.age: int = age
+    def __init__(self, source_node, target_node, initial_activation: float, decay_function: callable):
+        self.source_node = source_node
         self.target_node = target_node
-        self._original_activation: float = initial_activation
-
-        self._decay_function: callable = decay_function
+        self._original_activation = initial_activation
+        self._decay_function = decay_function
 
         self._expired: bool = False
+        self.age: int = 0
 
     @property
     def is_expired(self):
@@ -92,7 +94,7 @@ class Impulse(object):
         self._expired = True
 
     def __str__(self) -> str:
-        return f"Impulse: {self.activation} -> {self.target_node} ({self.age})"
+        return f"Impulse: {self.source_node} → {self.activation} → {self.target_node} ({self.age})"
 
 
 class TemporalSpreadingActivation(object):
@@ -132,6 +134,11 @@ class TemporalSpreadingActivation(object):
         def decay_function(age, original_activation):
             return original_activation * height_coef * exp((-1) * ((age - centre) ** 2) / (2 * sd * sd))
         return decay_function
+
+    def iter_impulses(self):
+        for v1, v2, e_data in self.graph.edges(data=True):
+            for impulse in e_data[EdgeDataKey.IMPULSES]:
+                yield impulse
 
     def _initialise_graph(self):
         for _n1, _n2, e_data in self.graph.edges(data=True):
@@ -182,6 +189,10 @@ class TemporalSpreadingActivation(object):
         for impulse in impulses_at_destination_nodes:
             self.activate_node(impulse.target_node, impulse.activation)
 
+    def tick(self):
+        self._decay_nodes()
+        self._propagate_impulses()
+
     def activate_node(self, n, activation: float):
         # Accumulate activation
         existing_charge: Charge = self.graph.nodes[n][NodeDataKey.CHARGE]
@@ -224,7 +235,8 @@ class TemporalSpreadingActivation(object):
             elif len(existing_impulses) > 1:
                 raise Exception("There should only ever be 0 or 1 existing impulse released this turn")
 
-            new_impulse = Impulse(target_node=target_node,
+            new_impulse = Impulse(source_node=n,
+                                  target_node=target_node,
                                   initial_activation=initial_activation,
                                   decay_function=self.edge_decay_function)
 
@@ -246,6 +258,90 @@ class TemporalSpreadingActivation(object):
     def log_graph(self):
         [logger.info(f"{line}") for line in str(self).strip().split('\n')]
 
-    def tick(self):
-        self._decay_nodes()
-        self._propagate_impulses()
+    def draw_graph(self, pdf=None, pos=None, frame_label=None):
+        """Draws and saves or shows the graph."""
+
+        # Use supplied position, or recompute
+        if pos is None:
+            pos = networkx.spring_layout(self.graph)
+
+        cmap = pyplot.get_cmap("autumn")
+
+        # Prepare labels
+
+        node_labels = {}
+        for n, n_data in self.graph.nodes(data=True):
+            node_labels[n] = f"{n}\n{n_data[NodeDataKey.CHARGE].activation:.3g}"
+
+        # edge_labels = {}
+        # for v1, v2, e_data in self.graph.edges(data=True):
+        #     weight = e_data[EdgeDataKey.WEIGHT]
+        #     length = e_data[EdgeDataKey.LENGTH]
+        #     impulses = e_data[EdgeDataKey.IMPULSES]
+        #     edge_labels[(v1, v2)] = f"w={weight:.3g}, l={length}\ni={impulses}"
+
+        # Prepare impulse points and labels
+        impulse_data = []
+        for v1, v2, e_data in self.graph.edges(data=True):
+            length = e_data[EdgeDataKey.LENGTH]
+            impulses = e_data[EdgeDataKey.IMPULSES]
+            if len(impulses) == 0:
+                continue
+            x1, y1 = pos[v1]
+            x2, y2 = pos[v2]
+            for i in impulses:
+
+                if i.age == 0:
+                    continue
+
+                if i.target_node == v2:
+                    # Travelling v1 → v2
+                    fraction = i.age / length
+                elif i.target_node == v1:
+                    # Travelling v2 → v1
+                    fraction = 1 - (i.age / length)
+                else:
+                    raise Exception(f"Inappropriate target node {i.target_node}")
+                x = x1 + (fraction * (x2 - x1))
+                y = y1 + (fraction * (y2 - y1))
+
+                c = cmap(i.activation)
+
+                impulse_data.append([x, y, c, i, length])
+
+        pyplot.figure()
+
+        # Draw the nodes
+        networkx.draw_networkx_nodes(
+            self.graph, pos=pos, with_labels=False,
+            node_color=[n_data[NodeDataKey.CHARGE].activation for n, n_data in self.graph.nodes(data=True)],
+            cmap=cmap, vmin=0, vmax=1,
+            node_size=400)
+        networkx.draw_networkx_labels(self.graph, pos=pos, labels=node_labels)
+
+        # Draw the edges
+        networkx.draw_networkx_edges(
+            self.graph, pos=pos, with_labels=False,
+        )
+        # networkx.draw_networkx_edge_labels(self.graph, pos=pos, labels=edge_labels, font_size=6)
+
+        # Draw impulses
+        for x, y, c, i, l in impulse_data:
+            pyplot.plot(x, y, marker='o', markersize=5, color=c)
+            pyplot.text(x, y, f"{i.activation:.3g} ({i.age}/{l})")
+
+        # Draw frame_label
+        if frame_label is not None:
+            pyplot.annotate(frame_label, horizontalalignment='left', verticalalignment='bottom', xy=(1, 0), xycoords='axes fraction')
+
+        # Style figure
+        pyplot.axis('off')
+
+        # Save or show graph
+        if pdf is not None:
+            pdf.savefig()
+            pyplot.close()
+        else:
+            pyplot.show()
+
+        return pos
