@@ -45,11 +45,11 @@ def main():
         graph=graph,
         threshold=.2,
         weight_coefficient=1,
-        granularity=100,
+        granularity=30,
         node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(
-            decay_factor=0.99),
+            decay_factor=0.95),
         edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(
-            sd=40),
+            sd=15),
     )
 
     with PdfPages("/Users/caiwingfield/Desktop/graph.pdf") as pdf:

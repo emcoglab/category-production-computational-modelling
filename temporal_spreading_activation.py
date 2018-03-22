@@ -132,7 +132,8 @@ class TemporalSpreadingActivation(object):
     @staticmethod
     def create_decay_function_gaussian_with_params(sd, height_coef=1, centre=0) -> callable:
         def decay_function(age, original_activation):
-            return original_activation * height_coef * exp((-1) * ((age - centre) ** 2) / (2 * sd * sd))
+            height = original_activation * height_coef
+            return height * exp((-1) * (((age - centre) ** 2) / (2 * sd * sd)))
         return decay_function
 
     def iter_impulses(self):

@@ -24,9 +24,8 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
-from corpus_analysis.core.utils.maths import DistanceType
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from spreading_activation import SpreadingActivationCleglowski
+from temporal_spreading_activation import TemporalSpreadingActivation
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -70,17 +69,26 @@ def main():
 
     logger.info("Setting up spreading output")
 
-    sa = SpreadingActivationCleglowski(graph, decay_factor=0.8, firing_threshold=0.5)
+    sa = TemporalSpreadingActivation(
+        graph=graph,
+        threshold=0.15,
+        weight_coefficient=1,
+        granularity=30,
+        node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(
+            decay_factor=0.95),
+        edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(
+            sd=15),
+        )
 
-    # Pick initial node
 
     initial_word = "school"
     logger.info(f"Activating initial node {initial_word}")
-    sa.activate_node("school")
+    sa.activate_node(initial_word, 1)
 
     logger.info("Running spreading output")
-    sa.spread_n_times(10)
-    sa.print_graph()
+    for i in range(1, 100):
+        logger.info(f"Clock = {i}")
+        sa.tick()
 
 
 def filtering_dictionaries(filtered_indices):
