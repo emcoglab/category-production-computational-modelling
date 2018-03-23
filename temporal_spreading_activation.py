@@ -21,11 +21,9 @@ caiwingfield.net
 """
 
 import logging
-from math import ceil
 from typing import List, Dict
 
-import numpy
-from numpy import exp, ndarray, ones_like
+from numpy import exp, ndarray, ones_like, ceil
 import networkx
 from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from matplotlib import pyplot
@@ -148,6 +146,7 @@ class TemporalSpreadingActivation(object):
     @staticmethod
     def graph_from_distance_matrix(distance_matrix: ndarray,
                                    length_granularity: int,
+                                   weight_factor: float = 1,
                                    relabelling_dict=None) -> Graph:
         """
         Produces a Graph of the correct format to underlie a TemporalSpreadingActivation.
@@ -163,6 +162,8 @@ class TemporalSpreadingActivation(object):
         A symmetric distance matrix in numpy format.
         :param length_granularity:
         Distances will be scaled into integer connection lengths using this granularity scaling factor.
+        :param weight_factor:
+        (Optional, default 1.) Linearly scale weights by this factor
         :param relabelling_dict:
         (Optional.) If provided and not None: A dictionary which maps the integer indices of nodes to
         their desired labels.
@@ -170,8 +171,8 @@ class TemporalSpreadingActivation(object):
         A Graph of the correct format.
         """
 
-        weight_matrix = ones_like(distance_matrix) - distance_matrix
-        length_matrix = numpy.ceil(distance_matrix * length_granularity)
+        weight_matrix = weight_factor * (ones_like(distance_matrix) - distance_matrix)
+        length_matrix = ceil(distance_matrix * length_granularity)
 
         graph = from_numpy_matrix(weight_matrix)
 

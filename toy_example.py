@@ -22,6 +22,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from numpy import array
 
 from temporal_spreading_activation import TemporalSpreadingActivation
+from tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(message)s'
@@ -50,17 +51,11 @@ def main():
             sd=15),
     )
 
-    with PdfPages("/Users/caiwingfield/Desktop/graph.pdf") as pdf:
+    logger.info("Activating node...")
+    sa.activate_node("lion", 1)
 
-        logger.info("Activating node...")
-        sa.activate_node("lion", 1)
-        pos = sa.draw_graph(pdf=pdf, frame_label=str(0))
-
-        logger.info("Running spreading activation...")
-        for i in range(1, 200):
-            logger.info(f"CLOCK = {i}")
-            sa.tick()
-            sa.draw_graph(pdf=pdf, pos=pos, frame_label=str(i))
+    logger.info("Running spreading activation...")
+    run_with_pdf_output(sa, 200, "/Users/cai/Desktop/graph.pdf")
 
 
 if __name__ == '__main__':

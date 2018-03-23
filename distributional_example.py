@@ -25,6 +25,7 @@ from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
 from temporal_spreading_activation import TemporalSpreadingActivation
+from tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -40,8 +41,10 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
     distributional_model.train(memory_map=True)
 
-    filtered_words = get_word_list(freq_dist, top_n=2000)
+    filtered_words = get_word_list(freq_dist, top_n=300) # school is in the top 300
+    # filtered_words = ["lion", "tiger", "jungle"]
     filtered_indices = [distributional_model_index.token2id[w] for w in filtered_words]
+    # TODO: explain what these dictionaries are
     ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
 
     logger.info("Constructing weight matrix")
@@ -57,6 +60,7 @@ def main():
     graph = TemporalSpreadingActivation.graph_from_distance_matrix(
         distance_matrix=distance_matrix,
         length_granularity=100,
+        weight_factor=20,
         # Relabel nodes with words rather than indices
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
@@ -64,24 +68,30 @@ def main():
 
     sa = TemporalSpreadingActivation(
         graph=graph,
-        threshold=0.15,
+        threshold=0.1,
         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(
-            decay_factor=0.95),
+            decay_factor=0.99),
         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_params(
-            sd=15),
+            sd=80),
         )
 
     activation_trace = []
 
     initial_word = "school"
+
+    # sa.activate_node(initial_word, 1)
+    # run_with_pdf_output(sa, 100, "/Users/cai/Desktop/graph.pdf")
+    # sa.reset()
+
     logger.info(f"Activating initial node {initial_word}")
     sa.activate_node(initial_word, 1)
     activation_trace.append(sa.activation_snapshot())
 
     logger.info("Running spreading output")
-    for i in range(1, 5):
+    for i in range(1, 200):
         logger.info(f"Clock = {i}")
         sa.tick()
+        # sa.log_graph()
         activation_trace.append(sa.activation_snapshot())
 
     trace_df = DataFrame.from_records(activation_trace)
