@@ -19,13 +19,11 @@ import logging
 import sys
 
 from matplotlib.backends.backend_pdf import PdfPages
-from networkx import convert_matrix, relabel_nodes
 from numpy import array
 
 from temporal_spreading_activation import TemporalSpreadingActivation
 
 logger = logging.getLogger()
-# logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_format = '%(asctime)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
@@ -33,22 +31,22 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def main():
     logger.info("Building graph...")
 
-    distance_matrix = array([
-        [.0, .3, .6],  # Lion
-        [.3, .0, .4],  # Tiger
-        [.6, .4, .0],  # Stripes
-    ])
-    graph = convert_matrix.from_numpy_array(distance_matrix)
-    graph = relabel_nodes(graph, {0: "lion", 1: "tiger", 2: "stripes"}, copy=False)
+    graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+        distance_matrix=array([
+            [.0, .3, .6],  # Lion
+            [.3, .0, .4],  # Tiger
+            [.6, .4, .0],  # Stripes
+        ]),
+        length_granularity=30,
+        relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+    )
 
     sa = TemporalSpreadingActivation(
         graph=graph,
         threshold=.2,
-        weight_coefficient=1,
-        granularity=30,
-        node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(
+        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(
             decay_factor=0.95),
-        edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(
+        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_params(
             sd=15),
     )
 
@@ -56,17 +54,13 @@ def main():
 
         logger.info("Activating node...")
         sa.activate_node("lion", 1)
-        # sa.log_graph()
         pos = sa.draw_graph(pdf=pdf, frame_label=str(0))
 
         logger.info("Running spreading activation...")
         for i in range(1, 200):
             logger.info(f"CLOCK = {i}")
             sa.tick()
-            # sa.log_graph()
             sa.draw_graph(pdf=pdf, pos=pos, frame_label=str(i))
-            # for im in sa.iter_impulses():
-            #     logger.info(f"\t{str(im)}")
 
 
 if __name__ == '__main__':

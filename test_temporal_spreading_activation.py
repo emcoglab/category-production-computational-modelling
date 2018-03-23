@@ -18,7 +18,6 @@ caiwingfield.net
 import unittest
 
 from numpy import array
-from networkx import convert_matrix, relabel_nodes
 
 from temporal_spreading_activation import TemporalSpreadingActivation
 
@@ -30,16 +29,16 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        graph = convert_matrix.from_numpy_array(distance_matrix)
-        graph = relabel_nodes(graph, {0: "lion", 1: "tiger", 2: "stripes"}, copy=False)
-
+        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+            distance_matrix=distance_matrix,
+            length_granularity=10,
+            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+        )
         sa = TemporalSpreadingActivation(
             graph=graph,
             threshold=.2,
-            weight_coefficient=1,
-            granularity=10,
-            node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90),
-            edge_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(decay_factor=0.90)
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(decay_factor=0.90),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(decay_factor=0.90)
         )
 
         sa.activate_node("lion", 1)
