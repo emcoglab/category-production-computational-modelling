@@ -18,8 +18,7 @@ caiwingfield.net
 import logging
 import sys
 
-from networkx import convert_matrix, relabel_nodes
-from numpy import ones
+from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
@@ -47,48 +46,46 @@ def main():
 
     logger.info("Constructing weight matrix")
 
-    # First coordinate (row index) points to
+    # First coordinate (row index) points to TODO: what?
     embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :]
 
     # Convert to distance matrix
     distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
 
-    # Convert to weight matrix
-    # For cosine, similarity = 1 - distance
-    weight_matrix = ones(distance_matrix.shape) - distance_matrix
-
-    # Initialise graph
-
     logger.info("Building graph")
 
-    graph = convert_matrix.from_numpy_array(weight_matrix)
-
-    relabelling_dict = build_relabelling_dictionary(ldm_to_matrix, distributional_model_index)
-
-    graph = relabel_nodes(graph, relabelling_dict, copy=False)
+    graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+        distance_matrix=distance_matrix,
+        length_granularity=100,
+        # Relabel nodes with words rather than indices
+        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
     logger.info("Setting up spreading output")
 
     sa = TemporalSpreadingActivation(
         graph=graph,
         threshold=0.15,
-        weight_coefficient=1,
-        granularity=30,
-        node_decay_function=TemporalSpreadingActivation.create_decay_function_exponential_with_params(
+        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(
             decay_factor=0.95),
-        edge_decay_function=TemporalSpreadingActivation.create_decay_function_gaussian_with_params(
+        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_params(
             sd=15),
         )
 
+    activation_trace = []
 
     initial_word = "school"
     logger.info(f"Activating initial node {initial_word}")
     sa.activate_node(initial_word, 1)
+    activation_trace.append(sa.activation_snapshot())
 
     logger.info("Running spreading output")
-    for i in range(1, 100):
+    for i in range(1, 5):
         logger.info(f"Clock = {i}")
         sa.tick()
+        activation_trace.append(sa.activation_snapshot())
+
+    trace_df = DataFrame.from_records(activation_trace)
+    trace_df.to_csv("/Users/caiwingfield/Desktop/trace.csv")
 
 
 def filtering_dictionaries(filtered_indices):
