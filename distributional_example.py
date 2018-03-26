@@ -25,7 +25,6 @@ from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
 from temporal_spreading_activation import TemporalSpreadingActivation
-from tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -58,21 +57,24 @@ def main():
     logger.info("Building graph")
 
     graph = TemporalSpreadingActivation.graph_from_distance_matrix(
-        distance_matrix=distance_matrix,
+        distance_matrix=distance_matrix.copy(),
         length_granularity=100,
         weight_factor=20,
         # Relabel nodes with words rather than indices
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
+    # TODO: Does this make a difference somehow?
+    del distributional_model, embedding_matrix, distance_matrix
+
     logger.info("Setting up spreading output")
 
     sa = TemporalSpreadingActivation(
         graph=graph,
-        threshold=0.1,
+        threshold=0.25,
         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(
             decay_factor=0.99),
         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_params(
-            sd=80),
+            sd=15),
         )
 
     activation_trace = []
@@ -88,7 +90,7 @@ def main():
     activation_trace.append(sa.activation_snapshot())
 
     logger.info("Running spreading output")
-    for i in range(1, 200):
+    for i in range(1, 100):
         logger.info(f"Clock = {i}")
         sa.tick()
         # sa.log_graph()
