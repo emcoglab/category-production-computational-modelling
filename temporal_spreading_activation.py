@@ -105,6 +105,7 @@ class TemporalSpreadingActivation(object):
                  threshold: float,
                  node_decay_function: callable,
                  edge_decay_function: callable,
+                 activation_cap: float = 1,
                  ):
         """
         :param graph:
@@ -121,17 +122,24 @@ class TemporalSpreadingActivation(object):
                 impulses
         :param threshold:
         Activation threshold.
-        Impulses which drop below this threshold will be deleted.
+        Impulses which drop (strictly) below this threshold will be deleted.
         :param node_decay_function:
         A function governing the decay of activations on nodes.
         Use the decay_function_*_with_params methods to create these.
         :param edge_decay_function:
         A function governing the decay of activations in connections.
-        Use the decay_function_*_with_params methods to create these.
+        Use the decay_function_*_with_* methods to create these.
+        :param activation_cap:
+        (Optional, default 1) Caps node activations at this value. If None is given, activations will not be capped.
         """
+
+        assert activation_cap > 0
+        assert threshold <= activation_cap
 
         # Parameters
         self.threshold = threshold
+        self.activation_cap = activation_cap
+
         # These decay functions should be stateless, and convert an original activation and an age into a current
         # activation.
         self.node_decay_function: callable = node_decay_function
@@ -279,8 +287,11 @@ class TemporalSpreadingActivation(object):
 
     def activate_node(self, n, activation: float):
         # Accumulate activation
-        existing_charge: Charge = self.graph.nodes[n][NodeDataKey.CHARGE]
-        new_charge = Charge(n, activation + existing_charge.activation, self.node_decay_function)
+        existing_activation = self.graph.nodes[n][NodeDataKey.CHARGE].activation
+        new_activation = existing_activation + activation
+        if self.activation_cap is not None:
+            new_activation = min(new_activation, self.activation_cap)
+        new_charge = Charge(n, new_activation, self.node_decay_function)
         self.graph.nodes[n][NodeDataKey.CHARGE] = new_charge
 
         # Rebroadcast
