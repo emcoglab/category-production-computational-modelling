@@ -38,7 +38,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             graph=graph,
             threshold=.2,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90)
+            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
+            activation_cap=1
         )
 
         sa.activate_node("lion", 1)

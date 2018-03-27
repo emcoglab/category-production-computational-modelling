@@ -105,7 +105,7 @@ class TemporalSpreadingActivation(object):
                  threshold: float,
                  node_decay_function: callable,
                  edge_decay_function: callable,
-                 activation_cap: float = 1,
+                 activation_cap=1,
                  ):
         """
         :param graph:
@@ -133,8 +133,9 @@ class TemporalSpreadingActivation(object):
         (Optional, default 1) Caps node activations at this value. If None is given, activations will not be capped.
         """
 
-        assert activation_cap > 0
-        assert threshold <= activation_cap
+        if activation_cap is not None:
+            assert activation_cap > 0
+            assert threshold <= activation_cap
 
         # Parameters
         self.threshold = threshold
@@ -310,29 +311,14 @@ class TemporalSpreadingActivation(object):
             # TODO: Perhaps instead have a separate place to accumulate new emissions, and do the agglomeration there
             # TODO: before putting them in the pipes.
 
-            initial_activation = e_data[EdgeDataKey.WEIGHT] * new_charge.activation
-
-            # Check if another impulse has been released into this edge this tick
-            existing_impulses = [i for i in e_data[EdgeDataKey.IMPULSES]
-                                 if i.age == 0
-                                 and i.target_node == target_node
-                                 and not i.is_expired]
-
-            # If there are no existing ones, we don't need to do anything
-            if len(existing_impulses) == 0:
-                pass
-            # If one has been released this tick, we add its activation to the existing one and delete it
-            elif len(existing_impulses) == 1:
-                initial_activation += existing_impulses[0].activation
-                existing_impulses[0].expire()
-            # We are performing this check for each impulse released, so there should only ever be 0 or 1 existing
-            # impulse (if there were more, we already would have combined them.
-            elif len(existing_impulses) > 1:
-                raise Exception("There should only ever be 0 or 1 existing impulse released this turn")
+            # If another impulse was released from this node to the same target this tick, it gets replaced by this one
+            for i in e_data[EdgeDataKey.IMPULSES]:
+                if i.age == 0 and i.target_node == target_node and i.source_node == n:
+                    i.expire()
 
             new_impulse = Impulse(source_node=n,
                                   target_node=target_node,
-                                  initial_activation=initial_activation,
+                                  initial_activation=e_data[EdgeDataKey.WEIGHT] * new_charge.activation,
                                   decay_function=self.edge_decay_function)
 
             e_data[EdgeDataKey.IMPULSES].append(new_impulse)
