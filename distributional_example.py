@@ -59,7 +59,6 @@ def main():
     graph = TemporalSpreadingActivation.graph_from_distance_matrix(
         distance_matrix=distance_matrix.copy(),
         length_granularity=100,
-        weight_factor=20,
         # Relabel nodes with words rather than indices
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
