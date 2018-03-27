@@ -17,7 +17,7 @@ caiwingfield.net
 
 import unittest
 
-from numpy import array
+from numpy import array, log
 
 from temporal_spreading_activation import TemporalSpreadingActivation
 
@@ -37,8 +37,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         sa = TemporalSpreadingActivation(
             graph=graph,
             threshold=.2,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(decay_factor=0.90),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(decay_factor=0.90)
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90)
         )
 
         sa.activate_node("lion", 1)
@@ -49,6 +49,28 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.7654122868171584)
         self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.49227468208638314)
         self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.23159221991442014)
+
+    def test_exponential_decay_factor_1(self):
+        d = 1
+        t = 27
+        a_0 = 0.64
+        self.assertEqual(
+            a_0,
+            TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(d)(t, a_0)
+        )
+
+    def test_two_form_of_exponential_decay_are_equal(self):
+        d = 0.93
+        λ = - log(d)
+        hl = log(2) / λ
+        t = 30
+        a_0 = .7
+        exponential_decay_via_d  = TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=d)
+        exponential_decay_via_hl = TemporalSpreadingActivation.decay_function_exponential_with_half_life(half_life=hl)
+        self.assertAlmostEqual(
+            exponential_decay_via_d(t, a_0),
+            exponential_decay_via_hl(t, a_0)
+        )
 
 
 if __name__ == '__main__':

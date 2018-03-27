@@ -23,7 +23,7 @@ caiwingfield.net
 import logging
 from typing import List, Dict
 
-from numpy import exp, ndarray, ones_like, ceil
+from numpy import exp, ndarray, ones_like, ceil, float_power
 import networkx
 from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from matplotlib import pyplot
@@ -190,18 +190,40 @@ class TemporalSpreadingActivation(object):
         return graph
 
     @staticmethod
-    def decay_function_exponential_with_params(decay_factor) -> callable:
+    def decay_function_exponential_with_decay_factor(decay_factor) -> callable:
+        # Decay formula for activation a, original activation a_0, decay factor d, time t:
+        #   a = a_0 d^t
+        #
+        # In traditional formulation of exponential decay, this is equivalent to:
+        #   a = a_0 e^(-λt)
+        # where λ is the decay constant.
+        #
+        # I.e.
+        #   d = e^(-λ)
+        #   λ = - ln d
+        assert 0 < decay_factor <= 1
+
         def decay_function(age, original_activation):
             return original_activation * (decay_factor ** age)
-
         return decay_function
 
     @staticmethod
-    def decay_function_gaussian_with_params(sd, height_coef=1, centre=0) -> callable:
+    def decay_function_exponential_with_half_life(half_life) -> callable:
+        assert half_life > 0
+        # Using notation from above, with half-life hl
+        #   λ = ln 2 / ln hl
+        #   d = 2 ^ (- 1 / hl)
+        decay_factor = float_power(2, - 1 / half_life)
+        return TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor)
+
+    @staticmethod
+    def decay_function_gaussian_with_sd(sd, height_coef=1, centre=0) -> callable:
+        assert height_coef > 0
+        assert sd > 0
+
         def decay_function(age, original_activation):
             height = original_activation * height_coef
             return height * exp((-1) * (((age - centre) ** 2) / (2 * sd * sd)))
-
         return decay_function
 
     def iter_impulses(self):

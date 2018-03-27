@@ -71,9 +71,9 @@ def main():
     sa = TemporalSpreadingActivation(
         graph=graph,
         threshold=0.25,
-        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_params(
+        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
             decay_factor=0.99),
-        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_params(
+        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
             sd=15),
         )
 
