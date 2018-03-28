@@ -1,3 +1,3 @@
-[submodule "corpus-analysis"]
+[submodule "corpus_analysis"]
 	path = corpus_analysis
-	url = https://bitbucket.org/caiw/corpus-analysis
+	url = git@github.com:emcoglab/linguistic-distributional-models.git
