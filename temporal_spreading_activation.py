@@ -95,6 +95,16 @@ class Impulse(object):
     def __str__(self):
         return f"{self.source_node} → {self.target_node}: {self.activation_at_destination:.4g} @ {str(self.time_at_destination)}"
 
+    def age_at_time(self, t: int):
+        """
+        The integer age of this impulse at specified time, or None if impulse will not exist at that time.
+        """
+        if t > self.time_at_destination:
+            return None
+        if t < self.time_at_creation:
+            return None
+        return t - self.time_at_creation
+
 
 class TemporalSpreadingActivation(object):
 
@@ -141,6 +151,7 @@ class TemporalSpreadingActivation(object):
 
         # These decay functions should be stateless, and convert an original activation and an age into a current
         # activation.
+        # Each should be of the form (age, initial_activation) ↦ current_activation
         self.node_decay_function: callable = node_decay_function
         self.edge_decay_function: callable = edge_decay_function
 
@@ -391,25 +402,32 @@ class TemporalSpreadingActivation(object):
                 continue
             x1, y1 = pos[v1]
             x2, y2 = pos[v2]
-            for i in impulses:
+            for impulse in impulses:
 
-                if i.age == 0:
+                age = impulse.age_at_time(self.clock)
+
+                # Skip dead impulses
+                if age is None:
                     continue
 
-                if i.target_node == v2:
+                # Skip just-created impulses
+                if age == 0:
+                    continue
+
+                if impulse.target_node == v2:
                     # Travelling v1 → v2
-                    fraction = i.age / length
-                elif i.target_node == v1:
+                    fraction = age / length
+                elif impulse.target_node == v1:
                     # Travelling v2 → v1
-                    fraction = 1 - (i.age / length)
+                    fraction = 1 - (age / length)
                 else:
-                    raise Exception(f"Inappropriate target node {i.target_node}")
+                    raise Exception(f"Inappropriate target node {impulse.target_node}")
                 x = x1 + (fraction * (x2 - x1))
                 y = y1 + (fraction * (y2 - y1))
 
-                c = cmap(i.activation)
+                colour = cmap(self.node_decay_function(age, impulse.initial_activation))
 
-                impulse_data.append([x, y, c, i, length])
+                impulse_data.append([x, y, colour, impulse, length])
 
         pyplot.figure()
 
@@ -428,9 +446,10 @@ class TemporalSpreadingActivation(object):
         networkx.draw_networkx_edge_labels(self.graph, pos=pos, edge_labels=edge_labels, font_size=6)
 
         # Draw impulses
-        for x, y, c, i, l in impulse_data:
-            pyplot.plot(x, y, marker='o', markersize=5, color=c)
-            pyplot.text(x, y, f"{i.activation:.3g} ({i.age}/{l})")
+        for x, y, colour, impulse, length in impulse_data:
+            pyplot.plot(x, y, marker='o', markersize=5, color=colour)
+            age = impulse.age_at_time(self.clock)
+            pyplot.text(x, y, f"{self.node_decay_function(age, impulse.initial_activation):.3g} ({age}/{length})")
 
         # Draw frame_label
         if frame_label is not None:

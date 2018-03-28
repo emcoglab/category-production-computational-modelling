@@ -54,11 +54,7 @@ def main():
     sa.log_graph()
 
     logger.info("Running spreading activation...")
-    for t in range(1,15):
-        logger.info("")
-        sa.tick()
-        sa.log_graph()
-    # run_with_pdf_output(sa, 200, "/Users/cai/Desktop/graph.pdf")
+    run_with_pdf_output(sa, 200, "/Users/caiwingfield/Desktop/graph.pdf")
 
 
 if __name__ == '__main__':
