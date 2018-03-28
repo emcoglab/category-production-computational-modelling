@@ -44,12 +44,12 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
 
         sa.activate_node("lion", 1)
 
-        for i in range(1, 13):
+        for i in range(1, 14):
             sa.tick()
 
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.7654122868171584)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.49227468208638314)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.23159221991442014)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.6888710581)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.4430472139)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.4742613262)
 
     def test_exponential_decay_factor_1(self):
         d = 1

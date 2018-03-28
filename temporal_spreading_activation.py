@@ -33,6 +33,18 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
+def partition(iterable, predicate):
+    """
+    Separates the an iterable into two sub-iterables; those which satisfy predicate and those which don't.
+    Thanks to https://stackoverflow.com/a/4578605/2883198 and https://stackoverflow.com/questions/949098/python-split-a-list-based-on-a-condition#comment24295861_12135169.
+    """
+    trues = []
+    falses = []
+    for item in iterable:
+        trues.append(item) if predicate(item) else falses.append(item)
+    return trues, falses
+
+
 class EdgeDataKey(object):
     WEIGHT   = "weight"
     LENGTH   = "length"
@@ -69,33 +81,19 @@ class Charge(object):
 class Impulse(object):
     """An activation travelling through an edge."""
 
-    def __init__(self, source_node, target_node, initial_activation: float, decay_function: callable):
+    def __init__(self,
+                 source_node, target_node,
+                 time_at_creation: int, time_at_destination: int,
+                 initial_activation: float, final_activation: float):
         self.source_node = source_node
         self.target_node = target_node
-        self._original_activation = initial_activation
-        self._decay_function = decay_function
+        self.time_at_creation: int = time_at_creation
+        self.time_at_destination: int = time_at_destination
+        self.initial_activation: float = initial_activation
+        self.activation_at_destination: float = final_activation
 
-        self._expired: bool = False
-        self.age: int = 0
-
-    @property
-    def is_expired(self):
-        return self._expired
-
-    @property
-    def activation(self):
-        """Current activation."""
-        return self._decay_function(self.age, self._original_activation)
-
-    def propagate_and_decay(self):
-        # Decay is handled by the `self.activation` property; all we need to do is increment the age.
-        self.age += 1
-
-    def expire(self):
-        self._expired = True
-
-    def __str__(self) -> str:
-        return f"Impulse: {self.source_node} → {self.activation} → {self.target_node} ({self.age})"
+    def __str__(self):
+        return f"{self.source_node} → {self.target_node}: {self.activation_at_destination:.4g} @ {str(self.time_at_destination)}"
 
 
 class TemporalSpreadingActivation(object):
@@ -148,6 +146,8 @@ class TemporalSpreadingActivation(object):
 
         # Underlying graph: weighted, undirected
         self.graph: Graph = graph
+
+        self.clock: int = 0
 
         # Initialise graph
         self.reset()
@@ -248,6 +248,8 @@ class TemporalSpreadingActivation(object):
         # Delete all activations
         for _n1, _n2, e_data in self.graph.edges(data=True):
             e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
+        # Reset clock
+        self.clock = 0
 
     def _decay_nodes(self):
         """Decays activation in each node."""
@@ -258,35 +260,27 @@ class TemporalSpreadingActivation(object):
 
     def _propagate_impulses(self):
         """Propagates impulses along connections."""
-        impulses_at_destination_nodes = []
+
+        # In each edge...
         for _n1, _n2, e_data in self.graph.edges(data=True):
-            for impulse in e_data[EdgeDataKey.IMPULSES]:
 
-                impulse.propagate_and_decay()
+            impulses_at_destination, impulses_en_route = partition(e_data[EdgeDataKey.IMPULSES],
+                                                                   lambda i: i.time_at_destination == self.clock)
 
-                # Expire if below threshold
-                if impulse.activation < self.threshold:
-                    impulse.expire()
-                    continue
+            # Only those en route should remain
+            e_data[EdgeDataKey.IMPULSES] = impulses_en_route
 
-                # Apply to node if destination reached
-                if impulse.age >= e_data[EdgeDataKey.LENGTH]:
-                    impulses_at_destination_nodes.append(impulse)
-                    impulse.expire()
-                    continue
-            # Remove expired impulses
-            e_data[EdgeDataKey.IMPULSES] = [i for i in e_data[EdgeDataKey.IMPULSES]
-                                            if not i.is_expired]
-
-        # Apply new activations to nodes
-        for impulse in impulses_at_destination_nodes:
-            self.activate_node(impulse.target_node, impulse.activation)
+            # Impulses at destination activate their target nodes, possibly rebroadcasting new impulses.
+            for impulse in impulses_at_destination:
+                self.activate_node(impulse.target_node, impulse.activation_at_destination)
 
     def tick(self):
+        self.clock += 1
         self._decay_nodes()
         self._propagate_impulses()
 
     def activate_node(self, n, activation: float):
+
         # Accumulate activation
         existing_activation = self.graph.nodes[n][NodeDataKey.CHARGE].activation
         new_activation = existing_activation + activation
@@ -295,36 +289,49 @@ class TemporalSpreadingActivation(object):
         new_charge = Charge(n, new_activation, self.node_decay_function)
         self.graph.nodes[n][NodeDataKey.CHARGE] = new_charge
 
+        source_node = n
+
         # Rebroadcast
 
         # For each incident edge
-        for n1, n2, e_data in self.graph.edges(n, data=True):
-            if n == n1:
+        for n1, n2, e_data in self.graph.edges(source_node, data=True):
+            if source_node == n1:
                 target_node = n2
-            elif n == n2:
+            elif source_node == n2:
                 target_node = n1
             else:
                 raise ValueError()
 
-            # TODO: This still doesn't seem like the most efficient way to do this, as we may make the same check
-            # TODO: multiple times.
-            # TODO: Perhaps instead have a separate place to accumulate new emissions, and do the agglomeration there
-            # TODO: before putting them in the pipes.
+            edge_length = e_data[EdgeDataKey.LENGTH]
 
-            # If another impulse was released from this node to the same target this tick, it gets replaced by this one
-            for i in e_data[EdgeDataKey.IMPULSES]:
-                if i.age == 0 and i.target_node == target_node and i.source_node == n:
-                    i.expire()
+            # We pre-compute the impulses now rather than decaying them over time.
+            # Intermediate activates can be computed for display purposes if necessary.
+            initial_activation = e_data[EdgeDataKey.WEIGHT] * new_charge.activation
+            final_activation = self.edge_decay_function(edge_length, initial_activation)
 
-            new_impulse = Impulse(source_node=n,
-                                  target_node=target_node,
-                                  initial_activation=e_data[EdgeDataKey.WEIGHT] * new_charge.activation,
-                                  decay_function=self.edge_decay_function)
+            # Only create impulses that will reach the destination before decaying below threshold
+            if final_activation < self.threshold:
+                continue
+
+            new_impulse = Impulse(
+                source_node=source_node, target_node=target_node,
+                time_at_creation=self.clock, time_at_destination=self.clock + edge_length,
+                initial_activation=initial_activation,
+                final_activation=final_activation
+            )
+
+            # If another impulse was released from this node to the same target this tick, it should replaced by this
+            # one, so remove it.
+            e_data[EdgeDataKey.IMPULSES] = [impulse
+                                            for impulse in e_data[EdgeDataKey.IMPULSES]
+                                            if not (impulse.target_node == target_node
+                                                    and impulse.source_node == source_node
+                                                    and impulse.time_at_creation == self.clock)]
 
             e_data[EdgeDataKey.IMPULSES].append(new_impulse)
 
     def __str__(self):
-        string_builder = ""
+        string_builder = f"CLOCK = {self.clock}\n"
         string_builder += "Nodes:\n"
         for node, n_data in self.graph.nodes(data=True):
             # Skip unactivated nodes
