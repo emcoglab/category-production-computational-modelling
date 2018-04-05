@@ -146,7 +146,7 @@ class TemporalSpreadingActivation(object):
             assert threshold <= activation_cap
 
         # Parameters
-        self.threshold = threshold
+        self.threshold = threshold  # Use `< self.threshold` and `>= self.threshold` to test for below/above threshold.
         self.activation_cap = activation_cap
 
         # These decay functions should be stateless, and convert an original activation and an age into a current
