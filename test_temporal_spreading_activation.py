@@ -37,8 +37,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         sa = TemporalSpreadingActivation(
             graph=graph,
             threshold=.2,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.80),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.80),
             activation_cap=1
         )
 
@@ -47,9 +47,9 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         for i in range(1, 14):
             sa.tick()
 
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.6888710581)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.4430472139)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.4742613262)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation,    0.2748779)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation,   0.1649267)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.1099512)
 
     def test_exponential_decay_factor_1(self):
         d = 1
