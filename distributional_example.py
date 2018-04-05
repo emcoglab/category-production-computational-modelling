@@ -40,7 +40,7 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
     distributional_model.train(memory_map=True)
 
-    filtered_words = get_word_list(freq_dist, top_n=300) # school is in the top 300
+    filtered_words = get_word_list(freq_dist, top_n=500)  # school is in the top 300
     # filtered_words = ["lion", "tiger", "jungle"]
     filtered_indices = [distributional_model_index.token2id[w] for w in filtered_words]
     # TODO: explain what these dictionaries are
@@ -69,11 +69,11 @@ def main():
 
     sa = TemporalSpreadingActivation(
         graph=graph,
-        threshold=0.25,
-        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-            decay_factor=0.99),
+        threshold=0.2,
+        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(
+            half_life=40),
         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
-            sd=15),
+            sd=30),
         )
 
     activation_trace = []
