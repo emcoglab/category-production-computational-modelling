@@ -23,6 +23,7 @@ from temporal_spreading_activation import TemporalSpreadingActivation
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
+
     def test_v0_worked_example_node_values(self):
         distance_matrix = array([
             [.0, .3, .6],  # Lion
@@ -50,6 +51,9 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.6888710581)
         self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.4430472139)
         self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.4742613262)
+
+
+class TestDecayFunctions(unittest.TestCase):
 
     def test_exponential_decay_factor_1(self):
         d = 1
