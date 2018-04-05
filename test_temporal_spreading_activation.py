@@ -78,5 +78,48 @@ class TestDecayFunctions(unittest.TestCase):
         )
 
 
+class TestGraphPruning(unittest.TestCase):
+
+    def test_distance_pruning_sub_threshold_edges_gone(self):
+        LION    = 0
+        STRIPES = 2
+
+        distance_matrix = array([
+            [.0, .3, .6],  # Lion
+            [.3, .0, .4],  # Tiger
+            [.6, .4, .0],  # Stripes
+        ])
+        granularity = 10
+        pruning_threshold = 5
+
+        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+            distance_matrix=distance_matrix,
+            length_granularity=granularity,
+            prune_connections_longer_than=pruning_threshold
+        )
+        self.assertFalse((LION, STRIPES) in graph.edges)
+
+    def test_distance_pruning_supra_threshold_edges_remain(self):
+        LION    = 0
+        TIGER   = 1
+        STRIPES = 2
+
+        distance_matrix = array([
+            [.0, .3, .6],  # Lion
+            [.3, .0, .4],  # Tiger
+            [.6, .4, .0],  # Stripes
+        ])
+        granularity = 10
+        pruning_threshold = 5
+
+        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+            distance_matrix=distance_matrix,
+            length_granularity=granularity,
+            prune_connections_longer_than=pruning_threshold
+        )
+        self.assertTrue((LION, TIGER) in graph.edges)
+        self.assertTrue((TIGER, STRIPES) in graph.edges)
+
+
 if __name__ == '__main__':
     unittest.main()
