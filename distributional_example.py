@@ -49,7 +49,7 @@ def main():
     logger.info("Constructing weight matrix")
 
     # First coordinate (row index) points to TODO: what?
-    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :]
+    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :].copy()
 
     # Convert to distance matrix
     distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
