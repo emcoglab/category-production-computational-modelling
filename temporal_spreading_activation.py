@@ -384,6 +384,18 @@ class TemporalSpreadingActivation(object):
             for n, n_data in self.graph.nodes(data=True)
         }
 
+    def n_suprathreshold_nodes(self) -> int:
+        """
+        The number of nodes which are above the threshold.
+        """
+        return len(self._suprathreshold_nodes())
+
+    def _suprathreshold_nodes(self):
+        return [
+            n for n, n_data in self.graph.nodes(data=True)
+            if n_data[NodeDataKey.CHARGE].activation >= self.threshold
+        ]
+
     def log_graph(self):
         [logger.info(f"{line}") for line in str(self).strip().split('\n')]
 

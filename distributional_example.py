@@ -78,6 +78,7 @@ def main():
         )
 
     activation_trace = []
+    activated_node_counts = []
 
     initial_word = "school"
 
@@ -88,6 +89,7 @@ def main():
     logger.info(f"Activating initial node {initial_word}")
     sa.activate_node(initial_word, 1)
     activation_trace.append(sa.activation_snapshot())
+    activated_node_counts.append(sa.n_suprathreshold_nodes())
 
     logger.info("Running spreading output")
     for i in range(1, 100):
@@ -95,9 +97,12 @@ def main():
         sa.tick()
         # sa.log_graph()
         activation_trace.append(sa.activation_snapshot())
+        activated_node_counts.append(sa.n_suprathreshold_nodes())
 
     trace_df = DataFrame.from_records(activation_trace)
     trace_df.to_csv("/Users/caiwingfield/Desktop/trace.csv")
+    counts_df = DataFrame(activated_node_counts, columns=["Number of supra-threshold nodes."])
+    counts_df.to_csv("/Users/caiwingfield/Desktop/activated node counts.csv")
 
 
 def filtering_dictionaries(filtered_indices):
