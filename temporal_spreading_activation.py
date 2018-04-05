@@ -168,7 +168,8 @@ class TemporalSpreadingActivation(object):
     def graph_from_distance_matrix(distance_matrix: ndarray,
                                    length_granularity: int,
                                    weight_factor: float = 1,
-                                   relabelling_dict=None) -> Graph:
+                                   relabelling_dict=None,
+                                   prune_connections_longer_than: int = None) -> Graph:
         """
         Produces a Graph of the correct format to underlie a TemporalSpreadingActivation.
 
@@ -188,6 +189,8 @@ class TemporalSpreadingActivation(object):
         :param relabelling_dict:
         (Optional.) If provided and not None: A dictionary which maps the integer indices of nodes to
         their desired labels.
+        :param prune_connections_longer_than:
+        (Optional.) If provided and not None: Any connections with lengths (strictly) longer than this will be severed.
         :return:
         A Graph of the correct format.
         """
@@ -203,6 +206,15 @@ class TemporalSpreadingActivation(object):
         # Add lengths to graph data
         for n1, n2, e_data in graph.edges(data=True):
             e_data[EdgeDataKey.LENGTH] = length_matrix[n1][n2]
+
+        # Prune long connections
+        if prune_connections_longer_than is not None:
+            long_edges = [
+                (n1, n2)
+                for n1, n2, e_data in graph.edges(data=True)
+                if e_data[EdgeDataKey.LENGTH] > prune_connections_longer_than
+            ]
+            graph.remove_edges_from(long_edges)
 
         # Relabel nodes if dictionary was provided
         if relabelling_dict is not None:
