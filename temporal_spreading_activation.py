@@ -21,6 +21,7 @@ caiwingfield.net
 """
 
 import logging
+import time
 from typing import List, Dict
 
 from numpy import exp, ndarray, ones_like, ceil, float_power
@@ -286,9 +287,23 @@ class TemporalSpreadingActivation(object):
                 self.activate_node(impulse.target_node, impulse.activation_at_destination)
 
     def tick(self):
+        """
+        Performs the spreading activation algorithm for one tick of the clock.
+        """
         self.clock += 1
         self._decay_nodes()
         self._propagate_impulses()
+
+    def tick_timed(self) -> float:
+        """
+        Performs the spreading activation algorithm for one tick of the clock.
+        Returns the number of seconds which elapsed computing this tick.
+        """
+        start = time.time()
+        self.tick()
+        duration = time.time() - start
+
+        return duration
 
     def activate_node(self, n, activation: float):
 
