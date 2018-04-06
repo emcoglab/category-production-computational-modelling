@@ -17,6 +17,7 @@ caiwingfield.net
 
 import logging
 import sys
+from typing import Set
 
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
@@ -40,9 +41,10 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
     distributional_model.train(memory_map=True)
 
-    filtered_words = get_word_list(freq_dist, top_n=300) # school is in the top 300
-    # filtered_words = ["lion", "tiger", "jungle"]
-    filtered_indices = [distributional_model_index.token2id[w] for w in filtered_words]
+    # Words 101–400
+    filtered_words = get_word_list(freq_dist, top_n=400) - get_word_list(freq_dist, top_n=100)  # school is in the top 300
+
+    filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
     # TODO: explain what these dictionaries are
     ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
 
@@ -121,8 +123,8 @@ def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: Toke
     return relabelling_dictinoary
 
 
-def get_word_list(freq_dist, top_n):
-    return [word for word, _ in freq_dist.most_common(top_n)]
+def get_word_list(freq_dist, top_n) -> Set:
+    return {word for word, _ in freq_dist.most_common(top_n)}
 
 
 if __name__ == '__main__':
