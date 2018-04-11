@@ -168,6 +168,7 @@ class TemporalSpreadingActivation(object):
     @staticmethod
     def graph_from_distance_matrix(distance_matrix: ndarray,
                                    length_granularity: int,
+                                   weighted_graph: bool,
                                    weight_factor: float = 1,
                                    relabelling_dict=None,
                                    prune_connections_longer_than: int = None) -> Graph:
@@ -185,10 +186,17 @@ class TemporalSpreadingActivation(object):
         A symmetric distance matrix in numpy format.
         :param length_granularity:
         Distances will be scaled into integer connection lengths using this granularity scaling factor.
+        :param weighted_graph:
+        Whether to use weights on the edges.
+        If True, distances will be converted to weights using x ↦ 1-x.
+        If False, all edges get the same weight.
         :param weight_factor:
-        (Optional, default 1.) Linearly scale weights by this factor
+        (Default 1.)
+        If `weighted_graph` is True, this factor is multiplied by all weights.
+        If `weighted_graph` is false, this fixed weight given to each edge in the graph.
         :param relabelling_dict:
-        (Optional.) If provided and not None: A dictionary which maps the integer indices of nodes to
+        (Optional.)
+        If provided and not None: A dictionary which maps the integer indices of nodes to
         their desired labels.
         :param prune_connections_longer_than:
         (Optional.) If provided and not None: Any connections with lengths (strictly) longer than this will be severed.
@@ -196,8 +204,12 @@ class TemporalSpreadingActivation(object):
         A Graph of the correct format.
         """
 
-        weight_matrix = weight_factor * (ones_like(distance_matrix) - distance_matrix)
         length_matrix = ceil(distance_matrix * length_granularity)
+
+        if weighted_graph:
+            weight_matrix = weight_factor * (ones_like(distance_matrix) - distance_matrix)
+        else:
+            weight_matrix = weight_factor * ones_like(distance_matrix)
 
         graph = from_numpy_matrix(weight_matrix)
 

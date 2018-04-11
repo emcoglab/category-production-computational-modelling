@@ -24,7 +24,7 @@ from temporal_spreading_activation import TemporalSpreadingActivation
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
 
-    def test_v0_worked_example_node_values(self):
+    def test_worked_example_weighted_node_values(self):
         distance_matrix = array([
             [.0, .3, .6],  # Lion
             [.3, .0, .4],  # Tiger
@@ -32,14 +32,17 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         ])
         graph = TemporalSpreadingActivation.graph_from_distance_matrix(
             distance_matrix=distance_matrix,
+            weighted_graph=True,
             length_granularity=10,
             relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
         )
         sa = TemporalSpreadingActivation(
             graph=graph,
             threshold=.2,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.90),
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                decay_factor=0.9),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                decay_factor=0.9),
             activation_cap=1
         )
 
@@ -48,10 +51,38 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         for i in range(1, 14):
             sa.tick()
 
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation, 0.6888710581)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation, 0.4430472139)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation,    0.6888710581)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation,   0.4430472139)
         self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.4742613262)
 
+    def test_worked_example_unweighted_node_values(self):
+        distance_matrix = array([
+            [.0, .3, .6],  # Lion
+            [.3, .0, .4],  # Tiger
+            [.6, .4, .0],  # Stripes
+        ])
+        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+            distance_matrix=distance_matrix,
+            weighted_graph=False,
+            length_granularity=10,
+            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+        )
+        sa = TemporalSpreadingActivation(
+            graph=graph,
+            threshold=.2,
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.8),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.8),
+            activation_cap=1
+        )
+
+        sa.activate_node("lion", 1)
+
+        for i in range(1, 14):
+            sa.tick()
+
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation,    0.2748779)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation,   0.1649267)
+        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.1099512)
 
 class TestDecayFunctions(unittest.TestCase):
 
@@ -95,6 +126,7 @@ class TestGraphPruning(unittest.TestCase):
         graph = TemporalSpreadingActivation.graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
+            weighted_graph=False,
             prune_connections_longer_than=pruning_threshold
         )
         self.assertFalse((LION, STRIPES) in graph.edges)
@@ -115,6 +147,7 @@ class TestGraphPruning(unittest.TestCase):
         graph = TemporalSpreadingActivation.graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
+            weighted_graph=False,
             prune_connections_longer_than=pruning_threshold
         )
         self.assertTrue((LION, TIGER) in graph.edges)
