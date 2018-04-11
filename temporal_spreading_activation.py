@@ -118,6 +118,7 @@ class TemporalSpreadingActivation(object):
                  ):
         """
         :param graph:
+        ¡ Calling this constructor or modifying this object WILL modify the underlying graph !
         Should be an undirected weighted graph with the following data:
             On Nodes:
                 (no data required)

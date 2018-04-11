@@ -19,9 +19,10 @@ import logging
 import sys
 from typing import Set
 
-from pandas import DataFrame
+from pandas import Series
 from sklearn.metrics.pairwise import pairwise_distances
 
+from utils import add_column_to_csv
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
@@ -33,6 +34,9 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
+
+    csv_location = "/Users/caiwingfield/Desktop/activated node counts.csv"
+
     logger.info("Training distributional model")
 
     corpus_meta = CorpusPreferences.source_corpus_metas[0]
@@ -65,46 +69,44 @@ def main():
         # Relabel nodes with words rather than indices
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
-    # TODO: Does this make a difference somehow?
-    del distributional_model, embedding_matrix, distance_matrix
+    n_ticks = 100
+    initial_word = "school"  # random.choice(tuple(filtered_words))
 
-    logger.info("Setting up spreading output")
+    # Run multiple times with different parameters
 
-    sa = TemporalSpreadingActivation(
-        graph=graph,
-        threshold=0.25,
-        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-            decay_factor=0.99),
-        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
-            sd=15),
-        )
+    for threshold in [0.1, 0.2, 0.3]:
+        for node_decay_factor in [0.99, 0.9, 0.8]:
+            for edge_decay_sd in [10, 15, 20]:
 
-    activation_trace = []
-    activated_node_counts = []
+                logger.info(f"")
+                logger.info(f"Setting up spreading output")
+                logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
-    initial_word = "school"
+                column_name = f"Nodes activated (t={threshold}, d={node_decay_factor}, sd={edge_decay_sd})"
 
-    # sa.activate_node(initial_word, 1)
-    # run_with_pdf_output(sa, 100, "/Users/cai/Desktop/graph.pdf")
-    # sa.reset()
+                tsa = TemporalSpreadingActivation(
+                    graph=graph,
+                    threshold=threshold,
+                    node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                        decay_factor=node_decay_factor),
+                    edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
+                        sd=edge_decay_sd))
 
-    logger.info(f"Activating initial node {initial_word}")
-    sa.activate_node(initial_word, 1)
-    activation_trace.append(sa.activation_snapshot())
-    activated_node_counts.append(sa.n_suprathreshold_nodes())
+                activated_node_counts = []
 
-    logger.info("Running spreading output")
-    for i in range(1, 100):
-        logger.info(f"Clock = {i}")
-        sa.tick()
-        # sa.log_graph()
-        activation_trace.append(sa.activation_snapshot())
-        activated_node_counts.append(sa.n_suprathreshold_nodes())
+                logger.info(f"Initial node {initial_word}")
+                tsa.activate_node(initial_word, 1)
+                activated_node_counts.append(tsa.n_suprathreshold_nodes())
 
-    trace_df = DataFrame.from_records(activation_trace)
-    trace_df.to_csv("/Users/caiwingfield/Desktop/trace.csv")
-    counts_df = DataFrame(activated_node_counts, columns=["Number of supra-threshold nodes."])
-    counts_df.to_csv("/Users/caiwingfield/Desktop/activated node counts.csv")
+                logger.info("Running spreading output")
+                for i in range(1, n_ticks):
+                    logger.info(f"Clock = {i}")
+                    tsa.tick()
+                    activated_node_counts.append(tsa.n_suprathreshold_nodes())
+
+                counts_df = Series(activated_node_counts)
+
+                add_column_to_csv(counts_df, column_name, csv_location)
 
 
 def filtering_dictionaries(filtered_indices):
