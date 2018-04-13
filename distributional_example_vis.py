@@ -29,23 +29,34 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
-    box_root = "/Users/caiwingfield/Box Sync/WIP/"
+    box_root = "/Users/cai/Box Sync/WIP/"
     csv_location = path.join(box_root, "activated node counts.csv")
 
     results_df = read_csv(csv_location, header=0, index_col=False)
 
-    save_example(path.join(box_root, "trace.png"), results_df)
+    save_example(box_root, results_df)
 
 
 def save_example(fig_location, results_df):
     data = results_df
-    # data = data[data["Threshold"] == 0.2]
-    data = data[data["Node decay factor"] == 0.8]
-    data = data[data["Edge decay SD"] == 15]
 
-    seaborn.tsplot(data=data, time="Tick", value="Activated nodes", unit="Run", condition="Threshold")
+    for d in [0.99, 0.9, 0.8]:
+        for s in [10, 15, 20]:
 
-    pyplot.savefig(fig_location)
+            seaborn.tsplot(
+                data=data[
+                    (data["Node decay factor"] == d)
+                    & (data["Edge decay SD"] == s)
+                ],
+                time="Tick", value="Activated nodes", unit="Run",
+                condition="Threshold",
+                err_style="unit_traces",
+            )
+
+            fname = path.join(fig_location, f"trace d={d} s={s}.png")
+
+            pyplot.savefig(fname)
+            pyplot.close()
 
 
 if __name__ == '__main__':
