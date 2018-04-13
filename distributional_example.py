@@ -16,13 +16,13 @@ caiwingfield.net
 """
 
 import logging
+import random
 import sys
 from typing import Set
 
-from pandas import Series
+from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
-from utils import add_column_to_csv
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
@@ -71,43 +71,50 @@ def main():
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
     n_ticks = 100
-    initial_word = "school"  # random.choice(tuple(filtered_words))
+    n_runs = 10
 
     # Run multiple times with different parameters
 
-    for threshold in [0.1, 0.2, 0.3]:
-        for node_decay_factor in [0.99, 0.9, 0.8]:
-            for edge_decay_sd in [10, 15, 20]:
+    results = []
 
-                logger.info(f"")
-                logger.info(f"Setting up spreading output")
-                logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+    for run in range(n_runs):
 
-                column_name = f"Nodes activated (t={threshold}, d={node_decay_factor}, sd={edge_decay_sd})"
+        initial_word = random.choice(tuple(filtered_words))
 
-                tsa = TemporalSpreadingActivation(
-                    graph=graph,
-                    threshold=threshold,
-                    node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-                        decay_factor=node_decay_factor),
-                    edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
-                        sd=edge_decay_sd))
+        for threshold in [0.1, 0.2, 0.3]:
+            for node_decay_factor in [0.99, 0.9, 0.8]:
+                for edge_decay_sd in [10, 15, 20]:
 
-                activated_node_counts = []
+                    logger.info(f"")
+                    logger.info(f"\t(run {run})")
+                    logger.info(f"Setting up spreading output")
+                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
-                logger.info(f"Initial node {initial_word}")
-                tsa.activate_node(initial_word, 1)
-                activated_node_counts.append(tsa.n_suprathreshold_nodes())
+                    tsa = TemporalSpreadingActivation(
+                        graph=graph,
+                        threshold=threshold,
+                        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                            decay_factor=node_decay_factor),
+                        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
+                            sd=edge_decay_sd))
 
-                logger.info("Running spreading output")
-                for i in range(1, n_ticks):
-                    logger.info(f"Clock = {i}")
-                    tsa.tick()
-                    activated_node_counts.append(tsa.n_suprathreshold_nodes())
+                    logger.info(f"Initial node {initial_word}")
+                    tsa.activate_node(initial_word, 1)
 
-                counts_df = Series(activated_node_counts)
+                    results.append(
+                        [run, 0, tsa.n_suprathreshold_nodes(), threshold, node_decay_factor, edge_decay_sd])
 
-                add_column_to_csv(counts_df, column_name, csv_location)
+                    logger.info("Running spreading output")
+                    for tick in range(1, n_ticks):
+                        logger.info(f"Clock = {tick}")
+                        tsa.tick()
+                        results.append(
+                            [run, tick, tsa.n_suprathreshold_nodes(), threshold, node_decay_factor, edge_decay_sd])
+
+    results_df = DataFrame(data=results,
+                           columns=["Run", "Tick", "Activated nodes", "Threshold", "Node decay factor", "Edge decay SD"])
+
+    results_df.to_csv(csv_location, header=True, index=False)
 
 
 def filtering_dictionaries(filtered_indices):
