@@ -18,6 +18,7 @@ caiwingfield.net
 import logging
 import random
 import sys
+from os import path
 from typing import Set
 
 from pandas import DataFrame
@@ -35,7 +36,8 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main():
 
-    csv_location = "/Users/caiwingfield/Desktop/activated node counts.csv"
+    box_root = "/Users/caiwingfield/Box Sync/WIP/"
+    csv_location = path.join(box_root, "activated node counts.csv")
 
     logger.info("Training distributional model")
 
