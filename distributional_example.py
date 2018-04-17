@@ -72,8 +72,9 @@ def main():
         # Relabel nodes with words rather than indices
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
-    n_ticks = 100
-    n_runs = 10
+    n_ticks = 200
+    n_runs = 1
+    bailout = 200
 
     # Run multiple times with different parameters
 
@@ -104,14 +105,18 @@ def main():
                     tsa.activate_node(initial_word, 1)
 
                     results.append(
-                        [run, 0, tsa.n_suprathreshold_nodes(), threshold, node_decay_factor, edge_decay_sd])
+                        [run, 0, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd])
 
                     logger.info("Running spreading output")
                     for tick in range(1, n_ticks):
                         logger.info(f"Clock = {tick}")
                         tsa.tick()
                         results.append(
-                            [run, tick, tsa.n_suprathreshold_nodes(), threshold, node_decay_factor, edge_decay_sd])
+                            [run, tick, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd])
+
+                        # Break early if we've got a probable explosion
+                        if tsa.n_suprathreshold_nodes > bailout:
+                            break
 
     results_df = DataFrame(data=results,
                            columns=["Run", "Tick", "Activated nodes", "Threshold", "Node decay factor", "Edge decay SD"])

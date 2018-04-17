@@ -34,6 +34,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
+# TODO: This is too useful not to be a library somewhere
 def partition(iterable, predicate):
     """
     Separates the an iterable into two sub-iterables; those which satisfy predicate and those which don't.
@@ -419,6 +420,7 @@ class TemporalSpreadingActivation(object):
             for n, n_data in self.graph.nodes(data=True)
         }
 
+    @property
     def n_suprathreshold_nodes(self) -> int:
         """
         The number of nodes which are above the threshold.
