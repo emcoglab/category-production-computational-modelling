@@ -29,22 +29,12 @@ import networkx
 from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from matplotlib import pyplot
 
+from utils import partition
+
+
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-
-# TODO: This is too useful not to be a library somewhere
-def partition(iterable, predicate):
-    """
-    Separates the an iterable into two sub-iterables; those which satisfy predicate and those which don't.
-    Thanks to https://stackoverflow.com/a/4578605/2883198 and https://stackoverflow.com/questions/949098/python-split-a-list-based-on-a-condition#comment24295861_12135169.
-    """
-    trues = []
-    falses = []
-    for item in iterable:
-        trues.append(item) if predicate(item) else falses.append(item)
-    return trues, falses
 
 
 class EdgeDataKey(object):
