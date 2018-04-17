@@ -24,6 +24,7 @@ from typing import Set
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
+from category_production.category_production import CategoryProduction
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
@@ -34,20 +35,17 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-class BrionyCategoryProductionData(object):
 
-    _box_root = "/Users/cai/Box Sync/LANGBOOT Project/Experiments/Phase 1 - Categorisation/Experiment 1.4 - Category production/Data & Analysis"
-    _csv_path = path.join(_box_root, "Data for proximity measures/Data for linguistic proximity measure BrEng.csv")
+def briony_vocab_overlap(top_n_words):
+    # Category production words
+    category_production = CategoryProduction()
+    data_words = category_production.single_word_vocabulary
 
-    def __init__(self):
-        self.data = DataFrame()
-        self._load()
+    # Frequent words in corpus
+    corpus_meta = CorpusPreferences.source_corpus_metas[0]
+    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    corpus_words = get_word_list(freq_dist, top_n=top_n_words)
 
-        # TODO: Build vocab lists
-        
-
-    def _load(self):
-        self.data = DataFrame.from_csv(BrionyCategoryProductionData._csv_path, index_col=0, header=0)
 
 
 def main():
@@ -171,5 +169,5 @@ def get_word_list(freq_dist, top_n) -> Set:
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main()
+    briony_vocab_overlap(3000)
     logger.info("Done!")
