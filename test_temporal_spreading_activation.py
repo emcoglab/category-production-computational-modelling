@@ -84,6 +84,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation,   0.1649267)
         self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.1099512)
 
+
 class TestDecayFunctions(unittest.TestCase):
 
     def test_exponential_decay_factor_1(self):
@@ -106,6 +107,94 @@ class TestDecayFunctions(unittest.TestCase):
         self.assertAlmostEqual(
             exponential_decay_via_d(t, a_0),
             exponential_decay_via_hl(t, a_0)
+        )
+
+    def test_gaussian_decay_same_granularity_different_function_maker(self):
+        """
+        The values in this test haven't been manually verified, and has so far only been used to test that refactoring
+        has no effect.
+        """
+
+        distance_matrix = array([
+            [.0, .5],
+            [.5, .0]
+        ])
+        sd_frac = 0.42
+        tsa_100 = TemporalSpreadingActivation(
+            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+                distance_matrix=distance_matrix,
+                length_granularity=100,
+                weighted_graph=False
+            ),
+            threshold=0,
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, 100)
+        )
+        tsa = TemporalSpreadingActivation(
+            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+                distance_matrix=distance_matrix,
+                length_granularity=100,
+                weighted_graph=False
+            ),
+            threshold=0,
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(42)
+        )
+
+        tsa_100.activate_node(n=0, activation=1.0)
+        tsa.activate_node(n=0, activation=1.0)
+
+        for tick in range(1, 50):
+            tsa_100.tick()
+            tsa.tick()
+
+        # Same granularity, different function-maker
+        self.assertAlmostEqual(
+            tsa_100.graph.edges[0, 1]["impulses"][0].activation_at_destination,
+            tsa.graph.edges[0, 1]["impulses"][0].activation_at_destination
+        )
+
+    def test_gaussian_decay_different_granularity_same_function_maker(self):
+        """
+        The values in this test haven't been manually verified, and has so far only been used to test that refactoring
+        has no effect.
+        """
+
+        distance_matrix = array([
+            [.0, .5],
+            [.5, .0]
+        ])
+        sd_frac = 0.42
+        granularity = 390
+        tsa_390 = TemporalSpreadingActivation(
+            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+                distance_matrix=distance_matrix,
+                length_granularity=granularity,
+                weighted_graph=False
+            ),
+            threshold=0,
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, granularity)
+        )
+        granularity = 1000
+        tsa_1000 = TemporalSpreadingActivation(
+            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+                distance_matrix=distance_matrix,
+                length_granularity=granularity,
+                weighted_graph=False
+            ),
+            threshold=0,
+            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
+            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, granularity)
+        )
+
+        tsa_390.activate_node(n=0, activation=1.0)
+        tsa_1000.activate_node(n=0, activation=1.0)
+
+        # Different granularity, same function-maker
+        self.assertAlmostEqual(
+            tsa_390.graph.edges[0, 1]["impulses"][0].activation_at_destination,
+            tsa_1000.graph.edges[0, 1]["impulses"][0].activation_at_destination
         )
 
 

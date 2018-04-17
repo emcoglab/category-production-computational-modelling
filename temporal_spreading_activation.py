@@ -264,6 +264,7 @@ class TemporalSpreadingActivation(object):
 
     @staticmethod
     def decay_function_gaussian_with_sd(sd, height_coef=1, centre=0) -> callable:
+        """Gaussian decay with sd specifying the number of ticks."""
         assert height_coef > 0
         assert sd > 0
 
@@ -271,6 +272,15 @@ class TemporalSpreadingActivation(object):
             height = original_activation * height_coef
             return height * exp((-1) * (((age - centre) ** 2) / (2 * sd * sd)))
         return decay_function
+
+    @staticmethod
+    def decay_function_gaussian_with_sd_fraction(sd_frac: float, granularity: int, height_coef=1, centre=0) -> callable:
+        """Gaussian decay with sd as a fraction of the granularity"""
+        sd = sd_frac * granularity
+        return TemporalSpreadingActivation.decay_function_gaussian_with_sd(
+            sd=sd,
+            height_coef=height_coef,
+            centre=centre)
 
     def iter_impulses(self):
         for v1, v2, e_data in self.graph.edges(data=True):
