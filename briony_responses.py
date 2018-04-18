@@ -35,21 +35,29 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-
 def briony_vocab_overlap(top_n_words):
     # Category production words
     category_production = CategoryProduction()
-    data_words = category_production.single_word_vocabulary
+    category_production_words = category_production.single_word_vocabulary
 
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[0]
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
     corpus_words = get_word_list(freq_dist, top_n=top_n_words)
 
+    # Useful numbers to report
+    n_cat_prod_words = len(category_production_words)
+    n_intersection = len(set(category_production_words).intersection(set(corpus_words)))
+    n_missing = len(set(category_production_words) - set(corpus_words))
+    n_unused = len(set(corpus_words) - set(category_production_words))
+
+    logger.info(f"Category production dataset contains {n_cat_prod_words} words.")
+    logger.info(f"This includes {n_intersection} of the top {top_n_words} words in the {corpus_meta.name} corpus.")
+    logger.info(f"{n_missing} category production words are not present.")
+    logger.info(f"{n_unused} graph words are not used in the category production set.")
 
 
 def main():
-
     # SA parameters
     granularity = 100
     node_decay_factors = [0.99, 0.9, 0.8]
@@ -66,8 +74,8 @@ def main():
     logger.info("Training distributional model")
     corpus_meta = CorpusPreferences.source_corpus_metas[0]
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    distributional_model_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
+    ldm_index = TokenIndexDictionary.from_freqdist(freq_dist)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=ldm_index)
     distributional_model.train(memory_map=True)
 
     # Use most frequent words, excluding the *very* most frequent ones
@@ -81,8 +89,8 @@ def main():
                 f"and a maximum of {int(0.5 * len(filtered_words) * (len(filtered_words) - 1))} connections")
 
     # Build index-lookup dictionaries
-    filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
-    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
+    filtered_indices = sorted([ldm_index.token2id[w] for w in filtered_words])
+    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([ldm_index.token2id[w] for w in filtered_words])
 
     # Build distance matrix
     logger.info("Constructing distance matrix")
@@ -96,7 +104,7 @@ def main():
         weighted_graph=False,
         length_granularity=granularity,
         # Relabel nodes with words rather than indices
-        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
+        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, ldm_index))
 
     # Run multiple times with different parameters
 
@@ -147,7 +155,8 @@ def main():
 def filtering_dictionaries(filtered_indices):
     # A lookup dictionary which converts the index of a word in the LDM to its index in the specific filtered matrix
     ldm_to_matrix_index = {}
-    # A lookup dictionary which converts the index of a word in the specific filtered distance matrix to its index in the LDM
+    # A lookup dictionary which converts the index of a word in the specific filtered distance matrix to its index in
+    # the LDM
     matrix_to_ldm_index = {}
     for i, filtered_index in enumerate(filtered_indices):
         ldm_to_matrix_index[filtered_index] = i
