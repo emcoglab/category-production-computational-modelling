@@ -22,7 +22,7 @@ caiwingfield.net
 
 import logging
 import time
-from typing import List, Dict
+from typing import List, Dict, Iterable
 
 from numpy import exp, ndarray, ones_like, ceil, float_power
 import networkx
@@ -273,63 +273,34 @@ class TemporalSpreadingActivation(object):
             height_coef=height_coef,
             centre=centre)
 
-    def iter_impulses(self):
+    @property
+    def node_labels(self) -> Iterable:
+        return self.graph.nodes
+
+    @property
+    def charges(self) -> Iterable:
+        for n, n_data in self.graph.nodes(data=True):
+            yield n_data[NodeDataKey.CHARGE]
+
+    @property
+    def edge_labels(self) -> Iterable:
+        return self.graph.edges
+
+    @property
+    def impulses(self) -> Iterable:
         for v1, v2, e_data in self.graph.edges(data=True):
             for impulse in e_data[EdgeDataKey.IMPULSES]:
                 yield impulse
 
-    def reset(self):
-        """Reset SA graph so it looks as if it's just been built."""
-        # Set all node activations to zero
-        for n, n_data in self.graph.nodes(data=True):
-            n_data[NodeDataKey.CHARGE] = Charge(n, 0, self.node_decay_function)
-        # Delete all activations
-        for _n1, _n2, e_data in self.graph.edges(data=True):
-            e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
-        # Reset clock
-        self.clock = 0
-
-    def _decay_nodes(self):
-        """Decays activation in each node."""
-        for n, n_data in self.graph.nodes(data=True):
-            charge = n_data[NodeDataKey.CHARGE]
-            if charge is not None:
-                charge.decay()
-
-    def _propagate_impulses(self):
-        """Propagates impulses along connections."""
-
-        # In each edge...
-        for _n1, _n2, e_data in self.graph.edges(data=True):
-
-            impulses_at_destination, impulses_en_route = partition(e_data[EdgeDataKey.IMPULSES],
-                                                                   lambda i: i.time_at_destination == self.clock)
-
-            # Only those en route should remain
-            e_data[EdgeDataKey.IMPULSES] = impulses_en_route
-
-            # Impulses at destination activate their target nodes, possibly rebroadcasting new impulses.
-            for impulse in impulses_at_destination:
-                self.activate_node(impulse.target_node, impulse.activation_at_destination)
-
-    def tick(self):
+    @property
+    def n_suprathreshold_nodes(self) -> int:
         """
-        Performs the spreading activation algorithm for one tick of the clock.
+        The number of nodes which are above the threshold.
         """
-        self.clock += 1
-        self._decay_nodes()
-        self._propagate_impulses()
-
-    def tick_timed(self) -> float:
-        """
-        Performs the spreading activation algorithm for one tick of the clock.
-        Returns the number of seconds which elapsed computing this tick.
-        """
-        start = time.time()
-        self.tick()
-        duration = time.time() - start
-
-        return duration
+        return len([
+            charge for charge in self.charges
+            if charge.activation >= self.threshold
+        ])
 
     def activate_node(self, n, activation: float):
 
@@ -382,6 +353,59 @@ class TemporalSpreadingActivation(object):
 
             e_data[EdgeDataKey.IMPULSES].append(new_impulse)
 
+    def _decay_nodes(self):
+        """Decays activation in each node."""
+        for n, n_data in self.graph.nodes(data=True):
+            charge = n_data[NodeDataKey.CHARGE]
+            if charge is not None:
+                charge.decay()
+
+    def _propagate_impulses(self):
+        """Propagates impulses along connections."""
+
+        # In each edge...
+        for _n1, _n2, e_data in self.graph.edges(data=True):
+
+            impulses_at_destination, impulses_en_route = partition(e_data[EdgeDataKey.IMPULSES],
+                                                                   lambda i: i.time_at_destination == self.clock)
+
+            # Only those en route should remain
+            e_data[EdgeDataKey.IMPULSES] = impulses_en_route
+
+            # Impulses at destination activate their target nodes, possibly rebroadcasting new impulses.
+            for impulse in impulses_at_destination:
+                self.activate_node(impulse.target_node, impulse.activation_at_destination)
+
+    def tick(self):
+        """
+        Performs the spreading activation algorithm for one tick of the clock.
+        """
+        self.clock += 1
+        self._decay_nodes()
+        self._propagate_impulses()
+
+    def tick_timed(self) -> float:
+        """
+        Performs the spreading activation algorithm for one tick of the clock.
+        Returns the number of seconds which elapsed computing this tick.
+        """
+        start = time.time()
+        self.tick()
+        duration = time.time() - start
+
+        return duration
+
+    def reset(self):
+        """Reset SA graph so it looks as if it's just been built."""
+        # Set all node activations to zero
+        for n, n_data in self.graph.nodes(data=True):
+            n_data[NodeDataKey.CHARGE] = Charge(n, 0, self.node_decay_function)
+        # Delete all activations
+        for _n1, _n2, e_data in self.graph.edges(data=True):
+            e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
+        # Reset clock
+        self.clock = 0
+
     def __str__(self):
         string_builder = f"CLOCK = {self.clock}\n"
         string_builder += "Nodes:\n"
@@ -400,28 +424,6 @@ class TemporalSpreadingActivation(object):
             for impulse in impulse_list:
                 string_builder += f"\t\t{impulse}\n"
         return string_builder
-
-    def activation_snapshot(self) -> Dict:
-        """
-        Returns a dictionary of activations for each node.
-        """
-        return {
-            n: n_data[NodeDataKey.CHARGE].activation
-            for n, n_data in self.graph.nodes(data=True)
-        }
-
-    @property
-    def n_suprathreshold_nodes(self) -> int:
-        """
-        The number of nodes which are above the threshold.
-        """
-        return len(self._suprathreshold_nodes())
-
-    def _suprathreshold_nodes(self):
-        return [
-            n for n, n_data in self.graph.nodes(data=True)
-            if n_data[NodeDataKey.CHARGE].activation >= self.threshold
-        ]
 
     def log_graph(self):
         [logger.info(f"{line}") for line in str(self).strip().split('\n')]

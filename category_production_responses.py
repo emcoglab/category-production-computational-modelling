@@ -65,7 +65,7 @@ def main():
     thresholds = [0.1, 0.2, 0.3]
 
     n_ticks = 200
-    bailout = 1000
+    explosion_bailout = 1000
 
     # Where to save data
     box_root = "/Users/caiwingfield/Box Sync/WIP/"
@@ -99,7 +99,7 @@ def main():
 
     # Build graph
     logger.info("Building graph")
-    graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+    word_graph = TemporalSpreadingActivation.graph_from_distance_matrix(
         distance_matrix=distance_matrix.copy(),
         weighted_graph=False,
         length_granularity=granularity,
@@ -121,7 +121,7 @@ def main():
                 logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_fracs}")
 
                 tsa = TemporalSpreadingActivation(
-                    graph=graph,
+                    graph=word_graph,
                     threshold=threshold,
                     node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                         decay_factor=node_decay_factor),
@@ -139,11 +139,12 @@ def main():
                 for tick in range(1, n_ticks):
                     logger.info(f"Clock = {tick}")
                     tsa.tick()
+
                     results.append(
                         [tick, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd_fracs])
 
                     # Break early if we've got a probable explosion
-                    if tsa.n_suprathreshold_nodes > bailout:
+                    if tsa.n_suprathreshold_nodes > explosion_bailout:
                         break
 
     results_df = DataFrame(data=results,
@@ -178,5 +179,6 @@ def get_word_list(freq_dist, top_n) -> Set:
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    briony_vocab_overlap(3000)
+    main()
+    # briony_vocab_overlap(3000)
     logger.info("Done!")
