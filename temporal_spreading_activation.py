@@ -153,6 +153,10 @@ class TemporalSpreadingActivation(object):
 
         self.clock: int = 0
 
+        # TODO: this would be better as a DataFrame
+        # Stores a clock-keyed dictionary of historical information relating to the current run
+        self.activation_history = dict()
+
         # Initialise graph
         self.reset()
 
@@ -353,6 +357,8 @@ class TemporalSpreadingActivation(object):
 
             e_data[EdgeDataKey.IMPULSES].append(new_impulse)
 
+        self._update_history()
+
     def _decay_nodes(self):
         """Decays activation in each node."""
         for n, n_data in self.graph.nodes(data=True):
@@ -384,6 +390,8 @@ class TemporalSpreadingActivation(object):
         self._decay_nodes()
         self._propagate_impulses()
 
+        self._update_history()
+
     def tick_timed(self) -> float:
         """
         Performs the spreading activation algorithm for one tick of the clock.
@@ -403,8 +411,15 @@ class TemporalSpreadingActivation(object):
         # Delete all activations
         for _n1, _n2, e_data in self.graph.edges(data=True):
             e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
-        # Reset clock
+        # Reset clock and history
         self.clock = 0
+        self.activation_history = dict
+
+    def _update_history(self):
+        self.activation_history[self.clock] = {
+            "clock":                  self.clock,
+            "n_suprathreshold_nodes": self.n_suprathreshold_nodes,
+        }
 
     def __str__(self):
         string_builder = f"CLOCK = {self.clock}\n"

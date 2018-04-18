@@ -131,9 +131,8 @@ def main():
                 logger.info(f"Initial node {initial_word}")
                 tsa.activate_node(initial_word, 1)
 
-                # TODO: This could be stored internal to the TSA object.
                 results.append(
-                    [0, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd_fracs])
+                    [tsa.activation_history["clock"], tsa.activation_history["n_suprathreshold_nodes"], threshold, node_decay_factor, edge_decay_sd_fracs])
 
                 logger.info("Running spreading output")
                 for tick in range(1, n_ticks):
@@ -141,7 +140,7 @@ def main():
                     tsa.tick()
 
                     results.append(
-                        [tick, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd_fracs])
+                        [tsa.activation_history["clock"], tsa.activation_history["n_suprathreshold_nodes"], threshold, node_decay_factor, edge_decay_sd_fracs])
 
                     # Break early if we've got a probable explosion
                     if tsa.n_suprathreshold_nodes > explosion_bailout:
