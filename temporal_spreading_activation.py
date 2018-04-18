@@ -266,9 +266,7 @@ class TemporalSpreadingActivation(object):
 
     @property
     def n_suprathreshold_nodes(self) -> int:
-        """
-        The number of nodes which are above the threshold.
-        """
+        """The number of nodes which are above the threshold."""
         return len([
             charge for charge in self.charges
             if charge.activation >= self.threshold
@@ -279,6 +277,7 @@ class TemporalSpreadingActivation(object):
         return self.graph.nodes(n, data=True)[NodeDataKey.CHARGE].activation
 
     def activate_node(self, n, activation: float):
+        """Activates a node."""
 
         self.nodes_activated_this_tick.add(n)
 
@@ -357,14 +356,12 @@ class TemporalSpreadingActivation(object):
                 self.activate_node(impulse.target_node, impulse.activation_at_destination)
 
     def tick(self):
-        """
-        Performs the spreading activation algorithm for one tick of the clock.
-        """
+        """Performs the spreading activation algorithm for one tick of the clock."""
         self.clock += 1
 
         # Empty the list of activated nodes, it will be refilled as nodes become activated
         self.nodes_activated_this_tick = set()
-        
+
         self._decay_nodes()
         self._propagate_impulses()
 
@@ -476,7 +473,7 @@ class TemporalSpreadingActivation(object):
 
     @staticmethod
     def decay_function_gaussian_with_sd_fraction(sd_frac: float, granularity: int, height_coef=1, centre=0) -> callable:
-        """Gaussian decay with sd as a fraction of the granularity"""
+        """Gaussian decay with sd as a fraction of the granularity."""
         sd = sd_frac * granularity
         return TemporalSpreadingActivation.decay_function_gaussian_with_sd(
             sd=sd,
