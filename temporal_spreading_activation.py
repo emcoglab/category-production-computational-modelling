@@ -274,6 +274,10 @@ class TemporalSpreadingActivation(object):
             if charge.activation >= self.threshold
         ])
 
+    def activation_of_node(self, n) -> float:
+        """Returns the current activation of a node."""
+        return self.graph.nodes(n, data=True)[NodeDataKey.CHARGE].activation
+
     def activate_node(self, n, activation: float):
 
         self.nodes_activated_this_tick.add(n)
@@ -395,7 +399,11 @@ class TemporalSpreadingActivation(object):
         entry = {
             HistoryDataKey.CLOCK:          self.clock,
             HistoryDataKey.N_ACTIVATED:    self.n_suprathreshold_nodes,
-            HistoryDataKey.JUST_ACTIVATED: list(self.nodes_activated_this_tick),
+            # Include activations with just-activated nodes, and sort descending
+            HistoryDataKey.JUST_ACTIVATED: sorted([
+                (n, self.activation_of_node(n))
+                for n in self.nodes_activated_this_tick
+            ], key=lambda n, a: a, reverse=True),
         }
         # Check if a history entry exists for this clock time
         # Use a > check because when the clock is 0, and there IS an entry, the len will be 1 > 0
