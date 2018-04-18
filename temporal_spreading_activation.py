@@ -22,7 +22,7 @@ caiwingfield.net
 
 import logging
 import time
-from typing import List, Iterable, Dict
+from typing import List, Iterable, Dict, Set
 
 from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from numpy import exp, ndarray, ones_like, ceil, float_power
@@ -37,20 +37,21 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 class NodeDataKey(object):
     """Column names for node data."""
-    CHARGE     = "charge"
+    CHARGE         = "charge"
 
 
 class EdgeDataKey(object):
     """Column names for edge data."""
-    WEIGHT     = "weight"
-    LENGTH     = "length"
-    IMPULSES   = "impulses"
+    WEIGHT         = "weight"
+    LENGTH         = "length"
+    IMPULSES       = "impulses"
 
 
 class HistoryDataKey(object):
     """Column names for results history."""
-    CLOCK       = "clock"
-    N_ACTIVATED = "n_activated"
+    CLOCK          = "clock"
+    N_ACTIVATED    = "n_activated"
+    JUST_ACTIVATED = "just_activated"
 
 
 class Charge(object):
@@ -164,6 +165,9 @@ class TemporalSpreadingActivation(object):
         # Backing for self.activation_history, which converts this into a pandas.DataFrame
         self._activation_history: List[Dict] = []
 
+        # Nodes which received an activation this tick
+        self.nodes_activated_this_tick: Set = set()
+
         # Initialise graph
         self.reset()
 
@@ -272,6 +276,8 @@ class TemporalSpreadingActivation(object):
 
     def activate_node(self, n, activation: float):
 
+        self.nodes_activated_this_tick.add(n)
+
         # Accumulate activation
         existing_activation = self.graph.nodes[n][NodeDataKey.CHARGE].activation
         new_activation = existing_activation + activation
@@ -351,6 +357,10 @@ class TemporalSpreadingActivation(object):
         Performs the spreading activation algorithm for one tick of the clock.
         """
         self.clock += 1
+
+        # Empty the list of activated nodes, it will be refilled as nodes become activated
+        self.nodes_activated_this_tick = set()
+        
         self._decay_nodes()
         self._propagate_impulses()
 
@@ -375,6 +385,7 @@ class TemporalSpreadingActivation(object):
         # Delete all activations
         for _n1, _n2, e_data in self.graph.edges(data=True):
             e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
+        self.nodes_activated_this_tick = set()
         # Reset clock and history
         self.clock = 0
         self._activation_history = []
@@ -382,8 +393,9 @@ class TemporalSpreadingActivation(object):
 
     def _update_history(self):
         entry = {
-            HistoryDataKey.CLOCK:       self.clock,
-            HistoryDataKey.N_ACTIVATED: self.n_suprathreshold_nodes,
+            HistoryDataKey.CLOCK:          self.clock,
+            HistoryDataKey.N_ACTIVATED:    self.n_suprathreshold_nodes,
+            HistoryDataKey.JUST_ACTIVATED: list(self.nodes_activated_this_tick),
         }
         # Check if a history entry exists for this clock time
         # Use a > check because when the clock is 0, and there IS an entry, the len will be 1 > 0
