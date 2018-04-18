@@ -78,7 +78,7 @@ def main():
 
     # Run multiple times with different parameters
 
-    results = []
+    results_df = DataFrame()
 
     for run in range(n_runs):
 
@@ -104,22 +104,23 @@ def main():
                     logger.info(f"Initial node {initial_word}")
                     tsa.activate_node(initial_word, 1)
 
-                    results.append(
-                        [run, 0, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd])
-
                     logger.info("Running spreading output")
                     for tick in range(1, n_ticks):
                         logger.info(f"Clock = {tick}")
                         tsa.tick()
-                        results.append(
-                            [run, tick, tsa.n_suprathreshold_nodes, threshold, node_decay_factor, edge_decay_sd])
 
                         # Break early if we've got a probable explosion
                         if tsa.n_suprathreshold_nodes > bailout:
                             break
 
-    results_df = DataFrame(data=results,
-                           columns=["Run", "Tick", "Activated nodes", "Threshold", "Node decay factor", "Edge decay SD"])
+                    # Prepare results
+                    results_these_params = tsa.activation_history
+                    results_these_params["Threshold"] = threshold
+                    results_these_params["Node decay factor"] = node_decay_factor
+                    results_these_params["Edge decay SD"] = edge_decay_sd
+                    results_these_params["Run"] = run
+
+                    results_df.append(results_these_params)
 
     results_df.to_csv(csv_location, header=True, index=False)
 

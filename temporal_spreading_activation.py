@@ -22,29 +22,35 @@ caiwingfield.net
 
 import logging
 import time
-from typing import List, Dict, Iterable
+from typing import List, Iterable, Dict
 
-from numpy import exp, ndarray, ones_like, ceil, float_power
-import networkx
 from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
-from matplotlib import pyplot
+from numpy import exp, ndarray, ones_like, ceil, float_power
+from pandas import DataFrame
 
 from utils import partition
-
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-class EdgeDataKey(object):
-    WEIGHT   = "weight"
-    LENGTH   = "length"
-    IMPULSES = "impulses"
-
-
 class NodeDataKey(object):
-    CHARGE   = "charge"
+    """Column names for node data."""
+    CHARGE     = "charge"
+
+
+class EdgeDataKey(object):
+    """Column names for edge data."""
+    WEIGHT     = "weight"
+    LENGTH     = "length"
+    IMPULSES   = "impulses"
+
+
+class HistoryDataKey(object):
+    """Column names for results history."""
+    CLOCK       = "clock"
+    N_ACTIVATED = "n_activated"
 
 
 class Charge(object):
@@ -151,11 +157,12 @@ class TemporalSpreadingActivation(object):
         # Underlying graph: weighted, undirected
         self.graph: Graph = graph
 
+        # Zero-indexed tick counter.
         self.clock: int = 0
 
-        # TODO: this would be better as a DataFrame
-        # Stores a clock-keyed dictionary of historical information relating to the current run
-        self.activation_history = dict()
+        # Stores a clock-indexed list of dictionaries for the relevant data
+        # Backing for self.activation_history, which converts this into a pandas.DataFrame
+        self._activation_history: List[Dict] = []
 
         # Initialise graph
         self.reset()
@@ -230,52 +237,9 @@ class TemporalSpreadingActivation(object):
 
         return graph
 
-    @staticmethod
-    def decay_function_exponential_with_decay_factor(decay_factor) -> callable:
-        # Decay formula for activation a, original activation a_0, decay factor d, time t:
-        #   a = a_0 d^t
-        #
-        # In traditional formulation of exponential decay, this is equivalent to:
-        #   a = a_0 e^(-λt)
-        # where λ is the decay constant.
-        #
-        # I.e.
-        #   d = e^(-λ)
-        #   λ = - ln d
-        assert 0 < decay_factor <= 1
-
-        def decay_function(age, original_activation):
-            return original_activation * (decay_factor ** age)
-        return decay_function
-
-    @staticmethod
-    def decay_function_exponential_with_half_life(half_life) -> callable:
-        assert half_life > 0
-        # Using notation from above, with half-life hl
-        #   λ = ln 2 / ln hl
-        #   d = 2 ^ (- 1 / hl)
-        decay_factor = float_power(2, - 1 / half_life)
-        return TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor)
-
-    @staticmethod
-    def decay_function_gaussian_with_sd(sd, height_coef=1, centre=0) -> callable:
-        """Gaussian decay with sd specifying the number of ticks."""
-        assert height_coef > 0
-        assert sd > 0
-
-        def decay_function(age, original_activation):
-            height = original_activation * height_coef
-            return height * exp((-1) * (((age - centre) ** 2) / (2 * sd * sd)))
-        return decay_function
-
-    @staticmethod
-    def decay_function_gaussian_with_sd_fraction(sd_frac: float, granularity: int, height_coef=1, centre=0) -> callable:
-        """Gaussian decay with sd as a fraction of the granularity"""
-        sd = sd_frac * granularity
-        return TemporalSpreadingActivation.decay_function_gaussian_with_sd(
-            sd=sd,
-            height_coef=height_coef,
-            centre=centre)
+    @property
+    def activation_history(self) -> DataFrame:
+        return DataFrame(self._activation_history)
 
     @property
     def node_labels(self) -> Iterable:
@@ -413,13 +377,22 @@ class TemporalSpreadingActivation(object):
             e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
         # Reset clock and history
         self.clock = 0
-        self.activation_history = dict
+        self._activation_history = []
+        self._update_history()
 
     def _update_history(self):
-        self.activation_history[self.clock] = {
-            "clock":                  self.clock,
-            "n_suprathreshold_nodes": self.n_suprathreshold_nodes,
+        entry = {
+            HistoryDataKey.CLOCK:       self.clock,
+            HistoryDataKey.N_ACTIVATED: self.n_suprathreshold_nodes,
         }
+        # Check if a history entry exists for this clock time
+        # Use a > check because when the clock is 0, and there IS an entry, the len will be 1 > 0
+        if len(self._activation_history) > self.clock:
+            # Entry exists
+            self._activation_history[self.clock] = entry
+        else:
+            # Entry doesn't exist yet
+            self._activation_history.append(entry)
 
     def __str__(self):
         string_builder = f"CLOCK = {self.clock}\n"
@@ -442,3 +415,50 @@ class TemporalSpreadingActivation(object):
 
     def log_graph(self):
         [logger.info(f"{line}") for line in str(self).strip().split('\n')]
+
+    @staticmethod
+    def decay_function_exponential_with_decay_factor(decay_factor) -> callable:
+        # Decay formula for activation a, original activation a_0, decay factor d, time t:
+        #   a = a_0 d^t
+        #
+        # In traditional formulation of exponential decay, this is equivalent to:
+        #   a = a_0 e^(-λt)
+        # where λ is the decay constant.
+        #
+        # I.e.
+        #   d = e^(-λ)
+        #   λ = - ln d
+        assert 0 < decay_factor <= 1
+
+        def decay_function(age, original_activation):
+            return original_activation * (decay_factor ** age)
+        return decay_function
+
+    @staticmethod
+    def decay_function_exponential_with_half_life(half_life) -> callable:
+        assert half_life > 0
+        # Using notation from above, with half-life hl
+        #   λ = ln 2 / ln hl
+        #   d = 2 ^ (- 1 / hl)
+        decay_factor = float_power(2, - 1 / half_life)
+        return TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor)
+
+    @staticmethod
+    def decay_function_gaussian_with_sd(sd, height_coef=1, centre=0) -> callable:
+        """Gaussian decay with sd specifying the number of ticks."""
+        assert height_coef > 0
+        assert sd > 0
+
+        def decay_function(age, original_activation):
+            height = original_activation * height_coef
+            return height * exp((-1) * (((age - centre) ** 2) / (2 * sd * sd)))
+        return decay_function
+
+    @staticmethod
+    def decay_function_gaussian_with_sd_fraction(sd_frac: float, granularity: int, height_coef=1, centre=0) -> callable:
+        """Gaussian decay with sd as a fraction of the granularity"""
+        sd = sd_frac * granularity
+        return TemporalSpreadingActivation.decay_function_gaussian_with_sd(
+            sd=sd,
+            height_coef=height_coef,
+            centre=centre)
