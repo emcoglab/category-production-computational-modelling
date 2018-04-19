@@ -16,7 +16,6 @@ caiwingfield.net
 """
 
 import logging
-import random
 import sys
 from os import path
 from typing import Set
@@ -67,6 +66,8 @@ def main():
     n_ticks = 200
     explosion_bailout = 1000
 
+    top_n_responses = 1
+
     # Where to save data
     box_root = "/Users/caiwingfield/Box Sync/WIP/"
     csv_location = path.join(box_root, "activated node counts.csv")
@@ -108,47 +109,68 @@ def main():
 
     # Run multiple times with different parameters
 
+    category_production = CategoryProduction()
+
     results_df = DataFrame()
 
-    initial_word = random.choice(tuple(filtered_words))
+    for category in category_production.category_words:
 
-    for threshold in thresholds:
-        for node_decay_factor in node_decay_factors:
-            for edge_decay_sd_frac in edge_decay_sd_fracs:
+        for threshold in thresholds:
+            for node_decay_factor in node_decay_factors:
+                for edge_decay_sd_frac in edge_decay_sd_fracs:
 
-                logger.info(f"")
-                logger.info(f"Setting up spreading output")
-                logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_fracs}")
+                    ordered_word_list = []
 
-                tsa = TemporalSpreadingActivation(
-                    graph=word_graph,
-                    threshold=threshold,
-                    node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-                        decay_factor=node_decay_factor),
-                    edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
-                        sd_frac=edge_decay_sd_frac, granularity=granularity))
+                    logger.info(f"")
+                    logger.info(f"Setting up spreading output")
+                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_fracs}")
 
-                logger.info(f"Initial node {initial_word}")
-                tsa.activate_node(initial_word, 1)
+                    tsa = TemporalSpreadingActivation(
+                        graph=word_graph,
+                        threshold=threshold,
+                        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                            decay_factor=node_decay_factor),
+                        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
+                            sd_frac=edge_decay_sd_frac, granularity=granularity))
 
-                logger.info("Running spreading output")
-                for tick in range(1, n_ticks):
-                    logger.info(f"Clock = {tick}")
-                    tsa.tick()
+                    # Skip the check if the category isn't in the network
+                    if category not in tsa.node_labels:
+                        continue
 
-                    # Break early if we've got a probable explosion
-                    if tsa.n_suprathreshold_nodes > explosion_bailout:
-                        break
+                    logger.info(f"Initial node {category}")
+                    tsa.activate_node(category, 1)
 
-                # Prepare results
-                results_these_params = tsa.activation_history
-                results_these_params["Threshold"] = threshold
-                results_these_params["Node decay factor"] = node_decay_factor
-                results_these_params["Edge decay SD"] = edge_decay_sd_frac
+                    logger.info("Running spreading output")
+                    for tick in range(1, n_ticks):
+                        logger.info(f"Clock = {tick}")
+                        tsa.tick()
 
-                results_df.append(results_these_params)
+                        ordered_word_list.extend(tsa.nodes_activated_this_tick)
 
-    results_df.to_csv(csv_location, header=True, index=False)
+                        # Break early if we've got a probable explosion
+                        if tsa.n_suprathreshold_nodes > explosion_bailout:
+                            break
+
+                    response_indices = []
+                    # Look for indices of overlap
+                    for response in CategoryProduction.responses_for(category, top_n=top_n_responses):
+                        index_of_response_in_activated_words = ordered_word_list.index(response)
+                        if index_of_response_in_activated_words > 0:
+                            response_indices.append()
+
+                    # Prepare results
+                    results_these_params = tsa.activation_history
+                    results_these_params["Threshold"] = threshold
+                    results_these_params["Node decay factor"] = node_decay_factor
+                    results_these_params["Edge decay SD"] = edge_decay_sd_frac
+                    results_these_params["Category"] = category
+                    results_these_params[f"Index of top {top_n_responses} responses"] = response_indices
+
+                    results_df.append(results_these_params)
+
+        results_df.to_csv(csv_location, header=True, index=False)
+
+
 
 
 def filtering_dictionaries(filtered_indices):
