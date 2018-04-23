@@ -79,9 +79,12 @@ class Impulse(object):
     """An activation travelling through an edge."""
 
     def __init__(self,
-                 source_node, target_node,
-                 time_at_creation: int, time_at_destination: int,
-                 initial_activation: float, final_activation: float):
+                 source_node,
+                 target_node,
+                 time_at_creation: int,
+                 time_at_destination: int,
+                 initial_activation: float,
+                 final_activation: float):
         self.source_node = source_node
         self.target_node = target_node
         self.time_at_creation: int = time_at_creation
@@ -101,6 +104,26 @@ class Impulse(object):
         if t < self.time_at_creation:
             return None
         return t - self.time_at_creation
+
+    # region Implement Hashable
+
+    def __key(self):
+        return (
+            self.source_node,
+            self.target_node,
+            self.time_at_creation,
+            self.time_at_destination,
+            self.initial_activation,
+            self.activation_at_destination
+        )
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.__key() == other.__key()
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    # endregion
 
 
 class TemporalSpreadingActivation(object):
