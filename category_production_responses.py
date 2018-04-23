@@ -63,7 +63,11 @@ def main():
     edge_decay_sd_fracs = [0.1, 0.15, 0.2]
     thresholds = [0.1, 0.2, 0.3]
 
-    n_ticks = 5
+    # Use most frequent words, excluding the *very* most frequent ones
+    top_n_words = 3_000
+    top_n_function_words = 10
+
+    n_ticks = 200
     # Bail if more than 50% of words activated
     explosion_bailout = int(top_n_words * 0.5)
 
@@ -81,9 +85,6 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, token_indices=ldm_index)
     distributional_model.train(memory_map=True)
 
-    # Use most frequent words, excluding the *very* most frequent ones
-    top_n_words = 3000
-    top_n_function_words = 10
     filtered_words = get_word_list(freq_dist, top_n=top_n_words)
     function_words = get_word_list(freq_dist, top_n=top_n_function_words)
     filtered_words -= function_words
@@ -176,9 +177,9 @@ def main():
                     results_these_params["Node decay factor"] = node_decay_factor
                     results_these_params["Edge decay SD"] = edge_decay_sd_frac
                     results_these_params["Category"] = category
-                    results_these_params[f"Indices of top {top_n_responses} responses"] = response_indices
+                    results_these_params[f"Indices of top {top_n_responses} responses"] = ",".join(response_indices)
 
-                    results_df.append(results_these_params)
+                    results_df = results_df.append(results_these_params, ignore_index=True)
 
         results_df.to_csv(csv_location, header=True, index=False)
 
