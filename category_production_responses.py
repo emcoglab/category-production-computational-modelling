@@ -113,7 +113,7 @@ def main():
 
     results_df = DataFrame()
 
-    for category in category_production.category_words:
+    for category in category_production.categories:
 
         for threshold in thresholds:
             for node_decay_factor in node_decay_factors:
@@ -169,8 +169,6 @@ def main():
                     results_df.append(results_these_params)
 
         results_df.to_csv(csv_location, header=True, index=False)
-
-
 
 
 def filtering_dictionaries(filtered_indices):
