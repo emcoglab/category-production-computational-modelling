@@ -37,7 +37,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def briony_vocab_overlap(top_n_words):
     # Category production words
     category_production = CategoryProduction()
-    category_production_words = category_production.single_word_vocabulary
+    category_production_words = category_production.vocabulary_single_word
 
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
@@ -63,9 +63,11 @@ def main():
     edge_decay_sd_fracs = [0.1, 0.15, 0.2]
     thresholds = [0.1, 0.2, 0.3]
 
-    n_ticks = 200
-    explosion_bailout = 1000
+    n_ticks = 5
+    # Bail if more than 50% of words activated
+    explosion_bailout = int(top_n_words * 0.5)
 
+    # Look for only the most frequent category response
     top_n_responses = 1
 
     # Where to save data
@@ -76,7 +78,7 @@ def main():
     corpus_meta = CorpusPreferences.source_corpus_metas[1] # 1 = BBC
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
     ldm_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=ldm_index)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, token_indices=ldm_index)
     distributional_model.train(memory_map=True)
 
     # Use most frequent words, excluding the *very* most frequent ones
@@ -85,9 +87,10 @@ def main():
     filtered_words = get_word_list(freq_dist, top_n=top_n_words)
     function_words = get_word_list(freq_dist, top_n=top_n_function_words)
     filtered_words -= function_words
-    logger.info(f"Building graph from top {top_n_words} words, except these: {', '.join(function_words)}")
-    logger.info(f"This will include a total of {len(filtered_words)} words, "
-                f"and a maximum of {int(0.5 * len(filtered_words) * (len(filtered_words) - 1))} connections")
+    logger.info(f"Building graph from top {top_n_words:,} words, except these:")
+    logger.info(f"\t{', '.join(function_words)}")
+    logger.info(f"This will include a total of {len(filtered_words):,} words, "
+                f"and a maximum of {int(0.5 * len(filtered_words) * (len(filtered_words) - 1)):,} connections")
 
     # Build index-lookup dictionaries
     filtered_indices = sorted([ldm_index.token2id[w] for w in filtered_words])
@@ -115,6 +118,12 @@ def main():
 
     for category in category_production.categories:
 
+        logger.info(f"Category: {category}")
+
+        # Skip the check if the category won't be in the network
+        if category not in filtered_words:
+            continue
+
         for threshold in thresholds:
             for node_decay_factor in node_decay_factors:
                 for edge_decay_sd_frac in edge_decay_sd_fracs:
@@ -123,7 +132,7 @@ def main():
 
                     logger.info(f"")
                     logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_fracs}")
+                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
@@ -133,30 +142,33 @@ def main():
                         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
                             sd_frac=edge_decay_sd_frac, granularity=granularity))
 
-                    # Skip the check if the category isn't in the network
-                    if category not in tsa.node_labels:
-                        continue
-
                     logger.info(f"Initial node {category}")
                     tsa.activate_node(category, 1)
 
                     logger.info("Running spreading output")
                     for tick in range(1, n_ticks):
+
+                        # Spread the activation
                         logger.info(f"Clock = {tick}")
                         tsa.tick()
+                        logger.info(f"\tNodes: {tsa.n_suprathreshold_nodes}, impulses: {len(tsa.impulses)}.")
 
                         ordered_word_list.extend(tsa.nodes_activated_this_tick)
 
                         # Break early if we've got a probable explosion
                         if tsa.n_suprathreshold_nodes > explosion_bailout:
+                            logger.info("EXPLOSION BAILOUT!")
                             break
 
                     response_indices = []
                     # Look for indices of overlap
-                    for response in CategoryProduction.responses_for(category, top_n=top_n_responses):
-                        index_of_response_in_activated_words = ordered_word_list.index(response)
-                        if index_of_response_in_activated_words > 0:
-                            response_indices.append()
+                    responses = category_production.responses_for_category(category)[:top_n_responses]
+                    for response in responses:
+                        try:
+                            index_of_response_in_activated_words = ordered_word_list.index(response)
+                            response_indices.append(index_of_response_in_activated_words)
+                        except ValueError:
+                            pass
 
                     # Prepare results
                     results_these_params = tsa.activation_history
@@ -164,7 +176,7 @@ def main():
                     results_these_params["Node decay factor"] = node_decay_factor
                     results_these_params["Edge decay SD"] = edge_decay_sd_frac
                     results_these_params["Category"] = category
-                    results_these_params[f"Index of top {top_n_responses} responses"] = response_indices
+                    results_these_params[f"Indices of top {top_n_responses} responses"] = response_indices
 
                     results_df.append(results_these_params)
 

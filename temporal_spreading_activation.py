@@ -22,7 +22,7 @@ caiwingfield.net
 
 import logging
 import time
-from typing import List, Iterable, Dict, Set
+from typing import List, Dict, Set
 
 from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from numpy import exp, ndarray, ones_like, ceil, float_power
@@ -246,23 +246,25 @@ class TemporalSpreadingActivation(object):
         return DataFrame(self._activation_history)
 
     @property
-    def node_labels(self) -> Iterable:
-        return self.graph.nodes
+    def node_labels(self) -> List:
+        return [node
+                for node in self.graph.nodes]
 
     @property
-    def charges(self) -> Iterable:
-        for n, n_data in self.graph.nodes(data=True):
-            yield n_data[NodeDataKey.CHARGE]
+    def charges(self) -> List:
+        return [n_data[NodeDataKey.CHARGE]
+                for n, n_data in self.graph.nodes(data=True)]
 
     @property
-    def edge_labels(self) -> Iterable:
-        return self.graph.edges
+    def edge_labels(self) -> List:
+        return [edge
+                for edge in self.graph.edges]
 
     @property
-    def impulses(self) -> Iterable:
-        for v1, v2, e_data in self.graph.edges(data=True):
-            for impulse in e_data[EdgeDataKey.IMPULSES]:
-                yield impulse
+    def impulses(self) -> List:
+        return [impulse
+                for v1, v2, e_data in self.graph.edges(data=True)
+                for impulse in e_data[EdgeDataKey.IMPULSES]]
 
     @property
     def n_suprathreshold_nodes(self) -> int:
@@ -274,7 +276,7 @@ class TemporalSpreadingActivation(object):
 
     def activation_of_node(self, n) -> float:
         """Returns the current activation of a node."""
-        return self.graph.nodes(n, data=True)[NodeDataKey.CHARGE].activation
+        return self.graph.nodes(data=True)[n][NodeDataKey.CHARGE].activation
 
     def activate_node(self, n, activation: float):
         """Activates a node."""
@@ -324,6 +326,7 @@ class TemporalSpreadingActivation(object):
             # one, so remove it.
             e_data[EdgeDataKey.IMPULSES] = [impulse
                                             for impulse in e_data[EdgeDataKey.IMPULSES]
+                                            # All impulses except those created at this time from this node
                                             if not (impulse.target_node == target_node
                                                     and impulse.source_node == source_node
                                                     and impulse.time_at_creation == self.clock)]
@@ -342,6 +345,9 @@ class TemporalSpreadingActivation(object):
     def _propagate_impulses(self):
         """Propagates impulses along connections."""
 
+        # Propagation happens by just incrementing the global clock.
+
+        # But we have to check if any impulses have reached their destination.
         # In each edge...
         for _n1, _n2, e_data in self.graph.edges(data=True):
 
@@ -397,10 +403,11 @@ class TemporalSpreadingActivation(object):
             HistoryDataKey.CLOCK:          self.clock,
             HistoryDataKey.N_ACTIVATED:    self.n_suprathreshold_nodes,
             # Include activations with just-activated nodes, and sort descending
-            HistoryDataKey.JUST_ACTIVATED: sorted([
-                (n, self.activation_of_node(n))
-                for n in self.nodes_activated_this_tick
-            ], key=lambda n, a: a, reverse=True),
+            HistoryDataKey.JUST_ACTIVATED: sorted(
+                [(n, self.activation_of_node(n))
+                 for n in self.nodes_activated_this_tick],
+                # Sort by activation, descending
+                key=lambda n_a_pair: n_a_pair[1], reverse=True),
         }
         # Check if a history entry exists for this clock time
         # Use a > check because when the clock is 0, and there IS an entry, the len will be 1 > 0
