@@ -184,10 +184,10 @@ def filtering_dictionaries(filtered_indices):
 
 
 def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
-    relabelling_dictinoary = dict()
+    relabelling_dictionary = dict()
     for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictinoary[matrix_index] = distributional_model_index.id2token[token_index]
-    return relabelling_dictinoary
+        relabelling_dictionary[matrix_index] = distributional_model_index.id2token[token_index]
+    return relabelling_dictionary
 
 
 def get_word_list(freq_dist, top_n) -> Set:
