@@ -28,8 +28,6 @@ from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from numpy import exp, ndarray, ones_like, ceil, float_power
 from pandas import DataFrame
 
-from utils import partition
-
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
@@ -351,15 +349,23 @@ class TemporalSpreadingActivation(object):
         # In each edge...
         for _n1, _n2, e_data in self.graph.edges(data=True):
 
-            impulses_at_destination, impulses_en_route = partition(e_data[EdgeDataKey.IMPULSES],
-                                                                   lambda i: i.time_at_destination == self.clock)
+            impulses_at_destination = [i
+                                       for i in e_data[EdgeDataKey.IMPULSES]
+                                       if i.time_at_destination == self.clock]
 
-            # Only those en route should remain
-            e_data[EdgeDataKey.IMPULSES] = impulses_en_route
+            # If some have reached their destination we have something to do
+            if len(impulses_at_destination) > 0:
 
-            # Impulses at destination activate their target nodes, possibly rebroadcasting new impulses.
-            for impulse in impulses_at_destination:
-                self.activate_node(impulse.target_node, impulse.activation_at_destination)
+                impulses_en_route = [i
+                                     for i in e_data[EdgeDataKey.IMPULSES]
+                                     if i.time_at_destination > self.clock]
+
+                # Only those en route should remain
+                e_data[EdgeDataKey.IMPULSES] = impulses_en_route
+
+                # Impulses at destination activate their target nodes, possibly rebroadcasting new impulses.
+                for impulse in impulses_at_destination:
+                    self.activate_node(impulse.target_node, impulse.activation_at_destination)
 
     def tick(self):
         """Performs the spreading activation algorithm for one tick of the clock."""
