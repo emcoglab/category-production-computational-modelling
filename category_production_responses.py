@@ -40,7 +40,7 @@ def briony_vocab_overlap(top_n_words):
     category_production_words = category_production.single_word_vocabulary
 
     # Frequent words in corpus
-    corpus_meta = CorpusPreferences.source_corpus_metas[0]
+    corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
     corpus_words = get_word_list(freq_dist, top_n=top_n_words)
 
@@ -73,7 +73,7 @@ def main():
     csv_location = path.join(box_root, "activated node counts.csv")
 
     logger.info("Training distributional model")
-    corpus_meta = CorpusPreferences.source_corpus_metas[0]
+    corpus_meta = CorpusPreferences.source_corpus_metas[1] # 1 = BBC
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
     ldm_index = TokenIndexDictionary.from_freqdist(freq_dist)
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=ldm_index)
@@ -197,6 +197,8 @@ def get_word_list(freq_dist, top_n) -> Set:
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main()
-    # briony_vocab_overlap(3000)
+    # main()
+    for top_n in [100, 300, 1_000, 3_000, 10_000, 30_000, 100_000, 300_000]:
+        briony_vocab_overlap(top_n)
+        logger.info("")
     logger.info("Done!")
