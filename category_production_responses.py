@@ -117,7 +117,7 @@ def main():
 
     results_df = DataFrame()
 
-    for category in category_production.categories:
+    for category in category_production.category_labels:
 
         logger.info(f"Category: {category}")
 
@@ -177,7 +177,7 @@ def main():
                     results_these_params["Node decay factor"] = node_decay_factor
                     results_these_params["Edge decay SD"] = edge_decay_sd_frac
                     results_these_params["Category"] = category
-                    results_these_params[f"Indices of top {top_n_responses} responses"] = ",".join(response_indices)
+                    results_these_params[f"Indices of top {top_n_responses} responses"] = ",".join([str(i) for i in response_indices])
 
                     results_df = results_df.append(results_these_params, ignore_index=True)
 
