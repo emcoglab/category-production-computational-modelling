@@ -61,3 +61,11 @@ def partition(iterable, predicate):
     for item in iterable:
         trues.append(item) if predicate(item) else falses.append(item)
     return trues, falses
+
+
+def set_partition(iterable, predicate):
+    trues = set()
+    falses = set()
+    for item in iterable:
+        trues.add(item) if predicate(item) else falses.add(item)
+    return trues, falses

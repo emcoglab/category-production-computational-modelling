@@ -28,6 +28,8 @@ from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from numpy import exp, ndarray, ones_like, ceil, float_power
 from pandas import DataFrame
 
+from utils import set_partition
+
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
@@ -42,7 +44,6 @@ class EdgeDataKey(object):
     """Column names for edge data."""
     WEIGHT         = "weight"
     LENGTH         = "length"
-    IMPULSES       = "impulses"
 
 
 class HistoryDataKey(object):
@@ -147,8 +148,6 @@ class TemporalSpreadingActivation(object):
         To this the following data fields will be added by the constructor:
             On Nodes:
                 charge
-            On Edges:
-                impulses
         :param threshold:
         Activation threshold.
         Impulses which drop (strictly) below this threshold will be deleted.
@@ -178,6 +177,9 @@ class TemporalSpreadingActivation(object):
 
         # Underlying graph: weighted, undirected
         self.graph: Graph = graph
+
+        # Graph data:
+        self.impulses: Set = set()
 
         # Zero-indexed tick counter.
         self.clock: int = 0
@@ -282,12 +284,6 @@ class TemporalSpreadingActivation(object):
                 for edge in self.graph.edges]
 
     @property
-    def impulses(self) -> List:
-        return [impulse
-                for v1, v2, e_data in self.graph.edges(data=True)
-                for impulse in e_data[EdgeDataKey.IMPULSES]]
-
-    @property
     def n_suprathreshold_nodes(self) -> int:
         """The number of nodes which are above the threshold."""
         return len([
@@ -345,14 +341,14 @@ class TemporalSpreadingActivation(object):
 
             # If another impulse was released from this node to the same target this tick, it should replaced by this
             # one, so remove it.
-            e_data[EdgeDataKey.IMPULSES] = [impulse
-                                            for impulse in e_data[EdgeDataKey.IMPULSES]
-                                            # All impulses except those created at this time from this node
-                                            if not (impulse.target_node == target_node
-                                                    and impulse.source_node == source_node
-                                                    and impulse.time_at_creation == self.clock)]
+            self.impulses = set(impulse
+                                for impulse in self.impulses
+                                # All impulses except those created at this time from this node
+                                if not (impulse.target_node == target_node
+                                        and impulse.source_node == source_node
+                                        and impulse.time_at_creation == self.clock))
 
-            e_data[EdgeDataKey.IMPULSES].append(new_impulse)
+            self.impulses.add(new_impulse)
 
         self._update_history()
 
@@ -366,29 +362,17 @@ class TemporalSpreadingActivation(object):
     def _propagate_impulses(self):
         """Propagates impulses along connections."""
 
-        # Propagation happens by just incrementing the global clock.
+        # "Propagation" happens by just incrementing the global clock.
 
         # But we have to check if any impulses have reached their destination.
-        # In each edge...
-        for _n1, _n2, e_data in self.graph.edges(data=True):
+        impulses_at_destination, impulses_en_rounte = set_partition(self.impulses, lambda i: i.time_at_destination == self.clock)
 
-            impulses_at_destination = [i
-                                       for i in e_data[EdgeDataKey.IMPULSES]
-                                       if i.time_at_destination == self.clock]
+        if len(impulses_at_destination) > 0:
 
-            # If some have reached their destination we have something to do
-            if len(impulses_at_destination) > 0:
+            for impulse in impulses_at_destination:
+                self.activate_node(impulse.target_node, impulse.activation_at_destination)
 
-                impulses_en_route = [i
-                                     for i in e_data[EdgeDataKey.IMPULSES]
-                                     if i.time_at_destination > self.clock]
-
-                # Only those en route should remain
-                e_data[EdgeDataKey.IMPULSES] = impulses_en_route
-
-                # Impulses at destination activate their target nodes, possibly rebroadcasting new impulses.
-                for impulse in impulses_at_destination:
-                    self.activate_node(impulse.target_node, impulse.activation_at_destination)
+            self.impulses = impulses_en_rounte
 
     def tick(self):
         """Performs the spreading activation algorithm for one tick of the clock."""
@@ -419,8 +403,7 @@ class TemporalSpreadingActivation(object):
         for n, n_data in self.graph.nodes(data=True):
             n_data[NodeDataKey.CHARGE] = Charge(n, 0, self.node_decay_function)
         # Delete all activations
-        for _n1, _n2, e_data in self.graph.edges(data=True):
-            e_data[EdgeDataKey.IMPULSES]: List[Impulse] = []
+        self.impulses = set()
         self.nodes_activated_this_tick = set()
         # Reset clock and history
         self.clock = 0
@@ -457,7 +440,7 @@ class TemporalSpreadingActivation(object):
             string_builder += f"\t{str(n_data[NodeDataKey.CHARGE])}\n"
         string_builder += "Edges:\n"
         for n1, n2, e_data in self.graph.edges(data=True):
-            impulse_list = [str(i) for i in e_data[EdgeDataKey.IMPULSES]]
+            impulse_list = [str(i) for i in self.impulses]
             # Skip empty edges
             if len(impulse_list) == 0:
                 continue

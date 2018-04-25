@@ -152,7 +152,7 @@ def main():
                         # Spread the activation
                         logger.info(f"Clock = {tick}")
                         tsa.tick()
-                        logger.info(f"\tNodes: {tsa.n_suprathreshold_nodes}, impulses: {len(tsa.impulses)}.")
+                        logger.info(f"\tNodes: {tsa.n_suprathreshold_nodes:,}, impulses: {len(tsa.impulses):,}.")
 
                         ordered_word_list.extend(tsa.nodes_activated_this_tick)
 
@@ -168,6 +168,7 @@ def main():
                         try:
                             index_of_response_in_activated_words = ordered_word_list.index(response)
                             response_indices.append(index_of_response_in_activated_words)
+                        # TODO: what is this doing?
                         except ValueError:
                             pass
 
