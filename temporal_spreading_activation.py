@@ -340,13 +340,14 @@ class TemporalSpreadingActivation(object):
             )
 
             # If another impulse was released from this node to the same target this tick, it should replaced by this
-            # one, so remove it.
-            self.impulses = set(impulse
-                                for impulse in self.impulses
-                                # All impulses except those created at this time from this node
-                                if not (impulse.target_node == target_node
-                                        and impulse.source_node == source_node
-                                        and impulse.time_at_creation == self.clock))
+            # one, so remove it
+            existing_impulses = set(impulse
+                                    for impulse in self.impulses
+                                    if impulse.target_node == target_node
+                                    and impulse.source_node == source_node
+                                    and impulse.time_at_creation == self.clock)
+            if len(existing_impulses) > 0:
+                self.impulses -= existing_impulses
 
             self.impulses.add(new_impulse)
 
