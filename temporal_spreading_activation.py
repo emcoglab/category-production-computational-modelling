@@ -439,8 +439,10 @@ class TemporalSpreadingActivation(object):
                 continue
             string_builder += f"\t{str(n_data[NodeDataKey.CHARGE])}\n"
         string_builder += "Edges:\n"
-        for n1, n2, e_data in self.graph.edges(data=True):
-            impulse_list = [str(i) for i in self.impulses]
+        for n1, n2 in self.graph.edges():
+            impulse_list = [str(i)
+                            for i in self.impulses
+                            if {i.source_node, i.target_node} == {n1, n2}]
             # Skip empty edges
             if len(impulse_list) == 0:
                 continue
