@@ -18,7 +18,7 @@ caiwingfield.net
 import logging
 import sys
 from os import path
-from typing import Set
+from typing import List
 
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
@@ -85,9 +85,11 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, token_indices=ldm_index)
     distributional_model.train(memory_map=True)
 
-    filtered_words = get_word_list(freq_dist, top_n=top_n_words)
-    function_words = get_word_list(freq_dist, top_n=top_n_function_words)
+    filtered_words = set(get_word_list(freq_dist, top_n=top_n_words))
+    function_words = set(get_word_list(freq_dist, top_n=top_n_function_words))
     filtered_words -= function_words
+    filtered_words = sorted(filtered_words)
+
     logger.info(f"Building graph from top {top_n_words:,} words, except these:")
     logger.info(f"\t{', '.join(function_words)}")
     logger.info(f"This will include a total of {len(filtered_words):,} words, "
@@ -95,7 +97,7 @@ def main():
 
     # Build index-lookup dictionaries
     filtered_indices = sorted([ldm_index.token2id[w] for w in filtered_words])
-    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([ldm_index.token2id[w] for w in filtered_words])
+    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries(filtered_indices)
 
     # Build distance matrix
     logger.info("Constructing distance matrix")
@@ -119,11 +121,11 @@ def main():
 
     for category in category_production.category_labels:
 
-        logger.info(f"Category: {category}")
-
         # Skip the check if the category won't be in the network
         if category not in filtered_words:
             continue
+
+        logger.info(f"Category: {category}")
 
         for threshold in thresholds:
             for node_decay_factor in node_decay_factors:
@@ -145,6 +147,7 @@ def main():
 
                     logger.info(f"Initial node {category}")
                     tsa.activate_node(category, 1)
+                    logger.info(f"\tNodes: {tsa.n_suprathreshold_nodes:,}, impulses: {len(tsa.impulses):,}.")
 
                     logger.info("Running spreading output")
                     for tick in range(1, n_ticks):
@@ -152,7 +155,7 @@ def main():
                         # Spread the activation
                         logger.info(f"Clock = {tick}")
                         tsa.tick()
-                        logger.info(f"\tNodes: {tsa.n_suprathreshold_nodes}, impulses: {len(tsa.impulses)}.")
+                        logger.info(f"\tNodes: {tsa.n_suprathreshold_nodes:,}, impulses: {len(tsa.impulses):,}.")
 
                         ordered_word_list.extend(tsa.nodes_activated_this_tick)
 
@@ -203,8 +206,8 @@ def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: Toke
     return relabelling_dictionary
 
 
-def get_word_list(freq_dist, top_n) -> Set:
-    return {word for word, _ in freq_dist.most_common(top_n)}
+def get_word_list(freq_dist, top_n) -> List:
+    return [word for word, _ in freq_dist.most_common(top_n)]
 
 
 if __name__ == '__main__':
