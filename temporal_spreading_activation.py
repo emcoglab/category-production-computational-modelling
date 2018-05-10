@@ -366,14 +366,16 @@ class TemporalSpreadingActivation(object):
         # "Propagation" happens by just incrementing the global clock.
 
         # But we have to check if any impulses have reached their destination.
-        impulses_at_destination, impulses_en_rounte = set_partition(self.impulses, lambda i: i.time_at_destination == self.clock)
+        impulses_at_destination = set(i for i in self.impulses if i.time_at_destination == self.clock)
 
         if len(impulses_at_destination) > 0:
 
+            # Remove those that have reached the destination
+            self.impulses -= impulses_at_destination
+
+            # And have them activated their target nodes
             for impulse in impulses_at_destination:
                 self.activate_node(impulse.target_node, impulse.activation_at_destination)
-
-            self.impulses = impulses_en_rounte
 
     def tick(self):
         """Performs the spreading activation algorithm for one tick of the clock."""
