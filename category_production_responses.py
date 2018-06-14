@@ -35,6 +35,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def briony_vocab_overlap(top_n_words):
+    """Coverage of vocabulary in Briony's Category Production dataset."""
     # Category production words
     category_production = CategoryProduction()
     category_production_words = category_production.vocabulary_single_word
@@ -57,6 +58,7 @@ def briony_vocab_overlap(top_n_words):
 
 
 def briony_categories_overlap(top_n_words):
+    """Coverage of individual category responses in Briony's Category Production dataset."""
     # Category production words
     category_production = CategoryProduction()
     categories = category_production.category_labels
@@ -159,11 +161,11 @@ def main():
 
                     logger.info(f"")
                     logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
+                    logger.info(f"Using values: θ={pruning_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
-                        threshold=threshold,
+                        pruning_threshold=threshold,
                         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
@@ -238,8 +240,5 @@ def get_word_list(freq_dist, top_n) -> List:
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    # main()
-    for top_n in [100, 300, 1_000, 3_000, 10_000, 30_000, 100_000, 300_000]:
-        briony_categories_overlap(top_n)
-        logger.info("")
+    main()
     logger.info("Done!")

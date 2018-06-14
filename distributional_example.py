@@ -91,11 +91,11 @@ def main():
                     logger.info(f"")
                     logger.info(f"\t(run {run})")
                     logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                    logger.info(f"Using values: θ={pruning_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
                     tsa = TemporalSpreadingActivation(
                         graph=graph,
-                        threshold=threshold,
+                        pruning_threshold=threshold,
                         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(

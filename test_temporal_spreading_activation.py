@@ -38,7 +38,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         )
         sa = TemporalSpreadingActivation(
             graph=graph,
-            threshold=.2,
+            pruning_threshold=.2,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                 decay_factor=0.9),
             edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
@@ -69,7 +69,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         )
         sa = TemporalSpreadingActivation(
             graph=graph,
-            threshold=.2,
+            pruning_threshold=.2,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.8),
             edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.8),
             activation_cap=1
@@ -126,7 +126,7 @@ class TestDecayFunctions(unittest.TestCase):
                 length_granularity=100,
                 weighted_graph=False
             ),
-            threshold=0,
+            pruning_threshold=0,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
             edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, 100)
         )
@@ -136,7 +136,7 @@ class TestDecayFunctions(unittest.TestCase):
                 length_granularity=100,
                 weighted_graph=False
             ),
-            threshold=0,
+            pruning_threshold=0,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
             edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(42)
         )
@@ -172,7 +172,7 @@ class TestDecayFunctions(unittest.TestCase):
                 length_granularity=granularity,
                 weighted_graph=False
             ),
-            threshold=0,
+            pruning_threshold=0,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
             edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, granularity)
         )
@@ -183,7 +183,7 @@ class TestDecayFunctions(unittest.TestCase):
                 length_granularity=granularity,
                 weighted_graph=False
             ),
-            threshold=0,
+            pruning_threshold=0,
             node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
             edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, granularity)
         )

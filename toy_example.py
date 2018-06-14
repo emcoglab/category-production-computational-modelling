@@ -43,7 +43,7 @@ def main():
             length_granularity=10,
             relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
         ),
-        threshold=.2,
+        pruning_threshold=.2,
         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
             decay_factor=0.8),
         edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(

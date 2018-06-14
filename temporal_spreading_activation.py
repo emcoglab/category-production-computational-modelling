@@ -28,8 +28,6 @@ from networkx import Graph, from_numpy_matrix, relabel_nodes, selfloop_edges
 from numpy import exp, ndarray, ones_like, ceil, float_power
 from pandas import DataFrame
 
-from utils import set_partition
-
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
@@ -131,42 +129,53 @@ class TemporalSpreadingActivation(object):
 
     def __init__(self,
                  graph: Graph,
-                 threshold: float,
+                 firing_threshold: float,
+                 refractory_period: int,
+                 pruning_threshold: float,
                  node_decay_function: callable,
                  edge_decay_function: callable,
                  activation_cap=1,
                  ):
         """
         :param graph:
-        ¡ Calling this constructor or modifying this object WILL modify the underlying graph !
-        Should be an undirected weighted graph with the following data:
-            On Nodes:
-                (no data required)
-            On Edges:
-                weight
-                length
-        To this the following data fields will be added by the constructor:
-            On Nodes:
-                charge
-        :param threshold:
-        Activation threshold.
-        Impulses which drop (strictly) below this threshold will be deleted.
+            ¡ Calling this constructor or modifying this object WILL modify the underlying graph !
+            Should be an undirected weighted graph with the following data:
+                On Nodes:
+                    (no data required)
+                On Edges:
+                    weight
+                    length
+            To this the following data fields will be added by the constructor:
+                On Nodes:
+                    charge
+        :param firing_threshold:
+            Firing threshold.
+            A node will fire if its activation is above this threshold when it becomes activated itself, so long as it
+            is not refracting.
+        :param refractory_period:
+            Refractory period (ticks).
+            A node cannot fire if it has already fired within this many ticks.
+        :param pruning_threshold:
+            Pruning threshold.
+            Impulses which drop (strictly) below this threshold will be deleted.
         :param node_decay_function:
-        A function governing the decay of activations on nodes.
-        Use the decay_function_*_with_params methods to create these.
+            A function governing the decay of activations on nodes.
+            Use the decay_function_*_with_params methods to create these.
         :param edge_decay_function:
-        A function governing the decay of activations in connections.
-        Use the decay_function_*_with_* methods to create these.
+            A function governing the decay of activations in connections.
+            Use the decay_function_*_with_* methods to create these.
         :param activation_cap:
-        (Optional, default 1) Caps node activations at this value. If None is given, activations will not be capped.
+            (Optional, default 1) Caps node activations at this value. If None is given, activations will not be capped.
         """
 
         if activation_cap is not None:
             assert activation_cap > 0
-            assert threshold <= activation_cap
+            assert pruning_threshold <= activation_cap
 
         # Parameters
-        self.threshold = threshold  # Use `< self.threshold` and `>= self.threshold` to test for below/above threshold.
+        self.pruning_threshold = pruning_threshold  # Use < and >= to test for below/above
+        self.firing_threshold = firing_threshold  # Use < and >= to test for above/below
+        self.refractory_period = refractory_period
         self.activation_cap = activation_cap
 
         # These decay functions should be stateless, and convert an original activation and an age into a current
@@ -179,6 +188,9 @@ class TemporalSpreadingActivation(object):
         self.graph: Graph = graph
 
         # Graph data:
+
+        # Impulses are hashed in such a way that their identity is given by source, destination, and time created.
+        # Therefore making self.impulses a Set, we ensure that multiple impulses created on the
         self.impulses: Set = set()
 
         # Zero-indexed tick counter.
@@ -285,10 +297,10 @@ class TemporalSpreadingActivation(object):
 
     @property
     def n_suprathreshold_nodes(self) -> int:
-        """The number of nodes which are above the threshold."""
+        """The number of nodes which are above the firing threshold."""
         return len([
             charge for charge in self.charges
-            if charge.activation >= self.threshold
+            if charge.activation >= self.firing_threshold
         ])
 
     def activation_of_node(self, n) -> float:
@@ -308,48 +320,49 @@ class TemporalSpreadingActivation(object):
         new_charge = Charge(n, new_activation, self.node_decay_function)
         self.graph.nodes[n][NodeDataKey.CHARGE] = new_charge
 
-        source_node = n
+        if new_activation >= self.firing_threshold:
 
-        # Rebroadcast
+            # Fire and rebroadcast
+            source_node = n
 
-        # For each incident edge
-        for n1, n2, e_data in self.graph.edges(source_node, data=True):
-            if source_node == n1:
-                target_node = n2
-            elif source_node == n2:
-                target_node = n1
-            else:
-                raise ValueError()
+            # For each incident edge
+            for n1, n2, e_data in self.graph.edges(source_node, data=True):
+                if source_node == n1:
+                    target_node = n2
+                elif source_node == n2:
+                    target_node = n1
+                else:
+                    raise ValueError()
 
-            edge_length = e_data[EdgeDataKey.LENGTH]
+                edge_length = e_data[EdgeDataKey.LENGTH]
 
-            # We pre-compute the impulses now rather than decaying them over time.
-            # Intermediate activates can be computed for display purposes if necessary.
-            initial_activation = e_data[EdgeDataKey.WEIGHT] * new_charge.activation
-            final_activation = self.edge_decay_function(edge_length, initial_activation)
+                # We pre-compute the impulses now rather than decaying them over time.
+                # Intermediate activates can be computed for display purposes if necessary.
+                initial_activation = e_data[EdgeDataKey.WEIGHT] * new_charge.activation
+                final_activation = self.edge_decay_function(edge_length, initial_activation)
 
-            # Only create impulses that will reach the destination before decaying below threshold
-            if final_activation < self.threshold:
-                continue
+                # Only create impulses that will reach the destination before decaying below threshold
+                if final_activation < self.pruning_threshold:
+                    continue
 
-            new_impulse = Impulse(
-                source_node=source_node, target_node=target_node,
-                time_at_creation=self.clock, time_at_destination=self.clock + edge_length,
-                initial_activation=initial_activation,
-                final_activation=final_activation
-            )
+                new_impulse = Impulse(
+                    source_node=source_node, target_node=target_node,
+                    time_at_creation=self.clock, time_at_destination=self.clock + edge_length,
+                    initial_activation=initial_activation,
+                    final_activation=final_activation
+                )
 
-            # If another impulse was released from this node to the same target this tick, it should replaced by this
-            # one, so remove it
-            existing_impulses = set(impulse
-                                    for impulse in self.impulses
-                                    if impulse.target_node == target_node
-                                    and impulse.source_node == source_node
-                                    and impulse.time_at_creation == self.clock)
-            if len(existing_impulses) > 0:
-                self.impulses -= existing_impulses
+                # If another impulse was released from this node to the same target this tick, it should replaced by this
+                # one, so remove it
+                existing_impulses = set(impulse
+                                        for impulse in self.impulses
+                                        if impulse.target_node == target_node
+                                        and impulse.source_node == source_node
+                                        and impulse.time_at_creation == self.clock)
+                if len(existing_impulses) > 0:
+                    self.impulses -= existing_impulses
 
-            self.impulses.add(new_impulse)
+                self.impulses.add(new_impulse)
 
         self._update_history()
 
