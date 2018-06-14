@@ -56,6 +56,30 @@ def briony_vocab_overlap(top_n_words):
     logger.info(f"{n_unused} graph words are not used in the category production set.")
 
 
+def briony_categories_overlap(top_n_words):
+    # Category production words
+    category_production = CategoryProduction()
+    categories = category_production.category_labels
+
+    # Frequent words in corpus
+    corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
+    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    corpus_words = get_word_list(freq_dist, top_n=top_n_words)
+
+    logger.info(f"Top {top_n_words} words:")
+
+    for category in categories:
+        if " " in category:
+            continue
+        if category in corpus_words:
+            responses = category_production.responses_for_category(category, single_word_only=True)
+            n_present_responses = len(set(responses).intersection(set(corpus_words)))
+            percent_present_responses = 100 * n_present_responses / len(responses)
+            logger.info(f"{category}:\t{percent_present_responses:0.2f}%")
+        else:
+            logger.info(f"{category}:\t(not present)")
+
+
 def main():
     # SA parameters
     granularity = 100
@@ -216,6 +240,6 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
     # main()
     for top_n in [100, 300, 1_000, 3_000, 10_000, 30_000, 100_000, 300_000]:
-        briony_vocab_overlap(top_n)
+        briony_categories_overlap(top_n)
         logger.info("")
     logger.info("Done!")
