@@ -51,13 +51,13 @@ def main():
     filtered_words = get_word_list(freq_dist, top_n=400) - get_word_list(freq_dist, top_n=100)  # school is in the top 300
 
     filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
-    # TODO: explain what these dictionaries are
+    # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
     ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
 
     logger.info("Constructing weight matrix")
 
-    # First coordinate (row index) points to TODO: what?
-    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :].copy()
+    # First coordinate (row index) points to target words
+    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :]
 
     # Convert to distance matrix
     distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
@@ -65,7 +65,7 @@ def main():
     logger.info("Building graph")
 
     graph = TemporalSpreadingActivation.graph_from_distance_matrix(
-        distance_matrix=distance_matrix.copy(),
+        distance_matrix=distance_matrix,
         weighted_graph=False,
         length_granularity=100,
         weight_factor=20,
@@ -73,7 +73,7 @@ def main():
         relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
 
     n_ticks = 200
-    n_runs = 1
+    n_runs = 5
     bailout = 200
 
     # Run multiple times with different parameters
@@ -84,18 +84,18 @@ def main():
 
         initial_word = random.choice(tuple(filtered_words))
 
-        for threshold in [0.1, 0.2, 0.3]:
-            for node_decay_factor in [0.99, 0.9, 0.8]:
+        for activation_threshold in [0.4, 0.6, 0.8, 1.0]:
+            for node_decay_factor in [0.85, 0.9, 0.99]:
                 for edge_decay_sd in [10, 15, 20]:
 
                     logger.info(f"")
                     logger.info(f"\t(run {run})")
                     logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={pruning_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                    logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
                     tsa = TemporalSpreadingActivation(
                         graph=graph,
-                        pruning_threshold=threshold,
+                        activation_threshold=activation_threshold,
                         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
@@ -110,17 +110,18 @@ def main():
                         tsa.tick()
 
                         # Break early if we've got a probable explosion
-                        if tsa.n_suprathreshold_nodes > bailout:
-                            break
+                        # if tsa.n_suprathreshold_nodes > bailout:
+                        #     logger.warning(f"{tsa.n_suprathreshold_nodes} nodes active... Bailout!!")
+                        #     break
 
                     # Prepare results
                     results_these_params = tsa.activation_history
-                    results_these_params["Threshold"] = threshold
+                    results_these_params["Activation threshold"] = activation_threshold
                     results_these_params["Node decay factor"] = node_decay_factor
                     results_these_params["Edge decay SD"] = edge_decay_sd
                     results_these_params["Run"] = run
 
-                    results_df.append(results_these_params)
+                    results_df = results_df.append(results_these_params)
 
     results_df.to_csv(csv_location, header=True, index=False)
 
