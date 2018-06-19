@@ -27,7 +27,7 @@ from category_production.category_production import CategoryProduction
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -87,7 +87,7 @@ def main():
     granularity = 100
     node_decay_factors = [0.99, 0.9, 0.8]
     edge_decay_sd_fracs = [0.1, 0.15, 0.2]
-    thresholds = [0.1, 0.2, 0.3]
+    activation_thresholds = [0.1, 0.2, 0.3]
 
     # Use most frequent words, excluding the *very* most frequent ones
     top_n_words = 3_000
@@ -153,7 +153,7 @@ def main():
 
         logger.info(f"Category: {category}")
 
-        for threshold in thresholds:
+        for activation_threshold in activation_thresholds:
             for node_decay_factor in node_decay_factors:
                 for edge_decay_sd_frac in edge_decay_sd_fracs:
 
@@ -161,11 +161,11 @@ def main():
 
                     logger.info(f"")
                     logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={pruning_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
+                    logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
-                        pruning_threshold=threshold,
+                        activation_threshold=threshold,
                         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(

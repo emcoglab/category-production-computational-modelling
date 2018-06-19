@@ -19,7 +19,7 @@ import unittest
 
 from numpy import array, log
 
-from temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):

@@ -18,11 +18,10 @@ caiwingfield.net
 import logging
 import sys
 
-from matplotlib.backends.backend_pdf import PdfPages
 from numpy import array
 
-from temporal_spreading_activation import TemporalSpreadingActivation
-from tsa_visualisation import run_with_pdf_output
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(message)s'
@@ -43,7 +42,7 @@ def main():
             length_granularity=10,
             relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
         ),
-        pruning_threshold=.2,
+        activation_threshold=.2,
         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
             decay_factor=0.8),
         edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
