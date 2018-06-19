@@ -18,7 +18,6 @@ caiwingfield.net
 import logging
 import sys
 from os import path
-from typing import List
 
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
@@ -43,7 +42,7 @@ def briony_vocab_overlap(top_n_words):
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    corpus_words = get_word_list(freq_dist, top_n=top_n_words)
+    corpus_words = freq_dist.most_common_tokens(top_n_words)
 
     # Useful numbers to report
     n_cat_prod_words = len(category_production_words)
@@ -66,7 +65,7 @@ def briony_categories_overlap(top_n_words):
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    corpus_words = get_word_list(freq_dist, top_n=top_n_words)
+    corpus_words = set(freq_dist.most_common_tokens(top_n_words))
 
     logger.info(f"Top {top_n_words} words:")
 
@@ -111,8 +110,8 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, token_indices=ldm_index)
     distributional_model.train(memory_map=True)
 
-    filtered_words = set(get_word_list(freq_dist, top_n=top_n_words))
-    function_words = set(get_word_list(freq_dist, top_n=top_n_function_words))
+    filtered_words = set(freq_dist.most_common_tokens(top_n_words))
+    function_words = set(freq_dist.most_common_tokens(top_n_function_words))
     filtered_words -= function_words
     filtered_words = sorted(filtered_words)
 
@@ -165,7 +164,7 @@ def main():
 
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
-                        activation_threshold=threshold,
+                        activation_threshold=activation_threshold,
                         node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
@@ -203,7 +202,7 @@ def main():
 
                     # Prepare results
                     results_these_params = tsa.activation_history
-                    results_these_params["Threshold"] = threshold
+                    results_these_params["Activation threshold"] = activation_threshold
                     results_these_params["Node decay factor"] = node_decay_factor
                     results_these_params["Edge decay SD"] = edge_decay_sd_frac
                     results_these_params["Category"] = category
@@ -231,10 +230,6 @@ def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: Toke
     for token_index, matrix_index in ldm_to_matrix.items():
         relabelling_dictionary[matrix_index] = distributional_model_index.id2token[token_index]
     return relabelling_dictionary
-
-
-def get_word_list(freq_dist, top_n) -> List:
-    return [word for word, _ in freq_dist.most_common(top_n)]
 
 
 if __name__ == '__main__':

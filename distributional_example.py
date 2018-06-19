@@ -48,7 +48,7 @@ def main():
     distributional_model.train(memory_map=True)
 
     # Words 101–400
-    filtered_words = get_word_list(freq_dist, top_n=400) - get_word_list(freq_dist, top_n=100)  # school is in the top 300
+    filtered_words = set(freq_dist.most_common_tokens(400)) - set(freq_dist.most_common_tokens(100))  # school is in the top 300
 
     filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
     # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
@@ -140,10 +140,6 @@ def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: Toke
     for token_index, matrix_index in ldm_to_matrix.items():
         relabelling_dictinoary[matrix_index] = distributional_model_index.id2token[token_index]
     return relabelling_dictinoary
-
-
-def get_word_list(freq_dist, top_n) -> Set:
-    return {word for word, _ in freq_dist.most_common(top_n)}
 
 
 if __name__ == '__main__':
