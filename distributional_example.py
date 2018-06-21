@@ -27,7 +27,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -64,7 +64,7 @@ def main():
 
     logger.info("Building graph")
 
-    graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+    graph = graph_from_distance_matrix(
         distance_matrix=distance_matrix,
         weighted_graph=False,
         length_granularity=100,
@@ -96,9 +96,9 @@ def main():
                     tsa = TemporalSpreadingActivation(
                         graph=graph,
                         activation_threshold=activation_threshold,
-                        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                        node_decay_function=decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
-                        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
+                        edge_decay_function=decay_function_gaussian_with_sd(
                             sd=edge_decay_sd))
 
                     logger.info(f"Initial node {initial_word}")

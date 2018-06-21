@@ -26,7 +26,8 @@ from category_production.category_production import CategoryProduction
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
+    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -131,7 +132,7 @@ def main():
 
     # Build graph
     logger.info("Building graph")
-    word_graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+    word_graph = graph_from_distance_matrix(
         distance_matrix=distance_matrix.copy(),
         weighted_graph=False,
         length_granularity=granularity,
@@ -165,9 +166,9 @@ def main():
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
                         activation_threshold=activation_threshold,
-                        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+                        node_decay_function=decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
-                        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
+                        edge_decay_function=decay_function_gaussian_with_sd_fraction(
                             sd_frac=edge_decay_sd_frac, granularity=granularity))
 
                     logger.info(f"Initial node {category}")
@@ -185,7 +186,7 @@ def main():
                         ordered_word_list.extend(tsa.nodes_activated_this_tick)
 
                         # Break early if we've got a probable explosion
-                        if tsa.n_suprathreshold_nodes > explosion_bailout:
+                        if tsa.n_suprathreshold_nodes() > explosion_bailout:
                             logger.info("EXPLOSION BAILOUT!")
                             break
 
