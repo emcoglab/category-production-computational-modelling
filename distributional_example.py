@@ -27,7 +27,8 @@ from sklearn.metrics.pairwise import pairwise_distances
 from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
 from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
 from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix
+from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
+    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -68,9 +69,7 @@ def main():
         distance_matrix=distance_matrix,
         weighted_graph=False,
         length_granularity=100,
-        weight_factor=20,
-        # Relabel nodes with words rather than indices
-        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
+        weight_factor=20)
 
     n_ticks = 200
     n_runs = 5
@@ -96,6 +95,7 @@ def main():
                     tsa = TemporalSpreadingActivation(
                         graph=graph,
                         activation_threshold=activation_threshold,
+                        node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index),
                         node_decay_function=decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=decay_function_gaussian_with_sd(

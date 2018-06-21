@@ -135,9 +135,7 @@ def main():
     word_graph = graph_from_distance_matrix(
         distance_matrix=distance_matrix.copy(),
         weighted_graph=False,
-        length_granularity=granularity,
-        # Relabel nodes with words rather than indices
-        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, ldm_index))
+        length_granularity=granularity)
 
     # Run multiple times with different parameters
 
@@ -166,6 +164,7 @@ def main():
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
                         activation_threshold=activation_threshold,
+                        node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, ldm_index),
                         node_decay_function=decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=decay_function_gaussian_with_sd_fraction(

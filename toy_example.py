@@ -40,9 +40,9 @@ def main():
                 [.6, .4, .0],  # Stripes
             ]),
             weighted_graph=True,
-            length_granularity=10,
-            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+            length_granularity=10
         ),
+        node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
         activation_threshold=.2,
         node_decay_function=decay_function_exponential_with_decay_factor(
             decay_factor=0.8),
