@@ -87,7 +87,8 @@ def main():
     granularity = 100
     node_decay_factors = [0.99, 0.9, 0.8]
     edge_decay_sd_fracs = [0.1, 0.15, 0.2]
-    activation_thresholds = [0.1, 0.2, 0.3]
+    activation_thresholds = [0.2, 0.3, 0.4]
+    impulse_pruning_threshold = 0.1
 
     # Use most frequent words, excluding the *very* most frequent ones
     top_n_words = 3_000
@@ -160,14 +161,15 @@ def main():
                     logger.info(f"Setting up spreading output")
                     logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
-                    tsa = TemporalSpreadingActivation(
-                        graph=word_graph,
-                        activation_threshold=activation_threshold,
-                        node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, freq_dist),
-                        node_decay_function=decay_function_exponential_with_decay_factor(
-                            decay_factor=node_decay_factor),
-                        edge_decay_function=decay_function_gaussian_with_sd_fraction(
-                            sd_frac=edge_decay_sd_frac, granularity=granularity))
+                    tsa = TemporalSpreadingActivation(graph=word_graph,
+                                                      node_relabelling_dictionary=build_relabelling_dictionary(
+                                                          ldm_to_matrix, freq_dist),
+                                                      activation_threshold=activation_threshold,
+                                                      impulse_pruning_threshold=impulse_pruning_threshold,
+                                                      node_decay_function=decay_function_exponential_with_decay_factor(
+                                                          decay_factor=node_decay_factor),
+                                                      edge_decay_function=decay_function_gaussian_with_sd_fraction(
+                                                          sd_frac=edge_decay_sd_frac, granularity=granularity))
 
                     logger.info(f"Initial node {category}")
                     tsa.activate_node(category, 1)
