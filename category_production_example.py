@@ -23,9 +23,9 @@ from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
 from category_production.category_production import CategoryProduction
-from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
-from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
-from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
+from ldm.core.corpus.indexing import FreqDistIndex
+from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 
@@ -42,7 +42,7 @@ def briony_vocab_overlap(top_n_words):
 
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
     corpus_words = freq_dist.most_common_tokens(top_n_words)
 
     # Useful numbers to report
@@ -65,7 +65,7 @@ def briony_categories_overlap(top_n_words):
 
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
     corpus_words = set(freq_dist.most_common_tokens(top_n_words))
 
     logger.info(f"Top {top_n_words} words:")
@@ -106,9 +106,8 @@ def main():
 
     logger.info("Training distributional model")
     corpus_meta = CorpusPreferences.source_corpus_metas[1] # 1 = BBC
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    ldm_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, token_indices=ldm_index)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
     filtered_words = set(freq_dist.most_common_tokens(top_n_words))
@@ -122,7 +121,7 @@ def main():
                 f"and a maximum of {int(0.5 * len(filtered_words) * (len(filtered_words) - 1)):,} connections")
 
     # Build index-lookup dictionaries
-    filtered_indices = sorted([ldm_index.token2id[w] for w in filtered_words])
+    filtered_indices = sorted([freq_dist.token2id[w] for w in filtered_words])
     ldm_to_matrix, matrix_to_ldm = filtering_dictionaries(filtered_indices)
 
     # Build distance matrix
@@ -164,7 +163,7 @@ def main():
                     tsa = TemporalSpreadingActivation(
                         graph=word_graph,
                         activation_threshold=activation_threshold,
-                        node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, ldm_index),
+                        node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, freq_dist),
                         node_decay_function=decay_function_exponential_with_decay_factor(
                             decay_factor=node_decay_factor),
                         edge_decay_function=decay_function_gaussian_with_sd_fraction(
@@ -225,10 +224,10 @@ def filtering_dictionaries(filtered_indices):
     return ldm_to_matrix_index, matrix_to_ldm_index
 
 
-def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
+def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDistIndex):
     relabelling_dictionary = dict()
     for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictionary[matrix_index] = distributional_model_index.id2token[token_index]
+        relabelling_dictionary[matrix_index] = freq_dist.id2token[token_index]
     return relabelling_dictionary
 
 

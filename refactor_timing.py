@@ -22,14 +22,15 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
-from corpus_analysis.core.model.count import ConditionalProbabilityModel
-from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from ldm.core.corpus.indexing import FreqDistIndex
+from ldm.core.model.count import ConditionalProbabilityModel
+from ldm.core.utils.logging import date_format, log_message
+from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.temporal_spreading_activation import TemporalSpreadingActivation, decay_function_gaussian_with_sd, \
+    decay_function_exponential_with_decay_factor, graph_from_distance_matrix
+
 
 logger = logging.getLogger()
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
@@ -53,9 +54,8 @@ def main():
 
     logger.info("Training distributional model")
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = bbc
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    distributional_model_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = ConditionalProbabilityModel(corpus_meta, window_radius=1, token_indices=distributional_model_index, freq_dist=freq_dist)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
+    distributional_model = ConditionalProbabilityModel(corpus_meta, window_radius=1, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
     # Work with subset of words
@@ -64,9 +64,9 @@ def main():
     # Build distance matrix for subset of words
     logger.info("Constructing distance matrix")
     t_before_distance_matrix = time.monotonic()
-    filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
+    filtered_indices = sorted([freq_dist.token2id[w] for w in filtered_words])
     # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
-    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
+    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([freq_dist.token2id[w] for w in filtered_words])
     # First coordinate (row index) points to target words
     embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :]
     distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
@@ -75,12 +75,10 @@ def main():
     # Build the graph
     logger.info("Building graph")
     t_before_graph = time.monotonic()
-    graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+    graph = graph_from_distance_matrix(
         distance_matrix=distance_matrix,
         weighted_graph=False,
-        length_granularity=granularity,
-        # Relabel nodes with words rather than indices
-        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
+        length_granularity=granularity)
     duration_graph = time.monotonic() - t_before_graph
 
     # Set up spreading activation model
@@ -89,9 +87,9 @@ def main():
     tsa = TemporalSpreadingActivation(
         graph=graph,
         activation_threshold=activation_threshold,
-        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+        node_decay_function=decay_function_exponential_with_decay_factor(
             decay_factor=node_decay_rate),
-        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
+        edge_decay_function=decay_function_gaussian_with_sd(
             sd=edge_decay_sd))
     duration_sa_build = time.monotonic() - t_before_sa_build
 
@@ -128,15 +126,15 @@ def filtering_dictionaries(filtered_indices):
     return ldm_to_matrix_index, matrix_to_ldm_index
 
 
-def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
+def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDistIndex):
     relabelling_dictinoary = dict()
     for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictinoary[matrix_index] = distributional_model_index.id2token[token_index]
+        relabelling_dictinoary[matrix_index] = freq_dist.id2token[token_index]
     return relabelling_dictinoary
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
     main()
     logger.info("Done!")

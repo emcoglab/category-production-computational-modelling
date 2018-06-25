@@ -19,20 +19,19 @@ import logging
 import random
 import sys
 from os import path
-from typing import Set
 
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
-from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
-from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
-from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
+from ldm.core.corpus.indexing import FreqDistIndex
+from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.core.utils.logging import log_message, date_format
+from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 
+
 logger = logging.getLogger()
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
@@ -43,17 +42,16 @@ def main():
     logger.info("Training distributional model")
 
     corpus_meta = CorpusPreferences.source_corpus_metas[0]
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    distributional_model_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
     # Words 101–400
     filtered_words = set(freq_dist.most_common_tokens(400)) - set(freq_dist.most_common_tokens(100))  # school is in the top 300
 
-    filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
+    filtered_indices = sorted([freq_dist.token2id[w] for w in filtered_words])
     # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
-    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
+    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([freq_dist.token2id[w] for w in filtered_words])
 
     logger.info("Constructing weight matrix")
 
@@ -135,15 +133,15 @@ def filtering_dictionaries(filtered_indices):
     return ldm_to_matrix_index, matrix_to_ldm_index
 
 
-def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
+def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDistIndex):
     relabelling_dictinoary = dict()
     for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictinoary[matrix_index] = distributional_model_index.id2token[token_index]
+        relabelling_dictinoary[matrix_index] = freq_dist.id2token[token_index]
     return relabelling_dictinoary
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
     main()
     logger.info("Done!")
