@@ -20,7 +20,7 @@ import sys
 
 from networkx import DiGraph
 
-from spreading_activation import SpreadingActivationCleglowski
+from model.spreading_activation import SpreadingActivationCleglowski
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

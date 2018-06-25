@@ -20,7 +20,7 @@ import networkx
 from matplotlib import pyplot
 from matplotlib.backends.backend_pdf import PdfPages
 
-from temporal_spreading_activation import TemporalSpreadingActivation, EdgeDataKey, NodeDataKey
+from model.temporal_spreading_activation import TemporalSpreadingActivation, EdgeDataKey
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ def draw_graph(tsa: TemporalSpreadingActivation, pdf=None, pos=None, frame_label
     # Prepare labels
 
     node_labels = {}
-    for n, n_data in tsa.graph.nodes(data=True):
-        node_labels[n] = f"{n}\n{n_data[NodeDataKey.CHARGE].activation:.3g}"
+    for n in tsa.graph.nodes:
+        node_labels[n] = f"{tsa.node2label[n]}\n{tsa.activation_of_node(n):.3g}"
 
     edge_labels = {}
     for v1, v2, e_data in tsa.graph.edges(data=True):
@@ -50,18 +50,14 @@ def draw_graph(tsa: TemporalSpreadingActivation, pdf=None, pos=None, frame_label
     impulse_data = []
     for v1, v2, e_data in tsa.graph.edges(data=True):
         length = e_data[EdgeDataKey.LENGTH]
-        impulses = e_data[EdgeDataKey.IMPULSES]
-        if len(impulses) == 0:
+        impulses_this_edge = tsa.impulses_by_edge(v1, v2)
+        if len(impulses_this_edge) == 0:
             continue
         x1, y1 = pos[v1]
         x2, y2 = pos[v2]
-        for impulse in impulses:
+        for impulse in impulses_this_edge:
 
             age = impulse.age_at_time(tsa.clock)
-
-            # Skip dead impulses
-            if age is None:
-                continue
 
             # Skip just-created impulses
             if age == 0:
@@ -78,7 +74,7 @@ def draw_graph(tsa: TemporalSpreadingActivation, pdf=None, pos=None, frame_label
             x = x1 + (fraction * (x2 - x1))
             y = y1 + (fraction * (y2 - y1))
 
-            colour = cmap(tsa.node_decay_function(age, impulse.initial_activation))
+            colour = cmap(tsa.node_decay_function(age, impulse.departure_activation))
 
             impulse_data.append([x, y, colour, impulse, length])
 
@@ -87,7 +83,7 @@ def draw_graph(tsa: TemporalSpreadingActivation, pdf=None, pos=None, frame_label
     # Draw the nodes
     networkx.draw_networkx_nodes(
         tsa.graph, pos=pos, with_labels=False,
-        node_color=[n_data[NodeDataKey.CHARGE].activation for n, n_data in tsa.graph.nodes(data=True)],
+        node_color=[tsa.activation_of_node(n) for n in tsa.graph.nodes],
         cmap=cmap, vmin=0, vmax=1,
         node_size=400)
     networkx.draw_networkx_labels(tsa.graph, pos=pos, labels=node_labels)
@@ -102,7 +98,7 @@ def draw_graph(tsa: TemporalSpreadingActivation, pdf=None, pos=None, frame_label
     for x, y, colour, impulse, length in impulse_data:
         pyplot.plot(x, y, marker='o', markersize=5, color=colour)
         age = impulse.age_at_time(tsa.clock)
-        pyplot.text(x, y, f"{tsa.node_decay_function(age, impulse.initial_activation):.3g} ({age}/{length})")
+        pyplot.text(x, y, f"{tsa.node_decay_function(age, impulse.departure_activation):.3g} ({age}/{length})")
 
     # Draw frame_label
     if frame_label is not None:

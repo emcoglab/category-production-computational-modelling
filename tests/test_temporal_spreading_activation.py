@@ -19,7 +19,9 @@ import unittest
 
 from numpy import array, log
 
-from temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation, \
+    decay_function_exponential_with_decay_factor, graph_from_distance_matrix, decay_function_exponential_with_half_life, \
+    decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
@@ -30,30 +32,30 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+        graph = graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             weighted_graph=True,
-            length_granularity=10,
-            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+            length_granularity=10
         )
-        sa = TemporalSpreadingActivation(
+        tsa = TemporalSpreadingActivation(
             graph=graph,
-            threshold=.2,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+            activation_threshold=0.3,
+            impulse_pruning_threshold=.1,
+            node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=0.9),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+            edge_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=0.9),
-            activation_cap=1
+            node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"}
         )
 
-        sa.activate_node("lion", 1)
+        tsa.activate_node_with_label("lion", 1)
 
-        for i in range(1, 14):
-            sa.tick()
+        for i in range(1, 16):
+            tsa.tick()
 
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation,    0.6888710581)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation,   0.4430472139)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.4742613262)
+        self.assertAlmostEqual(tsa.activation_of_node_with_label("lion"),    0.377687, places=5)
+        self.assertAlmostEqual(tsa.activation_of_node_with_label("tiger"),   0.245422, places=5)
+        self.assertAlmostEqual(tsa.activation_of_node_with_label("stripes"), 0.316084, places=5)
 
     def test_worked_example_unweighted_node_values(self):
         distance_matrix = array([
@@ -61,28 +63,28 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+        graph = graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             weighted_graph=False,
             length_granularity=10,
-            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
         )
-        sa = TemporalSpreadingActivation(
+        tsa = TemporalSpreadingActivation(
             graph=graph,
-            threshold=.2,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.8),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=0.8),
-            activation_cap=1
+            node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
+            activation_threshold=0.3,
+            impulse_pruning_threshold=.1,
+            node_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
+            edge_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
         )
 
-        sa.activate_node("lion", 1)
+        tsa.activate_node_with_label("lion", 1)
 
-        for i in range(1, 14):
-            sa.tick()
+        for i in range(1, 16):
+            tsa.tick()
 
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["lion"]["charge"].activation,    0.2748779)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["tiger"]["charge"].activation,   0.1649267)
-        self.assertAlmostEqual(sa.graph.nodes(data=True)["stripes"]["charge"].activation, 0.1099512)
+        self.assertAlmostEqual(tsa.activation_of_node_with_label("lion"),    0.4118, places=4)
+        self.assertAlmostEqual(tsa.activation_of_node_with_label("tiger"),   0.6177, places=4)
+        self.assertAlmostEqual(tsa.activation_of_node_with_label("stripes"), 0.2059, places=4)
 
 
 class TestDecayFunctions(unittest.TestCase):
@@ -93,7 +95,7 @@ class TestDecayFunctions(unittest.TestCase):
         a_0 = 0.64
         self.assertEqual(
             a_0,
-            TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(d)(t, a_0)
+            decay_function_exponential_with_decay_factor(d)(t, a_0)
         )
 
     def test_two_form_of_exponential_decay_are_equal(self):
@@ -102,8 +104,8 @@ class TestDecayFunctions(unittest.TestCase):
         hl = log(2) / λ
         t = 30
         a_0 = .7
-        exponential_decay_via_d  = TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(decay_factor=d)
-        exponential_decay_via_hl = TemporalSpreadingActivation.decay_function_exponential_with_half_life(half_life=hl)
+        exponential_decay_via_d  = decay_function_exponential_with_decay_factor(decay_factor=d)
+        exponential_decay_via_hl = decay_function_exponential_with_half_life(half_life=hl)
         self.assertAlmostEqual(
             exponential_decay_via_d(t, a_0),
             exponential_decay_via_hl(t, a_0)
@@ -119,39 +121,42 @@ class TestDecayFunctions(unittest.TestCase):
             [.0, .5],
             [.5, .0]
         ])
-        sd_frac = 0.42
-        tsa_100 = TemporalSpreadingActivation(
-            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+        tsa_frac = TemporalSpreadingActivation(
+            graph=graph_from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
                 weighted_graph=False
             ),
-            threshold=0,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, 100)
+            activation_threshold=0.3,
+            impulse_pruning_threshold=0,
+            node_decay_function=decay_function_exponential_with_half_life(50),
+            edge_decay_function=decay_function_gaussian_with_sd_fraction(0.42, 100),
+            node_relabelling_dictionary=dict()
         )
         tsa = TemporalSpreadingActivation(
-            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+            graph=graph_from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
                 weighted_graph=False
             ),
-            threshold=0,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(42)
+            activation_threshold=0.3,
+            impulse_pruning_threshold=0,
+            node_decay_function=decay_function_exponential_with_half_life(50),
+            edge_decay_function=decay_function_gaussian_with_sd(42),
+            node_relabelling_dictionary=dict()
         )
 
-        tsa_100.activate_node(n=0, activation=1.0)
+        tsa_frac.activate_node(n=0, activation=1.0)
         tsa.activate_node(n=0, activation=1.0)
 
         for tick in range(1, 50):
-            tsa_100.tick()
+            tsa_frac.tick()
             tsa.tick()
 
         # Same granularity, different function-maker
         self.assertAlmostEqual(
-            tsa_100.graph.edges[0, 1]["impulses"][0].activation_at_destination,
-            tsa.graph.edges[0, 1]["impulses"][0].activation_at_destination
+            tsa_frac.activation_of_node(0),
+            tsa.activation_of_node(0)
         )
 
     def test_gaussian_decay_different_granularity_same_function_maker(self):
@@ -167,25 +172,29 @@ class TestDecayFunctions(unittest.TestCase):
         sd_frac = 0.42
         granularity = 390
         tsa_390 = TemporalSpreadingActivation(
-            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+            graph=graph_from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=granularity,
                 weighted_graph=False
             ),
-            threshold=0,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, granularity)
+            impulse_pruning_threshold=0,
+            activation_threshold=0.5,
+            node_decay_function=decay_function_exponential_with_half_life(50),
+            edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
+            node_relabelling_dictionary=dict()
         )
         granularity = 1000
         tsa_1000 = TemporalSpreadingActivation(
-            graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+            graph=graph_from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=granularity,
                 weighted_graph=False
             ),
-            threshold=0,
-            node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_half_life(50),
-            edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(sd_frac, granularity)
+            impulse_pruning_threshold=0,
+            activation_threshold=0.5,
+            node_decay_function=decay_function_exponential_with_half_life(50),
+            edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
+            node_relabelling_dictionary=dict()
         )
 
         tsa_390.activate_node(n=0, activation=1.0)
@@ -193,8 +202,10 @@ class TestDecayFunctions(unittest.TestCase):
 
         # Different granularity, same function-maker
         self.assertAlmostEqual(
-            tsa_390.graph.edges[0, 1]["impulses"][0].activation_at_destination,
-            tsa_1000.graph.edges[0, 1]["impulses"][0].activation_at_destination
+            # There will be only one impulse in each edge at this point so we can just grab it without worrying about
+            # the lack of ordering in the set of impulses.
+            list(tsa_390.impulses_by_edge(0, 1))[0].arrival_activation,
+            list(tsa_1000.impulses_by_edge(0, 1))[0].arrival_activation
         )
 
 
@@ -212,7 +223,7 @@ class TestGraphPruning(unittest.TestCase):
         granularity = 10
         pruning_threshold = 5
 
-        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+        graph = graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
             weighted_graph=False,
@@ -233,7 +244,7 @@ class TestGraphPruning(unittest.TestCase):
         granularity = 10
         pruning_threshold = 5
 
-        graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+        graph = graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
             weighted_graph=False,
