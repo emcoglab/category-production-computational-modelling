@@ -32,7 +32,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def main():
     logger.info("Building graph...")
 
-    sa = TemporalSpreadingActivation(
+    tsa = TemporalSpreadingActivation(
         graph=graph_from_distance_matrix(
             distance_matrix=array([
                 [.0, .3, .6],  # Lion
@@ -43,19 +43,20 @@ def main():
             length_granularity=10
         ),
         node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
-        activation_threshold=.2,
+        activation_threshold=0.3,
+        impulse_pruning_threshold=0.1,
         node_decay_function=decay_function_exponential_with_decay_factor(
-            decay_factor=0.8),
+            decay_factor=0.9),
         edge_decay_function=decay_function_exponential_with_decay_factor(
-            decay_factor=0.8),
+            decay_factor=0.9),
     )
 
     logger.info("Activating node...")
-    sa.activate_node("lion", 1)
-    sa.log_graph()
+    tsa.activate_node(tsa.label2node["lion"], 1)
+    tsa.log_graph()
 
     logger.info("Running spreading activation...")
-    run_with_pdf_output(sa, 20, "/Users/caiwingfield/Desktop/graph.pdf")
+    run_with_pdf_output(tsa, 100, "/Users/caiwingfield/Desktop/graph.pdf")
 
 
 if __name__ == '__main__':

@@ -37,9 +37,13 @@ def main():
     box_root = "/Users/caiwingfield/Box Sync/WIP/"
     csv_location = path.join(box_root, "activated node counts.csv")
 
+    n_ticks = 200
+    initial_word = "school"
+    impulse_pruning_threshold = 0.05
+
     logger.info("Training distributional model")
 
-    corpus_meta = CorpusPreferences.source_corpus_metas[1] # 1 = BBC
+    corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
     freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
@@ -68,18 +72,11 @@ def main():
         length_granularity=100,
         weight_factor=20)
 
-    n_ticks = 200
-    # Bail on computation if more than 50% of nodes get activated
-    bailout = int(0.5 * len(graph.nodes))
-
-    # Run multiple times with different parameters
-
-    initial_word = "school"
-
-    impulse_pruning_threshold = 0.05
+    # Bail on computation if too many nodes get activated
+    bailout = len(graph.nodes) * 0.1  # 0.1 = 10% of nodes
 
     d = []
-    for activation_threshold in [0.4, 0.6, 0.8, 1.0]:
+    for activation_threshold in [0.4, 0.6, 0.8]:
         for node_decay_factor in [0.85, 0.9, 0.99]:
             for edge_decay_sd in [10, 15, 20]:
 
@@ -98,8 +95,7 @@ def main():
                         sd=edge_decay_sd))
 
                 logger.info(f"Initial node {initial_word}")
-                initial_node = tsa.label2node[initial_word]
-                tsa.activate_node(initial_node, 1)
+                tsa.activate_node_with_label(initial_word, 1)
 
                 logger.info("Running spreading output")
                 for tick in range(1, n_ticks):
