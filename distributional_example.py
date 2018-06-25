@@ -46,8 +46,9 @@ def main():
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
-    # Words 101–400
-    filtered_words = set(freq_dist.most_common_tokens(400)) - set(freq_dist.most_common_tokens(100))  # school is in the top 300
+    # Words 101–3k
+    filtered_words = ( set(freq_dist.most_common_tokens(3_000))
+                       - set(freq_dist.most_common_tokens(100)) )  # school is in the top 300
 
     filtered_indices = sorted([freq_dist.token2id[w] for w in filtered_words])
     # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
@@ -70,58 +71,57 @@ def main():
         weight_factor=20)
 
     n_ticks = 200
-    n_runs = 5
     bailout = 200
 
     # Run multiple times with different parameters
 
     results_df = DataFrame()
 
-    for run in range(n_runs):
+    initial_word = random.choice(tuple(filtered_words))
 
-        initial_word = random.choice(tuple(filtered_words))
+    impulse_pruning_threshold = 0.05
 
-        for activation_threshold in [0.4, 0.6, 0.8, 1.0]:
-            for node_decay_factor in [0.85, 0.9, 0.99]:
-                for edge_decay_sd in [10, 15, 20]:
+    for activation_threshold in [0.4, 0.6, 0.8, 1.0]:
+        for node_decay_factor in [0.85, 0.9, 0.99]:
+            for edge_decay_sd in [10, 15, 20]:
 
-                    logger.info(f"")
-                    logger.info(f"\t(run {run})")
-                    logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                logger.info(f"")
+                logger.info(f"Setting up spreading output")
+                logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
-                    tsa = TemporalSpreadingActivation(
-                        graph=graph,
-                        activation_threshold=activation_threshold,
-                        node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index),
-                        node_decay_function=decay_function_exponential_with_decay_factor(
-                            decay_factor=node_decay_factor),
-                        edge_decay_function=decay_function_gaussian_with_sd(
-                            sd=edge_decay_sd))
+                tsa = TemporalSpreadingActivation(
+                    graph=graph,
+                    activation_threshold=activation_threshold,
+                    impulse_pruning_threshold=impulse_pruning_threshold,
+                    node_relabelling_dictionary=build_relabelling_dictionary(ldm_to_matrix, freq_dist),
+                    node_decay_function=decay_function_exponential_with_decay_factor(
+                        decay_factor=node_decay_factor),
+                    edge_decay_function=decay_function_gaussian_with_sd(
+                        sd=edge_decay_sd))
 
-                    logger.info(f"Initial node {initial_word}")
-                    tsa.activate_node(initial_word, 1)
+                logger.info(f"Initial node {initial_word}")
+                tsa.activate_node(initial_word, 1)
 
-                    logger.info("Running spreading output")
-                    for tick in range(1, n_ticks):
-                        logger.info(f"Clock = {tick}")
-                        tsa.tick()
+                logger.info("Running spreading output")
+                for tick in range(1, n_ticks):
+                    logger.info(f"Clock = {tick}")
+                    tsa.tick()
 
-                        # Break early if we've got a probable explosion
-                        # if tsa.n_suprathreshold_nodes > bailout:
-                        #     logger.warning(f"{tsa.n_suprathreshold_nodes} nodes active... Bailout!!")
-                        #     break
+                    # Break early if we've got a probable explosion
+                    # if tsa.n_suprathreshold_nodes > bailout:
+                    #     logger.warning(f"{tsa.n_suprathreshold_nodes} nodes active... Bailout!!")
+                    #     break
 
-                    # Prepare results
-                    results_these_params = tsa.activation_history
-                    results_these_params["Activation threshold"] = activation_threshold
-                    results_these_params["Node decay factor"] = node_decay_factor
-                    results_these_params["Edge decay SD"] = edge_decay_sd
-                    results_these_params["Run"] = run
+                # Prepare results
+                # results_these_params = tsa.activation_history
+                # results_these_params["Activation threshold"] = activation_threshold
+                # results_these_params["Node decay factor"] = node_decay_factor
+                # results_these_params["Edge decay SD"] = edge_decay_sd
+                # results_these_params["Run"] = run
+                #
+                # results_df = results_df.append(results_these_params)
 
-                    results_df = results_df.append(results_these_params)
-
-    results_df.to_csv(csv_location, header=True, index=False)
+    # results_df.to_csv(csv_location, header=True, index=False)
 
 
 def filtering_dictionaries(filtered_indices):
