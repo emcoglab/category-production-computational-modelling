@@ -23,10 +23,11 @@ from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
 from category_production.category_production import CategoryProduction
-from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
-from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
-from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from ldm.core.corpus.indexing import FreqDistIndex
+from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
+    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -41,7 +42,7 @@ def briony_vocab_overlap(top_n_words):
 
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
     corpus_words = freq_dist.most_common_tokens(top_n_words)
 
     # Useful numbers to report
@@ -64,7 +65,7 @@ def briony_categories_overlap(top_n_words):
 
     # Frequent words in corpus
     corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = BBC
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
     corpus_words = set(freq_dist.most_common_tokens(top_n_words))
 
     logger.info(f"Top {top_n_words} words:")
@@ -86,7 +87,8 @@ def main():
     granularity = 100
     node_decay_factors = [0.99, 0.9, 0.8]
     edge_decay_sd_fracs = [0.1, 0.15, 0.2]
-    activation_thresholds = [0.1, 0.2, 0.3]
+    activation_thresholds = [0.2, 0.3, 0.4]
+    impulse_pruning_threshold = 0.1
 
     # Use most frequent words, excluding the *very* most frequent ones
     top_n_words = 3_000
@@ -105,9 +107,8 @@ def main():
 
     logger.info("Training distributional model")
     corpus_meta = CorpusPreferences.source_corpus_metas[1] # 1 = BBC
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    ldm_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, token_indices=ldm_index)
+    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
     filtered_words = set(freq_dist.most_common_tokens(top_n_words))
@@ -121,7 +122,7 @@ def main():
                 f"and a maximum of {int(0.5 * len(filtered_words) * (len(filtered_words) - 1)):,} connections")
 
     # Build index-lookup dictionaries
-    filtered_indices = sorted([ldm_index.token2id[w] for w in filtered_words])
+    filtered_indices = sorted([freq_dist.token2id[w] for w in filtered_words])
     ldm_to_matrix, matrix_to_ldm = filtering_dictionaries(filtered_indices)
 
     # Build distance matrix
@@ -131,12 +132,10 @@ def main():
 
     # Build graph
     logger.info("Building graph")
-    word_graph = TemporalSpreadingActivation.graph_from_distance_matrix(
+    word_graph = graph_from_distance_matrix(
         distance_matrix=distance_matrix.copy(),
         weighted_graph=False,
-        length_granularity=granularity,
-        # Relabel nodes with words rather than indices
-        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, ldm_index))
+        length_granularity=granularity)
 
     # Run multiple times with different parameters
 
@@ -162,13 +161,15 @@ def main():
                     logger.info(f"Setting up spreading output")
                     logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
-                    tsa = TemporalSpreadingActivation(
-                        graph=word_graph,
-                        activation_threshold=activation_threshold,
-                        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-                            decay_factor=node_decay_factor),
-                        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd_fraction(
-                            sd_frac=edge_decay_sd_frac, granularity=granularity))
+                    tsa = TemporalSpreadingActivation(graph=word_graph,
+                                                      node_relabelling_dictionary=build_relabelling_dictionary(
+                                                          ldm_to_matrix, freq_dist),
+                                                      activation_threshold=activation_threshold,
+                                                      impulse_pruning_threshold=impulse_pruning_threshold,
+                                                      node_decay_function=decay_function_exponential_with_decay_factor(
+                                                          decay_factor=node_decay_factor),
+                                                      edge_decay_function=decay_function_gaussian_with_sd_fraction(
+                                                          sd_frac=edge_decay_sd_frac, granularity=granularity))
 
                     logger.info(f"Initial node {category}")
                     tsa.activate_node(category, 1)
@@ -185,7 +186,7 @@ def main():
                         ordered_word_list.extend(tsa.nodes_activated_this_tick)
 
                         # Break early if we've got a probable explosion
-                        if tsa.n_suprathreshold_nodes > explosion_bailout:
+                        if tsa.n_suprathreshold_nodes() > explosion_bailout:
                             logger.info("EXPLOSION BAILOUT!")
                             break
 
@@ -225,10 +226,10 @@ def filtering_dictionaries(filtered_indices):
     return ldm_to_matrix_index, matrix_to_ldm_index
 
 
-def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
+def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDistIndex):
     relabelling_dictionary = dict()
     for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictionary[matrix_index] = distributional_model_index.id2token[token_index]
+        relabelling_dictionary[matrix_index] = freq_dist.id2token[token_index]
     return relabelling_dictionary
 
 

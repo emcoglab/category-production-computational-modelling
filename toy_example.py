@@ -20,7 +20,8 @@ import sys
 
 from numpy import array
 
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
+    decay_function_exponential_with_decay_factor
 from model.tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
@@ -32,20 +33,20 @@ def main():
     logger.info("Building graph...")
 
     sa = TemporalSpreadingActivation(
-        graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+        graph=graph_from_distance_matrix(
             distance_matrix=array([
                 [.0, .3, .6],  # Lion
                 [.3, .0, .4],  # Tiger
                 [.6, .4, .0],  # Stripes
             ]),
             weighted_graph=True,
-            length_granularity=10,
-            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+            length_granularity=10
         ),
+        node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
         activation_threshold=.2,
-        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+        node_decay_function=decay_function_exponential_with_decay_factor(
             decay_factor=0.8),
-        edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
+        edge_decay_function=decay_function_exponential_with_decay_factor(
             decay_factor=0.8),
     )
 
