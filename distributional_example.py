@@ -16,7 +16,6 @@ caiwingfield.net
 """
 
 import logging
-import random
 import sys
 from os import path
 
@@ -30,7 +29,6 @@ from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 
-
 logger = logging.getLogger()
 
 
@@ -41,9 +39,9 @@ def main():
 
     logger.info("Training distributional model")
 
-    corpus_meta = CorpusPreferences.source_corpus_metas[0]
+    corpus_meta = CorpusPreferences.source_corpus_metas[1] # 1 = BBC
     freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, freq_dist=freq_dist)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
     # Words 101–3k
@@ -71,16 +69,16 @@ def main():
         weight_factor=20)
 
     n_ticks = 200
-    bailout = 200
+    # Bail on computation if more than 50% of nodes get activated
+    bailout = int(0.5 * len(graph.nodes))
 
     # Run multiple times with different parameters
 
-    results_df = DataFrame()
-
-    initial_word = random.choice(tuple(filtered_words))
+    initial_word = "school"
 
     impulse_pruning_threshold = 0.05
 
+    d = []
     for activation_threshold in [0.4, 0.6, 0.8, 1.0]:
         for node_decay_factor in [0.85, 0.9, 0.99]:
             for edge_decay_sd in [10, 15, 20]:
@@ -100,28 +98,30 @@ def main():
                         sd=edge_decay_sd))
 
                 logger.info(f"Initial node {initial_word}")
-                tsa.activate_node(initial_word, 1)
+                initial_node = tsa.label2node[initial_word]
+                tsa.activate_node(initial_node, 1)
 
                 logger.info("Running spreading output")
                 for tick in range(1, n_ticks):
                     logger.info(f"Clock = {tick}")
-                    tsa.tick()
+                    nodes_fired = tsa.tick()
 
-                    # Break early if we've got a probable explosion
-                    # if tsa.n_suprathreshold_nodes > bailout:
-                    #     logger.warning(f"{tsa.n_suprathreshold_nodes} nodes active... Bailout!!")
-                    #     break
+                    # Record results
+                    d.append({
+                        'Tick': tick,
+                        'Nodes fired': ", ".join([tsa.node2label[n] for n in nodes_fired]),
+                        "Activation threshold": activation_threshold,
+                        "Node decay factor": node_decay_factor,
+                        "Edge decay SD": edge_decay_sd,
+                    })
 
-                # Prepare results
-                # results_these_params = tsa.activation_history
-                # results_these_params["Activation threshold"] = activation_threshold
-                # results_these_params["Node decay factor"] = node_decay_factor
-                # results_these_params["Edge decay SD"] = edge_decay_sd
-                # results_these_params["Run"] = run
-                #
-                # results_df = results_df.append(results_these_params)
+                    # Every so often, check if we've got explosive behaviour
+                    if tick % 10 == 0:
+                        if tsa.n_suprathreshold_nodes() >= bailout:
+                            logger.warning("Bailout!")
+                            break
 
-    # results_df.to_csv(csv_location, header=True, index=False)
+    DataFrame(d).to_csv(csv_location, header=True, index=False)
 
 
 def filtering_dictionaries(filtered_indices):
