@@ -20,8 +20,9 @@ import unittest
 from numpy import array, log
 
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, graph_from_distance_matrix, decay_function_exponential_with_half_life, \
+    decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
     decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
+from model.graph import graph_from_distance_matrix
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):

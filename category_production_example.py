@@ -26,8 +26,10 @@ from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
+from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
+from model.graph import graph_from_distance_matrix
+from model.utils.indexing import list_index_dictionaries
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -108,6 +110,7 @@ def main():
     logger.info("Training distributional model")
     corpus_meta = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    token_index = TokenIndex.from_freqdist_ranks(freq_dist)
     distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
@@ -122,12 +125,18 @@ def main():
                 f"and a maximum of {int(0.5 * len(filtered_words) * (len(filtered_words) - 1)):,} connections")
 
     # Build index-lookup dictionaries
-    filtered_indices = sorted([freq_dist.token2id[w] for w in filtered_words])
-    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries(filtered_indices)
+    filtered_ldm_ids = sorted([freq_dist.token2id[w] for w in filtered_words])
 
+    # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
+    ldm_to_matrix, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
+
+    # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
+    # nodes (i.e. the word for the ldm-id corresponding to that row-id).
+    node_relabelling_dictionary = { node_id: token_index.id2token[ldm_id]
+                                    for node_id, ldm_id in matrix_to_ldm.items() }
     # Build distance matrix
     logger.info("Constructing distance matrix")
-    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :].copy()
+    embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :].copy()
     distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
 
     # Build graph
@@ -162,8 +171,7 @@ def main():
                     logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
                     tsa = TemporalSpreadingActivation(graph=word_graph,
-                                                      node_relabelling_dictionary=build_relabelling_dictionary(
-                                                          ldm_to_matrix, freq_dist),
+                                                      node_relabelling_dictionary=node_relabelling_dictionary,
                                                       activation_threshold=activation_threshold,
                                                       impulse_pruning_threshold=impulse_pruning_threshold,
                                                       node_decay_function=decay_function_exponential_with_decay_factor(
@@ -212,26 +220,6 @@ def main():
                     results_df = results_df.append(results_these_params, ignore_index=True)
 
         results_df.to_csv(csv_location, header=True, index=False)
-
-
-def filtering_dictionaries(filtered_indices):
-    # A lookup dictionary which converts the index of a word in the LDM to its index in the specific filtered matrix
-    ldm_to_matrix_index = {}
-    # A lookup dictionary which converts the index of a word in the specific filtered distance matrix to its index in
-    # the LDM
-    matrix_to_ldm_index = {}
-    for i, filtered_index in enumerate(filtered_indices):
-        ldm_to_matrix_index[filtered_index] = i
-        matrix_to_ldm_index[i] = filtered_index
-    return ldm_to_matrix_index, matrix_to_ldm_index
-
-
-def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDist):
-    ti = TokenIndex.from_freqdist_ranks(freq_dist)
-    relabelling_dictionary = dict()
-    for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictionary[matrix_index] = ti.id2token[token_index]
-    return relabelling_dictionary
 
 
 if __name__ == '__main__':

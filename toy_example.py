@@ -20,8 +20,9 @@ import sys
 
 from numpy import array
 
-from model.temporal_spreading_activation import TemporalSpreadingActivation, graph_from_distance_matrix, \
+from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor
+from model.graph import graph_from_distance_matrix
 from model.tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
