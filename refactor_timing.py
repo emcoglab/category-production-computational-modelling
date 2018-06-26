@@ -22,7 +22,7 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from ldm.core.corpus.indexing import FreqDistIndex
+from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import ConditionalProbabilityModel
 from ldm.core.utils.logging import date_format, log_message
 from ldm.preferences.preferences import Preferences as CorpusPreferences
@@ -53,8 +53,8 @@ def main():
     csv_location = path.join(box_root, "refactor_activations.csv")
 
     logger.info("Training distributional model")
-    corpus_meta = CorpusPreferences.source_corpus_metas[1]  # 1 = bbc
-    freq_dist = FreqDistIndex.load(corpus_meta.freq_dist_path)
+    corpus_meta = CorpusPreferences.source_corpus_metas.bbc
+    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
     distributional_model = ConditionalProbabilityModel(corpus_meta, window_radius=1, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
@@ -126,10 +126,11 @@ def filtering_dictionaries(filtered_indices):
     return ldm_to_matrix_index, matrix_to_ldm_index
 
 
-def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDistIndex):
+def build_relabelling_dictionary(ldm_to_matrix, freq_dist: FreqDist):
+    ti = TokenIndex.from_freqdist_ranks(freq_dist)
     relabelling_dictinoary = dict()
     for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictinoary[matrix_index] = freq_dist.id2token[token_index]
+        relabelling_dictinoary[matrix_index] = ti.id2token[token_index]
     return relabelling_dictinoary
 
 
