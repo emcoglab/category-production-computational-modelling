@@ -19,17 +19,20 @@ import logging
 import sys
 from os import path
 
+from networkx import read_gpickle, write_gpickle
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.logging import log_message, date_format
+from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.graph import graph_from_distance_matrix
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
-from model.graph import graph_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
+from preferences import Preferences
 
 logger = logging.getLogger()
 
@@ -41,19 +44,18 @@ def main():
 
     n_words = 3_000
     n_ticks = 1_000
-    initial_word = "school"
+    length_factor = 1_000
+    initial_word = "fruit"
     impulse_pruning_threshold = 0.05
 
     # Bail on computation if too many nodes get activated
     bailout = n_words * 0.5
 
-    logger.info("Training distributional model")
-
-    corpus_meta = CorpusPreferences.source_corpus_metas.bbc
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
+    corpus = CorpusPreferences.source_corpus_metas.bbc
+    freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
-    distributional_model.train(memory_map=True)
+    distance_type = DistanceType.cosine
+    distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     # Words 101–3k
     filtered_words = set(freq_dist.most_common_tokens(n_words)) - set(freq_dist.most_common_tokens(100))
@@ -67,28 +69,39 @@ def main():
     node_relabelling_dictionary = { node_id: token_index.id2token[ldm_id]
                                     for (node_id, ldm_id) in matrix_to_ldm.items() }
 
-    logger.info("Constructing weight matrix")
+    graph_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.pickle"
+    graph_path = path.join(Preferences.graphs_dir, graph_filename)
 
-    # First coordinate (row index) points to target words
-    embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
+    if path.isfile(graph_path):
+        logger.info("Loading graph")
+        graph = read_gpickle(graph_path)
+    else:
+        logger.info("Training distributional model")
+        distributional_model.train(memory_map=True)
 
-    # Convert to distance matrix
-    distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
+        logger.info("Constructing weight matrix")
 
-    logger.info("Building graph")
+        # First coordinate (row index) points to target words
+        embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
 
-    graph = graph_from_distance_matrix(
-        distance_matrix=distance_matrix,
-        weighted_graph=False,
-        length_granularity=1000)
+        # Convert to distance matrix
+        distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
+
+        logger.info("Building graph")
+        graph = graph_from_distance_matrix(
+            distance_matrix=distance_matrix,
+            weighted_graph=False,
+            length_granularity=length_factor)
+        logger.info("Saving graph")
+        write_gpickle(graph, graph_path)
 
     d = []
-    for activation_threshold in [0.4]:
+    for activation_threshold in [0.8]:
         for node_decay_factor in [0.99]:
             for edge_decay_sd in [400]:
 
                 logger.info(f"Setting up spreading output")
-                logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                logger.info(f"Using values: l={length_factor}, θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
                 tsa = TemporalSpreadingActivation(
                     graph=graph,
@@ -107,11 +120,15 @@ def main():
                 for tick in range(1, n_ticks):
                     logger.info(f"Clock = {tick}")
                     nodes_fired = tsa.tick()
+                    nodes_fired_str = ", ".join([f"{tsa.node2label[n]} ({tsa.activation_of_node(n):.3})" for n in nodes_fired])
+
+                    if len(nodes_fired) > 0:
+                        logger.info("\t" + nodes_fired_str)
 
                     # Record results
                     d.append({
                         'Tick': tick,
-                        'Nodes fired': ", ".join([f"{tsa.node2label[n]} ({tsa.activation_of_node(n):.3})" for n in nodes_fired]),
+                        'Nodes fired': nodes_fired_str,
                         "Activation threshold": activation_threshold,
                         "Node decay factor": node_decay_factor,
                         "Edge decay SD": edge_decay_sd,
