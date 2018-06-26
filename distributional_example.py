@@ -39,13 +39,13 @@ def main():
     box_root = "/Users/caiwingfield/Box Sync/WIP/"
     csv_location = path.join(box_root, "activated node counts.csv")
 
-    n_ticks = 500
-    n_words = 3_000  # school is approx #340
-    initial_word = "fruit"
+    n_words = 3_000
+    n_ticks = 1_000
+    initial_word = "school"
     impulse_pruning_threshold = 0.05
 
     # Bail on computation if too many nodes get activated
-    bailout = n_words * 0.2  # 0.2 = 20% of nodes
+    bailout = n_words * 0.5
 
     logger.info("Training distributional model")
 
@@ -83,9 +83,9 @@ def main():
         length_granularity=1000)
 
     d = []
-    for activation_threshold in [0.4, 0.6, 0.8]:
-        for node_decay_factor in [0.85, 0.9, 0.99]:
-            for edge_decay_sd in [10, 15, 20]:
+    for activation_threshold in [0.4]:
+        for node_decay_factor in [0.99]:
+            for edge_decay_sd in [400]:
 
                 logger.info(f"Setting up spreading output")
                 logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
@@ -111,10 +111,11 @@ def main():
                     # Record results
                     d.append({
                         'Tick': tick,
-                        'Nodes fired': ", ".join([tsa.node2label[n] for n in nodes_fired]),
+                        'Nodes fired': ", ".join([f"{tsa.node2label[n]} ({tsa.activation_of_node(n):.3})" for n in nodes_fired]),
                         "Activation threshold": activation_threshold,
                         "Node decay factor": node_decay_factor,
                         "Edge decay SD": edge_decay_sd,
+                        "Activated nodes": tsa.n_suprathreshold_nodes()
                     })
 
                     # Every so often, check if we've got explosive behaviour
