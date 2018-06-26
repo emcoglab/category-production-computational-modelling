@@ -29,7 +29,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
-    box_root = "/Users/caiwingfield/Box Sync/LANGBOOT Project/SA model/Notes/2018-04-16 Activated node counts/"
+    box_root = "/Users/caiwingfield/Box Sync/WIP/"
     csv_location = path.join(box_root, "activated node counts.csv")
 
     results_df = read_csv(csv_location, header=0, index_col=False)
@@ -40,7 +40,7 @@ def main():
 def save_example(fig_location, results_df):
     data = results_df
 
-    for d in [0.99, 0.9, 0.8]:
+    for d in [0.85, 0.9, 0.99]:
         for s in [10, 15, 20]:
 
             ax = seaborn.tsplot(
@@ -48,8 +48,8 @@ def save_example(fig_location, results_df):
                     (data["Node decay factor"] == d)
                     & (data["Edge decay SD"] == s)
                 ],
-                time="Tick", value="Activated nodes", unit="Run",
-                condition="Threshold",
+                time="clock", value="n_activated", unit="Run",
+                condition="Activation threshold",
                 err_style="unit_traces",
             )
 

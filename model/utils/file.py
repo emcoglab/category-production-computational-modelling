@@ -1,6 +1,6 @@
 """
 ===========================
-Useful utility functions.
+Utility functions for files.
 ===========================
 
 Dr. Cai Wingfield
@@ -18,7 +18,7 @@ caiwingfield.net
 import os
 from os import path
 
-from pandas import Series, read_csv, DataFrame
+from pandas import read_csv, DataFrame, Series
 from pandas.errors import EmptyDataError
 
 

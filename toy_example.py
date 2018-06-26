@@ -18,11 +18,12 @@ caiwingfield.net
 import logging
 import sys
 
-from matplotlib.backends.backend_pdf import PdfPages
 from numpy import array
 
-from temporal_spreading_activation import TemporalSpreadingActivation
-from tsa_visualisation import run_with_pdf_output
+from model.temporal_spreading_activation import TemporalSpreadingActivation, \
+    decay_function_exponential_with_decay_factor
+from model.graph import graph_from_distance_matrix
+from model.tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(message)s'
@@ -32,30 +33,31 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def main():
     logger.info("Building graph...")
 
-    sa = TemporalSpreadingActivation(
-        graph=TemporalSpreadingActivation.graph_from_distance_matrix(
+    tsa = TemporalSpreadingActivation(
+        graph=graph_from_distance_matrix(
             distance_matrix=array([
                 [.0, .3, .6],  # Lion
                 [.3, .0, .4],  # Tiger
                 [.6, .4, .0],  # Stripes
             ]),
             weighted_graph=True,
-            length_granularity=10,
-            relabelling_dict={0: "lion", 1: "tiger", 2: "stripes"}
+            length_granularity=10
         ),
-        threshold=.2,
-        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-            decay_factor=0.8),
-        edge_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-            decay_factor=0.8),
+        node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
+        activation_threshold=0.3,
+        impulse_pruning_threshold=0.1,
+        node_decay_function=decay_function_exponential_with_decay_factor(
+            decay_factor=0.9),
+        edge_decay_function=decay_function_exponential_with_decay_factor(
+            decay_factor=0.9),
     )
 
     logger.info("Activating node...")
-    sa.activate_node("lion", 1)
-    sa.log_graph()
+    tsa.activate_node(tsa.label2node["lion"], 1)
+    tsa.log_graph()
 
     logger.info("Running spreading activation...")
-    run_with_pdf_output(sa, 20, "/Users/caiwingfield/Desktop/graph.pdf")
+    run_with_pdf_output(tsa, 100, "/Users/caiwingfield/Desktop/graph.pdf")
 
 
 if __name__ == '__main__':

@@ -16,22 +16,22 @@ caiwingfield.net
 """
 
 import logging
-import random
 import sys
 from os import path
-from typing import Set
 
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
-from corpus_analysis.core.corpus.indexing import TokenIndexDictionary, FreqDist
-from corpus_analysis.core.model.count import LogCoOccurrenceCountModel
-from corpus_analysis.preferences.preferences import Preferences as CorpusPreferences
-from temporal_spreading_activation import TemporalSpreadingActivation
+from ldm.core.corpus.indexing import FreqDist, TokenIndex
+from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.core.utils.logging import log_message, date_format
+from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.temporal_spreading_activation import TemporalSpreadingActivation, \
+    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.graph import graph_from_distance_matrix
+from model.utils.indexing import list_index_dictionaries
 
 logger = logging.getLogger()
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main():
@@ -39,108 +39,96 @@ def main():
     box_root = "/Users/caiwingfield/Box Sync/WIP/"
     csv_location = path.join(box_root, "activated node counts.csv")
 
+    n_words = 3_000
+    n_ticks = 1_000
+    initial_word = "school"
+    impulse_pruning_threshold = 0.05
+
+    # Bail on computation if too many nodes get activated
+    bailout = n_words * 0.5
+
     logger.info("Training distributional model")
 
-    corpus_meta = CorpusPreferences.source_corpus_metas[0]
+    corpus_meta = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    distributional_model_index = TokenIndexDictionary.from_freqdist(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=1, token_indices=distributional_model_index)
+    token_index = TokenIndex.from_freqdist_ranks(freq_dist)
+    distributional_model = LogCoOccurrenceCountModel(corpus_meta, window_radius=5, freq_dist=freq_dist)
     distributional_model.train(memory_map=True)
 
-    # Words 101–400
-    filtered_words = get_word_list(freq_dist, top_n=400) - get_word_list(freq_dist, top_n=100)  # school is in the top 300
+    # Words 101–3k
+    filtered_words = set(freq_dist.most_common_tokens(n_words)) - set(freq_dist.most_common_tokens(100))
+    filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
 
-    filtered_indices = sorted([distributional_model_index.token2id[w] for w in filtered_words])
-    # TODO: explain what these dictionaries are
-    ldm_to_matrix, matrix_to_ldm = filtering_dictionaries([distributional_model_index.token2id[w] for w in filtered_words])
+    # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
+    _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
+
+    # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
+    # nodes (i.e. the word for the LDM-id corresponding to that row-id).
+    node_relabelling_dictionary = { node_id: token_index.id2token[ldm_id]
+                                    for (node_id, ldm_id) in matrix_to_ldm.items() }
 
     logger.info("Constructing weight matrix")
 
-    # First coordinate (row index) points to TODO: what?
-    embedding_matrix = distributional_model.matrix.tocsr()[filtered_indices, :].copy()
+    # First coordinate (row index) points to target words
+    embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
 
     # Convert to distance matrix
     distance_matrix = pairwise_distances(embedding_matrix, metric="cosine", n_jobs=-1)
 
     logger.info("Building graph")
 
-    graph = TemporalSpreadingActivation.graph_from_distance_matrix(
-        distance_matrix=distance_matrix.copy(),
+    graph = graph_from_distance_matrix(
+        distance_matrix=distance_matrix,
         weighted_graph=False,
-        length_granularity=100,
-        weight_factor=20,
-        # Relabel nodes with words rather than indices
-        relabelling_dict=build_relabelling_dictionary(ldm_to_matrix, distributional_model_index))
+        length_granularity=1000)
 
-    n_ticks = 100
-    n_runs = 10
+    d = []
+    for activation_threshold in [0.4]:
+        for node_decay_factor in [0.99]:
+            for edge_decay_sd in [400]:
 
-    # Run multiple times with different parameters
+                logger.info(f"Setting up spreading output")
+                logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
-    results = []
+                tsa = TemporalSpreadingActivation(
+                    graph=graph,
+                    activation_threshold=activation_threshold,
+                    impulse_pruning_threshold=impulse_pruning_threshold,
+                    node_relabelling_dictionary=node_relabelling_dictionary,
+                    node_decay_function=decay_function_exponential_with_decay_factor(
+                        decay_factor=node_decay_factor),
+                    edge_decay_function=decay_function_gaussian_with_sd(
+                        sd=edge_decay_sd))
 
-    for run in range(n_runs):
+                logger.info(f"Initial node {initial_word}")
+                tsa.activate_node_with_label(initial_word, 1)
 
-        initial_word = random.choice(tuple(filtered_words))
+                logger.info("Running spreading output")
+                for tick in range(1, n_ticks):
+                    logger.info(f"Clock = {tick}")
+                    nodes_fired = tsa.tick()
 
-        for threshold in [0.1, 0.2, 0.3]:
-            for node_decay_factor in [0.99, 0.9, 0.8]:
-                for edge_decay_sd in [10, 15, 20]:
+                    # Record results
+                    d.append({
+                        'Tick': tick,
+                        'Nodes fired': ", ".join([f"{tsa.node2label[n]} ({tsa.activation_of_node(n):.3})" for n in nodes_fired]),
+                        "Activation threshold": activation_threshold,
+                        "Node decay factor": node_decay_factor,
+                        "Edge decay SD": edge_decay_sd,
+                        "Activated nodes": tsa.n_suprathreshold_nodes()
+                    })
 
-                    logger.info(f"")
-                    logger.info(f"\t(run {run})")
-                    logger.info(f"Setting up spreading output")
-                    logger.info(f"Using values: θ={threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                    # Every so often, check if we've got explosive behaviour
+                    if tick % 10 == 0:
+                        if tsa.n_suprathreshold_nodes() >= bailout:
+                            logger.warning("Bailout!")
+                            break
 
-                    tsa = TemporalSpreadingActivation(
-                        graph=graph,
-                        threshold=threshold,
-                        node_decay_function=TemporalSpreadingActivation.decay_function_exponential_with_decay_factor(
-                            decay_factor=node_decay_factor),
-                        edge_decay_function=TemporalSpreadingActivation.decay_function_gaussian_with_sd(
-                            sd=edge_decay_sd))
-
-                    logger.info(f"Initial node {initial_word}")
-                    tsa.activate_node(initial_word, 1)
-
-                    results.append(
-                        [run, 0, tsa.n_suprathreshold_nodes(), threshold, node_decay_factor, edge_decay_sd])
-
-                    logger.info("Running spreading output")
-                    for tick in range(1, n_ticks):
-                        logger.info(f"Clock = {tick}")
-                        tsa.tick()
-                        results.append(
-                            [run, tick, tsa.n_suprathreshold_nodes(), threshold, node_decay_factor, edge_decay_sd])
-
-    results_df = DataFrame(data=results,
-                           columns=["Run", "Tick", "Activated nodes", "Threshold", "Node decay factor", "Edge decay SD"])
-
-    results_df.to_csv(csv_location, header=True, index=False)
-
-
-def filtering_dictionaries(filtered_indices):
-    ldm_to_matrix_index = {}
-    matrix_to_ldm_index = {}
-    for i, filtered_index in enumerate(filtered_indices):
-        ldm_to_matrix_index[filtered_index] = i
-        matrix_to_ldm_index[i] = filtered_index
-    return ldm_to_matrix_index, matrix_to_ldm_index
-
-
-def build_relabelling_dictionary(ldm_to_matrix, distributional_model_index: TokenIndexDictionary):
-    relabelling_dictinoary = dict()
-    for token_index, matrix_index in ldm_to_matrix.items():
-        relabelling_dictinoary[matrix_index] = distributional_model_index.id2token[token_index]
-    return relabelling_dictinoary
-
-
-def get_word_list(freq_dist, top_n) -> Set:
-    return {word for word, _ in freq_dist.most_common(top_n)}
+    DataFrame(d).to_csv(csv_location, header=True, index=False)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
     main()
     logger.info("Done!")
