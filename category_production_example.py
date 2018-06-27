@@ -36,54 +36,6 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def briony_vocab_overlap(top_n_words):
-    """Coverage of vocabulary in Briony's Category Production dataset."""
-    # Category production words
-    category_production = CategoryProduction()
-    category_production_words = category_production.vocabulary_single_word
-
-    # Frequent words in corpus
-    corpus_meta = CorpusPreferences.source_corpus_metas.bbc
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    corpus_words = freq_dist.most_common_tokens(top_n_words)
-
-    # Useful numbers to report
-    n_cat_prod_words = len(category_production_words)
-    n_intersection = len(set(category_production_words).intersection(set(corpus_words)))
-    n_missing = len(set(category_production_words) - set(corpus_words))
-    n_unused = len(set(corpus_words) - set(category_production_words))
-
-    logger.info(f"Category production dataset contains {n_cat_prod_words} words.")
-    logger.info(f"This includes {n_intersection} of the top {top_n_words} words in the {corpus_meta.name} corpus.")
-    logger.info(f"{n_missing} category production words are not present.")
-    logger.info(f"{n_unused} graph words are not used in the category production set.")
-
-
-def briony_categories_overlap(top_n_words):
-    """Coverage of individual category responses in Briony's Category Production dataset."""
-    # Category production words
-    category_production = CategoryProduction()
-    categories = category_production.category_labels
-
-    # Frequent words in corpus
-    corpus_meta = CorpusPreferences.source_corpus_metas.bbc
-    freq_dist = FreqDist.load(corpus_meta.freq_dist_path)
-    corpus_words = set(freq_dist.most_common_tokens(top_n_words))
-
-    logger.info(f"Top {top_n_words} words:")
-
-    for category in categories:
-        if " " in category:
-            continue
-        if category in corpus_words:
-            responses = category_production.responses_for_category(category, single_word_only=True)
-            n_present_responses = len(set(responses).intersection(set(corpus_words)))
-            percent_present_responses = 100 * n_present_responses / len(responses)
-            logger.info(f"{category}:\t{percent_present_responses:0.2f}%")
-        else:
-            logger.info(f"{category}:\t(not present)")
-
-
 def main():
     # SA parameters
     granularity = 100
