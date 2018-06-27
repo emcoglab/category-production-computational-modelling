@@ -63,17 +63,6 @@ def main():
         # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
         _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
-        # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
-        # nodes (i.e. the word for the LDM-id corresponding to that row-id).
-        node_label_dict = { node_id: token_index.id2token[ldm_id]
-                            for (node_id, ldm_id) in matrix_to_ldm.items() }
-
-        # Save node label dictionary
-        node_label_filename = f"{corpus.name} {word_count} words.nodelabels"
-        node_label_filename = path.join(Preferences.graphs_dir, node_label_filename)
-        with open(node_label_filename, mode="w", encoding="utf-8") as node_label_file:
-            json.dump(node_label_dict, node_label_file)
-
         graph_filename = f"{distributional_model.name} {distance_type.name} {word_count} words length {length_factor}.graph"
         graph_path = path.join(Preferences.graphs_dir, graph_filename)
 
@@ -101,6 +90,17 @@ def main():
 
             logger.info("Saving graph")
             save_graph(graph, graph_path)
+
+        # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
+        # nodes (i.e. the word for the LDM-id corresponding to that row-id).
+        node_label_dict = { node_id: token_index.id2token[ldm_id]
+                            for (node_id, ldm_id) in matrix_to_ldm.items() }
+
+        # Save node label dictionary
+        node_label_filename = f"{corpus.name} {word_count} words.nodelabels"
+        node_label_filename = path.join(Preferences.graphs_dir, node_label_filename)
+        with open(node_label_filename, mode="w", encoding="utf-8") as node_label_file:
+            json.dump(node_label_dict, node_label_file)
 
 
 if __name__ == '__main__':
