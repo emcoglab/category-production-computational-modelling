@@ -1,0 +1,112 @@
+"""
+===========================
+Save a number of commonly-used graphs built from the most-frequent words in the corpora.
+===========================
+
+Dr. Cai Wingfield
+---------------------------
+Embodied Cognition Lab
+Department of Psychology
+University of Lancaster
+c.wingfield@lancaster.ac.uk
+caiwingfield.net
+---------------------------
+2018
+---------------------------
+"""
+import logging
+import sys
+from os import path
+import json
+
+from sklearn.metrics.pairwise import pairwise_distances
+
+from ldm.core.corpus.indexing import FreqDist, TokenIndex
+from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.core.utils.logging import log_message, date_format
+from ldm.core.utils.maths import DistanceType
+from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.graph import graph_from_distance_matrix, save_graph
+from model.utils.indexing import list_index_dictionaries
+from preferences import Preferences
+
+logger = logging.getLogger()
+
+
+def main():
+
+    word_counts = [
+        1_000,
+        3_000,
+        5_000,
+        10_000,
+        30_000,
+        50_000,
+        100_000,
+        300_000
+    ]
+
+    length_factor = 1_000
+
+    for word_count in word_counts:
+        logger.info(f"{word_count:,} words:")
+
+        corpus = CorpusPreferences.source_corpus_metas.bbc
+        freq_dist = FreqDist.load(corpus.freq_dist_path)
+        token_index = TokenIndex.from_freqdist_ranks(freq_dist)
+        distance_type = DistanceType.cosine
+        distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+        distributional_model.train(memory_map=True)
+
+        # Words 101–3k
+        filtered_words = set(freq_dist.most_common_tokens(word_count)) - set(freq_dist.most_common_tokens(100))
+        filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
+
+        # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
+        _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
+
+        # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
+        # nodes (i.e. the word for the LDM-id corresponding to that row-id).
+        node_label_dict = { node_id: token_index.id2token[ldm_id]
+                            for (node_id, ldm_id) in matrix_to_ldm.items() }
+
+        # Save node label dictionary
+        node_label_filename = f"{corpus.name} {word_count} words.nodelabels"
+        node_label_filename = path.join(Preferences.graphs_dir, node_label_filename)
+        with open(node_label_filename, mode="w", encoding="utf-8") as node_label_file:
+            json.dump(node_label_dict, node_label_file)
+
+        graph_filename = f"{distributional_model.name} {distance_type.name} {word_count} words length {length_factor}.graph"
+        graph_path = path.join(Preferences.graphs_dir, graph_filename)
+
+        if path.isfile(graph_path):
+            logger.info(f"{graph_filename} already computed.")
+            logger.info("Skipping")
+        else:
+            logger.info("Constructing weight matrix")
+
+            # First coordinate (row index) points to target words
+            embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
+
+            # Convert to distance matrix
+            distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
+            # free ram
+            del embedding_matrix
+
+            logger.info(f"Building graph with {word_count:,} nodes")
+            graph = graph_from_distance_matrix(
+                distance_matrix=distance_matrix,
+                weighted_graph=False,
+                length_granularity=length_factor)
+            # free ram
+            del distance_matrix
+
+            logger.info("Saving graph")
+            save_graph(graph, graph_path)
+
+
+if __name__ == '__main__':
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
+    logger.info("Running %s" % " ".join(sys.argv))
+    main()
+    logger.info("Done!")
