@@ -17,10 +17,15 @@ caiwingfield.net
 
 import logging
 import sys
+from os import path
+
+from numpy import nan as nnan
+from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
+from preferences import Preferences
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -61,9 +66,11 @@ def briony_categories_overlap(top_n_words):
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     corpus_words = set(freq_dist.most_common_tokens(top_n_words))
 
-    logger.info(f"Top {top_n_words} words:")
+    logger.info(f"Top {top_n_words:,} words:")
 
+    results = []
     for category in categories:
+        # Skip multi-word categories
         if " " in category:
             continue
         if category in corpus_words:
@@ -73,6 +80,15 @@ def briony_categories_overlap(top_n_words):
             logger.info(f"{category}:\t{percent_present_responses:0.2f}%")
         else:
             logger.info(f"{category}:\t(not present)")
+            n_present_responses = nnan
+            percent_present_responses = nnan
+        results.append({
+            "Number of words": top_n_words,
+            "Category": category,
+            "Number of single-word responses covered": n_present_responses,
+            "% of single-word responses covered": percent_present_responses
+        })
+    return results
 
 
 def main():
@@ -83,9 +99,24 @@ def main():
         10_000,
         20_000,
         30_000,
+        50_000,
+        100_000,
+        200_000,
+        300_000,
     ]
+    results = DataFrame()
     for word_count in word_counts:
-        briony_categories_overlap(word_count)
+        results_this_word_count = DataFrame(briony_categories_overlap(word_count))
+        results = results.append(results_this_word_count, ignore_index=True)
+
+    # Save the overall data
+    filename = f"category production coverage words.csv"
+    results.to_csv(path.join(Preferences.output_dir, filename),
+                   columns=["Number of words",
+                            "Category",
+                            "Number of single-word responses covered",
+                            "% of single-word responses covered"],
+                   index=False)
 
 
 if __name__ == '__main__':
