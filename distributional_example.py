@@ -19,7 +19,6 @@ import logging
 import sys
 from os import path
 
-from networkx import read_gpickle, write_gpickle
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
@@ -28,7 +27,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import graph_from_distance_matrix
+from model.graph import graph_from_distance_matrix, save_graph, load_graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.indexing import list_index_dictionaries
@@ -39,10 +38,7 @@ logger = logging.getLogger()
 
 def main():
 
-    box_root = "/Users/caiwingfield/Box Sync/WIP/"
-    csv_location = path.join(box_root, "activated node counts.csv")
-
-    n_words = 3_000
+    n_words = 10_000
     n_ticks = 1_000
     length_factor = 1_000
     initial_word = "fruit"
@@ -69,12 +65,12 @@ def main():
     node_relabelling_dictionary = { node_id: token_index.id2token[ldm_id]
                                     for (node_id, ldm_id) in matrix_to_ldm.items() }
 
-    graph_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.pickle"
+    graph_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.graph"
     graph_path = path.join(Preferences.graphs_dir, graph_filename)
 
     if path.isfile(graph_path):
-        logger.info("Loading graph")
-        graph = read_gpickle(graph_path)
+        logger.info(f"Loading graph with {n_words:,} nodes")
+        graph = load_graph(graph_path)
     else:
         logger.info("Training distributional model")
         distributional_model.train(memory_map=True)
@@ -86,15 +82,21 @@ def main():
 
         # Convert to distance matrix
         distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
+        # free ram
+        del embedding_matrix
 
-        logger.info("Building graph")
+        logger.info(f"Building graph with {n_words:,} nodes")
         graph = graph_from_distance_matrix(
             distance_matrix=distance_matrix,
             weighted_graph=False,
             length_granularity=length_factor)
-        logger.info("Saving graph")
-        write_gpickle(graph, graph_path)
+        # free ram
+        del distance_matrix
 
+        logger.info("Saving graph")
+        save_graph(graph, graph_path)
+
+    # Run spreading activation
     d = []
     for activation_threshold in [0.8]:
         for node_decay_factor in [0.99]:
@@ -141,6 +143,7 @@ def main():
                             logger.warning("Bailout!")
                             break
 
+    csv_location = path.join(Preferences.output_dir, "activated node counts.csv")
     DataFrame(d).to_csv(csv_location, header=True, index=False)
 
 
