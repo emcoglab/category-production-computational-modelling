@@ -38,10 +38,10 @@ logger = logging.getLogger()
 
 def main():
 
-    n_words = 20_000
+    n_words = 10_000
     n_ticks = 1_000
     length_factor = 1_000
-    initial_word = "fruit"
+    initial_word = "colour"
     impulse_pruning_threshold = 0.05
 
     # Bail on computation if too many nodes get activated
@@ -53,9 +53,8 @@ def main():
     distance_type = DistanceType.cosine
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    # Words 101–3k
-    filtered_words = set(freq_dist.most_common_tokens(n_words)) - set(freq_dist.most_common_tokens(100))
-    filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
+    filtered_ldm_ids = sorted([token_index.token2id[token]
+                               for token in freq_dist.most_common_tokens(n_words)])
 
     # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
