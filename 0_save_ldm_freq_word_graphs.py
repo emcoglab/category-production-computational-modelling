@@ -47,15 +47,14 @@ def main():
 
     length_factor = 1_000
 
+    corpus = CorpusPreferences.source_corpus_metas.bbc
+    freq_dist = FreqDist.load(corpus.freq_dist_path)
+    token_index = TokenIndex.from_freqdist_ranks(freq_dist)
+    distance_type = DistanceType.cosine
+    distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+
     for word_count in word_counts:
         logger.info(f"{word_count:,} words:")
-
-        corpus = CorpusPreferences.source_corpus_metas.bbc
-        freq_dist = FreqDist.load(corpus.freq_dist_path)
-        token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-        distance_type = DistanceType.cosine
-        distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
-        distributional_model.train(memory_map=True)
 
         filtered_words = freq_dist.most_common_tokens(word_count)
         filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
@@ -71,6 +70,7 @@ def main():
             logger.info("Skipping")
         else:
             logger.info("Computing distance matrix")
+            distributional_model.train(memory_map=True)
             embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
             distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
             # free ram
