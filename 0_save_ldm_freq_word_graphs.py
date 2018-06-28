@@ -14,6 +14,7 @@ caiwingfield.net
 2018
 ---------------------------
 """
+
 import logging
 import sys
 from os import path
@@ -26,7 +27,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import graph_from_distance_matrix, save_graph
+from model.graph import save_graph_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -41,7 +42,7 @@ def main():
         5_000,
         10_000,
         20_000,
-        # 30_000,
+        30_000,
     ]
 
     length_factor = 1_000
@@ -70,26 +71,20 @@ def main():
             logger.info(f"{graph_filename} already computed.")
             logger.info("Skipping")
         else:
-            logger.info("Constructing weight matrix")
-
-            # First coordinate (row index) points to target words
+            logger.info("Computing distance matrix")
             embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
-
-            # Convert to distance matrix
             distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
             # free ram
             del embedding_matrix
 
-            logger.info(f"Building graph with {word_count:,} nodes")
-            graph = graph_from_distance_matrix(
+            logger.info(f"Saving graph")
+            save_graph_from_distance_matrix(
+                file_path=graph_path,
                 distance_matrix=distance_matrix,
                 weighted_graph=False,
                 length_granularity=length_factor)
             # free ram
             del distance_matrix
-
-            logger.info("Saving graph")
-            save_graph(graph, graph_path)
 
         # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
         # nodes (i.e. the word for the LDM-id corresponding to that row-id).
