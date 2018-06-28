@@ -57,8 +57,7 @@ def main():
         distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
         distributional_model.train(memory_map=True)
 
-        # Words 101–3k
-        filtered_words = set(freq_dist.most_common_tokens(word_count)) - set(freq_dist.most_common_tokens(100))
+        filtered_words = freq_dist.most_common_tokens(word_count)
         filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
 
         # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
