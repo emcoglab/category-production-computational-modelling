@@ -26,9 +26,9 @@ from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
-from model.graph import graph_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
 
 logger = logging.getLogger()
@@ -93,7 +93,7 @@ def main():
 
     # Build graph
     logger.info("Building graph")
-    word_graph = graph_from_distance_matrix(
+    word_graph = Graph.from_distance_matrix(
         distance_matrix=distance_matrix.copy(),
         weighted_graph=False,
         length_granularity=granularity)

@@ -27,7 +27,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import graph_from_distance_matrix, save_graph, load_graph
+from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.indexing import list_index_dictionaries
@@ -61,15 +61,15 @@ def main():
 
     # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
     # nodes (i.e. the word for the LDM-id corresponding to that row-id).
-    node_relabelling_dictionary = { node_id: token_index.id2token[ldm_id]
-                                    for (node_id, ldm_id) in matrix_to_ldm.items() }
+    node_relabelling_dictionary = {node_id: token_index.id2token[ldm_id]
+                                   for (node_id, ldm_id) in matrix_to_ldm.items()}
 
-    graph_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.graph"
-    graph_path = path.join(Preferences.graphs_dir, graph_filename)
+    edgelist_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
-    if path.isfile(graph_path):
+    if path.isfile(edgelist_path):
         logger.info(f"Loading graph with {n_words:,} nodes")
-        graph = load_graph(graph_path)
+        graph: Graph = Graph.load_from_edgelist(edgelist_path)
     else:
         logger.info("Training distributional model")
         distributional_model.train(memory_map=True)
@@ -85,7 +85,7 @@ def main():
         del embedding_matrix
 
         logger.info(f"Building graph with {n_words:,} nodes")
-        graph = graph_from_distance_matrix(
+        graph: Graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             weighted_graph=False,
             length_granularity=length_factor)
@@ -93,7 +93,7 @@ def main():
         del distance_matrix
 
         logger.info("Saving graph")
-        save_graph(graph, graph_path)
+        graph.save_as_edgelist(edgelist_path)
 
     # Run spreading activation
     d = []

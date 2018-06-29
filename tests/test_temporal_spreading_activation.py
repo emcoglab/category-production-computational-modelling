@@ -19,10 +19,10 @@ import unittest
 
 from numpy import array, log
 
+from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
     decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
-from model.graph import graph_from_distance_matrix
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
@@ -33,7 +33,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        graph = graph_from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             weighted_graph=True,
             length_granularity=10
@@ -64,7 +64,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        graph = graph_from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             weighted_graph=False,
             length_granularity=10,
@@ -123,7 +123,7 @@ class TestDecayFunctions(unittest.TestCase):
             [.5, .0]
         ])
         tsa_frac = TemporalSpreadingActivation(
-            graph=graph_from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
                 weighted_graph=False
@@ -135,7 +135,7 @@ class TestDecayFunctions(unittest.TestCase):
             node_relabelling_dictionary=dict()
         )
         tsa = TemporalSpreadingActivation(
-            graph=graph_from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
                 weighted_graph=False
@@ -173,7 +173,7 @@ class TestDecayFunctions(unittest.TestCase):
         sd_frac = 0.42
         granularity = 390
         tsa_390 = TemporalSpreadingActivation(
-            graph=graph_from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=granularity,
                 weighted_graph=False
@@ -186,7 +186,7 @@ class TestDecayFunctions(unittest.TestCase):
         )
         granularity = 1000
         tsa_1000 = TemporalSpreadingActivation(
-            graph=graph_from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=granularity,
                 weighted_graph=False
@@ -224,7 +224,7 @@ class TestGraphPruning(unittest.TestCase):
         granularity = 10
         pruning_threshold = 5
 
-        graph = graph_from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
             weighted_graph=False,
@@ -245,7 +245,7 @@ class TestGraphPruning(unittest.TestCase):
         granularity = 10
         pruning_threshold = 5
 
-        graph = graph_from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
             weighted_graph=False,
