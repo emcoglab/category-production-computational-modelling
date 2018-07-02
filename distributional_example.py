@@ -45,7 +45,7 @@ def main():
     impulse_pruning_threshold = 0.05
 
     # Bail on computation if too many nodes get activated
-    bailout = n_words * 0.5
+    bailout = n_words * 0.2
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -143,7 +143,7 @@ def main():
                             break
 
     csv_location = path.join(Preferences.output_dir, "activated node counts.csv")
-    DataFrame(d).to_csv(csv_location, header=True, index=False)
+    DataFrame(d).to_csv(csv_location, header=True, index='Tick')
 
 
 if __name__ == '__main__':
