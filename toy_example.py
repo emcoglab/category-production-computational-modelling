@@ -20,9 +20,9 @@ import sys
 
 from numpy import array
 
+from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor
-from model.graph import graph_from_distance_matrix
 from model.tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
@@ -34,7 +34,7 @@ def main():
     logger.info("Building graph...")
 
     tsa = TemporalSpreadingActivation(
-        graph=graph_from_distance_matrix(
+        graph=Graph.from_distance_matrix(
             distance_matrix=array([
                 [.0, .3, .6],  # Lion
                 [.3, .0, .4],  # Tiger

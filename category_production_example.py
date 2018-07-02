@@ -22,11 +22,11 @@ from os import path
 from typing import Set
 
 from category_production.category_production import CategoryProduction
-from ldm.core.corpus.indexing import FreqDist
+from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import load_graph
+from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 from model.utils.indexing import list_index_dictionaries
@@ -54,17 +54,24 @@ def main():
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
+    token_index = TokenIndex.from_freqdist_ranks(freq_dist)
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
-    filtered_ldm_ids = sorted([freq_dist.token2id[w] for w in filtered_words])
+    filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
 
     # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph = load_graph(path.join(Preferences.graphs_dir, f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.graph"))
-    node_relabelling_dictionary = json.load(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"))
+    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"))
+    # Load node relabelling dictionary
+    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
+        node_relabelling_dictionary_json = json.load(nrd_file)
+    # TODO: this isn't a great way to do this
+    node_relabelling_dictionary = dict()
+    for k, v in node_relabelling_dictionary_json.items():
+        node_relabelling_dictionary[int(k)] = v
 
     logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
 
@@ -72,15 +79,15 @@ def main():
 
     category_production = CategoryProduction()
 
-    for category in category_production.category_labels:
+    for category_label in category_production.category_labels:
 
-        actual_responses = category_production.responses_for_category(category)
+        actual_responses = category_production.responses_for_category(category_label)
 
         # Skip the check if the category won't be in the network
-        if category not in filtered_words:
+        if category_label not in filtered_words:
             continue
 
-        logger.info(f"Category: {category}")
+        logger.info(f"Category: {category_label}")
 
         tsa = TemporalSpreadingActivation(
             graph=graph,
@@ -92,7 +99,7 @@ def main():
             edge_decay_function=decay_function_gaussian_with_sd_fraction(
                 sd_frac=edge_decay_sd_frac, granularity=length_factor))
 
-        tsa.activate_node(category, 1)
+        tsa.activate_node_with_label(category_label, 1)
 
         activated_nodes = []
         for tick in range(1, n_ticks):
@@ -120,8 +127,11 @@ def main():
         response_indices = []
         # Look for indices of overlap
         for response in actual_responses:
-            index_of_response_in_activated_words = activated_nodes.index(response)
-            response_indices.append(index_of_response_in_activated_words)
+            try:
+                index_of_response_in_activated_words = activated_nodes.index(response)
+                response_indices.append(index_of_response_in_activated_words)
+            except ValueError:
+                response_indices.append(None)
 
 
 if __name__ == '__main__':

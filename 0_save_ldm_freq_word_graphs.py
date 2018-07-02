@@ -27,7 +27,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import save_graph_from_distance_matrix
+from model.graph import save_edgelist_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -64,11 +64,11 @@ def main():
         # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
         _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
-        graph_filename = f"{distributional_model.name} {distance_type.name} {word_count} words length {length_factor}.graph"
-        graph_path = path.join(Preferences.graphs_dir, graph_filename)
+        edgelist_filename = f"{distributional_model.name} {distance_type.name} {word_count} words length {length_factor}.edgelist"
+        edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
-        if path.isfile(graph_path):
-            logger.info(f"{graph_filename} already computed.")
+        if path.isfile(edgelist_path):
+            logger.info(f"{edgelist_filename} already computed.")
             logger.info("Skipping")
         else:
             logger.info("Computing distance matrix")
@@ -79,8 +79,8 @@ def main():
             del embedding_matrix
 
             logger.info(f"Saving graph")
-            save_graph_from_distance_matrix(
-                file_path=graph_path,
+            save_edgelist_from_distance_matrix(
+                file_path=edgelist_path,
                 distance_matrix=distance_matrix,
                 weighted_graph=False,
                 length_granularity=length_factor)
@@ -89,8 +89,8 @@ def main():
 
         # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
         # nodes (i.e. the word for the LDM-id corresponding to that row-id).
-        node_label_dict = { node_id: token_index.id2token[ldm_id]
-                            for (node_id, ldm_id) in matrix_to_ldm.items() }
+        node_label_dict = {node_id: token_index.id2token[ldm_id]
+                           for (node_id, ldm_id) in matrix_to_ldm.items()}
 
         # Save node label dictionary
         node_label_filename = f"{corpus.name} {word_count} words.nodelabels"
