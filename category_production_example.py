@@ -48,9 +48,8 @@ def main():
     edge_decay_sd_frac = 0.4
 
     # Bail if more than 50% of words activated
-    bailout = n_words * 0.5
+    bailout = n_words * 0.2
 
-    logger.info("Training distributional model")
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -64,8 +63,12 @@ def main():
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"))
+    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    logger.info(f"Loading graph from {graph_file_name}")
+    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
+
     # Load node relabelling dictionary
+    logger.info(f"Loading node labels")
     with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
         node_relabelling_dictionary_json = json.load(nrd_file)
     # TODO: this isn't a great way to do this
@@ -73,9 +76,10 @@ def main():
     for k, v in node_relabelling_dictionary_json.items():
         node_relabelling_dictionary[int(k)] = v
 
-    logger.info(f"Using values: θ={activation_threshold}, δ={node_decay_factor}, sd_frac={edge_decay_sd_frac}")
-
-    # Run multiple times with different parameters
+    logger.info(f"Running spreading activation")
+    logger.info(f"\tUsing values: θ = {activation_threshold})")
+    logger.info(f"\t              δ = {node_decay_factor}")
+    logger.info(f"\t        sd_frac = {edge_decay_sd_frac}")
 
     category_production = CategoryProduction()
 

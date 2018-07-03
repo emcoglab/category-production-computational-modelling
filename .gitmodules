@@ -1,4 +1,4 @@
-[submodule "corpus_analysis"]
+[submodule "ldm"]
 	path = ldm
 	url = git@github.com:emcoglab/linguistic-distributional-models.git
 [submodule "category_production"]
