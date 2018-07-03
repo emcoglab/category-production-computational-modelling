@@ -23,6 +23,6 @@ class Preferences(object):
 
     # Paths
 
-    graphs_dir = "/Volumes/Data/graphs/"
+    graphs_dir = "/Users/caiwingfield/data/graphs"
 
     output_dir = "/Users/caiwingfield/Box Sync/WIP/"
