@@ -37,6 +37,11 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
+def log_and_return(message: str) -> str:
+    logger.info(message)
+    return message + "\n"
+
+
 def main():
 
     n_words = 10_000
@@ -76,11 +81,6 @@ def main():
     for k, v in node_relabelling_dictionary_json.items():
         node_relabelling_dictionary[int(k)] = v
 
-    logger.info(f"Running spreading activation")
-    logger.info(f"\tUsing values: θ = {activation_threshold})")
-    logger.info(f"\t              δ = {node_decay_factor}")
-    logger.info(f"\t        sd_frac = {edge_decay_sd_frac}")
-
     category_production = CategoryProduction()
 
     for category_label in category_production.category_labels:
@@ -92,6 +92,13 @@ def main():
             continue
 
         logger.info(f"Category: {category_label}")
+        output_path = path.join(Preferences.output_dir, 'cp_traces', f"{category_label}_responses_{n_words:,}.txt")
+        text_block = ""
+
+        text_block += log_and_return(f"Running spreading activation")
+        text_block += log_and_return(f"\tUsing values: θ = {activation_threshold}")
+        text_block += log_and_return(f"\t              δ = {node_decay_factor}")
+        text_block += log_and_return(f"\t        sd_frac = {edge_decay_sd_frac}")
 
         tsa = TemporalSpreadingActivation(
             graph=graph,
@@ -108,25 +115,25 @@ def main():
         activated_nodes = []
         for tick in range(1, n_ticks):
 
-            logger.info(f"Clock = {tick}")
+            text_block += log_and_return(f"Clock = {tick}")
             nodes_activated_this_tick: Set = tsa.tick()
 
             activated_nodes.extend(list(nodes_activated_this_tick))
 
             # Break early if we've got a probable explosion
             if tsa.n_suprathreshold_nodes() > bailout:
-                logger.info("Bailout")
+                text_block += log_and_return("Bailout")
                 break
 
         model_responses = [response
                            for response in activated_nodes
                            if response in actual_responses]
 
-        logger.info("Actual responses:")
-        logger.info(f"\t{', '.join(actual_responses)}")
+        text_block += log_and_return("Actual responses:")
+        text_block += log_and_return(f"\t{', '.join(actual_responses)}")
 
-        logger.info("Model reponses:")
-        logger.info(f"\t{', '.join(model_responses)}")
+        text_block += log_and_return("Model reponses:")
+        text_block += log_and_return(f"\t{', '.join(model_responses)}")
 
         response_indices = []
         # Look for indices of overlap
@@ -136,6 +143,11 @@ def main():
                 response_indices.append(index_of_response_in_activated_words)
             except ValueError:
                 response_indices.append(None)
+
+        text_block += log_and_return("indices: {str(response_indices)}")
+
+        with open(output_path, mode="w", encoding="utf-8") as output_file:
+            output_file.write(text_block)
 
 
 if __name__ == '__main__':

@@ -142,7 +142,7 @@ def main():
                             logger.warning("Bailout!")
                             break
 
-    csv_location = path.join(Preferences.output_dir, "activated node counts.csv")
+    csv_location = path.join(Preferences.output_dir, f"activated node counts {n_words:,}.csv")
     DataFrame(d).to_csv(csv_location, header=True, index='Tick')
 
 
