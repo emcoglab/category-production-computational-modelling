@@ -142,18 +142,7 @@ def main():
         text_block += log_and_return("Response overlap:")
         text_block += log_and_return(f"\t{', '.join(response_overlap)}")
 
-        response_indices = []
-        # Look for indices of overlap
-        for response in actual_responses:
-            try:
-                index_of_response_in_activated_words = model_responses.index(response)
-                response_indices.append(index_of_response_in_activated_words)
-            except ValueError:
-                response_indices.append(None)
-
         # Output results
-
-        text_block += log_and_return(f"indices: {str(response_indices)}")
 
         with open(output_path, mode="w", encoding="utf-8") as output_file:
             output_file.write(text_block)
