@@ -38,7 +38,7 @@ logger = logging.getLogger()
 
 def main():
 
-    n_words = 10_000
+    n_words = 3_000
     n_ticks = 1_000
     length_factor = 1_000
     initial_word = "colour"

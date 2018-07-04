@@ -19,7 +19,6 @@ import sys
 import logging
 import json
 from os import path
-from typing import Set
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
@@ -52,8 +51,9 @@ def main():
     node_decay_factor = 0.99
     edge_decay_sd_frac = 0.4
 
-    # Bail if more than 50% of words activated
-    bailout = n_words * 0.2
+    # Bail if too many words get activated
+    # bailout = n_words * 0.2
+    bailout = 1_000
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
@@ -85,8 +85,6 @@ def main():
 
     for category_label in category_production.category_labels:
 
-        actual_responses = category_production.responses_for_category(category_label)
-
         # Skip the check if the category won't be in the network
         if category_label not in filtered_words:
             continue
@@ -100,6 +98,8 @@ def main():
         text_block += log_and_return(f"\t              δ = {node_decay_factor}")
         text_block += log_and_return(f"\t        sd_frac = {edge_decay_sd_frac}")
 
+        # Do the spreading activation
+
         tsa = TemporalSpreadingActivation(
             graph=graph,
             node_relabelling_dictionary=node_relabelling_dictionary,
@@ -112,22 +112,25 @@ def main():
 
         tsa.activate_node_with_label(category_label, 1)
 
-        activated_nodes = []
+        model_responses = []
         for tick in range(1, n_ticks):
 
-            text_block += log_and_return(f"Clock = {tick}")
-            nodes_activated_this_tick: Set = tsa.tick()
+            logger.info(f"Clock = {tick}")
+            nodes_activated_this_tick = tsa.tick()
 
-            activated_nodes.extend(list(nodes_activated_this_tick))
+            model_responses.extend([tsa.node2label[n] for n in nodes_activated_this_tick])
 
             # Break early if we've got a probable explosion
             if tsa.n_suprathreshold_nodes() > bailout:
                 text_block += log_and_return("Bailout")
                 break
 
-        model_responses = [response
-                           for response in activated_nodes
-                           if response in actual_responses]
+        # Compare model with data
+
+        actual_responses = category_production.responses_for_category(category_label)
+        response_overlap = [response
+                            for response in model_responses
+                            if response in actual_responses]
 
         text_block += log_and_return("Actual responses:")
         text_block += log_and_return(f"\t{', '.join(actual_responses)}")
@@ -135,16 +138,21 @@ def main():
         text_block += log_and_return("Model reponses:")
         text_block += log_and_return(f"\t{', '.join(model_responses)}")
 
+        text_block += log_and_return("Response overlap:")
+        text_block += log_and_return(f"\t{', '.join(response_overlap)}")
+
         response_indices = []
         # Look for indices of overlap
         for response in actual_responses:
             try:
-                index_of_response_in_activated_words = activated_nodes.index(response)
+                index_of_response_in_activated_words = model_responses.index(response)
                 response_indices.append(index_of_response_in_activated_words)
             except ValueError:
                 response_indices.append(None)
 
-        text_block += log_and_return("indices: {str(response_indices)}")
+        # Output results
+
+        text_block += log_and_return(f"indices: {str(response_indices)}")
 
         with open(output_path, mode="w", encoding="utf-8") as output_file:
             output_file.write(text_block)
