@@ -128,7 +128,7 @@ def main():
 
         # Compare model with data
 
-        actual_responses = category_production.responses_for_category(category_label)
+        actual_responses = category_production.responses_for_category(category_label, single_word_only=True)
         response_overlap = [response
                             for response in model_responses
                             if response in actual_responses]
