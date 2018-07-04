@@ -28,6 +28,7 @@ from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
+from model.utils.email import send_email
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -156,6 +157,8 @@ def main():
 
         with open(output_path, mode="w", encoding="utf-8") as output_file:
             output_file.write(text_block)
+
+    send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
 
 
 if __name__ == '__main__':

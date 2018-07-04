@@ -23,6 +23,9 @@ class Preferences(object):
 
     # Paths
 
+    email_connection_details_path = "/Users/caiwingfield/Box Sync/z Admin dox/notify@cwcomplex.net.txt"
+    target_email_address = "mail@caiwingfield.com"
+
     graphs_dir = "/Users/caiwingfield/data/graphs"
 
     output_dir = "/Users/caiwingfield/Box Sync/WIP/"
