@@ -90,64 +90,94 @@ def main():
         if category_label not in filtered_words:
             continue
 
-        logger.info(f"Category: {category_label}")
-        output_path = path.join(Preferences.output_dir, 'cp_traces', f"{category_label}_responses_{n_words:,}.txt")
-        text_block = ""
+        model_responses_path = path.join(Preferences.output_dir, 'cp_traces', f"{category_label}_responses_{n_words:,}.txt")
 
-        text_block += log_and_return(f"Running spreading activation")
-        text_block += log_and_return(f"\tUsing values: θ = {activation_threshold}")
-        text_block += log_and_return(f"\t              δ = {node_decay_factor}")
-        text_block += log_and_return(f"\t        sd_frac = {edge_decay_sd_frac}")
+        # Only run the TSA if we've not already done it
+        if not path.exists(model_responses_path):
+            text_block = ""
 
-        # Do the spreading activation
+            logger.info(f"Category: {category_label}")
 
-        tsa = TemporalSpreadingActivation(
-            graph=graph,
-            node_relabelling_dictionary=node_relabelling_dictionary,
-            activation_threshold=activation_threshold,
-            impulse_pruning_threshold=impulse_pruning_threshold,
-            node_decay_function=decay_function_exponential_with_decay_factor(
-                decay_factor=node_decay_factor),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(
-                sd_frac=edge_decay_sd_frac, granularity=length_factor))
+            text_block += log_and_return(f"# Running spreading activation using parameters:")
+            text_block += log_and_return(f"#\t      θ = {activation_threshold}")
+            text_block += log_and_return(f"#\t      δ = {node_decay_factor}")
+            text_block += log_and_return(f"#\tsd_frac = {edge_decay_sd_frac}")
 
-        tsa.activate_node_with_label(category_label, 1)
+            # Do the spreading activation
 
-        model_responses = []
-        for tick in range(1, n_ticks):
+            tsa = TemporalSpreadingActivation(
+                graph=graph,
+                node_relabelling_dictionary=node_relabelling_dictionary,
+                activation_threshold=activation_threshold,
+                impulse_pruning_threshold=impulse_pruning_threshold,
+                node_decay_function=decay_function_exponential_with_decay_factor(
+                    decay_factor=node_decay_factor),
+                edge_decay_function=decay_function_gaussian_with_sd_fraction(
+                    sd_frac=edge_decay_sd_frac, granularity=length_factor))
 
-            logger.info(f"Clock = {tick}")
-            nodes_activated_this_tick = tsa.tick()
+            tsa.activate_node_with_label(category_label, 1)
 
-            model_responses.extend([tsa.node2label[n] for n in nodes_activated_this_tick])
+            model_responses = []
+            for tick in range(1, n_ticks):
 
-            # Break early if we've got a probable explosion
-            if tsa.n_suprathreshold_nodes() > bailout:
-                text_block += log_and_return("Bailout")
-                break
+                logger.info(f"Clock = {tick}")
+                nodes_activated_this_tick = tsa.tick()
+
+                model_responses.extend([tsa.node2label[n] for n in nodes_activated_this_tick])
+
+                # Break early if we've got a probable explosion
+                if tsa.n_suprathreshold_nodes() > bailout:
+                    text_block += log_and_return("")
+                    text_block += log_and_return(f"# Spreading activation ended with a bailout after {tick} ticks.")
+                    break
+
+            text_block += "\n"
+            text_block += "# The following words were activated, in order:\n"
+
+            # Save model activated words
+            text_block += "\n".join(model_responses) + "\n"
+
+            # Output results
+
+            with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
+                output_file.write(text_block)
+
+        else:
+            logger.info(f"{model_responses_path} exists, loading prior results.")
+            with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
+                model_responses = [line.strip()
+                                   for line in model_responses_file
+                                   # Skip comments
+                                   if not line.startswith("#")]
 
         # Compare model with data
+        sort_by = CategoryProduction.ColNames.MeanRank
+        actual_responses = category_production.responses_for_category(category_label,
+                                                                      single_word_only=True,
+                                                                      sort_by=sort_by)
+        response_overlap = [mr
+                            for mr in model_responses
+                            if mr in actual_responses]
 
-        actual_responses = category_production.responses_for_category(category_label, single_word_only=True)
-        response_overlap = [response
-                            for response in model_responses
-                            if response in actual_responses]
+        model_efficacy_path = path.join(Preferences.output_dir, 'cp_traces', f"{category_label}_overlap_{sort_by}_{n_words:,}.txt")
 
-        text_block += log_and_return("Actual responses:")
-        text_block += log_and_return(f"\t{', '.join(actual_responses)}")
+        with open(model_efficacy_path, mode="w", encoding="utf-8") as model_efficacy_file:
+            model_efficacy_file.write("Model reponses:\n")
+            model_efficacy_file.write('\n\t'.join(model_responses) + "\n")
+            model_efficacy_file.write("\n")
 
-        text_block += log_and_return("Model reponses:")
-        text_block += log_and_return(f"\t{', '.join(model_responses)}")
+            model_efficacy_file.write("Actual responses:\n")
+            model_efficacy_file.write("\n\t".join(actual_responses) + "\n")
+            model_efficacy_file.write("\n")
 
-        text_block += log_and_return("Response overlap:")
-        text_block += log_and_return(f"\t{', '.join(response_overlap)}")
+            model_efficacy_file.write("Response overlap:\n")
+            model_efficacy_file.write("\n\t".join(response_overlap) + "\n")
+            model_efficacy_file.write("\n")
 
-        # Output results
+            model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
+            model_efficacy_file.write("\n\t".join([str(actual_responses.index(r)) for r in response_overlap]))
 
-        with open(output_path, mode="w", encoding="utf-8") as output_file:
-            output_file.write(text_block)
-
-    send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
+        send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
 
 
 if __name__ == '__main__':
