@@ -28,7 +28,7 @@ from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
-from model.utils.email import send_email
+from model.utils.email import Emailer
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -86,11 +86,13 @@ def main():
 
     for category_label in category_production.category_labels:
 
+        # region run model
+
         # Skip the check if the category won't be in the network
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir, 'cp_traces', f"{category_label}_responses_{n_words:,}.txt")
+        model_responses_path = path.join(Preferences.output_dir, "Category production traces", f"{category_label}_responses_{n_words:,}.txt")
 
         # Only run the TSA if we've not already done it
         if not path.exists(model_responses_path):
@@ -99,6 +101,7 @@ def main():
             logger.info(f"Category: {category_label}")
 
             text_block += log_and_return(f"# Running spreading activation using parameters:")
+            text_block += log_and_return(f"#\t  words = {n_words:,}")
             text_block += log_and_return(f"#\t      θ = {activation_threshold}")
             text_block += log_and_return(f"#\t      δ = {node_decay_factor}")
             text_block += log_and_return(f"#\tsd_frac = {edge_decay_sd_frac}")
@@ -127,11 +130,11 @@ def main():
 
                 # Break early if we've got a probable explosion
                 if tsa.n_suprathreshold_nodes() > bailout:
-                    text_block += log_and_return("")
+                    text_block += log_and_return(f"#")
                     text_block += log_and_return(f"# Spreading activation ended with a bailout after {tick} ticks.")
                     break
 
-            text_block += "\n"
+            text_block += "#\n"
             text_block += "# The following words were activated, in order:\n"
 
             # Save model activated words
@@ -150,7 +153,10 @@ def main():
                                    # Skip comments
                                    if not line.startswith("#")]
 
-        # Compare model with data
+        # endregion
+
+        # region compare model with data
+
         sort_by = CategoryProduction.ColNames.MeanRank
         actual_responses = category_production.responses_for_category(category_label,
                                                                       single_word_only=True,
@@ -159,25 +165,28 @@ def main():
                             for mr in model_responses
                             if mr in actual_responses]
 
-        model_efficacy_path = path.join(Preferences.output_dir, 'cp_traces', f"{category_label}_overlap_{sort_by}_{n_words:,}.txt")
+        model_efficacy_path = path.join(Preferences.output_dir, "Category production traces", f"{category_label}_overlap_{sort_by}_{n_words:,}.txt")
 
         with open(model_efficacy_path, mode="w", encoding="utf-8") as model_efficacy_file:
             model_efficacy_file.write("Model reponses:\n")
-            model_efficacy_file.write('\n\t'.join(model_responses) + "\n")
+            model_efficacy_file.write("\t" + "\n\t".join(model_responses) + "\n")
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Actual responses:\n")
-            model_efficacy_file.write("\n\t".join(actual_responses) + "\n")
+            model_efficacy_file.write("\t" + "\n\t".join(actual_responses) + "\n")
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Response overlap:\n")
-            model_efficacy_file.write("\n\t".join(response_overlap) + "\n")
+            model_efficacy_file.write("\t" + "\n\t".join(response_overlap) + "\n")
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
-            model_efficacy_file.write("\n\t".join([str(actual_responses.index(r)) for r in response_overlap]))
+            model_efficacy_file.write("\t" + "\n\t".join([str(actual_responses.index(r)) for r in response_overlap]))
 
-        send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
+        # endregion
+
+        emailer = Emailer(Preferences.email_connection_details_path)
+        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
 
 
 if __name__ == '__main__':
