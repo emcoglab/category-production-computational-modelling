@@ -92,7 +92,7 @@ def main():
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir, "Category production traces", f"{category_label}_responses_{n_words:,}.txt")
+        model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"{category_label}_responses_{n_words:,}.txt")
 
         # Only run the TSA if we've not already done it
         if not path.exists(model_responses_path):
@@ -165,23 +165,25 @@ def main():
                             for mr in model_responses
                             if mr in actual_responses]
 
-        model_efficacy_path = path.join(Preferences.output_dir, "Category production traces", f"{category_label}_overlap_{sort_by}_{n_words:,}.txt")
+        model_efficacy_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"{category_label}_overlap_{sort_by}_{n_words:,}.txt")
 
         with open(model_efficacy_path, mode="w", encoding="utf-8") as model_efficacy_file:
-            model_efficacy_file.write("Model reponses:\n")
-            model_efficacy_file.write("\t" + "\n\t".join(model_responses) + "\n")
-            model_efficacy_file.write("\n")
 
-            model_efficacy_file.write("Actual responses:\n")
-            model_efficacy_file.write("\t" + "\n\t".join(actual_responses) + "\n")
+            model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
+            model_efficacy_file.write("\t" + "\n\t".join([str(actual_responses.index(r)) for r in response_overlap]) + "\n")
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Response overlap:\n")
             model_efficacy_file.write("\t" + "\n\t".join(response_overlap) + "\n")
             model_efficacy_file.write("\n")
 
-            model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
-            model_efficacy_file.write("\t" + "\n\t".join([str(actual_responses.index(r)) for r in response_overlap]))
+            model_efficacy_file.write("Actual responses:\n")
+            model_efficacy_file.write("\t" + "\n\t".join(actual_responses) + "\n")
+            model_efficacy_file.write("\n")
+
+            model_efficacy_file.write("Model responses:\n")
+            model_efficacy_file.write("\t" + "\n\t".join(model_responses) + "\n")
+            model_efficacy_file.write("\n")
 
         # endregion
 
