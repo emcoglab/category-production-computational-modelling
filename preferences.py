@@ -28,4 +28,4 @@ class Preferences(object):
 
     graphs_dir = "/Users/caiwingfield/data/graphs"
 
-    output_dir = "/Users/caiwingfield/Box Sync/WIP/"
+    output_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/SA model/Results/"

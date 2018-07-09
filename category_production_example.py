@@ -92,7 +92,7 @@ def main():
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"{category_label}_responses_{n_words:,}.txt")
+        model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"responses_{category_label}_{n_words:,}.txt")
 
         # Only run the TSA if we've not already done it
         if not path.exists(model_responses_path):
@@ -165,7 +165,7 @@ def main():
                             for mr in model_responses
                             if mr in actual_responses]
 
-        model_efficacy_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"{category_label}_overlap_{sort_by}_{n_words:,}.txt")
+        model_efficacy_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"overlap_{sort_by}_{category_label}_{n_words:,}.txt")
 
         with open(model_efficacy_path, mode="w", encoding="utf-8") as model_efficacy_file:
 
