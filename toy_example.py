@@ -23,7 +23,6 @@ from numpy import array
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor
-from model.tsa_visualisation import run_with_pdf_output
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(message)s'
@@ -57,7 +56,9 @@ def main():
     tsa.log_graph()
 
     logger.info("Running spreading activation...")
-    run_with_pdf_output(tsa, 100, "/Users/caiwingfield/Desktop/graph.pdf")
+    for tick in range(1,100):
+        tsa.tick()
+        tsa.log_graph()
 
 
 if __name__ == '__main__':

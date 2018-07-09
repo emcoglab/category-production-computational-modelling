@@ -205,8 +205,8 @@ class TestDecayFunctions(unittest.TestCase):
         self.assertAlmostEqual(
             # There will be only one impulse in each edge at this point so we can just grab it without worrying about
             # the lack of ordering in the set of impulses.
-            list(tsa_390.impulses_by_edge(0, 1))[0].arrival_activation,
-            list(tsa_1000.impulses_by_edge(0, 1))[0].arrival_activation
+            set(tsa_390.impulses_headed_for(1).values()),
+            set(tsa_1000.impulses_headed_for(1).values())
         )
 
 
