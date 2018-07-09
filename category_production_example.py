@@ -131,14 +131,13 @@ def main():
             for tick in range(1, n_ticks):
 
                 logger.info(f"Clock = {tick}")
-                nodes_activated_this_tick = tsa.tick()
+                node_activations = tsa.tick()
 
-                for node in nodes_activated_this_tick:
-                    node_label = tsa.node2label[node]
+                for na in node_activations:
                     model_response_entries.append((
-                        node_label,
-                        node,
-                        tick
+                        na.node,
+                        na.activation,
+                        na.tick_activated
                     ))
 
                 # Break early if we've got a probable explosion
@@ -176,6 +175,21 @@ def main():
                             for mr in model_responses
                             if mr in category_production.responses_for_category(category_label, single_word_only=True)]
 
+        coverage_percent = 100 * len(set(response_overlap)) / len(set(category_production.responses_for_category(category_label, single_word_only=True)))
+
+        model_entries = []
+        for row in model_responses_df.iterrows():
+            model_response = row[RESPONSE]
+            tick = row[TICK_ON_WHICH_ACTIVATED]
+            model_entries.append((model_response, tick))
+
+        production_frequency_vector_for_overlap = []
+        model_response_vector_for_overlap = []
+
+        # endregion
+
+        # region save comparison output file
+
         model_effectiveness_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"model_effectiveness_{category_label}_{n_words:,}.csv")
 
         with open(model_effectiveness_path, mode="w", encoding="utf-8") as model_efficacy_file:
@@ -185,8 +199,7 @@ def main():
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Coverage: what percentage of human-listed responses are found by the model in the first 1000 ticks or before bailout?\n")
-            model_efficacy_file.write("{percent:.2f}%\n".format(percent=100 * len(set(response_overlap)) / len(
-                set(category_production.responses_for_category(category_label, single_word_only=True)))))
+            model_efficacy_file.write("{percent:.2f}%\n".format(percent=coverage_percent))
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Mean rank: where do model responses lie in order of actual responses?\n")
