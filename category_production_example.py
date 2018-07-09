@@ -187,8 +187,8 @@ def main():
 
         # endregion
 
-        emailer = Emailer(Preferences.email_connection_details_path)
-        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
+    emailer = Emailer(Preferences.email_connection_details_path)
+    emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
 
 
 if __name__ == '__main__':
