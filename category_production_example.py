@@ -157,35 +157,38 @@ def main():
 
         # region compare model with data
 
-        sort_by = CategoryProduction.ColNames.MeanRank
-        actual_responses = category_production.responses_for_category(category_label,
-                                                                      single_word_only=True,
-                                                                      sort_by=sort_by)
         response_overlap = [mr
                             for mr in model_responses
-                            if mr in actual_responses]
+                            if mr in category_production.responses_for_category(category_label, single_word_only=True)]
 
-        model_efficacy_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"overlap_{sort_by}_{category_label}_{n_words:,}.txt")
+        model_effectiveness_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"model_effectiveness_{category_label}_{n_words:,}.txt")
 
-        with open(model_efficacy_path, mode="w", encoding="utf-8") as model_efficacy_file:
+        with open(model_effectiveness_path, mode="w", encoding="utf-8") as model_efficacy_file:
 
             model_efficacy_file.write("Response overlap:\n")
             model_efficacy_file.write("\t" + "\n\t".join(response_overlap) + "\n")
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Coverage: what percentage of human-listed responses are found by the model in the first 1000 ticks or before bailout?\n")
-            model_efficacy_file.write(f"{100 * len(set(response_overlap))/len(set(actual_responses)):.2d}")
+            model_efficacy_file.write("{percent:.2f}%\n".format(percent=100 * len(set(response_overlap)) / len(
+                set(category_production.responses_for_category(category_label, single_word_only=True)))))
             model_efficacy_file.write("\n")
 
-            model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
-            model_efficacy_file.write("\t" + "\n\t".join([str(actual_responses.index(r)) for r in response_overlap]) + "\n")
+            model_efficacy_file.write("Mean rank: where do model responses lie in order of actual responses?\n")
+            model_efficacy_file.write("\t" + "\n\t".join([str(
+                category_production.responses_for_category(category_label,
+                                                           single_word_only=True,
+                                                           sort_by=CategoryProduction.ColNames.MeanRank).index(r))
+                                                          for r
+                                                          in response_overlap]) + "\n")
             model_efficacy_file.write("\n")
 
-            model_efficacy_file.write("Actual responses:\n")
-            model_efficacy_file.write("\t" + "\n\t".join(actual_responses) + "\n")
+            model_efficacy_file.write("Actual responses (ordered by Mean Rank):\n")
+            model_efficacy_file.write("\t" + "\n\t".join(category_production.responses_for_category(
+                category_label, single_word_only=True, sort_by=CategoryProduction.ColNames.MeanRank)) + "\n")
             model_efficacy_file.write("\n")
 
-            model_efficacy_file.write("Model responses:\n")
+            model_efficacy_file.write("Model responses (ordered by activation order, random order amongst ties):\n")
             model_efficacy_file.write("\t" + "\n\t".join(model_responses) + "\n")
             model_efficacy_file.write("\n")
 
