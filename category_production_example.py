@@ -169,12 +169,16 @@ def main():
 
         with open(model_efficacy_path, mode="w", encoding="utf-8") as model_efficacy_file:
 
-            model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
-            model_efficacy_file.write("\t" + "\n\t".join([str(actual_responses.index(r)) for r in response_overlap]) + "\n")
-            model_efficacy_file.write("\n")
-
             model_efficacy_file.write("Response overlap:\n")
             model_efficacy_file.write("\t" + "\n\t".join(response_overlap) + "\n")
+            model_efficacy_file.write("\n")
+
+            model_efficacy_file.write("Coverage: what percentage of human-listed responses are found by the model in the first 1000 ticks or before bailout?\n")
+            model_efficacy_file.write(f"{100 * len(set(response_overlap))/len(set(actual_responses)):.2d}")
+            model_efficacy_file.write("\n")
+
+            model_efficacy_file.write("Where do model responses lie in order of actual responses?\n")
+            model_efficacy_file.write("\t" + "\n\t".join([str(actual_responses.index(r)) for r in response_overlap]) + "\n")
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Actual responses:\n")
