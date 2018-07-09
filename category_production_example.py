@@ -20,6 +20,8 @@ import logging
 import json
 from os import path
 
+from pandas import read_csv, DataFrame
+
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
@@ -37,9 +39,14 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def log_and_return(message: str) -> str:
-    logger.info(message)
-    return message + "\n"
+# Results DataFrame column names
+RESPONSE = "Response"
+NODE_ID = "Node ID"
+TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+
+
+def comment_line_from_str(message: str) -> str:
+    return f"# {message}\n"
 
 
 def main():
@@ -92,19 +99,19 @@ def main():
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"responses_{category_label}_{n_words:,}.txt")
+        model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"responses_{category_label}_{n_words:,}.csv")
 
         # Only run the TSA if we've not already done it
         if not path.exists(model_responses_path):
-            text_block = ""
+            csv_comments = []
 
-            logger.info(f"Category: {category_label}")
+            logger.info(f"Running spreading activation for category {category_label}")
 
-            text_block += log_and_return(f"# Running spreading activation using parameters:")
-            text_block += log_and_return(f"#\t  words = {n_words:,}")
-            text_block += log_and_return(f"#\t      θ = {activation_threshold}")
-            text_block += log_and_return(f"#\t      δ = {node_decay_factor}")
-            text_block += log_and_return(f"#\tsd_frac = {edge_decay_sd_frac}")
+            csv_comments.append(f"Running spreading activation using parameters:")
+            csv_comments.append(f"\t  words = {n_words:,}")
+            csv_comments.append(f"\t      θ = {activation_threshold}")
+            csv_comments.append(f"\t      δ = {node_decay_factor}")
+            csv_comments.append(f"\tsd_frac = {edge_decay_sd_frac}")
 
             # Do the spreading activation
 
@@ -120,38 +127,46 @@ def main():
 
             tsa.activate_node_with_label(category_label, 1)
 
-            model_responses = []
+            model_response_entries = []
             for tick in range(1, n_ticks):
 
                 logger.info(f"Clock = {tick}")
                 nodes_activated_this_tick = tsa.tick()
 
-                model_responses.extend([tsa.node2label[n] for n in nodes_activated_this_tick])
+                for node in nodes_activated_this_tick:
+                    node_label = tsa.node2label[node]
+                    model_response_entries.append((
+                        node_label,
+                        node,
+                        tick
+                    ))
 
                 # Break early if we've got a probable explosion
                 if tsa.n_suprathreshold_nodes() > bailout:
-                    text_block += log_and_return(f"#")
-                    text_block += log_and_return(f"# Spreading activation ended with a bailout after {tick} ticks.")
+                    csv_comments.append(f"")
+                    csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks.")
                     break
 
-            text_block += "#\n"
-            text_block += "# The following words were activated, in order:\n"
-
-            # Save model activated words
-            text_block += "\n".join(model_responses) + "\n"
+            model_responses_df = DataFrame(model_response_entries, columns=[
+                RESPONSE,
+                NODE_ID,
+                TICK_ON_WHICH_ACTIVATED
+            ])
 
             # Output results
 
             with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
-                output_file.write(text_block)
+                # Write comments
+                for comment in csv_comments:
+                    output_file.write(f"# {comment}\n")
+                # Write data
+                model_responses_df.to_csv(output_file, index=False)
 
         else:
             logger.info(f"{model_responses_path} exists, loading prior results.")
-            with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-                model_responses = [line.strip()
-                                   for line in model_responses_file
-                                   # Skip comments
-                                   if not line.startswith("#")]
+            model_responses_df = read_csv(model_responses_path, header=0, comments="#", index=False)
+
+        model_responses = set(model_responses_df["Response"])
 
         # endregion
 
@@ -161,7 +176,7 @@ def main():
                             for mr in model_responses
                             if mr in category_production.responses_for_category(category_label, single_word_only=True)]
 
-        model_effectiveness_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"model_effectiveness_{category_label}_{n_words:,}.txt")
+        model_effectiveness_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"model_effectiveness_{category_label}_{n_words:,}.csv")
 
         with open(model_effectiveness_path, mode="w", encoding="utf-8") as model_efficacy_file:
 
@@ -189,7 +204,7 @@ def main():
             model_efficacy_file.write("\n")
 
             model_efficacy_file.write("Model responses (ordered by activation order, random order amongst ties):\n")
-            model_efficacy_file.write("\t" + "\n\t".join(model_responses) + "\n")
+            model_efficacy_file.write("\t" + "\n\t".join(model_response_entries) + "\n")
             model_efficacy_file.write("\n")
 
         # endregion
