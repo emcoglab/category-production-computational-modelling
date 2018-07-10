@@ -120,10 +120,10 @@ def main():
                 logger.info("Running spreading output")
                 for tick in range(1, n_ticks):
                     logger.info(f"Clock = {tick}")
-                    nodes_fired = tsa.tick()
-                    nodes_fired_str = ", ".join([f"{tsa.node2label[n]} ({tsa.activation_of_node(n):.3})" for n in nodes_fired])
+                    node_activations = tsa.tick()
+                    nodes_fired_str = ", ".join([f"{na.node} ({na.activation:.3})" for na in node_activations])
 
-                    if len(nodes_fired) > 0:
+                    if len(node_activations) > 0:
                         logger.info("\t" + nodes_fired_str)
 
                     # Record results
