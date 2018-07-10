@@ -217,8 +217,8 @@ def main():
             mean_rank_vector_for_overlap.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.MeanRank))
             production_frequency_vector_for_overlap.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.ProductionFrequency))
 
-        mean_rank_corr = spearmanr(model_response_vector_for_overlap, model_response_vector_for_overlap).rs
-        production_frequency_corr = spearmanr(model_response_vector_for_overlap, production_frequency_vector_for_overlap).rs
+        mean_rank_corr, _ = spearmanr(model_response_vector_for_overlap, model_response_vector_for_overlap)
+        production_frequency_corr, _ = spearmanr(model_response_vector_for_overlap, production_frequency_vector_for_overlap)
 
         # endregion
 
