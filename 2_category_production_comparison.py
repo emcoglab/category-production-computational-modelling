@@ -69,9 +69,9 @@ def main():
 
         # Load model responses
         model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"responses_{category_label}_{n_words:,}.csv")
-        model_responses_df = read_csv(model_responses_path, header=0, comments="#", index=False)
+        model_responses_df = read_csv(model_responses_path, header=0, comment="#", index_col=False)
         model_response_entries = []
-        for row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
+        for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
             model_response_entries.append(ActivatedNodeEvent(
                 node=row[RESPONSE], activation=row[ACTIVATION], tick_activated=row[TICK_ON_WHICH_ACTIVATED]))
 
@@ -84,6 +84,7 @@ def main():
             # Only interested in unique entries
             if mr.node in [existing_mr.node for existing_mr in model_response_overlap_entries]:
                 continue
+            model_response_overlap_entries.append(mr)
 
         coverage_percent = 100 * len(set(model_response_overlap_entries)) / n_actual_response_words
 
@@ -100,7 +101,7 @@ def main():
             mean_rank_vector_for_overlap.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.MeanRank))
             production_frequency_vector_for_overlap.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.ProductionFrequency))
 
-        mean_rank_corr, _ = spearmanr(model_response_vector_for_overlap, model_response_vector_for_overlap)
+        mean_rank_corr, _ = spearmanr(model_response_vector_for_overlap, mean_rank_vector_for_overlap)
         production_frequency_corr, _ = spearmanr(model_response_vector_for_overlap, production_frequency_vector_for_overlap)
 
         # endregion
