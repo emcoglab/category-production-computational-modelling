@@ -19,9 +19,9 @@ import logging
 import sys
 from os import path
 
-from numpy import nan
+from numpy import nan, mean
 from pandas import read_csv, DataFrame
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, pearsonr
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
@@ -53,6 +53,7 @@ MEAN_RANKS = "Mean ranks"
 PRODUCTION_FREQUENCIES = "Production frequencies"
 MEAN_RANK_CORRELATION = "Mean rank correlation (Spearman's; positive is better fit)"
 PRODUCTION_FREQUENCY_CORRELATION = "Production frequency correlation (Spearman's; negative is better fit)"
+FIRST_RESPONSE_RT_CORRELATION = "Production frequency correlation (Pearson's; positive is better fit)"
 
 
 def comment_line_from_str(message: str) -> str:
@@ -61,7 +62,7 @@ def comment_line_from_str(message: str) -> str:
 
 def main():
 
-    n_words = 10_000
+    n_words = 3_000
     min_f_r_f = 4
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
@@ -80,8 +81,8 @@ def main():
 
         # Dictionary of differently-ordered lists of words
         actual_response_words = [r
-                                              for r in cp.responses_for_category(category_label, single_word_only=True)
-                                              if r in filtered_words]
+                                 for r in cp.responses_for_category(category_label, single_word_only=True)
+                                 if r in filtered_words]
         n_actual_responses_in_corpus = len(actual_response_words)
         response_corpus_coverage_percent = 100 * n_actual_responses_in_corpus / len(cp.responses_for_category(category_label, single_word_only=True))
 
@@ -137,10 +138,19 @@ def main():
 
         # First rank frequency RTs
 
-        # Get the first-rank responses which have frf above threshold
-        f_r_responses = [r
-                         for r in actual_response_words
-                         if cp.data_for_category_response_pair(category_label, r, CategoryProduction.ColNames.FirstRankFrequency) >= min_f_r_f]
+        # Get the first-rank responses
+        f_r_response_entries = [r
+                                # which were also found by the model
+                                for r in model_response_overlap_entries
+                                # but only those above threshold
+                                if cp.data_for_category_response_pair(category_label, r, CategoryProduction.ColNames.FirstRankFrequency) >= min_f_r_f]
+        f_r_mean_rts = []
+        f_r_tsa_times = []
+        for response in f_r_response_entries:
+            f_r_mean_rts.append(mean(cp.rts_for_category_response_pair(category_label, response.node)))
+            f_r_tsa_times.append(response.tick_activated)
+        # noinspection PyTypeChecker
+        f_r_rt_corr, _ = pearsonr(f_r_mean_rts, f_r_tsa_times)
 
         category_comparisons.append((
             category_label,
@@ -153,7 +163,8 @@ def main():
             str(mean_ranks),
             mean_rank_corr,
             str(production_frequencies),
-            production_frequency_corr
+            production_frequency_corr,
+            f_r_rt_corr
         ))
 
     model_effectiveness_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"model_effectiveness_{n_words:,}.csv")
@@ -169,7 +180,8 @@ def main():
         MEAN_RANKS,
         MEAN_RANK_CORRELATION,
         PRODUCTION_FREQUENCIES,
-        PRODUCTION_FREQUENCY_CORRELATION
+        PRODUCTION_FREQUENCY_CORRELATION,
+        FIRST_RESPONSE_RT_CORRELATION,
     ])
     with open(model_effectiveness_path, mode="w", encoding="utf-8") as output_file:
         category_comparisons_df.to_csv(output_file, index=False)
