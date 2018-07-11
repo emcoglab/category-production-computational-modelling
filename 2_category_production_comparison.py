@@ -19,6 +19,7 @@ import logging
 import sys
 from os import path
 
+from numpy import nan
 from pandas import read_csv, DataFrame
 from scipy.stats import spearmanr
 
@@ -46,6 +47,7 @@ ACTUAL_RESPONSES_IN_CORPUS = "Actual responses in corpus"
 CORPUS_COVERAGE_OF_ACTUAL_RESPONSES = "Corpus coverage of actual responses (%)"
 OVERLAP_SIZE = "Model response overlap size"
 OVERLAP_PERCENT = "Model response overlap %"
+OVERLAP_WORDS = "Model response overlap words"
 MODEL_TIME_TO_FIRST_ACTIVATION = "Model: time to first activation"
 MEAN_RANKS = "Mean ranks"
 PRODUCTION_FREQUENCIES = "Production frequencies"
@@ -60,6 +62,7 @@ def comment_line_from_str(message: str) -> str:
 def main():
 
     n_words = 10_000
+    min_f_r_f = 4
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -76,17 +79,11 @@ def main():
             continue
 
         # Dictionary of differently-ordered lists of words
-        actual_response_words_by_mean_rank = [r
-                                              for r in cp.responses_for_category(category_label,
-                                                                                 single_word_only=True,
-                                                                                 sort_by=CategoryProduction.ColNames.MeanRank)
+        actual_response_words = [r
+                                              for r in cp.responses_for_category(category_label, single_word_only=True)
                                               if r in filtered_words]
-        n_actual_responses_in_corpus = len(actual_response_words_by_mean_rank)
+        n_actual_responses_in_corpus = len(actual_response_words)
         response_corpus_coverage_percent = 100 * n_actual_responses_in_corpus / len(cp.responses_for_category(category_label, single_word_only=True))
-
-        if n_actual_responses_in_corpus == 0:
-            logger.warning(f"None of the actual responses to the category {category_label} are in the corpus. Skipping.")
-            continue
 
         # Load model responses
         try:
@@ -107,7 +104,7 @@ def main():
         model_response_overlap_entries = []
         for mr in model_response_entries:
             # Only interested in overlap
-            if mr.node not in actual_response_words_by_mean_rank:
+            if mr.node not in actual_response_words:
                 continue
             # Only interested in unique entries
             if mr.node in [existing_mr.node for existing_mr in model_response_overlap_entries]:
@@ -115,7 +112,10 @@ def main():
             model_response_overlap_entries.append(mr)
 
         overlap_size = len(model_response_overlap_entries)
-        overlap_percent = 100 * overlap_size / n_actual_responses_in_corpus
+        if n_actual_responses_in_corpus > 0:
+            overlap_percent = 100 * overlap_size / n_actual_responses_in_corpus
+        else:
+            overlap_percent = nan
 
         # Comparison vectors
 
@@ -135,12 +135,20 @@ def main():
         # noinspection PyTypeChecker
         production_frequency_corr, _ = spearmanr(model_time_to_first_activation, production_frequencies)
 
+        # First rank frequency RTs
+
+        # Get the first-rank responses which have frf above threshold
+        f_r_responses = [r
+                         for r in actual_response_words
+                         if cp.data_for_category_response_pair(category_label, r, CategoryProduction.ColNames.FirstRankFrequency) >= min_f_r_f]
+
         category_comparisons.append((
             category_label,
             n_actual_responses_in_corpus,
             response_corpus_coverage_percent,
             overlap_size,
             overlap_percent,
+            str([e.node for e in model_response_overlap_entries]),
             str(model_time_to_first_activation),
             str(mean_ranks),
             mean_rank_corr,
@@ -156,6 +164,7 @@ def main():
         CORPUS_COVERAGE_OF_ACTUAL_RESPONSES,
         OVERLAP_SIZE,
         OVERLAP_PERCENT,
+        OVERLAP_WORDS,
         MODEL_TIME_TO_FIRST_ACTIVATION,
         MEAN_RANKS,
         MEAN_RANK_CORRELATION,
