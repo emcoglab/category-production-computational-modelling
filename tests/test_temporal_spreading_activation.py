@@ -19,10 +19,11 @@ import unittest
 
 from numpy import array, log
 
-from model.graph import Graph
+from model.graph import Graph, Edge
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
     decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
+from approximate_comparator.approximate_comparator import is_almost_equal
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
@@ -208,12 +209,15 @@ class TestDecayFunctions(unittest.TestCase):
         tsa_1000.activate_node(n=0, activation=1.0)
 
         # Different granularity, same function-maker
-        self.assertAlmostEqual(
+        almost_equal = is_almost_equal(
             # There will be only one impulse in each edge at this point so we can just grab it without worrying about
             # the lack of ordering in the set of impulses.
-            set(tsa_390.impulses_headed_for(1).values()),
-            set(tsa_1000.impulses_headed_for(1).values())
+            set(float(v) for v in tsa_390.impulses_headed_for(1).values()),
+            set(float(v) for v in tsa_1000.impulses_headed_for(1).values()),
+            places=5
         )
+
+        self.assertTrue(almost_equal)
 
 
 class TestGraphPruning(unittest.TestCase):
@@ -257,8 +261,8 @@ class TestGraphPruning(unittest.TestCase):
             weighted_graph=False,
             prune_connections_longer_than=pruning_threshold
         )
-        self.assertTrue((LION, TIGER) in graph.edges)
-        self.assertTrue((TIGER, STRIPES) in graph.edges)
+        self.assertTrue(Edge((LION, TIGER)) in graph.edges)
+        self.assertTrue(Edge((TIGER, STRIPES)) in graph.edges)
 
 
 if __name__ == '__main__':
