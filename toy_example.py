@@ -44,6 +44,7 @@ def main():
         ),
         node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
         firing_threshold=0.3,
+        conscious_access_threshold=0.3,
         impulse_pruning_threshold=0.1,
         node_decay_function=decay_function_exponential_with_decay_factor(
             decay_factor=0.9),

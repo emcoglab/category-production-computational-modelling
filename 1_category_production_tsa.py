@@ -57,6 +57,7 @@ def main():
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.8
+    conscious_access_threshold = 0.9
     node_decay_factor = 0.99
     edge_decay_sd_frac = 0.4
 
@@ -121,6 +122,7 @@ def main():
                 graph=graph,
                 node_relabelling_dictionary=node_relabelling_dictionary,
                 firing_threshold=firing_threshold,
+                conscious_access_threshold=conscious_access_threshold,
                 impulse_pruning_threshold=impulse_pruning_threshold,
                 node_decay_function=decay_function_exponential_with_decay_factor(
                     decay_factor=node_decay_factor),
