@@ -97,16 +97,18 @@ def main():
 
     # Run spreading activation
     d = []
-    for activation_threshold in [0.8]:
+    for firing_threshold in [0.8]:
         for node_decay_factor in [0.99]:
             for edge_decay_sd in [400]:
 
                 logger.info(f"Setting up spreading output")
-                logger.info(f"Using values: l={length_factor}, θ={activation_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                logger.info(f"Using values: l={length_factor}, θ={firing_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
                 tsa = TemporalSpreadingActivation(
                     graph=graph,
-                    activation_threshold=activation_threshold,
+                    firing_threshold=firing_threshold,
+                    # keep cat at ft
+                    conscious_access_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
                     node_relabelling_dictionary=node_relabelling_dictionary,
                     node_decay_function=decay_function_exponential_with_decay_factor(
@@ -121,16 +123,16 @@ def main():
                 for tick in range(1, n_ticks):
                     logger.info(f"Clock = {tick}")
                     node_activations = tsa.tick()
-                    nodes_fired_str = ", ".join([f"{na.node} ({na.activation:.3})" for na in node_activations])
+                    nodes_activated_str = ", ".join([f"{na.node} ({na.activation:.3})" for na in node_activations])
 
                     if len(node_activations) > 0:
-                        logger.info("\t" + nodes_fired_str)
+                        logger.info("\t" + nodes_activated_str)
 
                     # Record results
                     d.append({
                         'Tick': tick,
-                        'Nodes fired': nodes_fired_str,
-                        "Activation threshold": activation_threshold,
+                        'Nodes activated': nodes_activated_str,
+                        "Activation threshold": firing_threshold,
                         "Node decay factor": node_decay_factor,
                         "Edge decay SD": edge_decay_sd,
                         "Activated nodes": tsa.n_suprathreshold_nodes()

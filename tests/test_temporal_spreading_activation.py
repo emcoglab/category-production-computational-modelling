@@ -40,7 +40,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         )
         tsa = TemporalSpreadingActivation(
             graph=graph,
-            activation_threshold=0.3,
+            firing_threshold=0.3,
+            conscious_access_threshold=0.3,
             impulse_pruning_threshold=.1,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=0.9),
@@ -72,7 +73,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         tsa = TemporalSpreadingActivation(
             graph=graph,
             node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
-            activation_threshold=0.3,
+            firing_threshold=0.3,
+            conscious_access_threshold=0.3,
             impulse_pruning_threshold=.1,
             node_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
             edge_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
@@ -128,7 +130,8 @@ class TestDecayFunctions(unittest.TestCase):
                 length_granularity=100,
                 weighted_graph=False
             ),
-            activation_threshold=0.3,
+            firing_threshold=0.3,
+            conscious_access_threshold=0.3,
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd_fraction(0.42, 100),
@@ -140,7 +143,8 @@ class TestDecayFunctions(unittest.TestCase):
                 length_granularity=100,
                 weighted_graph=False
             ),
-            activation_threshold=0.3,
+            firing_threshold=0.3,
+            conscious_access_threshold=0.3,
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd(42),
@@ -179,7 +183,8 @@ class TestDecayFunctions(unittest.TestCase):
                 weighted_graph=False
             ),
             impulse_pruning_threshold=0,
-            activation_threshold=0.5,
+            firing_threshold=0.5,
+            conscious_access_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
             node_relabelling_dictionary=dict()
@@ -192,7 +197,8 @@ class TestDecayFunctions(unittest.TestCase):
                 weighted_graph=False
             ),
             impulse_pruning_threshold=0,
-            activation_threshold=0.5,
+            firing_threshold=0.5,
+            conscious_access_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
             node_relabelling_dictionary=dict()
