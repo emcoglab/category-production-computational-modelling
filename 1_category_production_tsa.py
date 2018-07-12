@@ -111,10 +111,11 @@ def main():
             logger.info(f"Running spreading activation for category {category_label}")
 
             csv_comments.append(f"Running spreading activation using parameters:")
-            csv_comments.append(f"\t  words = {n_words:,}")
-            csv_comments.append(f"\t      θ = {firing_threshold}")
-            csv_comments.append(f"\t      δ = {node_decay_factor}")
-            csv_comments.append(f"\tsd_frac = {edge_decay_sd_frac}")
+            csv_comments.append(f"\t      words = {n_words:,}")
+            csv_comments.append(f"\t   firing θ = {firing_threshold}")
+            csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
+            csv_comments.append(f"\t          δ = {node_decay_factor}")
+            csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
 
             # Do the spreading activation
 
