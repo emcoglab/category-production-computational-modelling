@@ -62,8 +62,7 @@ def main():
     edge_decay_sd_frac = 0.4
 
     # Bail if too many words get activated
-    # bailout = n_words * 0.2
-    bailout = 1_000
+    bailout = 2_000
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
