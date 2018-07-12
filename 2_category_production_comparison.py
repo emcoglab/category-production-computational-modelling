@@ -41,20 +41,6 @@ NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
-# Comparison DataFrame column names
-CATEGORY = "Category"
-ACTUAL_RESPONSES_IN_CORPUS = "Actual responses in corpus"
-CORPUS_COVERAGE_OF_ACTUAL_RESPONSES = "Corpus coverage of actual responses (%)"
-OVERLAP_SIZE = "Model response overlap size"
-OVERLAP_PERCENT = "Model response overlap %"
-OVERLAP_WORDS = "Model response overlap words"
-MODEL_TIME_TO_FIRST_ACTIVATION = "Model: time to first activation"
-MEAN_RANKS = "Mean ranks"
-PRODUCTION_FREQUENCIES = "Production frequencies"
-MEAN_RANK_CORRELATION = "Mean rank correlation (Spearman's; positive is better fit)"
-PRODUCTION_FREQUENCY_CORRELATION = "Production frequency correlation (Spearman's; negative is better fit)"
-FIRST_RESPONSE_RT_CORRELATION = "Production frequency correlation (Pearson's; positive is better fit)"
-
 
 def comment_line_from_str(message: str) -> str:
     return f"# {message}\n"
@@ -62,8 +48,8 @@ def comment_line_from_str(message: str) -> str:
 
 def main():
 
-    n_words = 3_000
-    min_f_r_f = 4
+    n_words: int = 3_000
+    min_first_rank_freq: int = 4
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -72,6 +58,11 @@ def main():
     cp = CategoryProduction()
 
     category_comparisons = []
+
+    # Average RTs for all category–first-rank-member pairs (with FRF ≥ `min_first_rank_freq`)
+    first_rank_mean_rts = []
+    # Corresponding time-to-activation of member nodes from category seed
+    first_rank_tsa_times = []
 
     for category_label in cp.category_labels:
 
@@ -139,18 +130,14 @@ def main():
         # First rank frequency RTs
 
         # Get the first-rank responses
-        f_r_response_entries = [r
-                                # which were also found by the model
-                                for r in model_response_overlap_entries
-                                # but only those above threshold
-                                if cp.data_for_category_response_pair(category_label, r, CategoryProduction.ColNames.FirstRankFrequency) >= min_f_r_f]
-        f_r_mean_rts = []
-        f_r_tsa_times = []
-        for response in f_r_response_entries:
-            f_r_mean_rts.append(mean(cp.rts_for_category_response_pair(category_label, response.node)))
-            f_r_tsa_times.append(response.tick_activated)
-        # noinspection PyTypeChecker
-        f_r_rt_corr, _ = pearsonr(f_r_mean_rts, f_r_tsa_times)
+        first_rank_entries_this_cat = [r
+                                       # which were also found by the model
+                                       for r in model_response_overlap_entries
+                                       # but only those above threshold
+                                       if cp.data_for_category_response_pair(category_label, r.node, CategoryProduction.ColNames.FirstRankFrequency) >= min_first_rank_freq]
+        for response in first_rank_entries_this_cat:
+            first_rank_mean_rts.append(mean(list(cp.rts_for_category_response_pair(category_label, response.node))))
+            first_rank_tsa_times.append(response.tick_activated)
 
         category_comparisons.append((
             category_label,
@@ -164,24 +151,26 @@ def main():
             mean_rank_corr,
             str(production_frequencies),
             production_frequency_corr,
-            f_r_rt_corr
         ))
+
+    first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tsa_times)
+    logger.info(
+        f"First response RT correlation (Pearson's; positive is better fit; FRF≥{min_first_rank_freq}) = {first_rank_rt_corr} (N = {len(first_rank_mean_rts)})")
 
     model_effectiveness_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"model_effectiveness_{n_words:,}.csv")
 
     category_comparisons_df = DataFrame(category_comparisons, columns=[
-        CATEGORY,
-        ACTUAL_RESPONSES_IN_CORPUS,
-        CORPUS_COVERAGE_OF_ACTUAL_RESPONSES,
-        OVERLAP_SIZE,
-        OVERLAP_PERCENT,
-        OVERLAP_WORDS,
-        MODEL_TIME_TO_FIRST_ACTIVATION,
-        MEAN_RANKS,
-        MEAN_RANK_CORRELATION,
-        PRODUCTION_FREQUENCIES,
-        PRODUCTION_FREQUENCY_CORRELATION,
-        FIRST_RESPONSE_RT_CORRELATION,
+        f"Category",
+        f"Actual responses in corpus",
+        f"Corpus coverage of actual responses (%)",
+        f"Model response overlap size",
+        f"Model response overlap %",
+        f"Model response overlap words",
+        f"Model: time to first activation",
+        f"Mean ranks",
+        f"Production frequencies",
+        f"Mean rank correlation (Spearman's; positive is better fit)",
+        f"Production frequency correlation (Spearman's; negative is better fit)",
     ])
     with open(model_effectiveness_path, mode="w", encoding="utf-8") as output_file:
         category_comparisons_df.to_csv(output_file, index=False)
