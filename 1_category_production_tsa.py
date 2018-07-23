@@ -175,5 +175,5 @@ def main(n_words: int=None):
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main(n_words=int(sys.argv[1]))
+    main(n_words=int(sys.argv[1]) if len(sys.argv) >= 2 else None)
     logger.info("Done!")
