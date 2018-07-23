@@ -50,9 +50,9 @@ def comment_line_from_str(message: str) -> str:
     return f"# {message}\n"
 
 
-def main():
+def main(n_words: int=None):
 
-    n_words = 10_000
+    n_words = 10_000 if n_words is None else n_words
     n_ticks = 1_000
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
@@ -175,5 +175,5 @@ def main():
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main()
+    main(n_words=sys.argv[1])
     logger.info("Done!")
