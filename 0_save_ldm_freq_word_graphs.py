@@ -31,7 +31,7 @@ from model.graph import save_edgelist_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def main():

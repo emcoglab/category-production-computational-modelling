@@ -29,7 +29,7 @@ from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.temporal_spreading_activation import ActivatedNodeEvent
 from preferences import Preferences
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
@@ -48,7 +48,7 @@ def comment_line_from_str(message: str) -> str:
 
 def main():
 
-    n_words: int = 3_000
+    n_words: int = 10_000
     min_first_rank_freq: int = 4
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
@@ -168,8 +168,8 @@ def main():
         f"Model response overlap words",
         f"Model: time to first activation",
         f"Mean ranks",
-        f"Production frequencies",
         f"Mean rank correlation (Spearman's; positive is better fit)",
+        f"Production frequencies",
         f"Production frequency correlation (Spearman's; negative is better fit)",
     ])
     with open(model_effectiveness_path, mode="w", encoding="utf-8") as output_file:

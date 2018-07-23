@@ -34,7 +34,7 @@ from model.utils.email import Emailer
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
@@ -148,7 +148,8 @@ def main():
                 # Break early if we've got a probable explosion
                 if tsa.n_suprathreshold_nodes() > bailout:
                     csv_comments.append(f"")
-                    csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks.")
+                    csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
+                                        f"with {tsa.n_suprathreshold_nodes()} nodes activated.")
                     break
 
             model_responses_df = DataFrame(model_response_entries, columns=[
