@@ -98,7 +98,9 @@ def main(n_words: int=None):
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir, f"Category production traces ({n_words:,} words)", f"responses_{category_label}_{n_words:,}.csv")
+        model_responses_path = path.join(Preferences.output_dir,
+                                         f"Category production traces ({n_words:,} words)",
+                                         f"responses_{category_label}_{n_words:,}.csv")
 
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
