@@ -20,7 +20,7 @@ import sys
 
 from numpy import array
 
-from model.graph import Graph
+from model.graph import WeightedGraph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor
 
@@ -33,13 +33,12 @@ def main():
     logger.info("Building graph...")
 
     tsa = TemporalSpreadingActivation(
-        graph=Graph.from_distance_matrix(
+        graph=WeightedGraph.from_distance_matrix(
             distance_matrix=array([
                 [.0, .3, .6],  # Lion
                 [.3, .0, .4],  # Tiger
                 [.6, .4, .0],  # Stripes
             ]),
-            weighted_graph=True,
             length_granularity=10
         ),
         node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
