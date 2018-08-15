@@ -1,9 +1,9 @@
 #$ -S /bin/bash
 #$ -q serial
-#$ -N cw_sa_15k
+#$ -N sa_15k
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=100G
+#$ -l h_vmem=60G
 
 source /etc/profile
 

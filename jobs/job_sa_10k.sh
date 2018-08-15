@@ -1,6 +1,6 @@
 #$ -S /bin/bash
 #$ -q serial
-#$ -N cw_sa_10k
+#$ -N sa_10k
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=30G
