@@ -20,7 +20,7 @@ import unittest
 from numpy import array, log
 
 from approximate_comparator.approximate_comparator import is_almost_equal
-from model.graph import Edge, WeightedGraph, UnweightedGraph
+from model.graph import Edge, Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
     decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
@@ -28,44 +28,13 @@ from model.temporal_spreading_activation import TemporalSpreadingActivation, \
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
 
-    def test_worked_example_weighted_node_values(self):
-        distance_matrix = array([
-            [.0, .3, .6],  # Lion
-            [.3, .0, .4],  # Tiger
-            [.6, .4, .0],  # Stripes
-        ])
-        graph = WeightedGraph.from_distance_matrix(
-            distance_matrix=distance_matrix,
-            length_granularity=10
-        )
-        tsa = TemporalSpreadingActivation(
-            graph=graph,
-            firing_threshold=0.3,
-            conscious_access_threshold=0.3,
-            impulse_pruning_threshold=.1,
-            node_decay_function=decay_function_exponential_with_decay_factor(
-                decay_factor=0.9),
-            edge_decay_function=decay_function_exponential_with_decay_factor(
-                decay_factor=0.9),
-            node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"}
-        )
-
-        tsa.activate_node_with_label("lion", 1)
-
-        for i in range(1, 16):
-            tsa.tick()
-
-        self.assertAlmostEqual(tsa.activation_of_node_with_label("lion"),    0.377687, places=5)
-        self.assertAlmostEqual(tsa.activation_of_node_with_label("tiger"),   0.245422, places=5)
-        self.assertAlmostEqual(tsa.activation_of_node_with_label("stripes"), 0.316084, places=5)
-
     def test_worked_example_unweighted_node_values(self):
         distance_matrix = array([
             [.0, .3, .6],  # Lion
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        graph = UnweightedGraph.from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=10,
         )
@@ -124,7 +93,7 @@ class TestDecayFunctions(unittest.TestCase):
             [.5, .0]
         ])
         tsa_frac = TemporalSpreadingActivation(
-            graph=UnweightedGraph.from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
             ),
@@ -136,7 +105,7 @@ class TestDecayFunctions(unittest.TestCase):
             node_relabelling_dictionary=dict()
         )
         tsa = TemporalSpreadingActivation(
-            graph=UnweightedGraph.from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
             ),
@@ -174,7 +143,7 @@ class TestDecayFunctions(unittest.TestCase):
         sd_frac = 0.42
         granularity = 390
         tsa_390 = TemporalSpreadingActivation(
-            graph=UnweightedGraph.from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=granularity,
             ),
@@ -187,7 +156,7 @@ class TestDecayFunctions(unittest.TestCase):
         )
         granularity = 1000
         tsa_1000 = TemporalSpreadingActivation(
-            graph=UnweightedGraph.from_distance_matrix(
+            graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=granularity,
             ),
@@ -228,7 +197,7 @@ class TestGraphPruning(unittest.TestCase):
         granularity = 10
         pruning_threshold = 5
 
-        graph = UnweightedGraph.from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
             prune_connections_longer_than=pruning_threshold
@@ -248,7 +217,7 @@ class TestGraphPruning(unittest.TestCase):
         granularity = 10
         pruning_threshold = 5
 
-        graph = UnweightedGraph.from_distance_matrix(
+        graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
             prune_connections_longer_than=pruning_threshold

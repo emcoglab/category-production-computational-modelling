@@ -87,7 +87,6 @@ def main():
         logger.info(f"Building graph with {n_words:,} nodes")
         graph: Graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
-            weighted_graph=False,
             length_granularity=length_factor)
         # free ram
         del distance_matrix

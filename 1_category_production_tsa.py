@@ -27,7 +27,7 @@ from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import UnweightedGraph
+from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 from model.utils.email import Emailer
@@ -79,7 +79,7 @@ def main(n_words: int=None):
     # Load distance matrix
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
     logger.info(f"Loading graph from {graph_file_name}")
-    graph = UnweightedGraph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
+    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")

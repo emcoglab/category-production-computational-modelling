@@ -43,7 +43,9 @@ def main():
         10_000,
         15_000,
         20_000,
+        25_000,
         30_000,
+        35_000,
         40_000,
         50_000,
     ]
@@ -83,7 +85,6 @@ def main():
             save_edgelist_from_distance_matrix(
                 file_path=edgelist_path,
                 distance_matrix=distance_matrix,
-                weighted_graph=False,
                 length_granularity=length_factor)
             # free ram
             del distance_matrix
