@@ -200,7 +200,7 @@ class TestGraphPruning(unittest.TestCase):
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
-            prune_connections_longer_than=pruning_threshold
+            ignore_edges_longer_than=pruning_threshold
         )
         self.assertFalse((LION, STRIPES) in graph.edges)
 
@@ -220,7 +220,7 @@ class TestGraphPruning(unittest.TestCase):
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
             length_granularity=granularity,
-            prune_connections_longer_than=pruning_threshold
+            ignore_edges_longer_than=pruning_threshold
         )
         self.assertTrue(Edge((LION, TIGER)) in graph.edges)
         self.assertTrue(Edge((TIGER, STRIPES)) in graph.edges)

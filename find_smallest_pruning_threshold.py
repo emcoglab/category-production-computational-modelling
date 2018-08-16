@@ -25,7 +25,7 @@ from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import edge_data_from_edgelist, Edge
+from model.graph import edge_data_from_edgelist
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
