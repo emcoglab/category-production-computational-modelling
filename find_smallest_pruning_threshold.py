@@ -86,5 +86,5 @@ def main(node_count_i):
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main(sys.argv[1])
+    main(int(sys.argv[1])-1)
     logger.info("Done!")

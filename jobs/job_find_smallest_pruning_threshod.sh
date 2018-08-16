@@ -1,10 +1,8 @@
 #$ -S /bin/bash
 #$ -q serial
 #$ -N find_pruning_thresholds
-#$ -m e
-#$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=30G
-#$ -t 0-9
+#$ -t 1-10:1
 
 source /etc/profile
 
