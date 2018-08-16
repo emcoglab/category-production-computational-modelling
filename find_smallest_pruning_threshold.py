@@ -20,7 +20,9 @@ from collections import defaultdict
 from os import path
 
 import numpy
+from matplotlib import pyplot
 from scipy.stats import percentileofscore
+from seaborn import distplot
 
 from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
@@ -71,6 +73,16 @@ def main(node_count_i):
         min_edge_lengths[n1] = min(min_edge_lengths[n1], length)
         min_edge_lengths[n2] = min(min_edge_lengths[n2], length)
 
+    f = pyplot.figure()
+    distplot(lengths)
+    f.savefig(f"/Users/caiwingfield/Desktop/length_distributions_{n_words}.png")
+    pyplot.close(f)
+
+    f = pyplot.figure()
+    distplot([length for node, length in min_edge_lengths.items()])
+    f.savefig(f"/Users/caiwingfield/Desktop/min_length_distributions_{n_words}.png")
+    pyplot.close(f)
+
     max_min_length = -numpy.inf
     for node, min_length in min_edge_lengths.items():
         max_min_length = max(max_min_length, min_length)
@@ -86,5 +98,10 @@ def main(node_count_i):
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main(int(sys.argv[1])-1)
+    # Take the given index, else do them all
+    if len(sys.argv) > 1:
+        main(int(sys.argv[1])-1)
+    else:
+        for i in range(len(NODE_COUNTS)):
+            main(i)
     logger.info("Done!")

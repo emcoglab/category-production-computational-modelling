@@ -34,15 +34,15 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 NODE_COUNTS = [
     1_000,
-    # 3_000,
-    # 5_000,
-    # 10_000,
-    # 15_000,
-    # 20_000,
-    # 25_000,
-    # 30_000,
-    # 35_000,
-    # 40_000,
+    3_000,
+    5_000,
+    10_000,
+    15_000,
+    20_000,
+    25_000,
+    30_000,
+    35_000,
+    40_000,
 ]
 LENGTH_FACTOR = 1_000
 TOP_QUANTILES = [
@@ -75,10 +75,6 @@ def main():
         logger.info(f"Loading graph from {graph_file_name}")
         graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
         logger.info(f"Graph has {len(graph.edges):,} edges")
-
-        f = pyplot.figure()
-        distplot([graph.edge_data[edge].length for edge in graph.edges])
-        f.savefig("/Users/caiwingfield/Desktop/fig.png")
 
         # Prune by percentage
         # Invert the quantiles so q of 0.1 gives TOP 10%

@@ -1,3 +1,4 @@
+#@IgnoreInspection BashAddShebang
 #$ -S /bin/bash
 #$ -q serial
 #$ -N find_pruning_thresholds
