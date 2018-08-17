@@ -1,7 +1,7 @@
 #@IgnoreInspection BashAddShebang
 #$ -S /bin/bash
 #$ -q serial
-#$ -N 10k_pruned_connectedness
+#$ -N n10k_pruned_connectedness
 #$ -l h_vmem=30G
 
 source /etc/profile
