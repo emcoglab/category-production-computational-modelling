@@ -58,15 +58,13 @@ TOP_QUANTILES = [
 ]
 
 
-def main(node_count_i):
+def main(n_words):
 
     # Load distributional model
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
-
-    n_words = NODE_COUNTS[node_count_i]
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
@@ -111,8 +109,8 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
     # Take the given index, else do them all
     if len(sys.argv) > 1:
-        main(int(sys.argv[1])-1)
+        main(int(sys.argv[1]))
     else:
-        for i in range(len(NODE_COUNTS)):
-            main(i)
+        for node_count in NODE_COUNTS:
+            main(node_count)
     logger.info("Done!")
