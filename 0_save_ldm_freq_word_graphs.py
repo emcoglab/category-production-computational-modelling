@@ -36,19 +36,6 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    word_counts = [
-        1_000,
-        3_000,
-        5_000,
-        10_000,
-        15_000,
-        20_000,
-        25_000,
-        30_000,
-        35_000,
-        40_000,
-    ]
-
     length_factor = 1_000
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
@@ -57,7 +44,7 @@ def main():
     distance_type = DistanceType.cosine
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    for word_count in word_counts:
+    for word_count in Preferences.graph_sizes:
         logger.info(f"{word_count:,} words:")
 
         filtered_words = freq_dist.most_common_tokens(word_count)

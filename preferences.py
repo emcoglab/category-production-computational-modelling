@@ -29,3 +29,20 @@ class Preferences(object):
     graphs_dir = "/Users/caiwingfield/data/graphs"
 
     output_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Results/"
+
+    figures_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Figures/"
+
+    # Graph sizes
+
+    graph_sizes = [
+        1_000,
+        3_000,
+        5_000,
+        10_000,
+        15_000,
+        20_000,
+        25_000,
+        30_000,
+        35_000,
+        40_000,
+    ]

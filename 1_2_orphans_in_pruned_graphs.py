@@ -1,6 +1,6 @@
 """
 ===========================
-Check the connectedness of pruned graphs.
+Compute pruning thresholds for graphs of different sizes.
 ===========================
 
 Dr. Cai Wingfield
@@ -14,10 +14,13 @@ caiwingfield.net
 2018
 ---------------------------
 """
+import argparse
 import json
 import logging
 import sys
 from os import path
+
+from numpy import linspace
 
 from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
@@ -30,41 +33,24 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
-NODE_COUNTS = [
-    1_000,
-    3_000,
-    5_000,
-    10_000,
-    15_000,
-    20_000,
-    25_000,
-    30_000,
-    35_000,
-    40_000,
-]
-LENGTH_FACTOR = 1_000
-TOP_QUANTILES = [
-    0.0,
-    0.1,
-    0.2,
-    0.3,
-    0.4,
-    0.5,
-    0.6,
-    0.7,
-    0.8,
-    0.9,
-    1.0,
-]
+
+# Results DataFrame column names
+RESPONSE = "Response"
+NODE_ID = "Node ID"
+ACTIVATION = "Activation"
+TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def main(n_words):
+def main(n_words: int):
 
-    # Load distributional model
+    length_factor = 1_000
+
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+
+    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
@@ -78,17 +64,14 @@ def main(n_words):
         node_relabelling_dictionary[int(k)] = v
 
     # Load the full graph
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {LENGTH_FACTOR}.edgelist"
     logger.info(f"Loading graph from {graph_file_name}")
     graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
     logger.info(f"Graph has {len(graph.edges):,} edges")
 
-    # Prune by percentage
-    # Invert the quantiles so q of 0.1 gives TOP 10%
-    pruning_lengths = [graph.edge_length_quantile(1-q) for q in TOP_QUANTILES]
-
-    for i, pruning_length in enumerate(pruning_lengths):
-        top_quantile = TOP_QUANTILES[i]
+    # Prune by quantile
+    for i, top_quantile in enumerate(linspace(0.0, 1.0, 11)):
+        # Invert the quantiles so q of 0.1 gives TOP 10%
+        pruning_length = graph.edge_length_quantile(1-top_quantile)
         logger.info(f"Pruning longest {int(100*top_quantile)}% of edges (anything longer than {pruning_length}).")
         graph.prune_longest_edges_by_quantile(top_quantile)
         logger.info(f"Graph has {len(graph.edges):,} edges")
@@ -107,10 +90,11 @@ def main(n_words):
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    # Take the given index, else do them all
-    if len(sys.argv) > 1:
-        main(int(sys.argv[1]))
-    else:
-        for node_count in NODE_COUNTS:
-            main(node_count)
+
+    parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
+    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
+                        nargs='?', default='1000')
+    args = parser.parse_args()
+
+    main(n_words=args.n_words)
     logger.info("Done!")

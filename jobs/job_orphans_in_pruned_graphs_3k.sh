@@ -1,15 +1,15 @@
 #@IgnoreInspection BashAddShebang
 #$ -S /bin/bash
 #$ -q serial
-#$ -N find_pruning_thresholds
-#$ -l h_vmem=30G
-#$ -t 1-10:1
+#$ -N n3k_pruned_connectedness
+#$ -m e
+#$ -M c.wingfield@lancaster.ac.uk
+#$ -l h_vmem=5G
 
 source /etc/profile
 
 echo Job running on compute node `uname -n`
-echo Job task $SGE_TASK_ID
 
 module add anaconda3
 
-python3 ../find_smallest_pruning_threshold.py $SGE_TASK_ID
+python3 ../1_2_orphans_in_pruned_graphs.py 3000

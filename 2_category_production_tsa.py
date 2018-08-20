@@ -14,7 +14,7 @@ caiwingfield.net
 2018
 ---------------------------
 """
-
+import argparse
 import json
 import logging
 import sys
@@ -31,6 +31,7 @@ from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 from model.utils.email import Emailer
+from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -46,13 +47,8 @@ ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def comment_line_from_str(message: str) -> str:
-    return f"# {message}\n"
+def main(n_words: int, prune_percent: int):
 
-
-def main(n_words: int=None):
-
-    n_words = 10_000 if n_words is None else n_words
     n_ticks = 1_000
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
@@ -78,9 +74,8 @@ def main(n_words: int=None):
 
     # Load distance matrix
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-    logger.info(f"Loading graph from {graph_file_name}")
-    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
-
+    logger.info(f"Loading graph from {graph_file_name}, pruning longest {prune_percent}% of edges")
+    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
     with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
@@ -166,7 +161,7 @@ def main(n_words: int=None):
             with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
                 # Write comments
                 for comment in csv_comments:
-                    output_file.write(f"# {comment}\n")
+                    output_file.write(comment_line_from_str(comment))
                 # Write data
                 model_responses_df.to_csv(output_file, index=False)
 
@@ -177,5 +172,11 @@ def main(n_words: int=None):
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main(n_words=int(sys.argv[1]) if len(sys.argv) >= 2 else None)
+
+    parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
+    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("prune_percent", type=int, help="The percentage of longest edges to prune from the graph.")
+    args = parser.parse_args()
+
+    main(n_words=args.n_words, prune_percent=args.prune_percent)
     logger.info("Done!")
