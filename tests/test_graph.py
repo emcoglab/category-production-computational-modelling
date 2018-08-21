@@ -17,7 +17,7 @@ caiwingfield.net
 
 import unittest
 
-from numpy import array
+from numpy import array, ones, eye
 
 from model.graph import Graph, Edge, Node
 
@@ -72,6 +72,69 @@ class TestGraphPruning(unittest.TestCase):
         self.assertTrue(Edge((1, 2)) in graph.edges)
         # Check absent
         self.assertFalse(Edge((0, 2)) in graph.edges)
+
+    def test_edge_pruning_with_keeping(self):
+        graph = Graph.from_distance_matrix(
+            length_granularity=1,
+            distance_matrix=array([
+                [0, 3, 5],  # Lion
+                [3, 0, 4],  # Tiger
+                [5, 4, 0],  # Stripes
+            ])
+        )
+        self.assertFalse(graph.has_orphaned_nodes())
+        graph.prune_longest_edges_by_length(3, keep_at_least_n_edges=1)
+        self.assertFalse(graph.has_orphaned_nodes())
+        graph.prune_longest_edges_by_length(3, keep_at_least_n_edges=0)
+        self.assertTrue(graph.has_orphaned_nodes())
+
+    def test_distance_matrix_pruning(self):
+        orphan_graph = Graph.from_distance_matrix(
+            length_granularity=1,
+            distance_matrix=array([
+                [0, 3, 5],  # Lion
+                [3, 0, 4],  # Tiger
+                [5, 4, 0],  # Stripes
+            ]),
+            ignore_edges_longer_than=3,
+            keep_at_least_n_edges=0
+        )
+        self.assertTrue(orphan_graph.has_orphaned_nodes())
+        non_orphan_graph = Graph.from_distance_matrix(
+            length_granularity=1,
+            distance_matrix=array([
+                [0, 3, 5],  # Lion
+                [3, 0, 4],  # Tiger
+                [5, 4, 0],  # Stripes
+            ]),
+            ignore_edges_longer_than=3,
+            keep_at_least_n_edges=1
+        )
+        self.assertFalse(non_orphan_graph.has_orphaned_nodes())
+
+    def test_keeping_enough_edges(self):
+        wide_graph = Graph.from_distance_matrix(
+            length_granularity=1,
+            # everything 10 away from everything else
+            distance_matrix=10*(ones((20, 20))-eye(20)),
+            ignore_edges_longer_than=5,
+            keep_at_least_n_edges=3
+        )
+        self.assertFalse(wide_graph.has_orphaned_nodes())
+        for node in wide_graph.nodes:
+            self.assertGreaterEqual(len(list(wide_graph.incident_edges(node))), 3)
+
+    def test_keeping_the_right_number_of_edges(self):
+        wide_graph = Graph.from_distance_matrix(
+            length_granularity=1,
+            # everything 10 away from everything else
+            distance_matrix=10*(ones((20, 20))-eye(20)),
+            ignore_edges_longer_than=5,
+            keep_at_least_n_edges=3
+        )
+        self.assertFalse(wide_graph.has_orphaned_nodes())
+        for node in wide_graph.nodes:
+            self.assertEqual(len(list(wide_graph.incident_edges(node))), 3)
 
 
 class TestGraphTopology(unittest.TestCase):
