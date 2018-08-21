@@ -1,6 +1,6 @@
 """
 ===========================
-Look for orphaned nodes in pruned graphs.
+Edge lengths by quantile and graph size.
 ===========================
 
 Dr. Cai Wingfield
@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import json
 import logging
 import sys
 from os import path
@@ -52,38 +51,16 @@ def main(n_words: int):
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
 
-    # Load node relabelling dictionary
-    logger.info(f"Loading node labels")
-    # TODO: this is duplicated code and can be refactored out in to a library function
-    # TODO: in fact, it SHOULD be
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r",
-              encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    node_relabelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
-
     # Load the full graph
     logger.info(f"Loading graph from {graph_file_name}")
     graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
-    logger.info(f"Graph has {len(graph.edges):,} edges")
+
+    top_quantiles = linspace(0.0, 1.0, 11)
 
     # Prune by quantile
-    for i, top_quantile in enumerate(linspace(0.0, 1.0, 11)):
-        # Invert the quantiles so q of 0.1 gives TOP 10%
-        pruning_length = graph.edge_length_quantile(1-top_quantile)
-        logger.info(f"Pruning longest {int(100*top_quantile)}% of edges (anything longer than {pruning_length}).")
-        graph.prune_longest_edges_by_quantile(top_quantile)
-        logger.info(f"Graph has {len(graph.edges):,} edges")
-        if graph.has_orphaned_nodes():
-            orphaned_nodes = graph.orphaned_nodes()
-            orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
-            logger.info(f"Graph has {len(orphaned_nodes)} orphaned nodes "
-                        f"({len(orphaned_nodes)/len(graph.nodes):.2}% of total): "
-                        f"{', '.join(orphaned_node_labels)}")
-        else:
-            logger.info("Graph has no orphaned nodes")
-        logger.info("")
+    for i, top_quantile in enumerate(top_quantiles):
+        pruning_length = graph.edge_length_quantile(top_quantile)
+        logger.info(f"Edges above the {int(100*top_quantile)}% percentile are those longer than {pruning_length}).")
     logger.info("")
 
 
