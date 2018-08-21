@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+qsub job_length_quantiles_1k.sh
+qsub job_length_quantiles_3k.sh
+qsub job_length_quantiles_5k.sh
+qsub job_length_quantiles_10k.sh
+qsub job_length_quantiles_15k.sh
+qsub job_length_quantiles_20k.sh
+qsub job_length_quantiles_30k.sh
+qsub job_length_quantiles_40k.sh
