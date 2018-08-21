@@ -124,18 +124,6 @@ class TestGraphPruning(unittest.TestCase):
         for node in wide_graph.nodes:
             self.assertGreaterEqual(len(list(wide_graph.incident_edges(node))), 3)
 
-    def test_keeping_the_right_number_of_edges(self):
-        wide_graph = Graph.from_distance_matrix(
-            length_granularity=1,
-            # everything 10 away from everything else
-            distance_matrix=10*(ones((20, 20))-eye(20)),
-            ignore_edges_longer_than=5,
-            keep_at_least_n_edges=3
-        )
-        self.assertFalse(wide_graph.has_orphaned_nodes())
-        for node in wide_graph.nodes:
-            self.assertEqual(len(list(wide_graph.incident_edges(node))), 3)
-
 
 class TestGraphTopology(unittest.TestCase):
 
