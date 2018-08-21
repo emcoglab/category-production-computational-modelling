@@ -26,7 +26,7 @@ from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph
+from model.graph import Graph, edge_length_quantile
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ def main(n_words: int):
     # Prune by quantile
     for i, top_quantile in enumerate(linspace(0.0, 1.0, 11)):
         # Invert the quantiles so q of 0.1 gives TOP 10%
-        pruning_length = graph.edge_length_quantile(1-top_quantile)
+        pruning_length = edge_length_quantile([length for edge, length in graph.edge_lengths], 1-top_quantile)
         logger.info(f"Pruning longest {int(100*top_quantile)}% of edges (anything longer than {pruning_length}).")
         graph.prune_longest_edges_by_quantile(top_quantile)
         logger.info(f"Graph has {len(graph.edges):,} edges")

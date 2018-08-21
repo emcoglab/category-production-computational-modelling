@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-qsub job_connectedness_of_pruned_graphs_1k.sh
-qsub job_connectedness_of_pruned_graphs_3k.sh
-qsub job_connectedness_of_pruned_graphs_5k.sh
-qsub job_connectedness_of_pruned_graphs_10k.sh
-qsub job_connectedness_of_pruned_graphs_15k.sh
-qsub job_connectedness_of_pruned_graphs_20k.sh

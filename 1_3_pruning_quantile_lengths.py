@@ -25,7 +25,7 @@ from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph
+from model.graph import edge_length_quantile, iter_edges_from_edgelist
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -41,11 +41,9 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
 def main(n_words: int):
+    logger.info("")
 
     length_factor = 1_000
-
-    # TODO: This doesn't yet work for graphs larger than those that could fit in memory.
-    # TODO: So might need to do this via edge-streaming, and perhaps refactor quantile code appropriately.
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
@@ -54,17 +52,14 @@ def main(n_words: int):
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
 
-    # Load the full graph
-    logger.info(f"Loading graph from {graph_file_name}")
-    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
-
     top_quantiles = linspace(0.0, 1.0, 11)
 
     # Prune by quantile
     for i, top_quantile in enumerate(top_quantiles):
-        pruning_length = graph.edge_length_quantile(top_quantile)
+        pruning_length = edge_length_quantile(
+            [length for _edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))],
+            top_quantile)
         logger.info(f"Edges above the {int(100*top_quantile)}% percentile are those longer than {pruning_length}).")
-    logger.info("")
 
 
 if __name__ == '__main__':
