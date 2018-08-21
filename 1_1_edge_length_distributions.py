@@ -28,7 +28,7 @@ from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import iter_edge_data_from_edgelist
+from model.graph import iter_edges_from_edgelist
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -59,9 +59,8 @@ def main(n_words: int):
 
     edge_lengths_from_node = defaultdict(list)
     accessibility = defaultdict(lambda: inf)
-    for edge, edge_data in iter_edge_data_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
+    for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
         n1, n2 = edge.nodes
-        length = edge_data.length
         accessibility[n1] = min(accessibility[n1], length)
         accessibility[n2] = min(accessibility[n2], length)
         edge_lengths_from_node[n1].append(length)

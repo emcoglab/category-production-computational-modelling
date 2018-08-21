@@ -44,6 +44,9 @@ def main(n_words: int):
 
     length_factor = 1_000
 
+    # TODO: This doesn't yet work for graphs larger than those that could fit in memory.
+    # TODO: So might need to do this via edge-streaming, and perhaps refactor quantile code appropriately.
+
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
