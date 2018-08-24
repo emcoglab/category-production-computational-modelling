@@ -36,13 +36,6 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-# Results DataFrame column names
-RESPONSE = "Response"
-NODE_ID = "Node ID"
-ACTIVATION = "Activation"
-TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-
-
 def main(n_words: int):
 
     length_factor = 1_000
