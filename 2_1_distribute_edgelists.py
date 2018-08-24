@@ -57,8 +57,8 @@ def main(n_words: int):
                 node_file.write(f"{n1} {n2} {length}\n")
 
         # Occasional logging
-        if i % 1000 == 0:
-            logger.info(f"Done {i} edges.")
+        if i % 1_000 == 0:
+            logger.info(f"Done {i:,} edges.")
 
 
 if __name__ == '__main__':
