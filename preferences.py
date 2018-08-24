@@ -26,7 +26,9 @@ class Preferences(object):
     email_connection_details_path = "/Users/caiwingfield/Box Sync/z Admin dox/notify@cwcomplex.net.txt"
     target_email_address = "c.wingfield@lancaster.ac.uk"
 
-    graphs_dir = "/Users/caiwingfield/data/graphs"
+    graphs_dir = "/Users/caiwingfield/data/graphs/"
+
+    node_distributions_dir = "/Users/caiwingfield/data/node_distributions/"
 
     output_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Results/"
 

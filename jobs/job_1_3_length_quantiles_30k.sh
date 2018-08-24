@@ -4,7 +4,7 @@
 #$ -N n30k_length_quantiles
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=20G
+#$ -l h_vmem=40G
 
 source /etc/profile
 
