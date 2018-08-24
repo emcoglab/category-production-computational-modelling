@@ -45,7 +45,7 @@ def main(n_words: int):
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
 
-    for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
+    for i, (edge, length) in enumerate(iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))):
         # Write the edge n1→n2 into the edgelist for each of n1 and n2
         n1, n2 = edge.nodes
         for n in [n1, n2]:
@@ -55,6 +55,10 @@ def main(n_words: int):
                 mkdir(node_dist_dir)
             with open(path.join(node_dist_dir, node_dist_filename), mode="a", encoding="utf-8") as node_file:
                 node_file.write(f"{n1} {n2} {length}\n")
+
+        # Occasional logging
+        if i % 1000 == 0:
+            logger.info(f"Done {i} edges.")
 
 
 if __name__ == '__main__':
