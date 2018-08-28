@@ -1,7 +1,7 @@
 #@IgnoreInspection BashAddShebang
 #$ -S /bin/bash
 #$ -q serial
-#$ -N n15k_pruned_connectedness
+#$ -N j12_15k_pruned_orphans
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=60G

@@ -1,7 +1,7 @@
 #@IgnoreInspection BashAddShebang
 #$ -S /bin/bash
 #$ -q serial
-#$ -N n40k_length_quantiles
+#$ -N j13_40k_length_quantiles
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=20G

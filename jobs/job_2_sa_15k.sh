@@ -1,6 +1,7 @@
+#@IgnoreInspection BashAddShebang
 #$ -S /bin/bash
 #$ -q serial
-#$ -N sa_15k
+#$ -N j2_15k_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=60G
