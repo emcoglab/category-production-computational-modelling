@@ -20,6 +20,7 @@ import sys
 from os import path
 
 from numpy import linspace
+from pandas import DataFrame
 
 from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
@@ -44,15 +45,22 @@ def main(n_words: int):
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
 
-    top_quantiles = linspace(0.0, 1.0, 11)
-
+    data = []
     # Prune by quantile
-    for i, top_quantile in enumerate(top_quantiles):
+    for i, top_quantile in enumerate([.0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0]):
         pruning_length = edge_length_quantile(
             [length for _edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))],
             top_quantile)
         logger.info(f"Edges above the {int(100*top_quantile)}% percentile are those longer than {pruning_length}).")
+        data.append((top_quantile, pruning_length))
+    # Save the data
+    DataFrame(data, columns=["Top quantile", "Pruning length"]).to_csv(
+        path.join(Preferences.graphs_dir, quantile_file_name),
+        header=True,
+        index=False
+    )
 
 
 if __name__ == '__main__':
