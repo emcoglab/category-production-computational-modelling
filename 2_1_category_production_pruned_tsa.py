@@ -18,7 +18,7 @@ import argparse
 import json
 import logging
 import sys
-from os import path
+from os import path, mkdir
 
 from pandas import DataFrame
 
@@ -74,12 +74,36 @@ def main(n_words: int, prune_percent: int):
 
     # Load distance matrix
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
+
+    quantile_data = DataFrame.from_csv(path.join(Preferences.graphs_dir, quantile_file_name), header=0, index_col=None)
+
+    # Get pruning length
     if prune_percent is not None:
-        logger.info(f"Loading graph from {graph_file_name}, pruning longest {prune_percent}% of edges")
+        pruning_length = quantile_data[
+            # Use 1 - so that smallest top quantiles get converted to longest edges
+            quantile_data["Top quantile"] == 1 - (prune_percent / 100)
+            ]["Pruning length"].iloc[0]
+        logger.info(f"Loading graph from {graph_file_name}, pruning longest {prune_percent}% of edges (anything over {pruning_length})")
     else:
+        pruning_length = None
         logger.info(f"Loading graph from {graph_file_name}")
-    # TODO: not actually pruning yet
-    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
+
+    # Load graph
+    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name), ignore_edges_longer_than=pruning_length)
+
+    # Topology
+    orphans = graph.has_orphaned_nodes()
+    connected = graph.is_connected()
+    if connected:
+        logger.info("Graph is connected")
+    else:
+        logger.info("Graph is disconnected")
+        if orphans:
+            logger.info("Graph has orphans")
+        else:
+            logger.info("Graph has no orphans")
+
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
     with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
@@ -97,9 +121,17 @@ def main(n_words: int, prune_percent: int):
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir,
-                                         f"Category production traces ({n_words:,} words)",
-                                         f"responses_{category_label}_{n_words:,}.csv")
+        # Output file path
+        if prune_percent is not None:
+            response_dir = path.join(Preferences.output_dir,
+                                     f"Category production traces ({n_words:,} words; longest {prune_percent:.2f}% edges removed)")
+        else:
+            response_dir = path.join(Preferences.output_dir,
+                                     f"Category production traces ({n_words:,} words)")
+        if not path.isdir(response_dir):
+            logger.warning(f"{response_dir} directory does not exist; making it.")
+            mkdir(response_dir)
+        model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
 
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
@@ -111,11 +143,16 @@ def main(n_words: int, prune_percent: int):
             logger.info(f"Running spreading activation for category {category_label}")
 
             csv_comments.append(f"Running spreading activation using parameters:")
-            csv_comments.append(f"\t      words = {n_words:,}")
+            csv_comments.append(f"\t      words = {n_words:_}")
+            if prune_percent is not None:
+                csv_comments.append(f"\t    pruning = {prune_percent:.2f}% ({pruning_length})")
             csv_comments.append(f"\t   firing θ = {firing_threshold}")
             csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
             csv_comments.append(f"\t          δ = {node_decay_factor}")
             csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
+            csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
+            if not connected:
+                csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
 
             # Do the spreading activation
 
@@ -170,7 +207,12 @@ def main(n_words: int, prune_percent: int):
                 model_responses_df.to_csv(output_file, index=False)
 
     emailer = Emailer(Preferences.email_connection_details_path)
-    emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
+    if prune_percent is not None:
+        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words and {prune_percent:.2f}% pruning.",
+                           Preferences.target_email_address)
+    else:
+        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.",
+                           Preferences.target_email_address)
 
 
 if __name__ == '__main__':
