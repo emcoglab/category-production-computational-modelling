@@ -53,7 +53,7 @@ def main(n_words: int):
     edge_lengths_from_node = defaultdict(list)
     accessibility = defaultdict(lambda: inf)
     for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
-        n1, n2 = edge.nodes
+        n1, n2 = edge
         accessibility[n1] = min(accessibility[n1], length)
         accessibility[n2] = min(accessibility[n2], length)
         edge_lengths_from_node[n1].append(length)
