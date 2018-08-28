@@ -74,7 +74,11 @@ def main(n_words: int, prune_percent: int):
 
     # Load distance matrix
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-    logger.info(f"Loading graph from {graph_file_name}, pruning longest {prune_percent}% of edges")
+    if prune_percent is not None:
+        logger.info(f"Loading graph from {graph_file_name}, pruning longest {prune_percent}% of edges")
+    else:
+        logger.info(f"Loading graph from {graph_file_name}")
+    # TODO: not actually pruning yet
     graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
@@ -175,7 +179,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
-    parser.add_argument("prune_percent", type=int, help="The percentage of longest edges to prune from the graph.")
+    parser.add_argument("prune_percent", type=int, nargs="?", help="The percentage of longest edges to prune from the graph.", default=None)
     args = parser.parse_args()
 
     main(n_words=args.n_words, prune_percent=args.prune_percent)
