@@ -19,6 +19,8 @@ import logging
 import sys
 from os import path
 
+from pandas import DataFrame
+
 from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
@@ -31,7 +33,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int):
+def main(n_words: int, prune_top_percentile: int):
 
     length_factor = 1_000
 
@@ -41,6 +43,15 @@ def main(n_words: int):
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
+    quantile_data = DataFrame.from_csv(path.join(Preferences.graphs_dir, quantile_file_name), header=0, index_col=None)
+    if prune_top_percentile is not None:
+        pruning_length = quantile_data[
+            # Use 1 - so that smallest top quantiles get converted to longest edges
+            quantile_data["Top quantile"] == 1 - (prune_top_percentile / 100)
+        ]["Pruning length"].iloc[0]
+    else:
+        pruning_length = None
 
     # Load the full graph
     keep_at_least = 10
@@ -67,8 +78,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
-                        nargs='?', default='1000')
+                        nargs='?', default=1_000)
+    parser.add_argument("prune_top_percentile", type=int, help="Prune this percent of edges, starting with the top",
+                        nargs="?", default=None)
     args = parser.parse_args()
 
-    main(n_words=args.n_words)
+    main(n_words=args.n_words, prune_top_percentile=args.prune_top_percentile)
     logger.info("Done!")
