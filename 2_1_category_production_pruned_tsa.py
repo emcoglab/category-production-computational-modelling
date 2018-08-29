@@ -127,7 +127,7 @@ def main(n_words: int, prune_percent: int):
         # Output file path
         if prune_percent is not None:
             response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words; longest {prune_percent:.2f}% edges removed)")
+                                     f"Category production traces ({n_words:,} words; longest {prune_percent}% edges removed)")
         else:
             response_dir = path.join(Preferences.output_dir,
                                      f"Category production traces ({n_words:,} words)")
