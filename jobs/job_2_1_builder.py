@@ -39,7 +39,7 @@ for size in graph_sizes:
             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
             job_file.write(f"#$ -S /bin/bash\n")
             job_file.write(f"#$ -q serial\n")
-            job_file.write(f"#$ -N j2_{k}_{percent}pc_sa\n")
+            job_file.write(f"#$ -N j21_{k}_{percent}pc_sa\n")
             job_file.write(f"#$ -m e\n")
             job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
             job_file.write(f"#$ -l h_vmem={ram_amount[size][percent]}G\n")

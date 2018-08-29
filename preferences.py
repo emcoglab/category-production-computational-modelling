@@ -34,8 +34,6 @@ class Preferences(object):
 
     figures_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Figures/"
 
-    # Graph sizes
-
     graph_sizes = [
         1_000,
         3_000,

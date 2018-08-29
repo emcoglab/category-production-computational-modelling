@@ -49,6 +49,9 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 def main(n_words: int, prune_percent: int):
 
+    if prune_percent == 0:
+        prune_percent = None
+
     n_ticks = 1_000
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
@@ -144,6 +147,7 @@ def main(n_words: int, prune_percent: int):
 
             csv_comments.append(f"Running spreading activation using parameters:")
             csv_comments.append(f"\t      words = {n_words:_}")
+            csv_comments.append(f"\tgranularity = {length_factor:_}")
             if prune_percent is not None:
                 csv_comments.append(f"\t    pruning = {prune_percent:.2f}% ({pruning_length})")
             csv_comments.append(f"\t   firing θ = {firing_threshold}")
@@ -206,14 +210,6 @@ def main(n_words: int, prune_percent: int):
                 # Write data
                 model_responses_df.to_csv(output_file, index=False)
 
-    emailer = Emailer(Preferences.email_connection_details_path)
-    if prune_percent is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words and {prune_percent:.2f}% pruning.",
-                           Preferences.target_email_address)
-    else:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.",
-                           Preferences.target_email_address)
-
 
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
@@ -226,3 +222,11 @@ if __name__ == '__main__':
 
     main(n_words=args.n_words, prune_percent=args.prune_percent)
     logger.info("Done!")
+
+    emailer = Emailer(Preferences.email_connection_details_path)
+    if args.prune_percent is not None:
+        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words and {args.prune_percent:.2f}% pruning.",
+                           Preferences.target_email_address)
+    else:
+        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words.",
+                           Preferences.target_email_address)
