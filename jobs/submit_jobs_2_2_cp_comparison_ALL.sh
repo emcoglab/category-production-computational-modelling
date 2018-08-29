@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+qsub job_2_2_cp_comparison_1k.sh
+qsub job_2_2_cp_comparison_3k.sh
+qsub job_2_2_cp_comparison_5k.sh
+qsub job_2_2_cp_comparison_10k.sh
+qsub job_2_2_cp_comparison_15k.sh
+qsub job_2_2_cp_comparison_20k.sh
+qsub job_2_2_cp_comparison_25k.sh
+qsub job_2_2_cp_comparison_30k.sh
