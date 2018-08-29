@@ -14,11 +14,11 @@ caiwingfield.net
 2018
 ---------------------------
 """
-
+import argparse
 import json
 import logging
 import sys
-from os import path
+from os import path, mkdir
 
 from pandas import DataFrame
 
@@ -31,6 +31,7 @@ from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 from model.utils.email import Emailer
+from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -46,13 +47,8 @@ ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def comment_line_from_str(message: str) -> str:
-    return f"# {message}\n"
+def main(n_words: int, prune_percent: int):
 
-
-def main(n_words: int=None):
-
-    n_words = 10_000 if n_words is None else n_words
     n_ticks = 1_000
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
@@ -78,8 +74,35 @@ def main(n_words: int=None):
 
     # Load distance matrix
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-    logger.info(f"Loading graph from {graph_file_name}")
-    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
+    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
+
+    quantile_data = DataFrame.from_csv(path.join(Preferences.graphs_dir, quantile_file_name), header=0, index_col=None)
+
+    # Get pruning length
+    if prune_percent is not None:
+        pruning_length = quantile_data[
+            # Use 1 - so that smallest top quantiles get converted to longest edges
+            quantile_data["Top quantile"] == 1 - (prune_percent / 100)
+            ]["Pruning length"].iloc[0]
+        logger.info(f"Loading graph from {graph_file_name}, pruning longest {prune_percent}% of edges (anything over {pruning_length})")
+    else:
+        pruning_length = None
+        logger.info(f"Loading graph from {graph_file_name}")
+
+    # Load graph
+    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name), ignore_edges_longer_than=pruning_length)
+
+    # Topology
+    orphans = graph.has_orphaned_nodes()
+    connected = graph.is_connected()
+    if connected:
+        logger.info("Graph is connected")
+    else:
+        logger.info("Graph is disconnected")
+        if orphans:
+            logger.info("Graph has orphans")
+        else:
+            logger.info("Graph has no orphans")
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
@@ -98,9 +121,17 @@ def main(n_words: int=None):
         if category_label not in filtered_words:
             continue
 
-        model_responses_path = path.join(Preferences.output_dir,
-                                         f"Category production traces ({n_words:,} words)",
-                                         f"responses_{category_label}_{n_words:,}.csv")
+        # Output file path
+        if prune_percent is not None:
+            response_dir = path.join(Preferences.output_dir,
+                                     f"Category production traces ({n_words:,} words; longest {prune_percent:.2f}% edges removed)")
+        else:
+            response_dir = path.join(Preferences.output_dir,
+                                     f"Category production traces ({n_words:,} words)")
+        if not path.isdir(response_dir):
+            logger.warning(f"{response_dir} directory does not exist; making it.")
+            mkdir(response_dir)
+        model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
 
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
@@ -112,11 +143,16 @@ def main(n_words: int=None):
             logger.info(f"Running spreading activation for category {category_label}")
 
             csv_comments.append(f"Running spreading activation using parameters:")
-            csv_comments.append(f"\t      words = {n_words:,}")
+            csv_comments.append(f"\t      words = {n_words:_}")
+            if prune_percent is not None:
+                csv_comments.append(f"\t    pruning = {prune_percent:.2f}% ({pruning_length})")
             csv_comments.append(f"\t   firing θ = {firing_threshold}")
             csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
             csv_comments.append(f"\t          δ = {node_decay_factor}")
             csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
+            csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
+            if not connected:
+                csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
 
             # Do the spreading activation
 
@@ -166,16 +202,27 @@ def main(n_words: int=None):
             with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
                 # Write comments
                 for comment in csv_comments:
-                    output_file.write(f"# {comment}\n")
+                    output_file.write(comment_line_from_str(comment))
                 # Write data
                 model_responses_df.to_csv(output_file, index=False)
 
     emailer = Emailer(Preferences.email_connection_details_path)
-    emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.", Preferences.target_email_address)
+    if prune_percent is not None:
+        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words and {prune_percent:.2f}% pruning.",
+                           Preferences.target_email_address)
+    else:
+        emailer.send_email(f"Done running {path.basename(__file__)} with {n_words} words.",
+                           Preferences.target_email_address)
 
 
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main(n_words=int(sys.argv[1]) if len(sys.argv) >= 2 else None)
+
+    parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
+    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("prune_percent", type=int, nargs="?", help="The percentage of longest edges to prune from the graph.", default=None)
+    args = parser.parse_args()
+
+    main(n_words=args.n_words, prune_percent=args.prune_percent)
     logger.info("Done!")

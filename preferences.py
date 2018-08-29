@@ -26,6 +26,25 @@ class Preferences(object):
     email_connection_details_path = "/Users/caiwingfield/Box Sync/z Admin dox/notify@cwcomplex.net.txt"
     target_email_address = "c.wingfield@lancaster.ac.uk"
 
-    graphs_dir = "/Users/caiwingfield/data/graphs"
+    graphs_dir = "/Users/caiwingfield/data/graphs/"
+
+    node_distributions_dir = "/Users/caiwingfield/data/node_distributions/"
 
     output_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Results/"
+
+    figures_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Figures/"
+
+    # Graph sizes
+
+    graph_sizes = [
+        1_000,
+        3_000,
+        5_000,
+        10_000,
+        15_000,
+        20_000,
+        25_000,
+        30_000,
+        35_000,
+        40_000,
+    ]
