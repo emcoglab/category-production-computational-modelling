@@ -93,7 +93,9 @@ def main(n_words: int, prune_percent: int):
         logger.info(f"Loading graph from {graph_file_name}")
 
     # Load graph
-    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name), ignore_edges_longer_than=pruning_length)
+    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name),
+                                     ignore_edges_longer_than=pruning_length,
+                                     keep_at_least_n_edges=Preferences.min_edges_per_node)
 
     # Topology
     orphans = graph.has_orphaned_nodes()
@@ -127,10 +129,15 @@ def main(n_words: int, prune_percent: int):
         # Output file path
         if prune_percent is not None:
             response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words; longest {prune_percent}% edges removed)")
+                                     f"Category production traces ({n_words:,} words; "
+                                     f"firing {firing_threshold}; "
+                                     f"access {conscious_access_threshold}; "
+                                     f"longest {prune_percent}% edges removed)")
         else:
             response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words)")
+                                     f"Category production traces ({n_words:,} words; "
+                                     f"firing {firing_threshold}; "
+                                     f"access {conscious_access_threshold})")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             mkdir(response_dir)
