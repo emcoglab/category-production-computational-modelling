@@ -15,14 +15,15 @@ caiwingfield.net
 ---------------------------
 """
 
+import json
 import logging
 import sys
 from os import path
-import json
 
 from sklearn.metrics.pairwise import pairwise_distances
 
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
+from ldm.core.model.base import DistributionalSemanticModel
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
@@ -44,7 +45,8 @@ def main():
     distance_type = DistanceType.cosine
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    for word_count in Preferences.graph_sizes:
+    # TODO WIP: revert this
+    for word_count in [1000]: #Preferences.graph_sizes:
         logger.info(f"{word_count:,} words:")
 
         filtered_words = freq_dist.most_common_tokens(word_count)
@@ -60,20 +62,34 @@ def main():
             logger.info(f"{edgelist_filename} already computed.")
             logger.info("Skipping")
         else:
-            logger.info("Computing distance matrix")
+            logger.info("Computing between-word distances")
             distributional_model.train(memory_map=True)
-            embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
-            distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
-            # free ram
-            del embedding_matrix
 
-            logger.info(f"Saving graph")
-            save_edgelist_from_distance_matrix(
-                file_path=edgelist_path,
-                distance_matrix=distance_matrix,
-                length_granularity=length_factor)
-            # free ram
-            del distance_matrix
+            if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.count:
+                embedding_matrix = distributional_model.matrix.tocsr()[filtered_ldm_ids, :]
+                distance_matrix = pairwise_distances(embedding_matrix, metric=distance_type.name, n_jobs=-1)
+                # free ram
+                del embedding_matrix
+
+                logger.info(f"Saving graph")
+                save_edgelist_from_distance_matrix(
+                    file_path=edgelist_path,
+                    distance_matrix=distance_matrix,
+                    length_granularity=length_factor)
+                # free ram
+                del distance_matrix
+
+            elif distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
+                similarity_matrix = distributional_model.underlying_count_model.matrix.to_csr()[filtered_ldm_ids, filtered_ldm_ids]
+
+                # TODO WIP: how to turn similarity into edge length?
+
+                ...
+
+            else:
+                raise NotImplementedError()
+
+        # Node label dictionaries
 
         # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
         # nodes (i.e. the word for the LDM-id corresponding to that row-id).
