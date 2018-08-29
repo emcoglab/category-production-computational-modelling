@@ -42,3 +42,9 @@ qsub job_2_1_sa_25k_20pc.sh
 qsub job_2_1_sa_25k_30pc.sh
 qsub job_2_1_sa_25k_40pc.sh
 qsub job_2_1_sa_25k_50pc.sh
+qsub job_2_1_sa_30k_0pc.sh
+qsub job_2_1_sa_30k_10pc.sh
+qsub job_2_1_sa_30k_20pc.sh
+qsub job_2_1_sa_30k_30pc.sh
+qsub job_2_1_sa_30k_40pc.sh
+qsub job_2_1_sa_30k_50pc.sh
