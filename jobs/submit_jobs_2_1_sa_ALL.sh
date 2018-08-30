@@ -12,12 +12,6 @@ qsub job_2_1_sa_3k_20pc.sh
 qsub job_2_1_sa_3k_30pc.sh
 qsub job_2_1_sa_3k_40pc.sh
 qsub job_2_1_sa_3k_50pc.sh
-qsub job_2_1_sa_5k_0pc.sh
-qsub job_2_1_sa_5k_10pc.sh
-qsub job_2_1_sa_5k_20pc.sh
-qsub job_2_1_sa_5k_30pc.sh
-qsub job_2_1_sa_5k_40pc.sh
-qsub job_2_1_sa_5k_50pc.sh
 qsub job_2_1_sa_10k_0pc.sh
 qsub job_2_1_sa_10k_10pc.sh
 qsub job_2_1_sa_10k_20pc.sh
@@ -36,12 +30,6 @@ qsub job_2_1_sa_20k_20pc.sh
 qsub job_2_1_sa_20k_30pc.sh
 qsub job_2_1_sa_20k_40pc.sh
 qsub job_2_1_sa_20k_50pc.sh
-qsub job_2_1_sa_25k_0pc.sh
-qsub job_2_1_sa_25k_10pc.sh
-qsub job_2_1_sa_25k_20pc.sh
-qsub job_2_1_sa_25k_30pc.sh
-qsub job_2_1_sa_25k_40pc.sh
-qsub job_2_1_sa_25k_50pc.sh
 qsub job_2_1_sa_30k_0pc.sh
 qsub job_2_1_sa_30k_10pc.sh
 qsub job_2_1_sa_30k_20pc.sh
