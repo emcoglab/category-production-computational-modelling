@@ -35,6 +35,7 @@ from model.temporal_spreading_activation import TemporalSpreadingActivation, \
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
+from model.utils.math import mean
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -236,10 +237,6 @@ def main(n_words: int, prune_importance: int = None):
                     output_file.write(comment_line_from_str(comment))
                 # Write data
                 model_responses_df.to_csv(output_file, index=False)
-
-
-def mean(*items):
-    return sum(items) / len(items)
 
 
 if __name__ == '__main__':
