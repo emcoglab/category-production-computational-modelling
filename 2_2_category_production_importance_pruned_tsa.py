@@ -22,20 +22,18 @@ from collections import defaultdict
 from os import path, mkdir
 
 from pandas import DataFrame
-from scipy.stats import percentileofscore
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph, Edge, Length, iter_edges_from_edgelist
+from model.graph import Graph, iter_edges_from_edgelist, importance
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
-from model.utils.math import mean
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -86,22 +84,6 @@ def main(n_words: int, prune_importance: int = None):
             edge_lengths_from_node[node].append(length)
     edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
 
-    def importance(e: Edge, l: Length) -> float:
-        """
-        The importance of an edge is the average of the percentile ranks of its length in the distributions of lengths
-        of edges incident to its endpoints.
-
-        An importance of 0 indicates the edge is the shortest incident to each of its endpoints.
-        An importance of 100 indicates the edge is longest incident to each of its endpoints.
-        An importance of 50 could reflect middling importance to both nodes or a highly imbalanced importance.
-
-        When using for pruning, prune LARGE importance, NOT SMALL!
-        """
-        n1, n2 = e
-        per1: float = percentileofscore(edge_lengths_from_node[n1], l)
-        per2: float = percentileofscore(edge_lengths_from_node[n2], l)
-        return mean(per1, per2)
-
     # Get pruning length
     if prune_importance is not None:
         logger.info(f"Loading graph from {graph_file_name}, pruning importance {prune_importance}")
@@ -111,7 +93,7 @@ def main(n_words: int, prune_importance: int = None):
     # Load graph
     graph = Graph.load_from_edgelist_with_arbitrary_stat(
         file_path=path.join(Preferences.graphs_dir, graph_file_name),
-        stat_from_length=importance,
+        stat_from_length=importance(edge_lengths_from_node),
         ignore_edges_with_stat_greater_than=prune_importance,
         keep_at_least_n_edges=Preferences.min_edges_per_node
     )
