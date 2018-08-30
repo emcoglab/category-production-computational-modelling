@@ -19,7 +19,7 @@ import unittest
 
 from numpy import array, vstack
 
-from model.temporal_spatial_expansion import Point, PointsInSpace
+from model.points_in_space import Point, PointsInSpace
 
 
 class TestGraphPruning(unittest.TestCase):

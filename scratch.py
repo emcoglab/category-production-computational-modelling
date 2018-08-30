@@ -1,7 +1,5 @@
-import numpy
-
 from model.sensorimotor import SensorimotorNorms
-from model.temporal_spatial_expansion import PointsInSpace, Point
+from model.points_in_space import PointsInSpace
 
 pis: PointsInSpace = SensorimotorNorms().as_points_in_space()
 
