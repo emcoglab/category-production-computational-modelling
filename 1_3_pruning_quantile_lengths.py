@@ -19,7 +19,6 @@ import logging
 import sys
 from os import path
 
-from numpy import linspace
 from pandas import DataFrame
 
 from ldm.core.corpus.indexing import FreqDist
