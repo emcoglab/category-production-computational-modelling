@@ -16,13 +16,10 @@ caiwingfield.net
 """
 
 import unittest
-from collections import defaultdict
 
 from numpy import array, ones, eye
-from scipy.stats import percentileofscore
 
-from model.graph import Graph, Edge, Node, iter_edges_from_edgelist, Length, importance
-from model.utils.math import mean
+from model.graph import Graph, Edge, Node
 from tests.test_materials.metadata import test_graph_file_path, test_graph_importance_file_path
 
 
@@ -206,22 +203,11 @@ class TestGraphImportancePruning(unittest.TestCase):
         predict_edges = 0.5 * n_nodes * (n_nodes - 1)
         self.assertEqual(n_edges, predict_edges)
 
-    def test_importance_pruned_graph(self):
-
-        # Build edge distributions
-        edge_lengths_from_node = defaultdict(list)
-        for edge, length in iter_edges_from_edgelist(test_graph_importance_file_path):
-            for node in edge:
-                edge_lengths_from_node[node].append(length)
-        edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
-
-        importance_pruned_graph: Graph = Graph.load_from_edgelist_with_arbitrary_stat(
+    def test_importance_pruned_graph_via_direct_importance_pruning(self):
+        importance_pruned_graph = Graph.load_from_edgelist_with_importance_pruning(
             file_path=test_graph_importance_file_path,
-            stat_from_length=importance(edge_lengths_from_node),
-            ignore_edges_with_stat_greater_than=50)
-
+            ignore_edges_with_importance_greater_than=50)
         n_edges = len(importance_pruned_graph.edges)
-
         self.assertEqual(n_edges, 5)
 
 

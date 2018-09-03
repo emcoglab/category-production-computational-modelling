@@ -28,7 +28,7 @@ from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph, iter_edges_from_edgelist, importance
+from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation, \
     decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
 from model.utils.email import Emailer
@@ -91,10 +91,9 @@ def main(n_words: int, prune_importance: int = None):
         logger.info(f"Loading graph from {graph_file_name}")
 
     # Load graph
-    graph = Graph.load_from_edgelist_with_arbitrary_stat(
+    graph = Graph.load_from_edgelist_with_importance_pruning(
         file_path=path.join(Preferences.graphs_dir, graph_file_name),
-        stat_from_length=importance(edge_lengths_from_node),
-        ignore_edges_with_stat_greater_than=prune_importance,
+        ignore_edges_with_importance_greater_than=prune_importance,
         keep_at_least_n_edges=Preferences.min_edges_per_node
     )
     n_edges = len(graph.edges)
