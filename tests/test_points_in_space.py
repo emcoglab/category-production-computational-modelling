@@ -26,8 +26,8 @@ class TestGraphPruning(unittest.TestCase):
 
     def test_dimensions(self):
 
-        p1 = Point(array([1, 2, 3]), "p1")
-        p2 = Point(array([4, 5, 6]), "p2")
+        p1 = Point("p1", array([1, 2, 3]))
+        p2 = Point("p2", array([4, 5, 6]))
 
         pis = PointsInSpace(vstack((p1.vector, p2.vector)), {i: p.label for i, p in enumerate([p1, p2])})
 
