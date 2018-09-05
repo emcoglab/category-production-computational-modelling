@@ -21,9 +21,9 @@ from numpy import array, log
 
 from approximate_comparator.approximate_comparator import is_almost_equal
 from model.graph import Edge, Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
-    decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
+    decay_function_gaussian_with_sd
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
@@ -101,7 +101,7 @@ class TestDecayFunctions(unittest.TestCase):
             conscious_access_threshold=0.3,
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(0.42, 100),
+            edge_decay_function=decay_function_gaussian_with_sd(0.42 * 100),
             node_relabelling_dictionary=dict()
         )
         tsa = TemporalSpreadingActivation(
@@ -151,7 +151,7 @@ class TestDecayFunctions(unittest.TestCase):
             firing_threshold=0.5,
             conscious_access_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
+            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
             node_relabelling_dictionary=dict()
         )
         granularity = 1000
@@ -164,7 +164,7 @@ class TestDecayFunctions(unittest.TestCase):
             firing_threshold=0.5,
             conscious_access_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
+            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
             node_relabelling_dictionary=dict()
         )
 

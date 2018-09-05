@@ -28,8 +28,8 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
@@ -175,8 +175,8 @@ def main(n_words: int, prune_percent: int):
                 impulse_pruning_threshold=impulse_pruning_threshold,
                 node_decay_function=decay_function_exponential_with_decay_factor(
                     decay_factor=node_decay_factor),
-                edge_decay_function=decay_function_gaussian_with_sd_fraction(
-                    sd_frac=edge_decay_sd_frac, granularity=length_factor))
+                edge_decay_function=decay_function_gaussian_with_sd(
+                    sd=edge_decay_sd_frac * length_factor))
 
             tsa.activate_node_with_label(category_label, 1)
 

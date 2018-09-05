@@ -28,8 +28,8 @@ from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
