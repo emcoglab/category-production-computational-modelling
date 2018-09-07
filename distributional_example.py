@@ -61,8 +61,8 @@ def main():
 
     # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
     # nodes (i.e. the word for the LDM-id corresponding to that row-id).
-    node_relabelling_dictionary = {node_id: token_index.id2token[ldm_id]
-                                   for (node_id, ldm_id) in matrix_to_ldm.items()}
+    node_labelling_dictionary = {node_id: token_index.id2token[ldm_id]
+                                 for (node_id, ldm_id) in matrix_to_ldm.items()}
 
     edgelist_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
     edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
@@ -109,14 +109,14 @@ def main():
                     # keep cat at ft
                     conscious_access_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
-                    node_relabelling_dictionary=node_relabelling_dictionary,
+                    item_labelling_dictionary=node_labelling_dictionary,
                     node_decay_function=decay_function_exponential_with_decay_factor(
                         decay_factor=node_decay_factor),
                     edge_decay_function=decay_function_gaussian_with_sd(
                         sd=edge_decay_sd))
 
                 logger.info(f"Initial node {initial_word}")
-                tsa.activate_node_with_label(initial_word, 1)
+                tsa.activate_item_with_label(initial_word, 1)
 
                 logger.info("Running spreading output")
                 for tick in range(1, n_ticks):

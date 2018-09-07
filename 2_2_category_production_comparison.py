@@ -25,7 +25,7 @@ from scipy.stats import spearmanr, pearsonr
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.common import ItemActivatedEvent
+from model.component import ItemActivatedEvent
 from model.utils.email import Emailer
 from preferences import Preferences
 
