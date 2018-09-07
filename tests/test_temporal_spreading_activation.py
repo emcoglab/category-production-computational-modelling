@@ -126,8 +126,8 @@ class TestDecayFunctions(unittest.TestCase):
 
         # Same granularity, different function-maker
         self.assertAlmostEqual(
-            tsa_frac.activation_of_node(0),
-            tsa.activation_of_node(0)
+            tsa_frac.activation_of_item_with_idx(0),
+            tsa.activation_of_item_with_idx(0)
         )
 
     def test_gaussian_decay_different_granularity_same_function_maker(self):
