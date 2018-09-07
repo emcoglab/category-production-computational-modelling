@@ -49,7 +49,7 @@ def save_example(fig_location, results_df):
                     & (data["Edge decay SD"] == s)
                 ],
                 time="clock", value="n_activated", unit="Run",
-                condition="Activation threshold",
+                condition="ActivationValue threshold",
                 err_style="unit_traces",
             )
 

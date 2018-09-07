@@ -43,7 +43,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 # Results DataFrame column names
 RESPONSE = "Response"
 NODE_ID = "Node ID"
-ACTIVATION = "Activation"
+ACTIVATION = "ActivationValue"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
@@ -188,10 +188,10 @@ def main(n_words: int, prune_percent: int):
 
                 for na in node_activations:
                     model_response_entries.append((
-                        na.node,
-                        tsa.label2node[na.node],
+                        na.label,
+                        tsa.label2node[na.label],
                         na.activation,
-                        na.tick_activated
+                        na.time_activated
                     ))
 
                 # Break early if we've got a probable explosion

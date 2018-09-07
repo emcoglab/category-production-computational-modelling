@@ -25,7 +25,7 @@ from scipy.stats import spearmanr, pearsonr
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import ActivatedNodeEvent
+from model.common import ItemActivatedEvent
 from model.utils.email import Emailer
 from preferences import Preferences
 
@@ -38,7 +38,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 # TODO: repeated values 😕
 RESPONSE = "Response"
 NODE_ID = "Node ID"
-ACTIVATION = "Activation"
+ACTIVATION = "ActivationValue"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
@@ -108,17 +108,17 @@ def main():
 
                 model_response_entries = []
                 for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
-                    model_response_entries.append(ActivatedNodeEvent(
+                    model_response_entries.append(ItemActivatedEvent(
                         node=row[RESPONSE], activation=row[ACTIVATION], tick_activated=row[TICK_ON_WHICH_ACTIVATED]))
 
                 # Get overlap
                 model_response_overlap_entries = []
                 for mr in model_response_entries:
                     # Only interested in overlap
-                    if mr.node not in actual_response_words:
+                    if mr.label not in actual_response_words:
                         continue
                     # Only interested in unique entries
-                    if mr.node in [existing_mr.node for existing_mr in model_response_overlap_entries]:
+                    if mr.label in [existing_mr.label for existing_mr in model_response_overlap_entries]:
                         continue
                     model_response_overlap_entries.append(mr)
 
@@ -137,9 +137,9 @@ def main():
                 # mean rank vector will contain mean ranks
                 mean_ranks = []
                 for common_entry in model_response_overlap_entries:
-                    model_time_to_first_activation.append(common_entry.tick_activated)
-                    mean_ranks.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.MeanRank))
-                    production_frequencies.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.ProductionFrequency))
+                    model_time_to_first_activation.append(common_entry.time_activated)
+                    mean_ranks.append(cp.data_for_category_response_pair(category_label, common_entry.label, CategoryProduction.ColNames.MeanRank))
+                    production_frequencies.append(cp.data_for_category_response_pair(category_label, common_entry.label, CategoryProduction.ColNames.ProductionFrequency))
 
                 # noinspection PyTypeChecker
                 mean_rank_corr, _ = spearmanr(model_time_to_first_activation, mean_ranks)
@@ -153,10 +153,10 @@ def main():
                                                # which were also found by the model
                                                for r in model_response_overlap_entries
                                                # but only those above threshold
-                                               if cp.data_for_category_response_pair(category_label, r.node, CategoryProduction.ColNames.FirstRankFrequency) >= min_first_rank_freq]
+                                               if cp.data_for_category_response_pair(category_label, r.label, CategoryProduction.ColNames.FirstRankFrequency) >= min_first_rank_freq]
                 for response in first_rank_entries_this_cat:
-                    first_rank_mean_rts.append(mean(list(cp.rts_for_category_response_pair(category_label, response.node))))
-                    first_rank_tsa_times.append(response.tick_activated)
+                    first_rank_mean_rts.append(mean(list(cp.rts_for_category_response_pair(category_label, response.label))))
+                    first_rank_tsa_times.append(response.time_activated)
 
                 category_comparisons.append((
                     n_words,
@@ -166,7 +166,7 @@ def main():
                     response_corpus_coverage_percent,
                     overlap_size,
                     overlap_percent,
-                    str([e.node for e in model_response_overlap_entries]),
+                    str([e.label for e in model_response_overlap_entries]),
                     str(model_time_to_first_activation),
                     str(mean_ranks),
                     mean_rank_corr,

@@ -131,7 +131,7 @@ def main():
                     d.append({
                         'Tick': tick,
                         'Nodes activated': nodes_activated_str,
-                        "Activation threshold": firing_threshold,
+                        "ActivationValue threshold": firing_threshold,
                         "Node decay factor": node_decay_factor,
                         "Edge decay SD": edge_decay_sd,
                         "Activated nodes": tsa.n_suprathreshold_nodes()
