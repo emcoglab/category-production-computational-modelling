@@ -20,7 +20,7 @@ import unittest
 from numpy import array, ones, eye
 
 from model.graph import Graph, Edge, Node
-from test_materials.metadata import test_graph_file_path
+from tests.test_materials.metadata import test_graph_file_path, test_graph_importance_file_path
 
 
 class TestGraphPruning(unittest.TestCase):
@@ -191,6 +191,24 @@ class TestGraphTopology(unittest.TestCase):
         )
         self.assertTrue(orphan_graph.has_orphaned_nodes())
         self.assertFalse(disconnected_graph.has_orphaned_nodes())
+
+
+class TestGraphImportancePruning(unittest.TestCase):
+
+    def test_full_graph(self):
+        full_graph: Graph = Graph.load_from_edgelist(file_path=test_graph_importance_file_path)
+        n_edges = len(full_graph.edges)
+        n_nodes = len(full_graph.nodes)
+        # complete graph K5
+        predict_edges = 0.5 * n_nodes * (n_nodes - 1)
+        self.assertEqual(n_edges, predict_edges)
+
+    def test_importance_pruned_graph_via_direct_importance_pruning(self):
+        importance_pruned_graph = Graph.load_from_edgelist_with_importance_pruning(
+            file_path=test_graph_importance_file_path,
+            ignore_edges_with_importance_greater_than=50)
+        n_edges = len(importance_pruned_graph.edges)
+        self.assertEqual(n_edges, 5)
 
 
 if __name__ == '__main__':

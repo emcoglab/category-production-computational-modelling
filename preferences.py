@@ -23,7 +23,7 @@ class Preferences(object):
 
     # Paths
 
-    email_connection_details_path = "/Users/caiwingfield/Box Sync/z Admin dox/notify@cwcomplex.net.txt"
+    email_connection_details_path = "/Users/caiwingfield/Box Sync/Admin dox/notify@cwcomplex.net.txt"
     target_email_address = "c.wingfield@lancaster.ac.uk"
 
     graphs_dir = "/Users/caiwingfield/data/graphs/"

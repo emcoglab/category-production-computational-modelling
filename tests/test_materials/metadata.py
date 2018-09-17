@@ -15,6 +15,9 @@ caiwingfield.net
 ---------------------------
 """
 
-import os
+from os import path
 
-test_graph_file_path: str = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_graph.edgelist")
+test_materials_dir: str = path.dirname(path.realpath(__file__))
+
+test_graph_file_path: str = path.join(test_materials_dir, "test_graph.edgelist")
+test_graph_importance_file_path: str = path.join(test_materials_dir, "test_graph_importance.edgelist")
