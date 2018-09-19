@@ -1,13 +1,35 @@
-from matplotlib import pyplot
-from numpy import linspace, log, exp
-from scipy.stats import lognorm, norm
+from os import path, getcwd
+from os import remove as rm
 
-x = linspace(0, 10, 1000)
-sigma = 0.35
-median = 3.75
-mu = log(median)
-y = 1-lognorm.cdf(x, s=sigma, scale=median)
-y = lognorm.sf(x, s=sigma, scale=median)
-# y = 1-norm.cdf(x, loc=mu, scale=sigma)
-pyplot.plot(x, y)
-pyplot.show()
+from pandas import DataFrame, read_csv
+from glob import glob
+
+
+def main():
+    root_dir = getcwd()
+    for dir_path in glob(path.join(root_dir, "*")):
+        if not path.isdir(dir_path):
+            continue
+        for csv_path in glob(path.join(dir_path, '*.csv')):
+            if path.basename(csv_path) == "model_effectiveness.csv":
+                rm(csv_path)
+                continue
+            print(f"Reading {csv_path}")
+            # read comments
+            comments = []
+            with open(csv_path, mode="r", encoding="utf-8") as comment_file:
+                for line in comment_file:
+                    if line.startswith("#"):
+                        comments.append(line)
+            df: DataFrame = read_csv(csv_path, header=0, index_col=None, comment='#')
+            df.sort_values(['Tick on which activated', 'Node ID'], inplace=True)
+            print(f"Writing {csv_path}")
+            with open(csv_path, mode="w", encoding="utf-8") as csv_file:
+                for line in comments:
+                    csv_file.write(line)
+                df.to_csv(csv_file, header=True, index=False)
+
+
+if __name__ == '__main__':
+    main()
+    print("Done")
