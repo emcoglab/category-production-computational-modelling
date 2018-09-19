@@ -1,45 +1,35 @@
-from numpy import array
+from os import path, getcwd
+from os import remove as rm
 
-from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, decay_function_exponential_with_half_life, \
-    decay_function_gaussian_with_sd_fraction
+from pandas import DataFrame, read_csv
+from glob import glob
 
-distance_matrix = array([
-    [.0, .5],
-    [.5, .0]
-])
-sd_frac = 0.42
-granularity = 390
-tsa_390 = TemporalSpreadingActivation(
-    graph=Graph.from_distance_matrix(
-        distance_matrix=distance_matrix,
-        length_granularity=granularity,
-    ),
-    impulse_pruning_threshold=0,
-    firing_threshold=0.5,
-    conscious_access_threshold=0.5,
-    node_decay_function=decay_function_exponential_with_half_life(50),
-    edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
-    node_relabelling_dictionary=dict()
-)
-granularity = 1000
-tsa_1000 = TemporalSpreadingActivation(
-    graph=Graph.from_distance_matrix(
-        distance_matrix=distance_matrix,
-        length_granularity=granularity,
-    ),
-    impulse_pruning_threshold=0,
-    firing_threshold=0.5,
-    conscious_access_threshold=0.5,
-    node_decay_function=decay_function_exponential_with_half_life(50),
-    edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
-    node_relabelling_dictionary=dict()
-)
 
-tsa_390.activate_node(n=0, activation=1.0)
-tsa_1000.activate_node(n=0, activation=1.0)
+def main():
+    root_dir = getcwd()
+    for dir_path in glob(path.join(root_dir, "*")):
+        if not path.isdir(dir_path):
+            continue
+        for csv_path in glob(path.join(dir_path, '*.csv')):
+            if path.basename(csv_path) == "model_effectiveness.csv":
+                rm(csv_path)
+                continue
+            print(f"Reading {csv_path}")
+            # read comments
+            comments = []
+            with open(csv_path, mode="r", encoding="utf-8") as comment_file:
+                for line in comment_file:
+                    if line.startswith("#"):
+                        comments.append(line)
+            df: DataFrame = read_csv(csv_path, header=0, index_col=None, comment='#')
+            df.sort_values(['Tick on which activated', 'Node ID'], inplace=True)
+            print(f"Writing {csv_path}")
+            with open(csv_path, mode="w", encoding="utf-8") as csv_file:
+                for line in comments:
+                    csv_file.write(line)
+                df.to_csv(csv_file, header=True, index=False)
 
-print(set(float(v) for v in tsa_390.impulses_headed_for(1).values()))
-print(set(float(v) for v in tsa_1000.impulses_headed_for(1).values()))
 
-print("Done")
+if __name__ == '__main__':
+    main()
+    print("Done")

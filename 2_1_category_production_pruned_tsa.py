@@ -206,7 +206,7 @@ def main(n_words: int, prune_percent: int):
             NODE_ID,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED
-        ])
+        ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
 
