@@ -23,7 +23,7 @@ from os import path
 
 from numpy import nan, mean
 from pandas import read_csv, DataFrame
-from scipy.stats import spearmanr
+from scipy.stats import spearmanr, pearsonr
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
@@ -51,7 +51,6 @@ def comment_line_from_str(message: str) -> str:
 
 
 def main_in_path(results_dir: str):
-    category_comparisons = []
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -67,6 +66,7 @@ def main_in_path(results_dir: str):
     # Corresponding time-to-activation of member nodes from category seed
     first_rank_tsa_times = []
 
+    category_comparisons = []
     for category_label in cp.category_labels:
 
         # Skip the check if the category won't be in the network
@@ -159,6 +159,9 @@ def main_in_path(results_dir: str):
             str(production_frequencies),
             production_frequency_corr,
         ))
+
+    first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tsa_times)
+    logger.info(f"First response RT correlation (Pearson's; positive is better fit; FRF≥{MIN_FIRST_RANK_FREQ}) = {first_rank_rt_corr} (N = {len(first_rank_mean_rts)})")
 
     model_effectiveness_path = path.join(results_dir, f"model_effectiveness.csv")
 

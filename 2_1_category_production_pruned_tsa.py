@@ -146,76 +146,76 @@ def main(n_words: int, prune_percent: int):
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
             logger.info(f"{model_responses_path} exists, skipping.")
+            continue
 
-        else:
-            csv_comments = []
+        csv_comments = []
 
-            logger.info(f"Running spreading activation for category {category_label}")
+        logger.info(f"Running spreading activation for category {category_label}")
 
-            csv_comments.append(f"Running spreading activation using parameters:")
-            csv_comments.append(f"\t      words = {n_words:_}")
-            csv_comments.append(f"\tgranularity = {length_factor:_}")
-            if prune_percent is not None:
-                csv_comments.append(f"\t    pruning = {prune_percent:.2f}% ({pruning_length})")
-            csv_comments.append(f"\t   firing θ = {firing_threshold}")
-            csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
-            csv_comments.append(f"\t          δ = {node_decay_factor}")
-            csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
-            csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
-            if not connected:
-                csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
+        csv_comments.append(f"Running spreading activation using parameters:")
+        csv_comments.append(f"\t      words = {n_words:_}")
+        csv_comments.append(f"\tgranularity = {length_factor:_}")
+        if prune_percent is not None:
+            csv_comments.append(f"\t    pruning = {prune_percent:.2f}% ({pruning_length})")
+        csv_comments.append(f"\t   firing θ = {firing_threshold}")
+        csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
+        csv_comments.append(f"\t          δ = {node_decay_factor}")
+        csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
+        csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
+        if not connected:
+            csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
 
-            # Do the spreading activation
+        # Do the spreading activation
 
-            tsa = TemporalSpreadingActivation(
-                graph=graph,
-                node_relabelling_dictionary=node_relabelling_dictionary,
-                firing_threshold=firing_threshold,
-                conscious_access_threshold=conscious_access_threshold,
-                impulse_pruning_threshold=impulse_pruning_threshold,
-                node_decay_function=decay_function_exponential_with_decay_factor(
-                    decay_factor=node_decay_factor),
-                edge_decay_function=decay_function_gaussian_with_sd_fraction(
-                    sd_frac=edge_decay_sd_frac, granularity=length_factor))
+        tsa = TemporalSpreadingActivation(
+            graph=graph,
+            node_relabelling_dictionary=node_relabelling_dictionary,
+            firing_threshold=firing_threshold,
+            conscious_access_threshold=conscious_access_threshold,
+            impulse_pruning_threshold=impulse_pruning_threshold,
+            node_decay_function=decay_function_exponential_with_decay_factor(
+                decay_factor=node_decay_factor),
+            edge_decay_function=decay_function_gaussian_with_sd_fraction(
+                sd_frac=edge_decay_sd_frac, granularity=length_factor))
 
-            tsa.activate_node_with_label(category_label, 1)
+        tsa.activate_node_with_label(category_label, 1)
 
-            model_response_entries = []
-            for tick in range(1, n_ticks):
+        model_response_entries = []
+        for tick in range(1, n_ticks):
 
-                logger.info(f"Clock = {tick}")
-                node_activations = tsa.tick()
+            logger.info(f"Clock = {tick}")
+            node_activations = tsa.tick()
 
-                for na in node_activations:
-                    model_response_entries.append((
-                        na.node,
-                        tsa.label2node[na.node],
-                        na.activation,
-                        na.tick_activated
-                    ))
+            for na in node_activations:
+                model_response_entries.append((
+                    na.node,
+                    tsa.label2node[na.node],
+                    na.activation,
+                    na.tick_activated
+                ))
 
-                # Break early if we've got a probable explosion
-                if tsa.n_suprathreshold_nodes() > bailout:
-                    csv_comments.append(f"")
-                    csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                        f"with {tsa.n_suprathreshold_nodes()} nodes activated.")
-                    break
+            # Break early if we've got a probable explosion
+            if tsa.n_suprathreshold_nodes() > bailout:
+                csv_comments.append(f"")
+                csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
+                                    f"with {tsa.n_suprathreshold_nodes()} nodes activated.")
+                break
 
-            model_responses_df = DataFrame(model_response_entries, columns=[
-                RESPONSE,
-                NODE_ID,
-                ACTIVATION,
-                TICK_ON_WHICH_ACTIVATED
-            ])
+        model_responses_df = DataFrame(model_response_entries, columns=[
+            RESPONSE,
+            NODE_ID,
+            ACTIVATION,
+            TICK_ON_WHICH_ACTIVATED
+        ])
 
-            # Output results
+        # Output results
 
-            with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
-                # Write comments
-                for comment in csv_comments:
-                    output_file.write(comment_line_from_str(comment))
-                # Write data
-                model_responses_df.to_csv(output_file, index=False)
+        with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
+            # Write comments
+            for comment in csv_comments:
+                output_file.write(comment_line_from_str(comment))
+            # Write data
+            model_responses_df.to_csv(output_file, index=False)
 
 
 if __name__ == '__main__':
