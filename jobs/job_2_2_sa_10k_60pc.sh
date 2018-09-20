@@ -1,10 +1,10 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j21_10k_60pc_sa
+#$ -N j22_10k_60pc_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=12G
+#$ -l h_vmem=13G
 
 source /etc/profile
 
