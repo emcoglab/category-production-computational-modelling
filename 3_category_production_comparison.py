@@ -51,36 +51,36 @@ def comment_line_from_str(message: str) -> str:
 
 
 def main_in_path(results_dir: str):
+    n_words = interpret_path(results_dir)
+
+    # Load main data
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
-
     cp = CategoryProduction()
+    linguistic_model_vocab = set(freq_dist.most_common_tokens(n_words))
 
-    n_words = interpret_path(results_dir)
-
-    filtered_words = set(freq_dist.most_common_tokens(n_words))
+    # Vectors for statistics of interest, to be computed over all categories
 
     # Average RTs for all category–first-rank-member pairs (with FRF ≥ `min_first_rank_freq`)
     first_rank_mean_rts = []
     # Corresponding time-to-activation of member nodes from category seed
     first_rank_tsa_times = []
 
+    # Of responses which were produced by both model and in the data, what are the ordinals of the (first occurrences of
+    #  the) responses?
+    ordinals_of_production_model = []
+    ordinals_of_production_actual = []
+
     category_comparisons = []
+
     for category_label in cp.category_labels:
 
         # Skip the check if the category won't be in the network
-        if category_label not in filtered_words:
+        if category_label not in linguistic_model_vocab:
             continue
 
-        # Dictionary of differently-ordered lists of words
-        actual_response_words = [r
-                                 for r in cp.responses_for_category(category_label, single_word_only=True)
-                                 if r in filtered_words]
-        n_actual_responses_in_corpus = len(actual_response_words)
-        response_corpus_coverage_percent = 100 * n_actual_responses_in_corpus / len(cp.responses_for_category(category_label, single_word_only=True))
-
-        # Load model responses
+        # Load MODEL responses
         try:
             model_responses_path = path.join(
                 results_dir,
@@ -88,59 +88,73 @@ def main_in_path(results_dir: str):
             with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
                 model_responses_df = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
+        # Skip any we don't have yet
         except FileNotFoundError as e:
-            # Skip any we don't have yet
             logger.warning(f"File not found: {e.filename}")
             continue
 
-        model_response_entries = []
-        for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
-            model_response_entries.append(ActivatedNodeEvent(
-                node=row[RESPONSE], activation=row[ACTIVATION], tick_activated=row[TICK_ON_WHICH_ACTIVATED]))
+        # Collect ACTUAL responses
+
+        # Dictionary of differently-ordered lists of words
+        actual_response_words = [response
+                                 for response in cp.responses_for_category(category_label, single_word_only=True)
+                                 if response in linguistic_model_vocab]
+        corpus_coverage_this_category = len(actual_response_words) / len(cp.responses_for_category(category_label, single_word_only=True))
+
+        model_response_entries = [
+            ActivatedNodeEvent(node=row[RESPONSE], activation=row[ACTIVATION], tick_activated=row[TICK_ON_WHICH_ACTIVATED])
+            for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows()
+        ]
 
         # Get overlap
         model_response_overlap_entries = []
-        for mr in model_response_entries:
+        for model_response in model_response_entries:
             # Only interested in overlap
-            if mr.node not in actual_response_words:
+            if model_response.node not in actual_response_words:
                 continue
-            # Only interested in unique entries
-            if mr.node in [existing_mr.node for existing_mr in model_response_overlap_entries]:
+            # Only interested in first among repeated entries
+            if model_response.node in [existing_mr.node for existing_mr in model_response_overlap_entries]:
                 continue
-            model_response_overlap_entries.append(mr)
+            model_response_overlap_entries.append(model_response)
 
-        overlap_size = len(model_response_overlap_entries)
-        if n_actual_responses_in_corpus > 0:
-            overlap_percent = 100 * overlap_size / n_actual_responses_in_corpus
-        else:
-            overlap_percent = nan
-
-        # Comparison vectors
+        # Model–data comparisons vectors for individual categories
 
         # model response vector will contain ticks on which the entry was (first) activated
-        model_time_to_first_activation = []
+        time_to_first_activation_in_model = [
+            common_entry.tick_activated
+            for common_entry in model_response_overlap_entries
+        ]
         # production frequency vector will contain the production frequency
-        production_frequencies = []
+        production_frequencies_in_data = [
+            cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.ProductionFrequency)
+            for common_entry in model_response_overlap_entries
+        ]
         # mean rank vector will contain mean ranks
-        mean_ranks = []
-        for common_entry in model_response_overlap_entries:
-            model_time_to_first_activation.append(common_entry.tick_activated)
-            mean_ranks.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.MeanRank))
-            production_frequencies.append(cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.ProductionFrequency))
+        mean_ranks = [
+            cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.MeanRank)
+            for common_entry in model_response_overlap_entries
+        ]
+        # for common_entry in model_response_overlap_entries:
+        #     ordinals_of_production_model.append(...)
+        #     ordinals_of_production_actual.append(...)
+
+        # Compute statistics for this category
 
         # noinspection PyTypeChecker
-        mean_rank_corr, _ = spearmanr(model_time_to_first_activation, mean_ranks)
+        corr_mean_rank_vs_time_to_activation, _ = spearmanr(time_to_first_activation_in_model, mean_ranks)
         # noinspection PyTypeChecker
-        production_frequency_corr, _ = spearmanr(model_time_to_first_activation, production_frequencies)
+        corr_production_freq_vs_time_to_activation, _ = spearmanr(time_to_first_activation_in_model, production_frequencies_in_data)
 
         # First rank frequency RTs
 
         # Get the first-rank responses
-        first_rank_entries_this_cat = [r
-                                       # which were also found by the model
-                                       for r in model_response_overlap_entries
-                                       # but only those above threshold
-                                       if cp.data_for_category_response_pair(category_label, r.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ]
+        first_rank_entries_this_cat = [
+            response
+            # which were also found by the model
+            for response in model_response_overlap_entries
+            # but only those above threshold
+            if cp.data_for_category_response_pair(category_label, response.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ
+        ]
         for response in first_rank_entries_this_cat:
             first_rank_mean_rts.append(mean(list(cp.rts_for_category_response_pair(category_label, response.node))))
             first_rank_tsa_times.append(response.tick_activated)
@@ -148,16 +162,16 @@ def main_in_path(results_dir: str):
         category_comparisons.append((
             n_words,
             category_label,
-            n_actual_responses_in_corpus,
-            response_corpus_coverage_percent,
-            overlap_size,
-            overlap_percent,
+            len(actual_response_words),
+            100 * corpus_coverage_this_category,
+            len(model_response_overlap_entries),
+            100 * len(model_response_overlap_entries) / len(actual_response_words) if len(actual_response_words) > 0 else nan,
             str([e.node for e in model_response_overlap_entries]),
-            str(model_time_to_first_activation),
+            str(time_to_first_activation_in_model),
             str(mean_ranks),
-            mean_rank_corr,
-            str(production_frequencies),
-            production_frequency_corr,
+            corr_mean_rank_vs_time_to_activation,
+            str(production_frequencies_in_data),
+            corr_production_freq_vs_time_to_activation,
         ))
 
     first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tsa_times)
