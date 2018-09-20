@@ -1,6 +1,9 @@
 """
 ===========================
 Compare model to Briony's category production actual responses.
+
+Pass the parent location to a bunch of results.
+TODO: This is just a temporary way to use this script. Should be more flexible/automatable.
 ===========================
 
 Dr. Cai Wingfield
@@ -30,6 +33,7 @@ from ldm.core.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.temporal_spreading_activation import ActivatedNodeEvent
 from model.utils.exceptions import ParseError
+from preferences import Preferences
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -69,8 +73,8 @@ def main_in_path(results_dir: str):
 
     # Of responses which were produced by both model and in the data, what are the ordinals of the (first occurrences of
     #  the) responses?
-    ordinals_of_production_model = []
-    ordinals_of_production_actual = []
+    mean_response_ranks_data = []
+    time_to_activation_model = []
 
     category_comparisons = []
 
@@ -120,7 +124,7 @@ def main_in_path(results_dir: str):
         # Model–data comparisons vectors for individual categories
 
         # model response vector will contain ticks on which the entry was (first) activated
-        time_to_first_activation_in_model = [
+        times_to_first_activation_in_model = [
             common_entry.tick_activated
             for common_entry in model_response_overlap_entries
         ]
@@ -134,30 +138,33 @@ def main_in_path(results_dir: str):
             cp.data_for_category_response_pair(category_label, common_entry.node, CategoryProduction.ColNames.MeanRank)
             for common_entry in model_response_overlap_entries
         ]
-        # for common_entry in model_response_overlap_entries:
-        #     ordinals_of_production_model.append(...)
-        #     ordinals_of_production_actual.append(...)
+
+        # Comparisons over all categories
+
+        # TODO: this stuff would be better done by building one large dataframe and then just doing the stats on that
+
+        mean_response_ranks_data.extend(mean_ranks)
+        time_to_activation_model.extend(times_to_first_activation_in_model)
+        # First rank frequency RTs
+        first_rank_mean_rts.extend([
+            mean(list(cp.rts_for_category_response_pair(category_label, response.node)))
+            for response in model_response_overlap_entries
+            # but only those above threshold
+            if cp.data_for_category_response_pair(category_label, response.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ
+        ])
+        first_rank_tsa_times.extend([
+            response.tick_activated
+            for response in model_response_overlap_entries
+            # but only those above threshold
+            if cp.data_for_category_response_pair(category_label, response.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ
+        ])
 
         # Compute statistics for this category
 
         # noinspection PyTypeChecker
-        corr_mean_rank_vs_time_to_activation, _ = spearmanr(time_to_first_activation_in_model, mean_ranks)
+        corr_mean_rank_vs_time_to_activation, _ = spearmanr(times_to_first_activation_in_model, mean_ranks)
         # noinspection PyTypeChecker
-        corr_production_freq_vs_time_to_activation, _ = spearmanr(time_to_first_activation_in_model, production_frequencies_in_data)
-
-        # First rank frequency RTs
-
-        # Get the first-rank responses
-        first_rank_entries_this_cat = [
-            response
-            # which were also found by the model
-            for response in model_response_overlap_entries
-            # but only those above threshold
-            if cp.data_for_category_response_pair(category_label, response.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ
-        ]
-        for response in first_rank_entries_this_cat:
-            first_rank_mean_rts.append(mean(list(cp.rts_for_category_response_pair(category_label, response.node))))
-            first_rank_tsa_times.append(response.tick_activated)
+        corr_production_freq_vs_time_to_activation, _ = spearmanr(times_to_first_activation_in_model, production_frequencies_in_data)
 
         category_comparisons.append((
             n_words,
@@ -167,7 +174,7 @@ def main_in_path(results_dir: str):
             len(model_response_overlap_entries),
             100 * len(model_response_overlap_entries) / len(actual_response_words) if len(actual_response_words) > 0 else nan,
             str([e.node for e in model_response_overlap_entries]),
-            str(time_to_first_activation_in_model),
+            str(times_to_first_activation_in_model),
             str(mean_ranks),
             corr_mean_rank_vs_time_to_activation,
             str(production_frequencies_in_data),
@@ -175,10 +182,14 @@ def main_in_path(results_dir: str):
         ))
 
     first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tsa_times)
-    logger.info(f"First response RT correlation (Pearson's; positive is better fit; FRF≥{MIN_FIRST_RANK_FREQ}) = {first_rank_rt_corr} (N = {len(first_rank_mean_rts)})")
+    # noinspection PyTypeChecker
+    mean_rank_corr, _ = pearsonr(mean_response_ranks_data, time_to_activation_model)
 
-    model_effectiveness_path = path.join(results_dir, f"model_effectiveness.csv")
+    # Paths
+    per_category_stats_output_path = path.join(Preferences.results_dir, "Category production fit", f"model_effectiveness_per_category ({path.basename(results_dir)}).csv")
+    overall_stats_output_path      = path.join(Preferences.results_dir, "Category production fit", f"model_effectiveness_overall ({path.basename(results_dir)}).txt")
 
+    # Save per-category stats
     category_comparisons_df = DataFrame(category_comparisons, columns=[
         f"Number of words",
         f"Category",
@@ -193,8 +204,17 @@ def main_in_path(results_dir: str):
         f"Production frequencies",
         f"Production frequency correlation (Spearman's; negative is better fit)",
     ])
-    with open(model_effectiveness_path, mode="w", encoding="utf-8") as output_file:
+    with open(per_category_stats_output_path, mode="w", encoding="utf-8") as output_file:
         category_comparisons_df.to_csv(output_file, index=False)
+
+    # Save overall stats
+    with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
+        # Correlation of first response RT with time-to-activation
+        output_file.write(path.basename(results_dir) + "\n\n")
+        output_file.write(f"First response RT correlation (Pearson's; positive is better fit; FRF≥{MIN_FIRST_RANK_FREQ}) = {first_rank_rt_corr}\n")
+        output_file.write(f"First response RT correlation N = {len(first_rank_mean_rts)}\n")
+        output_file.write(f"Mean rank vs time-to-activation correlation (Pearson's; positive is better fit) = {mean_rank_corr}\n")
+        output_file.write(f"Mean rank vs time-to-activation N = {len(mean_response_ranks_data)}\n")
 
 
 def interpret_path(results_dir_path: str) -> int:
@@ -256,7 +276,7 @@ if __name__ == '__main__':
 
     for d in dirs:
         if path.isdir(d):
-            logger.info(d)
+            logger.info(path.basename(d))
             main_in_path(d)
 
     logger.info("Done!")

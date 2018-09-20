@@ -30,7 +30,8 @@ class Preferences(object):
 
     node_distributions_dir = "/Users/caiwingfield/data/node_distributions/"
 
-    output_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Results/"
+    output_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Model output/"
+    results_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Results/"
 
     figures_dir = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/Spreading activation/Figures/"
 
