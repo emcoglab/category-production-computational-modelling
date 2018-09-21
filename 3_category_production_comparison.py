@@ -24,7 +24,7 @@ import re
 import sys
 from os import path
 
-from numpy import nan, mean
+from numpy import nan, mean, nanmean
 from pandas import read_csv, DataFrame
 from scipy.stats import spearmanr, pearsonr
 
@@ -69,7 +69,7 @@ def main_in_path(results_dir: str):
     # Average RTs for all category–first-rank-member pairs (with FRF ≥ `min_first_rank_freq`)
     first_rank_mean_rts = []
     # Corresponding time-to-activation of member nodes from category seed
-    first_rank_tsa_times = []
+    first_rank_tta = []
 
     # Of responses which were produced by both model and in the data, what are the ordinals of the (first occurrences of
     #  the) responses?
@@ -77,6 +77,10 @@ def main_in_path(results_dir: str):
     time_to_activation_model = []
 
     category_comparisons = []
+
+    # per-category stats
+
+    corrs_mean_rank_vs_tta = []
 
     for category_label in cp.category_labels:
 
@@ -152,7 +156,7 @@ def main_in_path(results_dir: str):
             # but only those above threshold
             if cp.data_for_category_response_pair(category_label, response.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ
         ])
-        first_rank_tsa_times.extend([
+        first_rank_tta.extend([
             response.tick_activated
             for response in model_response_overlap_entries
             # but only those above threshold
@@ -163,6 +167,7 @@ def main_in_path(results_dir: str):
 
         # noinspection PyTypeChecker
         corr_mean_rank_vs_time_to_activation, _ = spearmanr(times_to_first_activation_in_model, mean_ranks)
+        corrs_mean_rank_vs_tta.append(corr_mean_rank_vs_time_to_activation)
         # noinspection PyTypeChecker
         corr_production_freq_vs_time_to_activation, _ = spearmanr(times_to_first_activation_in_model, production_frequencies_in_data)
 
@@ -181,9 +186,8 @@ def main_in_path(results_dir: str):
             corr_production_freq_vs_time_to_activation,
         ))
 
-    first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tsa_times)
-    # noinspection PyTypeChecker
-    mean_rank_corr, _ = pearsonr(mean_response_ranks_data, time_to_activation_model)
+    first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tta)
+    mean_rank_corr = nanmean(corrs_mean_rank_vs_tta)
 
     # Paths
     per_category_stats_output_path = path.join(Preferences.results_dir, "Category production fit", f"model_effectiveness_per_category ({path.basename(results_dir)}).csv")
@@ -211,10 +215,14 @@ def main_in_path(results_dir: str):
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
         # Correlation of first response RT with time-to-activation
         output_file.write(path.basename(results_dir) + "\n\n")
-        output_file.write(f"First response RT correlation (Pearson's; positive is better fit; FRF≥{MIN_FIRST_RANK_FREQ}) = {first_rank_rt_corr}\n")
-        output_file.write(f"First response RT correlation N = {len(first_rank_mean_rts)}\n")
-        output_file.write(f"Mean rank vs time-to-activation correlation (Pearson's; positive is better fit) = {mean_rank_corr}\n")
-        output_file.write(f"Mean rank vs time-to-activation N = {len(mean_response_ranks_data)}\n")
+        output_file.write(f"First response RT vs TTA correlation ("
+                          f"Pearson's; positive is better fit; "
+                          f"FRF≥{MIN_FIRST_RANK_FREQ}; "
+                          f"N = {len(first_rank_mean_rts)}) "
+                          f"= {first_rank_rt_corr}\n")
+        output_file.write(f"Average mean_rank vs time-to-activation correlation ("
+                          f"Spearman's; positive is better fit) "
+                          f"= {mean_rank_corr}\n")
 
 
 def interpret_path(results_dir_path: str) -> int:
