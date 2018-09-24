@@ -24,9 +24,9 @@ import re
 import sys
 from os import path
 
-from numpy import nan, mean, nanmean, nanstd
+from numpy import nan, mean, nanmean
 from pandas import read_csv, DataFrame
-from scipy.stats import spearmanr, pearsonr
+from scipy.stats import spearmanr, pearsonr, sem
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
@@ -188,7 +188,7 @@ def main_in_path(results_dir: str):
 
     first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tta)
     mean_rank_corr = nanmean(corrs_mean_rank_vs_tta)
-    std_rank_corr = nanstd(corrs_mean_rank_vs_tta)
+    sem_rank_corr = sem(corrs_mean_rank_vs_tta, nan_policy='omit')
 
     # Paths
     per_category_stats_output_path = path.join(Preferences.results_dir, "Category production fit", f"model_effectiveness_per_category ({path.basename(results_dir)}).csv")
@@ -223,7 +223,7 @@ def main_in_path(results_dir: str):
                           f"= {first_rank_rt_corr}\n")
         output_file.write(f"Average mean_rank vs time-to-activation correlation ("
                           f"Spearman's; positive is better fit) "
-                          f"= {mean_rank_corr} (sd = {std_rank_corr})\n")
+                          f"= {mean_rank_corr} (SEM = {sem_rank_corr})\n")
 
 
 def interpret_path(results_dir_path: str) -> int:
