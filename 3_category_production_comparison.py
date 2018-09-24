@@ -63,7 +63,7 @@ def main_in_path(results_dir: str):
     # Vectors for statistics of interest, to be computed over all categories
 
     # Average RTs for all category–first-rank-member pairs (with FRF ≥ `min_first_rank_freq`)
-    first_rank_mean_rts = []
+    first_rank_mean_zrts = []
     # Corresponding time-to-activation of member nodes from category seed
     first_rank_tta = []
 
@@ -146,8 +146,8 @@ def main_in_path(results_dir: str):
         mean_response_ranks_data.extend(mean_ranks)
         time_to_activation_model.extend(times_to_first_activation_in_model)
         # First rank frequency RTs
-        first_rank_mean_rts.extend([
-            mean(list(cp.rts_for_category_response_pair(category_label, response.node)))
+        first_rank_mean_zrts.extend([
+            mean(list(cp.rts_for_category_response_pair(category_label, response.node, use_zrt=True)))
             for response in model_response_overlap_entries
             # but only those above threshold
             if cp.data_for_category_response_pair(category_label, response.node, CategoryProduction.ColNames.FirstRankFrequency) >= MIN_FIRST_RANK_FREQ
@@ -182,7 +182,7 @@ def main_in_path(results_dir: str):
             corr_production_freq_vs_time_to_activation,
         ))
 
-    first_rank_rt_corr, _ = pearsonr(first_rank_mean_rts, first_rank_tta)
+    first_rank_rt_corr, _ = pearsonr(first_rank_mean_zrts, first_rank_tta)
     mean_rank_corr = nanmean(corrs_mean_rank_vs_tta)
     sem_rank_corr = sem(corrs_mean_rank_vs_tta, nan_policy='omit')
 
@@ -215,7 +215,7 @@ def main_in_path(results_dir: str):
         output_file.write(f"First response RT vs TTA correlation ("
                           f"Pearson's; positive is better fit; "
                           f"FRF≥{MIN_FIRST_RANK_FREQ}; "
-                          f"N = {len(first_rank_mean_rts)}) "
+                          f"N = {len(first_rank_mean_zrts)}) "
                           f"= {first_rank_rt_corr}\n")
         output_file.write(f"Average mean_rank vs time-to-activation correlation ("
                           f"Spearman's; positive is better fit) "
