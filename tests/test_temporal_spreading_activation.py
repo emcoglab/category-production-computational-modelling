@@ -21,9 +21,9 @@ from numpy import array, log
 
 from approximate_comparator.approximate_comparator import is_almost_equal
 from model.graph import Edge, Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
-    decay_function_gaussian_with_sd_fraction, decay_function_gaussian_with_sd
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
+    decay_function_gaussian_with_sd
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         )
         tsa = TemporalSpreadingActivation(
             graph=graph,
-            node_relabelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
+            item_labelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
             firing_threshold=0.3,
             conscious_access_threshold=0.3,
             impulse_pruning_threshold=.1,
@@ -48,7 +48,7 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             edge_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
         )
 
-        tsa.activate_node_with_label("lion", 1)
+        tsa.activate_item_with_label("lion", 1)
 
         for i in range(1, 16):
             tsa.tick()
@@ -101,8 +101,8 @@ class TestDecayFunctions(unittest.TestCase):
             conscious_access_threshold=0.3,
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(0.42, 100),
-            node_relabelling_dictionary=dict()
+            edge_decay_function=decay_function_gaussian_with_sd(0.42 * 100),
+            item_labelling_dictionary=dict()
         )
         tsa = TemporalSpreadingActivation(
             graph=Graph.from_distance_matrix(
@@ -114,11 +114,11 @@ class TestDecayFunctions(unittest.TestCase):
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd(42),
-            node_relabelling_dictionary=dict()
+            item_labelling_dictionary=dict()
         )
 
-        tsa_frac.activate_node(n=0, activation=1.0)
-        tsa.activate_node(n=0, activation=1.0)
+        tsa_frac.activate_item_with_idx(n=0, activation=1.0)
+        tsa.activate_item_with_idx(n=0, activation=1.0)
 
         for tick in range(1, 50):
             tsa_frac.tick()
@@ -126,8 +126,8 @@ class TestDecayFunctions(unittest.TestCase):
 
         # Same granularity, different function-maker
         self.assertAlmostEqual(
-            tsa_frac.activation_of_node(0),
-            tsa.activation_of_node(0)
+            tsa_frac.activation_of_item_with_idx(0),
+            tsa.activation_of_item_with_idx(0)
         )
 
     def test_gaussian_decay_different_granularity_same_function_maker(self):
@@ -151,8 +151,8 @@ class TestDecayFunctions(unittest.TestCase):
             firing_threshold=0.5,
             conscious_access_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
-            node_relabelling_dictionary=dict()
+            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
+            item_labelling_dictionary=dict()
         )
         granularity = 1000
         tsa_1000 = TemporalSpreadingActivation(
@@ -164,12 +164,12 @@ class TestDecayFunctions(unittest.TestCase):
             firing_threshold=0.5,
             conscious_access_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(sd_frac, granularity),
-            node_relabelling_dictionary=dict()
+            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
+            item_labelling_dictionary=dict()
         )
 
-        tsa_390.activate_node(n=0, activation=1.0)
-        tsa_1000.activate_node(n=0, activation=1.0)
+        tsa_390.activate_item_with_idx(n=0, activation=1.0)
+        tsa_1000.activate_item_with_idx(n=0, activation=1.0)
 
         # Different granularity, same function-maker
         almost_equal = is_almost_equal(

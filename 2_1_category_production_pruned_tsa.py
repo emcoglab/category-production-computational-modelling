@@ -28,8 +28,8 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd_fraction
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
@@ -43,7 +43,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 # Results DataFrame column names
 RESPONSE = "Response"
 NODE_ID = "Node ID"
-ACTIVATION = "Activation"
+ACTIVATION = "ActivationValue"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
@@ -114,9 +114,9 @@ def main(n_words: int, prune_percent: int):
     with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
         node_relabelling_dictionary_json = json.load(nrd_file)
     # TODO: this isn't a great way to do this
-    node_relabelling_dictionary = dict()
+    node_labelling_dictionary = dict()
     for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
+        node_labelling_dictionary[int(k)] = v
 
     cp = CategoryProduction()
 
@@ -169,16 +169,16 @@ def main(n_words: int, prune_percent: int):
 
         tsa = TemporalSpreadingActivation(
             graph=graph,
-            node_relabelling_dictionary=node_relabelling_dictionary,
+            item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=firing_threshold,
             conscious_access_threshold=conscious_access_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
-            edge_decay_function=decay_function_gaussian_with_sd_fraction(
-                sd_frac=edge_decay_sd_frac, granularity=length_factor))
+            edge_decay_function=decay_function_gaussian_with_sd(
+                sd=edge_decay_sd_frac * length_factor))
 
-        tsa.activate_node_with_label(category_label, 1)
+        tsa.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
         for tick in range(1, n_ticks):
@@ -188,10 +188,10 @@ def main(n_words: int, prune_percent: int):
 
             for na in node_activations:
                 model_response_entries.append((
-                    na.node,
-                    tsa.label2node[na.node],
+                    na.label,
+                    tsa.label2idx[na.node],
                     na.activation,
-                    na.tick_activated
+                    na.time_activated
                 ))
 
             # Break early if we've got a probable explosion

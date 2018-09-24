@@ -31,7 +31,7 @@ from scipy.stats import spearmanr, pearsonr, sem
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.temporal_spreading_activation import ActivatedNodeEvent
+from model.component import ItemActivatedEvent
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 
@@ -110,7 +110,7 @@ def main_in_path(results_dir: str):
         corpus_coverage_this_category = len(actual_response_words) / len(cp.responses_for_category(category_label, single_word_only=True))
 
         model_response_entries = [
-            ActivatedNodeEvent(node=row[RESPONSE], activation=row[ACTIVATION], tick_activated=row[TICK_ON_WHICH_ACTIVATED])
+            ItemActivatedEvent(label=row[RESPONSE], activation=row[ACTIVATION], time_activated=row[TICK_ON_WHICH_ACTIVATED])
             for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows()
         ]
 

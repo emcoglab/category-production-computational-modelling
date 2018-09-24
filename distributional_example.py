@@ -28,8 +28,8 @@ from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, \
-    decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
 
@@ -61,8 +61,8 @@ def main():
 
     # A dictionary whose keys are nodes (i.e. row-ids for the distance matrix) and whose values are labels for those
     # nodes (i.e. the word for the LDM-id corresponding to that row-id).
-    node_relabelling_dictionary = {node_id: token_index.id2token[ldm_id]
-                                   for (node_id, ldm_id) in matrix_to_ldm.items()}
+    node_labelling_dictionary = {node_id: token_index.id2token[ldm_id]
+                                 for (node_id, ldm_id) in matrix_to_ldm.items()}
 
     edgelist_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
     edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
@@ -109,14 +109,14 @@ def main():
                     # keep cat at ft
                     conscious_access_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
-                    node_relabelling_dictionary=node_relabelling_dictionary,
+                    item_labelling_dictionary=node_labelling_dictionary,
                     node_decay_function=decay_function_exponential_with_decay_factor(
                         decay_factor=node_decay_factor),
                     edge_decay_function=decay_function_gaussian_with_sd(
                         sd=edge_decay_sd))
 
                 logger.info(f"Initial node {initial_word}")
-                tsa.activate_node_with_label(initial_word, 1)
+                tsa.activate_item_with_label(initial_word, 1)
 
                 logger.info("Running spreading output")
                 for tick in range(1, n_ticks):
@@ -131,7 +131,7 @@ def main():
                     d.append({
                         'Tick': tick,
                         'Nodes activated': nodes_activated_str,
-                        "Activation threshold": firing_threshold,
+                        "ActivationValue threshold": firing_threshold,
                         "Node decay factor": node_decay_factor,
                         "Edge decay SD": edge_decay_sd,
                         "Activated nodes": tsa.n_suprathreshold_nodes()
