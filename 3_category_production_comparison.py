@@ -50,10 +50,6 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 MIN_FIRST_RANK_FREQ = 4
 
 
-def comment_line_from_str(message: str) -> str:
-    return f"# {message}\n"
-
-
 def main_in_path(results_dir: str):
     n_words = interpret_path(results_dir)
 
