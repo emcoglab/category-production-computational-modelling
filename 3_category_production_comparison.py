@@ -72,8 +72,7 @@ def main_in_path(results_dir: str, category_production: CategoryProduction):
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
 
     # Save main dataframe
-
-    per_category_stats_output_path = path.join(Preferences.results_dir, "Category production fit", f"model_effectiveness_per_category ({path.basename(results_dir)}).csv")
+    per_category_stats_output_path = path.join(Preferences.results_dir, "Category production fit", f"item-level data ({path.basename(results_dir)}).csv")
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
 
     # Compute overall stats
