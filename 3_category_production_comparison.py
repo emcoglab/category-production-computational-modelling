@@ -77,13 +77,15 @@ def main_in_path(results_dir: str, category_production: CategoryProduction):
 
     # Compute overall stats
 
+    # Pearson's correlation between production frequency and ttfa
+    corr_prodfreq_vs_ttfa = main_dataframe[CPColNames.ProductionFrequency].corr(main_dataframe[TTFA], method='pearson')
+
     # The Pearson's correlation over all categories between average first-response RT (for responses with
     # first-rank frequency ≥4) and the time to the first activation (TTFA) within the model.
 
     # First rank frequency cutoff
     first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= MIN_FIRST_RANK_FREQ]
     n_first_rank_frequent = first_rank_frequent_data.shape[0]
-
     first_rank_frequent_corr_rt_vs_ttfa = first_rank_frequent_data[CPColNames.MeanZRT].corr(first_rank_frequent_data[TTFA], method='pearson')
 
     # The average (over categories) Spearman's correlation (over responses) between the mean rank of the response and
@@ -105,12 +107,15 @@ def main_in_path(results_dir: str, category_production: CategoryProduction):
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
         # Correlation of first response RT with time-to-activation
         output_file.write(path.basename(results_dir) + "\n\n")
-        output_file.write(f"First response RT vs TTA correlation ("
+        output_file.write(f"Production frequency vs TTFA correlation ("
+                          f"Pearson's; negative is better fit) "
+                          f"= {corr_prodfreq_vs_ttfa}\n")
+        output_file.write(f"First response RT vs TTFA correlation ("
                           f"Pearson's; positive is better fit; "
                           f"FRF≥{MIN_FIRST_RANK_FREQ}; "
                           f"N = {n_first_rank_frequent}) "
                           f"= {first_rank_frequent_corr_rt_vs_ttfa}\n")
-        output_file.write(f"Average mean_rank vs time-to-activation correlation ("
+        output_file.write(f"Average mean_rank vs TTFA correlation ("
                           f"Spearman's; positive is better fit) "
                           f"= {average_corr_meanrank_vs_ttfa} (SEM = {sem_corr_meanrank_vs_ttfa})\n")
 
