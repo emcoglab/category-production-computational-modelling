@@ -27,7 +27,7 @@ from os import path
 from typing import Dict, DefaultDict
 
 from numpy import nan
-from pandas import read_csv, DataFrame
+from pandas import read_csv, DataFrame, to_numeric
 from scipy.stats import spearmanr
 
 from category_production.category_production import CategoryProduction
@@ -82,7 +82,6 @@ def main_in_path(results_dir: str):
 
     # Main dataframe holds category production data and model response data
     main_dataframe: DataFrame = cp.data.copy()
-
     # Drop precomputed distance measures
     main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor', 'Linguistic'], axis=1, inplace=True)
 
@@ -94,6 +93,9 @@ def main_in_path(results_dir: str):
 
     # Drop rows corresponding to responses which weren't produced by the model
     main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
+
+    # Now we can convert TTFAs to ints as there won't be null values
+    main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
 
     # Compute overall stats
 
