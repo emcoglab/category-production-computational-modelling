@@ -61,7 +61,9 @@ def main(n_words: int):
     graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
     logger.info(f"Graph has {len(graph.edges):,} edges")
 
-    # Prune by quantile
+    # Prune by length quantile
+    logger.info("Length quantile pruning\n")
+
     for i, top_quantile in enumerate(linspace(0.0, 1.0, 11)):
         # Invert the quantiles so q of 0.1 gives TOP 10%
         pruning_length = edge_length_quantile([length for edge, length in graph.edge_lengths], 1-top_quantile)
@@ -70,6 +72,26 @@ def main(n_words: int):
         logger.info(f"Graph has {len(graph.edges):,} edges")
         if graph.has_orphaned_nodes():
             orphaned_nodes = graph.orphaned_nodes()
+            orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
+            logger.info(f"Graph has {len(orphaned_nodes)} orphaned nodes "
+                        f"({len(orphaned_nodes)/len(graph.nodes):.2}% of total): "
+                        f"{', '.join(orphaned_node_labels)}")
+        else:
+            logger.info("Graph has no orphaned nodes")
+        logger.info("")
+    logger.info("")
+
+    # Prune by importance
+    logger.info("Importance pruning\n")
+
+    for importance in [0, 19, 20, 30, 40, 50, 60, 70, 80, 90, 100]:
+        logger.info(f"Pruning at importance level {importance}")
+        importance_pruned_graph = Graph.load_from_edgelist_with_importance_pruning(path.join(Preferences.graphs_dir, graph_file_name),
+                                                                                   ignore_edges_with_importance_greater_than=importance,
+                                                                                   keep_at_least_n_edges=0)
+        logger.info(f"Graph has {len(importance_pruned_graph.edges):,} edges")
+        if importance_pruned_graph.has_orphaned_nodes():
+            orphaned_nodes = importance_pruned_graph.orphaned_nodes()
             orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
             logger.info(f"Graph has {len(orphaned_nodes)} orphaned nodes "
                         f"({len(orphaned_nodes)/len(graph.nodes):.2}% of total): "
