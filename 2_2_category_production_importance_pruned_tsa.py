@@ -50,7 +50,7 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 def main(n_words: int, prune_importance: int = None):
 
-    n_ticks = 1_000
+    n_ticks = 3_000
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.8
@@ -59,7 +59,7 @@ def main(n_words: int, prune_importance: int = None):
     edge_decay_sd_frac = 0.4
 
     # Bail if too many words get activated
-    bailout = 2_000
+    bailout = 5_000
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
