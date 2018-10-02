@@ -242,27 +242,12 @@ def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) 
         return defaultdict(lambda: nan)
 
 
-if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
-    logger.info("Running %s" % " ".join(sys.argv))
-
-    # TODO: The manner of invocation of this feels rather convoluted and fragile.
-    # TODO: THere must be a better way!
-
-    parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
-    parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("-n", "--n_words", type=int, nargs="+", required=False, help="Only consider this many words.")
-    args = parser.parse_args()
-
-    n_wordss = args.n_words
-
+def main(n_wordss, dirs):
     if n_wordss is not None:
         str_list = " or ".join(f"{n:,}" for n in n_wordss)
         logger.info(f"Only looking at outputs from models with {str_list} words")
     else:
         logger.info(f"Looking at all available model outputs")
-
-    dirs = glob.glob(path.join(args.path, "*"))
 
     cp = CategoryProduction()
 
@@ -288,5 +273,20 @@ if __name__ == '__main__':
                 continue
             logger.info(path.basename(d))
             main_in_path(d, cp, available_items)
+
+
+if __name__ == '__main__':
+    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logger.info("Running %s" % " ".join(sys.argv))
+
+    # TODO: The manner of invocation of this feels rather convoluted and fragile.
+    # TODO: THere must be a better way!
+
+    parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
+    parser.add_argument("path", type=str, help="The path in which to find the results.")
+    parser.add_argument("-n", "--n_words", type=int, nargs="+", required=False, help="Only consider this many words.")
+    args = parser.parse_args()
+
+    main(args.n_words, glob.glob(path.join(args.path, "*")))
 
     logger.info("Done!")
