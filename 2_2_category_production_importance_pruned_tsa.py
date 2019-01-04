@@ -169,18 +169,18 @@ def main(n_words: int, prune_importance: int = None):
 
         # Do the spreading activation
 
-        tsa = TemporalSpreadingActivation(
+        tsa: TemporalSpreadingActivation = TemporalSpreadingActivation(
             graph=graph,
-            node_relabelling_dictionary=node_relabelling_dictionary,
+            item_labelling_dictionary=node_relabelling_dictionary,
             firing_threshold=firing_threshold,
             conscious_access_threshold=conscious_access_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd_frac=edge_decay_sd_frac*length_factor, granularity=length_factor))
+                sd=edge_decay_sd_frac*length_factor))
 
-        tsa.activate_node_with_label(category_label, 1)
+        tsa.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
         for tick in range(1, n_ticks):
@@ -191,7 +191,7 @@ def main(n_words: int, prune_importance: int = None):
             for na in node_activations:
                 model_response_entries.append((
                     na.node,
-                    tsa.label2node[na.node],
+                    tsa.label2idx[na.node],
                     na.activation,
                     na.tick_activated
                 ))
