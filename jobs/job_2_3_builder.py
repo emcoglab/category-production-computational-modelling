@@ -39,7 +39,7 @@ for firing_threshold in firing_thresholds:
             job_file.write(f"\n")
             job_file.write(f"module add anaconda3\n")
             job_file.write(f"\n")
-            job_file.write(f"python3 ../2_3_category_production_importance_pruned_tsa.py"
+            job_file.write(f"python3 ../2_3_category_production_parameter_search.py"
                            f" {int(number_of_words)}"
                            f" {int(importance_threshold)}"
                            f" {float(firing_threshold)}"
