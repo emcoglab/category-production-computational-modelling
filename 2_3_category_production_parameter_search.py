@@ -179,7 +179,7 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
 
             for na in node_activations:
                 model_response_entries.append((
-                    na.node,
+                    na.label,
                     tsa.label2idx[na.node],
                     na.activation,
                     na.tick_activated
