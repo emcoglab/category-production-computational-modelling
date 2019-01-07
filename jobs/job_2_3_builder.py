@@ -4,7 +4,7 @@ Builds some template jobs
 
 number_of_words = 30_000
 importance_threshold = 50
-ram_amount = 90
+ram_amount = 100
 thresholds = {
     # firing: conscious-access
     0.6: [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2],
