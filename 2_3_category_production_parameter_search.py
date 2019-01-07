@@ -180,9 +180,9 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
             for na in node_activations:
                 model_response_entries.append((
                     na.label,
-                    tsa.label2idx[na.node],
+                    tsa.label2idx[na.label],
                     na.activation,
-                    na.tick_activated
+                    na.time_activated
                 ))
 
             # Break early if we've got a probable explosion
