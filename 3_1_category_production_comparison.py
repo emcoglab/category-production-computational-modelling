@@ -60,6 +60,7 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
 
     # Main dataframe holds category production data and model response data
     main_dataframe: DataFrame = category_production.data.copy()
+
     # Drop precomputed distance measures
     main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor', 'Linguistic'], axis=1, inplace=True)
 
