@@ -70,6 +70,7 @@ def main(n_words: int):
         logger.info(f"Pruning longest {int(100*top_quantile)}% of edges (anything longer than {pruning_length}).")
         graph.prune_longest_edges_by_quantile(top_quantile)
         logger.info(f"Graph has {len(graph.edges):,} edges")
+        logger.info(f"Graph has {len(graph.nodes):,} nodes")
         if graph.has_orphaned_nodes():
             orphaned_nodes = graph.orphaned_nodes()
             orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
@@ -90,6 +91,7 @@ def main(n_words: int):
                                                                                    ignore_edges_with_importance_greater_than=importance,
                                                                                    keep_at_least_n_edges=0)
         logger.info(f"Graph has {len(importance_pruned_graph.edges):,} edges")
+        logger.info(f"Graph has {len(importance_pruned_graph.nodes):,} nodes")
         if importance_pruned_graph.has_orphaned_nodes():
             orphaned_nodes = importance_pruned_graph.orphaned_nodes()
             orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
