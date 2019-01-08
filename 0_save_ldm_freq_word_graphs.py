@@ -25,7 +25,6 @@ from sklearn.metrics.pairwise import pairwise_distances
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.base import DistributionalSemanticModel
 from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.model.ngram import LogNgramModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
@@ -44,11 +43,9 @@ def main():
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
     distance_type = DistanceType.cosine
-    # distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
-    distributional_model = LogNgramModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distributional_model: DistributionalSemanticModel = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    # TODO WIP: revert this
-    for word_count in [1000]: #Preferences.graph_sizes:
+    for word_count in Preferences.graph_sizes:
         logger.info(f"{word_count:,} words:")
 
         filtered_words = freq_dist.most_common_tokens(word_count)
