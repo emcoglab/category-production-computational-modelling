@@ -1,6 +1,6 @@
 """
 ===========================
-Search parameter space.
+Spreading activation on ngram graphs.
 ===========================
 
 Dr. Cai Wingfield
@@ -25,8 +25,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.maths import DistanceType
+from ldm.core.model.ngram import PPMINgramModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
@@ -48,22 +47,23 @@ ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def main(n_words: int, prune_importance: int, firing_threshold: float, conscious_access_threshold: float):
+def main(n_words: int):
 
     n_ticks = 3_000
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
+    firing_threshold = 0.1
+    conscious_access_threshold = 0.1
     node_decay_factor = 0.99
-    edge_decay_sd_frac = 0.4
+    edge_decay_sd_frac = 0.8
 
     # Bail if too many words get activated
     bailout = 5_000
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
-    distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distributional_model = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
     filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
@@ -72,7 +72,7 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
 
     # Build edge distributions
     logger.info("Collating edge length distributions.")
@@ -82,20 +82,16 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
             edge_lengths_from_node[node].append(length)
     edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
 
-    # Get pruning length
-    logger.info(f"Loading graph from {graph_file_name}, pruning importance {prune_importance}")
+    logger.info(f"Loading graph from {graph_file_name}")
 
     # Load graph
-    graph = Graph.load_from_edgelist_with_importance_pruning(
-        file_path=path.join(Preferences.graphs_dir, graph_file_name),
-        ignore_edges_with_importance_greater_than=prune_importance,
-        keep_at_least_n_edges=Preferences.min_edges_per_node
-    )
+    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
+    n_nodes = len(graph.nodes)
     n_edges = len(graph.edges)
 
     # Topology
-    orphans = graph.has_orphaned_nodes()
-    connected = graph.is_connected()
+    orphans = graph.has_orphaned_nodes() or n_nodes != n_words
+    connected = graph.is_connected() and not orphans
     if connected:
         logger.info("Graph is connected")
     else:
@@ -127,7 +123,8 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
                                  f"Category production traces ({n_words:,} words; "
                                  f"firing {firing_threshold}; "
                                  f"access {conscious_access_threshold}; "
-                                 f"edge importance threshold {prune_importance})")
+                                 f"sd frac {edge_decay_sd_frac}; "
+                                 f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             mkdir(response_dir)
@@ -143,11 +140,10 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
         logger.info(f"Running spreading activation for category {category_label}")
 
         csv_comments.append(f"Running spreading activation using parameters:")
+        csv_comments.append(f"\t      model = {distributional_model.name}")
         csv_comments.append(f"\t      words = {n_words:_}")
         csv_comments.append(f"\t      edges = {n_edges:_}")
         csv_comments.append(f"\tgranularity = {length_factor:_}")
-        if prune_importance is not None:
-            csv_comments.append(f"\t    pruning = {prune_importance}")
         csv_comments.append(f"\t   firing θ = {firing_threshold}")
         csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
         csv_comments.append(f"\t          δ = {node_decay_factor}")
@@ -179,10 +175,10 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
 
             for na in node_activations:
                 model_response_entries.append((
-                    na.label,
-                    tsa.label2idx[na.label],
+                    na.node,
+                    tsa.label2idx[na.node],
                     na.activation,
-                    na.time_activated
+                    na.tick_activated
                 ))
 
             # Break early if we've got a probable explosion
@@ -215,18 +211,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
-    parser.add_argument("prune_importance", type=int, help="Edge importance above which to prune.")
-    parser.add_argument("firing_threshold", type=float, help="The firing threshold.")
-    parser.add_argument("conscious_access_threshold", type=float, help="The conscious access threshold.")
     args = parser.parse_args()
 
-    main(n_words=args.n_words, prune_importance=args.prune_importance,
-         firing_threshold=args.firing_threshold, conscious_access_threshold=args.conscious_access_threshold)
+    main(n_words=args.n_words)
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
-    emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words"
-                       f" and words at least {args.prune_importance} importance,"
-                       f" using a firing threshold of {args.firing_threshold}"
-                       f" and a conscious-access threshold of {args.conscious_access_threshold}.",
+    emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words.",
                        Preferences.target_email_address)

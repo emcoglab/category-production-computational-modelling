@@ -20,14 +20,11 @@ import logging
 import sys
 from os import path
 
-from numpy import linspace
-
 from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.count import LogCoOccurrenceCountModel, PPMIModel
-from ldm.core.model.ngram import LogNgramModel, PPMINgramModel
+from ldm.core.model.ngram import PPMINgramModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph, edge_length_quantile
+from model.graph import Graph
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -40,7 +37,6 @@ def main(n_words: int):
     length_factor = 1_000
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
-    distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
 
