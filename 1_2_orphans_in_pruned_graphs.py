@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import json
 import logging
 import sys
 from os import path
@@ -27,6 +26,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph, edge_length_quantile
+from model.component import load_labels
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -47,14 +47,7 @@ def main(n_words: int):
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    # TODO: this is duplicated code and can be refactored out in to a library function
-    # TODO: in fact, it SHOULD be
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r",
-              encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    node_relabelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
+    node_labelling_dictionary = load_labels(corpus, n_words)
 
     # Load the full graph
     logger.info(f"Loading graph from {graph_file_name}")
@@ -73,7 +66,7 @@ def main(n_words: int):
         logger.info(f"Graph has {len(graph.nodes):,} nodes")
         if graph.has_orphaned_nodes():
             orphaned_nodes = graph.orphaned_nodes()
-            orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
+            orphaned_node_labels = sorted(list(node_labelling_dictionary[node] for node in orphaned_nodes))
             logger.info(f"Graph has {len(orphaned_nodes)} orphaned nodes "
                         f"({len(orphaned_nodes)/len(graph.nodes):.2}% of total): "
                         f"{', '.join(orphaned_node_labels)}")
@@ -94,7 +87,7 @@ def main(n_words: int):
         logger.info(f"Graph has {len(importance_pruned_graph.nodes):,} nodes")
         if importance_pruned_graph.has_orphaned_nodes():
             orphaned_nodes = importance_pruned_graph.orphaned_nodes()
-            orphaned_node_labels = sorted(list(node_relabelling_dictionary[node] for node in orphaned_nodes))
+            orphaned_node_labels = sorted(list(node_labelling_dictionary[node] for node in orphaned_nodes))
             logger.info(f"Graph has {len(orphaned_nodes)} orphaned nodes "
                         f"({len(orphaned_nodes)/len(graph.nodes):.2}% of total): "
                         f"{', '.join(orphaned_node_labels)}")

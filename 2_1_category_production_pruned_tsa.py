@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import json
 import logging
 import sys
 from os import path, mkdir
@@ -28,6 +27,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
+from model.component import load_labels
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from model.utils.email import Emailer
@@ -111,12 +111,7 @@ def main(n_words: int, prune_percent: int):
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    # TODO: this isn't a great way to do this
-    node_labelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_labelling_dictionary[int(k)] = v
+    node_labelling_dictionary = load_labels(corpus, n_words)
 
     cp = CategoryProduction()
 

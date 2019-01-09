@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import json
 import logging
 import sys
 from collections import defaultdict
@@ -29,6 +28,7 @@ from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph, iter_edges_from_edgelist
+from model.component import load_labels
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -107,12 +107,7 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    # TODO: this isn't a great way to do this
-    node_relabelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
+    node_labelling_dictionary = load_labels(corpus, n_words)
 
     cp = CategoryProduction()
 
@@ -160,7 +155,7 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
 
         tsa: TemporalSpreadingActivation = TemporalSpreadingActivation(
             graph=graph,
-            item_labelling_dictionary=node_relabelling_dictionary,
+            item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=firing_threshold,
             conscious_access_threshold=conscious_access_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
