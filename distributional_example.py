@@ -106,8 +106,6 @@ def main():
                 tsa = TemporalSpreadingActivation(
                     graph=graph,
                     firing_threshold=firing_threshold,
-                    # keep cat at ft
-                    conscious_access_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
                     item_labelling_dictionary=node_labelling_dictionary,
                     node_decay_function=decay_function_exponential_with_decay_factor(
