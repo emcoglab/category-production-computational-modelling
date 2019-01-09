@@ -39,12 +39,13 @@ logger = logging.getLogger()
 def main():
 
     n_words = 3_000
-    n_ticks = 1_000
+    run_for_ticks = 1_000
+    propagation_speed = 1/1_000
     initial_word = "colour"
     impulse_pruning_threshold = 0.05
 
     # Bail on computation if too many nodes get activated
-    bailout = n_words * 0.2
+    bailout = n_words * 0.5
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -108,6 +109,7 @@ def main():
                     conscious_access_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
                     item_labelling_dictionary=node_labelling_dictionary,
+                    impulse_propagation_speed=propagation_speed,
                     node_decay_function=decay_function_exponential_with_decay_factor(
                         decay_factor=node_decay_factor),
                     edge_decay_function=decay_function_gaussian_with_sd(
@@ -117,7 +119,7 @@ def main():
                 tsa.activate_item_with_label(initial_word, 1)
 
                 logger.info("Running spreading output")
-                for tick in range(1, n_ticks):
+                for tick in range(1, run_for_ticks):
                     logger.info(f"Clock = {tick}")
                     node_activations = tsa.tick()
                     nodes_activated_str = ", ".join([f"{na.node} ({na.activation:.3})" for na in node_activations])
