@@ -189,7 +189,7 @@ def main(n_words: int, prune_importance: int = None):
                     na.label,
                     tsa.label2idx[na.label],
                     na.activation,
-                    na.time_activated
+                    na.time_activated,
                     "Exceeded conc.acc. θ" if na.activation >= conscious_access_threshold else ""
                 ))
 
