@@ -50,15 +50,15 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 def main(n_words: int):
 
     n_ticks = 3_000
-    length_factor = 1_000
+    length_factor = 100
     impulse_pruning_threshold = 0.05
-    firing_threshold = 0.1
-    conscious_access_threshold = 0.1
+    firing_threshold = 0.6
+    conscious_access_threshold = 0.8
     node_decay_factor = 0.99
     edge_decay_sd_frac = 0.8
 
     # Bail if too many words get activated
-    bailout = 5_000
+    bailout = n_words * .5
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -163,7 +163,8 @@ def main(n_words: int):
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_frac*length_factor))
+                # TODO: THIS IS AWFUL
+                sd=edge_decay_sd_frac*1_000))
 
         tsa.activate_item_with_label(category_label, 1)
 
@@ -175,10 +176,10 @@ def main(n_words: int):
 
             for na in node_activations:
                 model_response_entries.append((
-                    na.node,
-                    tsa.label2idx[na.node],
+                    na.label,
+                    tsa.label2idx[na.label],
                     na.activation,
-                    na.tick_activated
+                    na.time_activated
                 ))
 
             # Break early if we've got a probable explosion
