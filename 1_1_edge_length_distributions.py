@@ -39,29 +39,27 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main(n_words: int):
 
-    length_factor = 1_000
-
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.count:
-        graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
     elif distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
         graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
     else:
         raise NotImplementedError()
 
     # We want to over-prune isolated nodes and under-prune highly accessible nodes, so that we end up pruning approx the
-    # target fraction of edges.  We classify a node's "accessibility" as its minimum edge length.
+    # target fraction of edges.
 
     edge_lengths_from_node = defaultdict(list)
-    accessibility = defaultdict(lambda: inf)
+    min_edge_length = defaultdict(lambda: inf)
     for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
         n1, n2 = edge
-        accessibility[n1] = min(accessibility[n1], length)
-        accessibility[n2] = min(accessibility[n2], length)
+        min_edge_length[n1] = min(min_edge_length[n1], length)
+        min_edge_length[n2] = min(min_edge_length[n2], length)
         edge_lengths_from_node[n1].append(length)
         edge_lengths_from_node[n2].append(length)
 
@@ -71,8 +69,8 @@ def main(n_words: int):
     pyplot.close(f)
 
     f = pyplot.figure()
-    distplot([length for node, length in accessibility.items()])
-    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"min_length_distributions_[{distributional_model.name}]_length_{n_words}.png"))
+    distplot([length for node, length in min_edge_length.items()])
+    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"min_length_distributions_[{distributional_model.name}]_{n_words}.png"))
     pyplot.close(f)
 
 

@@ -15,14 +15,12 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import json
 import logging
 import sys
 from os import path
 
 from ldm.core.corpus.indexing import FreqDist
 from ldm.core.model.ngram import PPMINgramModel
-from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
 from preferences import Preferences
@@ -34,24 +32,11 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main(n_words: int):
 
-    length_factor = 1_000
-
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
-
-    # Load node relabelling dictionary
-    logger.info(f"Loading node labels")
-    # TODO: this is duplicated code and can be refactored out in to a library function
-    # TODO: in fact, it SHOULD be
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r",
-              encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    node_relabelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
+    graph_file_name = f"{distributional_model.name} {n_words} words.edgelist"
 
     # Load the full graph
     logger.info(f"Loading graph from {graph_file_name}")
