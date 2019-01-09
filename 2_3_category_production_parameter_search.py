@@ -46,6 +46,7 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+EXCEEDED_CAT = "Exceeded conc.acc. θ"
 
 
 def main(n_words: int, prune_importance: int, firing_threshold: float, conscious_access_threshold: float):
@@ -162,7 +163,6 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
             graph=graph,
             item_labelling_dictionary=node_relabelling_dictionary,
             firing_threshold=firing_threshold,
-            conscious_access_threshold=conscious_access_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
@@ -182,7 +182,8 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
                     na.label,
                     tsa.label2idx[na.label],
                     na.activation,
-                    na.time_activated
+                    na.time_activated,
+                    "Exceeded conc.acc. θ" if na.activation >= conscious_access_threshold else ""
                 ))
 
             # Break early if we've got a probable explosion
@@ -196,7 +197,8 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
             RESPONSE,
             NODE_ID,
             ACTIVATION,
-            TICK_ON_WHICH_ACTIVATED
+            TICK_ON_WHICH_ACTIVATED,
+            EXCEEDED_CAT
         ])
 
         # Output results
