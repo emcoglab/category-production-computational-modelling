@@ -19,7 +19,7 @@ import unittest
 
 from numpy import array, log
 
-from approximate_comparator.approximate_comparator import is_almost_equal
+from .approximate_comparator.approximate_comparator import is_almost_equal
 from model.graph import Edge, Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
@@ -36,13 +36,13 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         ])
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
-            length_granularity=10,
         )
         tsa = TemporalSpreadingActivation(
             graph=graph,
             item_labelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
             firing_threshold=0.3,
             impulse_pruning_threshold=.1,
+            impulse_propagation_speed=.1,
             node_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
             edge_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
         )
@@ -52,9 +52,9 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
         for i in range(1, 16):
             tsa.tick()
 
-        self.assertAlmostEqual(tsa.activation_of_node_with_label("lion"),    0.4118, places=4)
-        self.assertAlmostEqual(tsa.activation_of_node_with_label("tiger"),   0.6177, places=4)
-        self.assertAlmostEqual(tsa.activation_of_node_with_label("stripes"), 0.2059, places=4)
+        self.assertAlmostEqual(tsa.activation_of_item_with_label("lion"),    0.4118, places=4)
+        self.assertAlmostEqual(tsa.activation_of_item_with_label("tiger"),   0.6177, places=4)
+        self.assertAlmostEqual(tsa.activation_of_item_with_label("stripes"), 0.2059, places=4)
 
 
 class TestDecayFunctions(unittest.TestCase):
@@ -81,7 +81,7 @@ class TestDecayFunctions(unittest.TestCase):
             exponential_decay_via_hl(t, a_0)
         )
 
-    def test_gaussian_decay_same_granularity_different_function_maker(self):
+    def test_gaussian_decay_same_speed_different_function_maker(self):
         """
         The values in this test haven't been manually verified, and has so far only been used to test that refactoring
         has no effect.
@@ -94,24 +94,24 @@ class TestDecayFunctions(unittest.TestCase):
         tsa_frac = TemporalSpreadingActivation(
             graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
-                length_granularity=100,
             ),
             firing_threshold=0.3,
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd(0.42 * 100),
-            item_labelling_dictionary=dict()
+            item_labelling_dictionary=dict(),
+            impulse_propagation_speed=.01
         )
         tsa = TemporalSpreadingActivation(
             graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
-                length_granularity=100,
             ),
             firing_threshold=0.3,
             impulse_pruning_threshold=0,
             node_decay_function=decay_function_exponential_with_half_life(50),
             edge_decay_function=decay_function_gaussian_with_sd(42),
-            item_labelling_dictionary=dict()
+            item_labelling_dictionary=dict(),
+            impulse_propagation_speed=.01
         )
 
         tsa_frac.activate_item_with_idx(n=0, activation=1.0)
@@ -121,13 +121,13 @@ class TestDecayFunctions(unittest.TestCase):
             tsa_frac.tick()
             tsa.tick()
 
-        # Same granularity, different function-maker
+        # Same speed, different function-maker
         self.assertAlmostEqual(
             tsa_frac.activation_of_item_with_idx(0),
             tsa.activation_of_item_with_idx(0)
         )
 
-    def test_gaussian_decay_different_granularity_same_function_maker(self):
+    def test_gaussian_decay_different_speed_same_function_maker(self):
         """
         The values in this test haven't been manually verified, and has so far only been used to test that refactoring
         has no effect.
@@ -138,35 +138,35 @@ class TestDecayFunctions(unittest.TestCase):
             [.5, .0]
         ])
         sd_frac = 0.42
-        granularity = 390
+        speed = 1/100
         tsa_390 = TemporalSpreadingActivation(
             graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
-                length_granularity=granularity,
             ),
             impulse_pruning_threshold=0,
             firing_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
-            item_labelling_dictionary=dict()
+            edge_decay_function=decay_function_gaussian_with_sd(sd_frac),
+            item_labelling_dictionary=dict(),
+            impulse_propagation_speed=speed
         )
-        granularity = 1000
+        speed = 1/1000
         tsa_1000 = TemporalSpreadingActivation(
             graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
-                length_granularity=granularity,
             ),
             impulse_pruning_threshold=0,
             firing_threshold=0.5,
             node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
-            item_labelling_dictionary=dict()
+            edge_decay_function=decay_function_gaussian_with_sd(sd_frac),
+            item_labelling_dictionary=dict(),
+            impulse_propagation_speed=speed
         )
 
         tsa_390.activate_item_with_idx(n=0, activation=1.0)
         tsa_1000.activate_item_with_idx(n=0, activation=1.0)
 
-        # Different granularity, same function-maker
+        # Different speed, same function-maker
         almost_equal = is_almost_equal(
             # There will be only one impulse in each edge at this point so we can just grab it without worrying about
             # the lack of ordering in the set of impulses.
@@ -189,12 +189,10 @@ class TestGraphPruning(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        granularity = 10
         pruning_threshold = 5
 
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
-            length_granularity=granularity,
             ignore_edges_longer_than=pruning_threshold
         )
         self.assertFalse((LION, STRIPES) in graph.edges)
@@ -209,12 +207,10 @@ class TestGraphPruning(unittest.TestCase):
             [.3, .0, .4],  # Tiger
             [.6, .4, .0],  # Stripes
         ])
-        granularity = 10
         pruning_threshold = 5
 
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
-            length_granularity=granularity,
             ignore_edges_longer_than=pruning_threshold
         )
         self.assertTrue(Edge((LION, TIGER)) in graph.edges)
