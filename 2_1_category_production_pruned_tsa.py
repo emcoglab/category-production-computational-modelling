@@ -52,8 +52,8 @@ def main(n_words: int, prune_percent: int):
     if prune_percent == 0:
         prune_percent = None
 
-    n_ticks = 1_000
-    length_factor = 1_000
+    propagation_speed = 1/1000
+    run_for_ticks = 1_000
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.8
     conscious_access_threshold = 0.9
@@ -76,8 +76,8 @@ def main(n_words: int, prune_percent: int):
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
+    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
+    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words edge length quantiles.csv"
 
     quantile_data = DataFrame.from_csv(path.join(Preferences.graphs_dir, quantile_file_name), header=0, index_col=None)
 
@@ -149,7 +149,6 @@ def main(n_words: int, prune_percent: int):
 
         csv_comments.append(f"Running spreading activation using parameters:")
         csv_comments.append(f"\t      words = {n_words:_}")
-        csv_comments.append(f"\tgranularity = {length_factor:_}")
         if prune_percent is not None:
             csv_comments.append(f"\t    pruning = {prune_percent:.2f}% ({pruning_length})")
         csv_comments.append(f"\t   firing θ = {firing_threshold}")
@@ -176,7 +175,7 @@ def main(n_words: int, prune_percent: int):
         tsa.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
-        for tick in range(1, n_ticks):
+        for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
             node_activations = tsa.tick()

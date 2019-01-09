@@ -37,8 +37,6 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    length_factor = 1_000
-
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
@@ -56,9 +54,9 @@ def main():
 
         # Where to save edgelist
         if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.count:
-            edgelist_filename = f"{distributional_model.name} {distance_type.name} {word_count} words length {length_factor}.edgelist"
+            edgelist_filename = f"{distributional_model.name} {distance_type.name} {word_count} words.edgelist"
         elif distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
-            edgelist_filename = f"{distributional_model.name} {word_count} words length {length_factor}.edgelist"
+            edgelist_filename = f"{distributional_model.name} {word_count} words.edgelist"
         else:
             raise NotImplementedError()
         edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
@@ -82,8 +80,7 @@ def main():
                 logger.info(f"Saving edgelist")
                 save_edgelist_from_distance_matrix(
                     file_path=edgelist_path,
-                    distance_matrix=distance_matrix,
-                    length_granularity=length_factor)
+                    distance_matrix=distance_matrix)
                 # free ram
                 del distance_matrix
 
@@ -94,8 +91,7 @@ def main():
                 logger.info("Saving edgelist")
                 save_edgelist_from_similarity_matrix(
                     file_path=edgelist_path,
-                    similarity_matrix=similarity_matrix,
-                    length_granularity=length_factor)
+                    similarity_matrix=similarity_matrix)
 
             else:
                 raise NotImplementedError()
