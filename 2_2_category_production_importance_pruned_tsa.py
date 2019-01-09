@@ -46,6 +46,7 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+EXCEEDED_CAT = "Exceeded conc.acc. θ"
 
 
 def main(n_words: int, prune_importance: int = None):
@@ -192,7 +193,8 @@ def main(n_words: int, prune_importance: int = None):
                     na.node,
                     tsa.label2idx[na.node],
                     na.activation,
-                    na.tick_activated
+                    na.tick_activated,
+                    "Exceeded conc.acc. θ" if na.activation >= conscious_access_threshold else ""
                 ))
 
             # Break early if we've got a probable explosion
@@ -206,7 +208,8 @@ def main(n_words: int, prune_importance: int = None):
             RESPONSE,
             NODE_ID,
             ACTIVATION,
-            TICK_ON_WHICH_ACTIVATED
+            TICK_ON_WHICH_ACTIVATED,
+            EXCEEDED_CAT
         ])
 
         # Output results
