@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import json
 import logging
 import sys
 from collections import defaultdict
@@ -27,6 +26,7 @@ from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.ngram import PPMINgramModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.component import load_labels
 from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.email import Emailer
@@ -45,17 +45,18 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+EXCEEDED_CAT = "Exceeded conc.acc. θ"
 
 
 def main(n_words: int):
 
     n_ticks = 3_000
-    length_factor = 100
+    propagation_speed = 0.1
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.6
     conscious_access_threshold = 0.8
     node_decay_factor = 0.99
-    edge_decay_sd_frac = 0.8
+    edge_decay_sd = 8
 
     # Bail if too many words get activated
     bailout = n_words * .5
@@ -72,7 +73,7 @@ def main(n_words: int):
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
+    graph_file_name = f"{distributional_model.name} {n_words} words.edgelist"
 
     # Build edge distributions
     logger.info("Collating edge length distributions.")
@@ -103,12 +104,7 @@ def main(n_words: int):
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r", encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    # TODO: this isn't a great way to do this
-    node_relabelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
+    node_labelling_dictionary = load_labels(corpus, n_words)
 
     cp = CategoryProduction()
 
@@ -123,7 +119,7 @@ def main(n_words: int):
                                  f"Category production traces ({n_words:,} words; "
                                  f"firing {firing_threshold}; "
                                  f"access {conscious_access_threshold}; "
-                                 f"sd frac {edge_decay_sd_frac}; "
+                                 f"sd {edge_decay_sd}; "
                                  f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -140,31 +136,30 @@ def main(n_words: int):
         logger.info(f"Running spreading activation for category {category_label}")
 
         csv_comments.append(f"Running spreading activation using parameters:")
-        csv_comments.append(f"\t      model = {distributional_model.name}")
-        csv_comments.append(f"\t      words = {n_words:_}")
-        csv_comments.append(f"\t      edges = {n_edges:_}")
-        csv_comments.append(f"\tgranularity = {length_factor:_}")
-        csv_comments.append(f"\t   firing θ = {firing_threshold}")
-        csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
-        csv_comments.append(f"\t          δ = {node_decay_factor}")
-        csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
-        csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
+        csv_comments.append(f"\t        model = {distributional_model.name}")
+        csv_comments.append(f"\t        words = {n_words:_}")
+        csv_comments.append(f"\t        edges = {n_edges:_}")
+        csv_comments.append(f"\timpulse speed = {propagation_speed}")
+        csv_comments.append(f"\t     firing θ = {firing_threshold}")
+        csv_comments.append(f"\t  conc.acc. θ = {conscious_access_threshold}")
+        csv_comments.append(f"\t            δ = {node_decay_factor}")
+        csv_comments.append(f"\t           sd = {edge_decay_sd}")
+        csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
-            csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
+            csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
 
         # Do the spreading activation
 
         tsa: TemporalSpreadingActivation = TemporalSpreadingActivation(
             graph=graph,
-            item_labelling_dictionary=node_relabelling_dictionary,
+            item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=firing_threshold,
-            conscious_access_threshold=conscious_access_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
+            impulse_propagation_speed=propagation_speed,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                # TODO: THIS IS AWFUL
-                sd=edge_decay_sd_frac*1_000))
+                sd=edge_decay_sd))
 
         tsa.activate_item_with_label(category_label, 1)
 
@@ -179,7 +174,8 @@ def main(n_words: int):
                     na.label,
                     tsa.label2idx[na.label],
                     na.activation,
-                    na.time_activated
+                    na.time_activated,
+                    "Exceeded conc.acc. θ" if na.activation >= conscious_access_threshold else ""
                 ))
 
             # Break early if we've got a probable explosion
@@ -193,7 +189,8 @@ def main(n_words: int):
             RESPONSE,
             NODE_ID,
             ACTIVATION,
-            TICK_ON_WHICH_ACTIVATED
+            TICK_ON_WHICH_ACTIVATED,
+            EXCEEDED_CAT
         ])
 
         # Output results
