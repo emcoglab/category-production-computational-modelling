@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
+
 # Results DataFrame column names
 # TODO: repeated values 😕
 RESPONSE = "Response"
@@ -46,6 +47,7 @@ NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 TTFA = "TTFA"
+REACHED_CAT = "Reached conc.acc. θ"
 
 # Analysis settings
 MIN_FIRST_RANK_FREQ = 4
@@ -173,6 +175,7 @@ def interpret_path(results_dir_path: str) -> int:
 
     dir_name = path.basename(results_dir_path)
 
+    # TODO: these have all changed and this method is totally gross; for god's sake don't do it
     unpruned_graph_match = re.match(re.compile(
         r"^"
         r"Category production traces \("
@@ -230,6 +233,11 @@ def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) 
 
         ttfas = defaultdict(lambda: nan)
         for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
+
+            # Only consider items whose activation exceeded the CAT
+            if not row[REACHED_CAT]:
+                continue
+
             activation_event = ItemActivatedEvent(label=row[RESPONSE],
                                                   activation=row[ACTIVATION],
                                                   time_activated=row[TICK_ON_WHICH_ACTIVATED])
