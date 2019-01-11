@@ -196,6 +196,14 @@ def interpret_path(results_dir_path: str) -> int:
         r"firing (?P<firing_threshold>[0-9.]+); "
         r"access (?P<access_threshold>[0-9.]+); "
         r"edge importance threshold (?P<importance_pruning>[0-9]+)\)$"), dir_name)
+    ngram_graph_match = re.match(re.compile(
+        r"^"
+        r"Category production traces \("
+        r"(?P<n_words>[0-9,]+) words; "
+        r"firing (?P<firing_threshold>[0-9.]+); "
+        r"access (?P<access_threshold>[0-9.]+); "
+        r"sd (?P<sd>[0-9.]+); "
+        r"model \[(?P<model>[^\[\]]+)\]\)$"), dir_name)
 
     if unpruned_graph_match:
         n_words = int(unpruned_graph_match.group('n_words').replace(',', ''))
@@ -203,6 +211,8 @@ def interpret_path(results_dir_path: str) -> int:
         n_words = int(length_pruned_graph_match.group('n_words').replace(',', ''))
     elif importance_pruned_graph_match:
         n_words = int(importance_pruned_graph_match.group('n_words').replace(',', ''))
+    elif ngram_graph_match:
+        n_words = int(ngram_graph_match.group("n_words").replace(',', ''))
     else:
         raise ParseError(f"Could not parse \"{dir_name}\"")
 
@@ -251,21 +261,29 @@ def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) 
         return defaultdict(lambda: nan)
 
 
-def main(n_wordss, dirs):
-    if n_wordss is not None:
-        str_list = " or ".join(f"{n:,}" for n in n_wordss)
+def main(n_words_or_list, dirs):
+    if n_words_or_list is not None:
+        str_list = " or ".join(f"{n:,}" for n in n_words_or_list)
         logger.info(f"Only looking at outputs from models with {str_list} words")
     else:
         logger.info(f"Looking at all available model outputs")
 
     cp = CategoryProduction()
 
+    # TODO: This next bit is pretty opaque. maybe refactor it into a function or something to make it clear that it's
+    # TODO: restricting to a common set of items
+
     available_items = set()
 
     for d in dirs:
         if path.isdir(d):
             # If we're restricting by words
-            if n_wordss is not None and interpret_path(d) not in n_wordss:
+            try:
+                n_words = interpret_path(d)
+            # skip dirs we don't understand
+            except ParseError:
+                continue
+            if n_words_or_list is not None and n_words not in n_words_or_list:
                 continue
             logger.info(path.basename(d))
             if not available_items:
@@ -278,7 +296,7 @@ def main(n_wordss, dirs):
     for d in dirs:
         if path.isdir(d):
             # If we're restricting by words
-            if n_wordss is not None and interpret_path(d) not in n_wordss:
+            if n_words_or_list is not None and interpret_path(d) not in n_words_or_list:
                 continue
             logger.info(path.basename(d))
             main_in_path(d, cp, available_items)
@@ -292,10 +310,11 @@ if __name__ == '__main__':
     # TODO: THere must be a better way!
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
-    parser.add_argument("path", type=str, help="The path in which to find the results.")
+    parser.add_argument("path", type=str, help="The path in which to find the results. Accepts glob-style wildcards.")
     parser.add_argument("-n", "--n_words", type=int, nargs="+", required=False, help="Only consider this many words.")
     args = parser.parse_args()
 
-    main(args.n_words, glob.glob(path.join(args.path, "*")))
+    dirs = glob.glob(args.path)
+    main(args.n_words, dirs)
 
     logger.info("Done!")

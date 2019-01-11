@@ -53,8 +53,8 @@ def main(n_words: int):
     n_ticks = 3_000
     propagation_speed = 0.1
     impulse_pruning_threshold = 0.05
-    firing_threshold = 0.6
-    conscious_access_threshold = 0.8
+    firing_threshold = 0.4
+    conscious_access_threshold = 0.6
     node_decay_factor = 0.99
     edge_decay_sd = 8 / propagation_speed
 
