@@ -45,9 +45,9 @@ def main(n_words: int):
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.count:
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
+        graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
     elif distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
-        graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
+        graph_file_name = f"{distributional_model.name} {n_words} words.edgelist"
     else:
         raise NotImplementedError()
 

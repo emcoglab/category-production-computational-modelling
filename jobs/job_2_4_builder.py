@@ -8,6 +8,7 @@ ram_amount = {
     10_000: 10,
     20_000: 10,
     30_000: 15,
+    40_000: 20,
 }
 graph_sizes = sorted(ram_amount.keys())
 
