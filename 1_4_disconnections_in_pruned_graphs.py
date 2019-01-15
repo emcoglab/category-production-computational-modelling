@@ -35,13 +35,15 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main(n_words: int, prune_top_percentile: int):
 
+    length_factor = 1_000
+
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
-    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words edge length quantiles.csv"
+    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
     quantile_data = DataFrame.from_csv(path.join(Preferences.graphs_dir, quantile_file_name), header=0, index_col=None)
     if prune_top_percentile is not None:
         pruning_length = quantile_data[

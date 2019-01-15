@@ -40,7 +40,7 @@ def main():
 
     n_words = 3_000
     run_for_ticks = 1_000
-    propagation_speed = 1/1_000
+    length_factor = 1_000
     initial_word = "colour"
     impulse_pruning_threshold = 0.05
 
@@ -64,7 +64,7 @@ def main():
     node_labelling_dictionary = {node_id: token_index.id2token[ldm_id]
                                  for (node_id, ldm_id) in matrix_to_ldm.items()}
 
-    edgelist_filename = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
+    edgelist_filename = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
     edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
     if path.isfile(edgelist_path):
@@ -86,7 +86,8 @@ def main():
 
         logger.info(f"Building graph with {n_words:,} nodes")
         graph: Graph = Graph.from_distance_matrix(
-            distance_matrix=distance_matrix)
+            distance_matrix=distance_matrix,
+            length_granularity=length_factor)
         # free ram
         del distance_matrix
 
@@ -100,14 +101,13 @@ def main():
             for edge_decay_sd in [400]:
 
                 logger.info(f"Setting up spreading output")
-                logger.info(f"Using values: θ={firing_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
+                logger.info(f"Using values: l={length_factor}, θ={firing_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
                 tsa = TemporalSpreadingActivation(
                     graph=graph,
                     firing_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
                     item_labelling_dictionary=node_labelling_dictionary,
-                    impulse_propagation_speed=propagation_speed,
                     node_decay_function=decay_function_exponential_with_decay_factor(
                         decay_factor=node_decay_factor),
                     edge_decay_function=decay_function_gaussian_with_sd(
