@@ -50,14 +50,14 @@ EXCEEDED_CAT = "Exceeded conc.acc. θ"
 
 
 def main(n_words: int, prune_importance: int = None):
-
     run_for_ticks = 3_000
-    propagation_speed = 1/1_000
+
+    length_factor = 1_000
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.8
     conscious_access_threshold = 0.9
     node_decay_factor = 0.99
-    edge_decay_sd = 0.4 / propagation_speed
+    edge_decay_sd_frac = 0.4
 
     # Bail if too many words get activated
     bailout = 5_000
@@ -75,7 +75,7 @@ def main(n_words: int, prune_importance: int = None):
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words.edgelist"
+    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
 
     # Build edge distributions
     logger.info("Collating edge length distributions.")
@@ -152,16 +152,16 @@ def main(n_words: int, prune_importance: int = None):
         csv_comments.append(f"Running spreading activation using parameters:")
         csv_comments.append(f"\t      words = {n_words:_}")
         csv_comments.append(f"\t      edges = {n_edges:_}")
+        csv_comments.append(f"\tgranularity = {length_factor:_}")
         if prune_importance is not None:
-            csv_comments.append(f"\t      pruning = {prune_importance}")
-        csv_comments.append(f"\timpulse speed = {propagation_speed}")
-        csv_comments.append(f"\t     firing θ = {firing_threshold}")
-        csv_comments.append(f"\t  conc.acc. θ = {conscious_access_threshold}")
-        csv_comments.append(f"\t node decay δ = {node_decay_factor}")
-        csv_comments.append(f"\tedge decay sd = {edge_decay_sd}")
-        csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
+            csv_comments.append(f"\t    pruning = {prune_importance}")
+        csv_comments.append(f"\t   firing θ = {firing_threshold}")
+        csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
+        csv_comments.append(f"\t          δ = {node_decay_factor}")
+        csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
+        csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
         if not connected:
-            csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
+            csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
 
         # Do the spreading activation
 
@@ -170,11 +170,10 @@ def main(n_words: int, prune_importance: int = None):
             item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=firing_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
-            impulse_propagation_speed=propagation_speed,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd))
+                sd=edge_decay_sd_frac*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
 

@@ -92,6 +92,7 @@ class TestGraphPruning(unittest.TestCase):
 
     def test_edge_pruning(self):
         graph = Graph.from_distance_matrix(
+            length_granularity=1,
             distance_matrix=array([
                 [0, 3, 5],  # Lion
                 [3, 0, 4],  # Tiger
@@ -111,6 +112,7 @@ class TestGraphPruning(unittest.TestCase):
 
     def test_edge_pruning_with_keeping(self):
         graph = Graph.from_distance_matrix(
+            length_granularity=1,
             distance_matrix=array([
                 [0, 3, 5],  # Lion
                 [3, 0, 4],  # Tiger
@@ -125,6 +127,7 @@ class TestGraphPruning(unittest.TestCase):
 
     def test_distance_matrix_pruning(self):
         orphan_graph = Graph.from_distance_matrix(
+            length_granularity=1,
             distance_matrix=array([
                 [0, 3, 5],  # Lion
                 [3, 0, 4],  # Tiger
@@ -135,6 +138,7 @@ class TestGraphPruning(unittest.TestCase):
         )
         self.assertTrue(orphan_graph.has_orphaned_nodes())
         non_orphan_graph = Graph.from_distance_matrix(
+            length_granularity=1,
             distance_matrix=array([
                 [0, 3, 5],  # Lion
                 [3, 0, 4],  # Tiger
@@ -147,6 +151,7 @@ class TestGraphPruning(unittest.TestCase):
 
     def test_distance_matrix_keeping_enough_edges(self):
         wide_graph = Graph.from_distance_matrix(
+            length_granularity=1,
             # everything 10 away from everything else
             distance_matrix=10*(ones((20, 20))-eye(20)),
             ignore_edges_longer_than=5,
@@ -158,6 +163,7 @@ class TestGraphPruning(unittest.TestCase):
 
     def test_pruning_keeping_enough_edges(self):
         wide_graph = Graph.from_distance_matrix(
+            length_granularity=1,
             # everything 10 away from everything else
             distance_matrix=10*(ones((20, 20))-eye(20)),
         )
