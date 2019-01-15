@@ -34,7 +34,7 @@ from category_production.category_production import ColNames as CPColNames
 from model.component import ItemActivatedEvent
 from model.utils.exceptions import ParseError
 from preferences import Preferences
-
+1
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
@@ -103,6 +103,9 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
 
     # region Compute overall stats
 
+    # frf vs ttfa
+    corr_frf_vs_ttfa = main_dataframe[CPColNames.FirstRankFrequency].corr(main_dataframe[TTFA], method='pearson')
+
     # The Pearson's correlation over all categories between average first-response RT (for responses with
     # first-rank frequency ≥4) and the time to the first activation (TTFA) within the model.
     first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= MIN_FIRST_RANK_FREQ]
@@ -112,23 +115,22 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
     # Pearson's correlation between production frequency and ttfa
     corr_prodfreq_vs_ttfa = main_dataframe[CPColNames.ProductionFrequency].corr(main_dataframe[TTFA], method='pearson')
 
-    # endregion
+    corr_meanrank_vs_ttfa = main_dataframe[CPColNames.MeanRank].corr(main_dataframe[TTFA], method='pearson')
 
-    # region Average over category stats
-
-    # The average (over categories) Spearman's correlation (over responses) between the mean rank of the response and
-    # the time to first activation in the model.
-
-    correlations_per_category = (
-        main_dataframe
-        .groupby(CPColNames.Category)
-        # Correlate MeanRank and TTFA
-        [[CPColNames.MeanRank, TTFA]].corr(method='spearman')
-        # .corr gives the 2x2 correlation matrix for these two variables, but we just want the off-diagonal entries
-        .iloc[0::2, -1])
-
-    average_corr_meanrank_vs_ttfa = correlations_per_category.mean()
-    sem_corr_meanrank_vs_ttfa = correlations_per_category.sem()
+    # # The average (over categories) Spearman's correlation (over responses) between the mean rank of the response and
+    # # the time to first activation in the model.
+    #
+    # correlations_per_category = (
+    #     main_dataframe
+    #     .groupby(CPColNames.Category)
+    #     # Correlate MeanRank and TTFA
+    #     [[CPColNames.MeanRank, TTFA]].corr(method='spearman')
+    #     # .corr gives the 2x2 correlation matrix for these two variables, but we just want the off-diagonal entries
+    #     # we get those with this bonkers thing (thanks to someone on Stack Overflow, probably). Good job, pandas 😒
+    #     .iloc[0::2, -1])
+    #
+    # average_corr_meanrank_vs_ttfa = correlations_per_category.mean()
+    # sem_corr_meanrank_vs_ttfa = correlations_per_category.sem()
 
     # endregion
 
@@ -146,6 +148,10 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
         # Correlation of first response RT with time-to-activation
         output_file.write(path.basename(results_dir) + "\n\n")
+        output_file.write(f"First rank frequency vs TTFA correlation ("
+                          f"Pearson's; negative is better fit; "
+                          f"N = {n_first_rank_frequent}) "
+                          f"= {corr_frf_vs_ttfa}\n")
         output_file.write(f"First response RT vs TTFA correlation ("
                           f"Pearson's; positive is better fit; "
                           f"FRF≥{MIN_FIRST_RANK_FREQ}; "
@@ -155,9 +161,10 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
                           f"Pearson's; negative is better fit; "
                           f"N = {len(available_items)}) "
                           f"= {corr_prodfreq_vs_ttfa}\n")
-        output_file.write(f"Average mean_rank vs TTFA correlation ("
-                          f"Spearman's; positive is better fit) "
-                          f"= {average_corr_meanrank_vs_ttfa} (SEM = {sem_corr_meanrank_vs_ttfa})\n")
+        output_file.write(f"Mean rank vs TTFA correlation ("
+                          f"Pearson's; positive is better fit "
+                          f"N = {len(available_items)}) "
+                          f"= {corr_meanrank_vs_ttfa}\n")
 
     # endregion
 
