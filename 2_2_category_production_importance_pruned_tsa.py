@@ -205,7 +205,7 @@ def main(n_words: int, prune_importance: int = None):
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
             REACHED_CAT
-        ])
+        ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
 

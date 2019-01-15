@@ -194,7 +194,7 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
             REACHED_CAT
-        ])
+        ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
 
