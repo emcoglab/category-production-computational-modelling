@@ -50,13 +50,14 @@ REACHED_CAT = "Reached conc.acc. θ"
 
 def main(n_words: int):
 
+    length_factor = 1000
+
     n_ticks = 3_000
-    propagation_speed = 0.1
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.4
     conscious_access_threshold = 0.6
     node_decay_factor = 0.99
-    edge_decay_sd = 8 / propagation_speed
+    edge_decay_sd = 80
 
     # Bail if too many words get activated
     bailout = n_words * .5
@@ -73,7 +74,7 @@ def main(n_words: int):
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {n_words} words.edgelist"
+    graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
 
     # Build edge distributions
     logger.info("Collating edge length distributions.")
@@ -139,7 +140,7 @@ def main(n_words: int):
         csv_comments.append(f"\t        model = {distributional_model.name}")
         csv_comments.append(f"\t        words = {n_words:_}")
         csv_comments.append(f"\t        edges = {n_edges:_}")
-        csv_comments.append(f"\timpulse speed = {propagation_speed}")
+        csv_comments.append(f"\tlength factor = {length_factor}")
         csv_comments.append(f"\t     firing θ = {firing_threshold}")
         csv_comments.append(f"\t  conc.acc. θ = {conscious_access_threshold}")
         csv_comments.append(f"\t            δ = {node_decay_factor}")
@@ -155,11 +156,10 @@ def main(n_words: int):
             item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=firing_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
-            impulse_propagation_speed=propagation_speed,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd))
+                sd=edge_decay_sd*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
 
