@@ -57,7 +57,7 @@ def main(n_words: int):
     firing_threshold = 0.4
     conscious_access_threshold = 0.6
     node_decay_factor = 0.99
-    edge_decay_sd = 80
+    edge_decay_sd = 8
 
     # Bail if too many words get activated
     bailout = n_words * .5
