@@ -34,7 +34,7 @@ from category_production.category_production import ColNames as CPColNames
 from model.component import ItemActivatedEvent
 from model.utils.exceptions import ParseError
 from preferences import Preferences
-1
+
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
