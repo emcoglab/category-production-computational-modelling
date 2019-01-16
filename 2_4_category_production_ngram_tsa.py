@@ -50,7 +50,7 @@ REACHED_CAT = "Reached conc.acc. θ"
 
 def main(n_words: int):
 
-    length_factor = 1000
+    length_factor = 10
 
     n_ticks = 3_000
     impulse_pruning_threshold = 0.05
