@@ -121,6 +121,7 @@ def main(n_words: int):
                                  f"firing {firing_threshold}; "
                                  f"access {conscious_access_threshold}; "
                                  f"sd {edge_decay_sd}; "
+                                 f"length {length_factor}; "
                                  f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
