@@ -24,7 +24,6 @@ from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.base import DistributionalSemanticModel
 from ldm.core.model.ngram import PPMINgramModel, NgramModel
 from ldm.core.utils.logging import log_message, date_format
-from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_similarity_matrix
 from model.utils.indexing import list_index_dictionaries
@@ -40,7 +39,6 @@ def main():
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distance_type = DistanceType.cosine
     distributional_model: NgramModel = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     for word_count in Preferences.graph_sizes:
@@ -68,15 +66,16 @@ def main():
 
             # Count, predict and n-gram models will be treated differently when building the graph
             if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
-                # Convert to csr for slicing rows and to csc for slicing columns
-                similarity_matrix = distributional_model.underlying_count_model.matrix.tocsr()[filtered_ldm_ids, :].tocsc()[:, filtered_ldm_ids]
 
-                # TODO: start here
                 logger.info("Saving edgelist")
+
+                # Convert to csr for slicing rows and to csc for slicing columns
+                similarity_matrix = distributional_model.underlying_count_model.matrix
                 save_edgelist_from_similarity_matrix(
                     file_path=edgelist_path,
                     similarity_matrix=similarity_matrix,
-                    length_granularity=length_factor)
+                    filtered_node_ids=filtered_ldm_ids,
+                    length_factor=length_factor)
 
             else:
                 raise NotImplementedError()
