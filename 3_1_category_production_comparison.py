@@ -59,7 +59,7 @@ def interpret_path(results_dir_path: str) -> int:
     :return: n_words: int
     """
     dir_name = path.basename(results_dir_path)
-    words_match = re.match(re.compile(r" (?P<n_words>[0-9,]+) words; "), dir_name)
+    words_match = re.match(re.compile(r"[^0-9,]*(?P<n_words>[0-9,]+) words;"), dir_name)
     if words_match:
         # remove the comma and parse as int
         n_words = int(words_match.group("n_words").replace(",", ""))
