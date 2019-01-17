@@ -3,7 +3,6 @@
 Compare model to Briony's category production actual responses.
 
 Pass the parent location to a bunch of results.
-TODO: This is just a temporary way to use this script. Should be more flexible/automatable.
 ===========================
 
 Dr. Cai Wingfield
@@ -52,60 +51,22 @@ REACHED_CAT = "Reached conc.acc. θ"
 MIN_FIRST_RANK_FREQ = 4
 
 
+# TODO: this isn't a great way to do this
 def interpret_path(results_dir_path: str) -> int:
     """
-
+    Gets the number of words from a path storing results.
     :param results_dir_path:
-    :return:
-        n_words: int,
-
+    :return: n_words: int
     """
-
     dir_name = path.basename(results_dir_path)
-
-    # TODO: these have all changed and this method is totally gross; for god's sake don't do it
-    unpruned_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+)\)$"), dir_name)
-    length_pruned_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+); "
-        r"longest (?P<length_pruning_percent>[0-9]+)% edges removed\)$"), dir_name)
-    importance_pruned_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+); "
-        r"edge importance threshold (?P<importance_pruning>[0-9]+)\)$"), dir_name)
-    ngram_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+); "
-        r"sd (?P<sd>[0-9.]+); "
-        r"length (?P<length_factor>[0-9.]+); "
-        r"model \[(?P<model>[^\[\]]+)\]\)$"), dir_name)
-
-    if unpruned_graph_match:
-        n_words = int(unpruned_graph_match.group('n_words').replace(',', ''))
-    elif length_pruned_graph_match:
-        n_words = int(length_pruned_graph_match.group('n_words').replace(',', ''))
-    elif importance_pruned_graph_match:
-        n_words = int(importance_pruned_graph_match.group('n_words').replace(',', ''))
-    elif ngram_graph_match:
-        n_words = int(ngram_graph_match.group("n_words").replace(',', ''))
+    words_match = re.match(re.compile(r" (?P<n_words>[0-9,]+) words; "), dir_name)
+    if words_match:
+        # remove the comma and parse as int
+        n_words = int(words_match.group("n_words").replace(",", ""))
+        logger.info(f"Results are from graph with {n_words:,} words")
+        return n_words
     else:
-        raise ParseError(f"Could not parse \"{dir_name}\"")
-
-    return n_words
+        raise ParseError(f"Could not parse number of words from {dir_name}")
 
 
 def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) -> DefaultDict[str, int]:
@@ -216,10 +177,8 @@ def main(results_dir):
 
     # region Save stats
 
-    # If we're restricting or not we save results in a different place
-    # TODO: this is a bad way to record this logic,
-    # TODO: and in general I'm not happy with the control logic of this script
-    overall_stats_output_path = path.join(Preferences.results_dir, "Category production fit",
+    overall_stats_output_path = path.join(Preferences.results_dir,
+                                          "Category production fit",
                                           f"model_effectiveness_overall ({path.basename(results_dir)}).txt")
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
         # Correlation of first response RT with time-to-activation
@@ -251,12 +210,8 @@ if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
-    # TODO: The manner of invocation of this feels rather convoluted and fragile.
-    # TODO: THere must be a better way!
-
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    # parser.add_argument("-n", "--n_words", type=int, help="Only consider this many words.")
     args = parser.parse_args()
 
     main(args.path)
