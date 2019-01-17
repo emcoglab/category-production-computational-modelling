@@ -5,10 +5,9 @@ Builds some template jobs
 ram_amount = {
     1_000:  2,
     3_000:  3,
-    10_000: 10,
-    20_000: 10,
-    30_000: 15,
-    40_000: 20,
+    10_000: 7,
+    30_000: 12,
+    40_000: 15,
 }
 graph_sizes = sorted(ram_amount.keys())
 
