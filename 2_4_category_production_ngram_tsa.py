@@ -54,10 +54,10 @@ def main(n_words: int):
 
     n_ticks = 3_000
     impulse_pruning_threshold = 0.05
-    firing_threshold = 0.4
-    conscious_access_threshold = 0.6
+    firing_threshold = 0.3
+    conscious_access_threshold = 0.4
     node_decay_factor = 0.99
-    edge_decay_sd = 8
+    edge_decay_sd = 15
 
     # Bail if too many words get activated
     bailout = n_words * .5
