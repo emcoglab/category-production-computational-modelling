@@ -20,34 +20,21 @@ caiwingfield.net
 import argparse
 import glob
 import logging
-import re
 import sys
-from collections import defaultdict
 from os import path
 from typing import Dict, DefaultDict, Set, Tuple
 
-from numpy import nan
-from pandas import read_csv, DataFrame
+from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from model.component import ItemActivatedEvent
+from evaluation.category_production import interpret_path, get_model_ttfas_for_category, TTFA
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-
-# Results DataFrame column names
-# TODO: repeated values 😕
-RESPONSE = "Response"
-NODE_ID = "Node ID"
-ACTIVATION = "Activation"
-TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-TTFA = "TTFA"
-REACHED_CAT = "Reached conc.acc. θ"
 
 # Analysis settings
 MIN_FIRST_RANK_FREQ = 4
@@ -117,21 +104,6 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
 
     corr_meanrank_vs_ttfa = main_dataframe[CPColNames.MeanRank].corr(main_dataframe[TTFA], method='pearson')
 
-    # # The average (over categories) Spearman's correlation (over responses) between the mean rank of the response and
-    # # the time to first activation in the model.
-    #
-    # correlations_per_category = (
-    #     main_dataframe
-    #     .groupby(CPColNames.Category)
-    #     # Correlate MeanRank and TTFA
-    #     [[CPColNames.MeanRank, TTFA]].corr(method='spearman')
-    #     # .corr gives the 2x2 correlation matrix for these two variables, but we just want the off-diagonal entries
-    #     # we get those with this bonkers thing (thanks to someone on Stack Overflow, probably). Good job, pandas 😒
-    #     .iloc[0::2, -1])
-    #
-    # average_corr_meanrank_vs_ttfa = correlations_per_category.mean()
-    # sem_corr_meanrank_vs_ttfa = correlations_per_category.sem()
-
     # endregion
 
     # region Save stats
@@ -170,102 +142,6 @@ def main_in_path(results_dir: str, category_production: CategoryProduction, avai
 
     return available_items
 
-
-def interpret_path(results_dir_path: str) -> int:
-    """
-
-    :param results_dir_path:
-    :return:
-        n_words: int,
-
-    """
-
-    dir_name = path.basename(results_dir_path)
-
-    # TODO: these have all changed and this method is totally gross; for god's sake don't do it
-    unpruned_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+)\)$"), dir_name)
-    length_pruned_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+); "
-        r"longest (?P<length_pruning_percent>[0-9]+)% edges removed\)$"), dir_name)
-    importance_pruned_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+); "
-        r"edge importance threshold (?P<importance_pruning>[0-9]+)\)$"), dir_name)
-    ngram_graph_match = re.match(re.compile(
-        r"^"
-        r"Category production traces \("
-        r"(?P<n_words>[0-9,]+) words; "
-        r"firing (?P<firing_threshold>[0-9.]+); "
-        r"access (?P<access_threshold>[0-9.]+); "
-        r"sd (?P<sd>[0-9.]+); "
-        r"model \[(?P<model>[^\[\]]+)\]\)$"), dir_name)
-
-    if unpruned_graph_match:
-        n_words = int(unpruned_graph_match.group('n_words').replace(',', ''))
-    elif length_pruned_graph_match:
-        n_words = int(length_pruned_graph_match.group('n_words').replace(',', ''))
-    elif importance_pruned_graph_match:
-        n_words = int(importance_pruned_graph_match.group('n_words').replace(',', ''))
-    elif ngram_graph_match:
-        n_words = int(ngram_graph_match.group("n_words").replace(',', ''))
-    else:
-        raise ParseError(f"Could not parse \"{dir_name}\"")
-
-    return n_words
-
-
-def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) -> DefaultDict[str, int]:
-    """
-    Dictionary of
-        response -> time to first activation
-    for the specified category.
-
-    DefaultDict gives nans where response not found
-
-    :param category:
-    :param results_dir:
-    :param n_words:
-    :return:
-    """
-
-    # Try to load model response
-    try:
-        model_responses_path = path.join(
-            results_dir,
-            f"responses_{category}_{n_words:,}.csv")
-        with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses_df: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
-
-        ttfas = defaultdict(lambda: nan)
-        for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
-
-            # Only consider items whose activation exceeded the CAT
-            if not row[REACHED_CAT]:
-                continue
-
-            activation_event = ItemActivatedEvent(label=row[RESPONSE],
-                                                  activation=row[ACTIVATION],
-                                                  time_activated=row[TICK_ON_WHICH_ACTIVATED])
-            # We've sorted by activation time, so we only need to consider the first entry for each item
-            if activation_event.label not in ttfas.keys():
-                ttfas[activation_event.label] = activation_event.time_activated
-        return ttfas
-
-    # If the category wasn't found, there are no TTFAs
-    except FileNotFoundError:
-        return defaultdict(lambda: nan)
 
 
 def main(n_words_or_list, dirs):
