@@ -39,8 +39,6 @@ MIN_FIRST_RANK_FREQ = 4
 
 
 def main(results_dir):
-
-    # TODO: this isn't a great way to do this
     n_words = interpret_path(results_dir)
 
     logger.info(f"Looking at output from model with {n_words} words.")
@@ -76,8 +74,9 @@ def main(results_dir):
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
 
     # Collect
-    available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]].groupby(
-        [CPColNames.Category, CPColNames.Response]).groups.keys())
+    available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]
+                          .groupby([CPColNames.Category, CPColNames.Response])
+                          .groups.keys())
 
     # Save main dataframe
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
@@ -104,9 +103,7 @@ def main(results_dir):
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False)
-
-    return available_items
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False, MIN_FIRST_RANK_FREQ)
 
 
 if __name__ == '__main__':

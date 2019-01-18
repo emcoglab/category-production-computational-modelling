@@ -39,7 +39,12 @@ MIN_FIRST_RANK_FREQ = 4
 
 
 def main_restricted(results_dir: str, category_production: CategoryProduction, available_items: Set[Tuple[str, str]]):
+
     n_words = interpret_path(results_dir)
+
+    per_category_stats_output_path = path.join(Preferences.results_dir,
+                                               "Category production fit",
+                                               f"item-level data (restricted) ({path.basename(results_dir)}).csv")
 
     # region Build main dataframe
 
@@ -62,9 +67,6 @@ def main_restricted(results_dir: str, category_production: CategoryProduction, a
     # Now we can convert TTFAs to ints as there won't be null values
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
 
-    per_category_stats_output_path = path.join(Preferences.results_dir,
-                                               "Category production fit",
-                                               f"item-level data (restricted) ({path.basename(results_dir)}).csv")
     # Restrict on available items
     main_dataframe = main_dataframe[
         # Filter on categories
@@ -96,7 +98,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction, a
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True)
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, MIN_FIRST_RANK_FREQ)
 
 
 def get_available_items_from_path(p: str, cp: CategoryProduction) -> Set[Tuple[str, str]]:
@@ -129,41 +131,33 @@ def get_available_items_from_path(p: str, cp: CategoryProduction) -> Set[Tuple[s
 
 def main(paths):
 
-    n_words_list = [interpret_path(p) for p in paths]
-
-    logger.info(f'Only looking at outputs shared between models with {" and ".join(f"{n:,}" for n in n_words_list)} words')
+    logger.info(f'Only looking at outputs shared between models with {" and ".join(f"{n:,}" for n in [interpret_path(p) for p in paths])} words')
 
     cp = CategoryProduction()
 
+    # Get intersection of available items
     available_items: Set = None
     for p in paths:
-        n_words_this_path = interpret_path(p)
-        logger.info(path.basename(p))
         if not available_items:
             available_items = get_available_items_from_path(p, cp)
         else:
-            available_items = set.intersection(available_items, get_available_items_from_path(p, cp))
+            new_available_items = get_available_items_from_path(p, cp)
+            available_items = set.intersection(available_items, new_available_items)
 
     logger.info(f"Looking at restricted set of {len(available_items)} items")
-
-    for p in paths:
-        if path.isdir(p):
-            # If we're restricting by words
-            if n_words_or_list is not None and interpret_path(p) not in n_words_or_list:
-                continue
-            logger.info(path.basename(p))
-            main_restricted(p, cp, available_items)
+    first_path = paths[0]
+    logger.info(path.basename(first_path))
+    main_restricted(first_path, cp, available_items)
 
 
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
-    # TODO: The manner of invocation of this feels rather convoluted and fragile.
-    # TODO: THere must be a better way!
-
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
-    parser.add_argument("paths", type=str, nargs="+", help="The paths in which to find the results.")
+    parser.add_argument("paths", type=str, nargs="+", help="The paths in which to find the results. Will use only "
+                                                           "items present in all cases, but will compute results based "
+                                                           "on the FIRST path.")
     args = parser.parse_args()
 
     main(args.paths)

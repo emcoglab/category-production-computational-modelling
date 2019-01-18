@@ -1,5 +1,4 @@
 import re
-from logging import getLogger
 from collections import defaultdict
 from os import path
 from typing import DefaultDict
@@ -10,11 +9,6 @@ from pandas import DataFrame, read_csv
 from model.component import ItemActivatedEvent
 from model.utils.exceptions import ParseError
 from preferences import Preferences
-
-logger = getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -36,7 +30,6 @@ def interpret_path(results_dir_path: str) -> int:
     if words_match:
         # remove the comma and parse as int
         n_words = int(words_match.group("n_words").replace(",", ""))
-        logger.info(f"Results are from graph with {n_words:,} words")
         return n_words
     else:
         raise ParseError(f"Could not parse number of words from {dir_name}")
@@ -85,7 +78,7 @@ def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) 
 
 
 def save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted):
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted, MIN_FIRST_RANK_FREQ):
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}({path.basename(results_dir)}).txt")
