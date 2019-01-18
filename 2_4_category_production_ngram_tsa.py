@@ -1,6 +1,6 @@
 """
 ===========================
-Spreading activation on graphs pruned by importance rather than length.
+Spreading activation on ngram graphs.
 ===========================
 
 Dr. Cai Wingfield
@@ -11,7 +11,7 @@ University of Lancaster
 c.wingfield@lancaster.ac.uk
 caiwingfield.net
 ---------------------------
-2018
+2019
 ---------------------------
 """
 import argparse
@@ -24,11 +24,10 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.maths import DistanceType
+from ldm.core.model.ngram import PPMINgramModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph, iter_edges_from_edgelist
 from model.component import load_labels
+from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -49,24 +48,24 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 REACHED_CAT = "Reached conc.acc. θ"
 
 
-def main(n_words: int, prune_importance: int = None):
-    run_for_ticks = 3_000
+def main(n_words: int):
 
-    length_factor = 1_000
+    length_factor = 10
+
+    n_ticks = 3_000
     impulse_pruning_threshold = 0.05
-    firing_threshold = 0.8
-    conscious_access_threshold = 0.9
+    firing_threshold = 0.3
+    conscious_access_threshold = 0.4
     node_decay_factor = 0.99
-    edge_decay_sd_frac = 0.4
+    edge_decay_sd = 15
 
     # Bail if too many words get activated
-    bailout = 5_000
+    bailout = n_words * .5
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
-    distance_type = DistanceType.cosine
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distributional_model = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
     filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
@@ -75,7 +74,7 @@ def main(n_words: int, prune_importance: int = None):
     _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
 
     # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
 
     # Build edge distributions
     logger.info("Collating edge length distributions.")
@@ -85,23 +84,16 @@ def main(n_words: int, prune_importance: int = None):
             edge_lengths_from_node[node].append(length)
     edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
 
-    # Get pruning length
-    if prune_importance is not None:
-        logger.info(f"Loading graph from {graph_file_name}, pruning importance {prune_importance}")
-    else:
-        logger.info(f"Loading graph from {graph_file_name}")
+    logger.info(f"Loading graph from {graph_file_name}")
 
     # Load graph
-    graph = Graph.load_from_edgelist_with_importance_pruning(
-        file_path=path.join(Preferences.graphs_dir, graph_file_name),
-        ignore_edges_with_importance_greater_than=prune_importance,
-        keep_at_least_n_edges=Preferences.min_edges_per_node
-    )
+    graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
+    n_nodes = len(graph.nodes)
     n_edges = len(graph.edges)
 
     # Topology
-    orphans = graph.has_orphaned_nodes()
-    connected = graph.is_connected()
+    orphans = graph.has_orphaned_nodes() or n_nodes != n_words
+    connected = graph.is_connected() and not orphans
     if connected:
         logger.info("Graph is connected")
     else:
@@ -124,17 +116,13 @@ def main(n_words: int, prune_importance: int = None):
             continue
 
         # Output file path
-        if prune_importance is not None:
-            response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words; "
-                                     f"firing {firing_threshold}; "
-                                     f"access {conscious_access_threshold}; "
-                                     f"edge importance threshold {prune_importance})")
-        else:
-            response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words; "
-                                     f"firing {firing_threshold}; "
-                                     f"access {conscious_access_threshold})")
+        response_dir = path.join(Preferences.output_dir,
+                                 f"Category production traces ({n_words:,} words; "
+                                 f"firing {firing_threshold}; "
+                                 f"access {conscious_access_threshold}; "
+                                 f"sd {edge_decay_sd}; "
+                                 f"length {length_factor}; "
+                                 f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             mkdir(response_dir)
@@ -150,18 +138,17 @@ def main(n_words: int, prune_importance: int = None):
         logger.info(f"Running spreading activation for category {category_label}")
 
         csv_comments.append(f"Running spreading activation using parameters:")
-        csv_comments.append(f"\t      words = {n_words:_}")
-        csv_comments.append(f"\t      edges = {n_edges:_}")
-        csv_comments.append(f"\tgranularity = {length_factor:_}")
-        if prune_importance is not None:
-            csv_comments.append(f"\t    pruning = {prune_importance}")
-        csv_comments.append(f"\t   firing θ = {firing_threshold}")
-        csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
-        csv_comments.append(f"\t          δ = {node_decay_factor}")
-        csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
-        csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
+        csv_comments.append(f"\t        model = {distributional_model.name}")
+        csv_comments.append(f"\t        words = {n_words:_}")
+        csv_comments.append(f"\t        edges = {n_edges:_}")
+        csv_comments.append(f"\tlength factor = {length_factor}")
+        csv_comments.append(f"\t     firing θ = {firing_threshold}")
+        csv_comments.append(f"\t  conc.acc. θ = {conscious_access_threshold}")
+        csv_comments.append(f"\t            δ = {node_decay_factor}")
+        csv_comments.append(f"\t           sd = {edge_decay_sd}")
+        csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
-            csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
+            csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
 
         # Do the spreading activation
 
@@ -173,12 +160,12 @@ def main(n_words: int, prune_importance: int = None):
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_frac*length_factor))
+                sd=edge_decay_sd*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
-        for tick in range(1, run_for_ticks):
+        for tick in range(1, n_ticks):
 
             logger.info(f"Clock = {tick}")
             node_activations = tsa.tick()
@@ -223,17 +210,11 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
-    parser.add_argument("prune_importance", type=int, nargs="?", help="Edge importance above which to prune.", default=None)
     args = parser.parse_args()
 
-    main(n_words=args.n_words, prune_importance=args.prune_importance)
+    main(n_words=args.n_words)
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
-    if args.prune_importance is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words"
-                           f" and words at least {args.prune_importance} importance.",
-                           Preferences.target_email_address)
-    else:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words.",
-                           Preferences.target_email_address)
+    emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words.",
+                       Preferences.target_email_address)

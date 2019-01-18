@@ -25,6 +25,7 @@ from numpy import inf
 from seaborn import distplot
 
 from ldm.core.corpus.indexing import FreqDist
+from ldm.core.model.base import DistributionalSemanticModel
 from ldm.core.model.count import LogCoOccurrenceCountModel
 from ldm.core.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
@@ -45,7 +46,12 @@ def main(n_words: int):
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
 
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.count:
+        graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
+    elif distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
+        graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
+    else:
+        raise NotImplementedError()
 
     # We want to over-prune isolated nodes and under-prune highly accessible nodes, so that we end up pruning approx the
     # target fraction of edges.
@@ -61,12 +67,12 @@ def main(n_words: int):
 
     f = pyplot.figure()
     distplot([length for edge, lengths in edge_lengths_from_node.items() for length in lengths])
-    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"length_distributions_{n_words}.png"))
+    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"length_distributions_[{distributional_model.name}]_length_{n_words}.png"))
     pyplot.close(f)
 
     f = pyplot.figure()
     distplot([length for node, length in min_edge_length.items()])
-    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"min_length_distributions_{n_words}.png"))
+    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"min_length_distributions_[{distributional_model.name}]_{n_words}.png"))
     pyplot.close(f)
 
 
@@ -76,7 +82,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
-                        nargs='?', default='1000')
+                        nargs='?', default='3000')
     args = parser.parse_args()
 
     main(n_words=args.n_words)
