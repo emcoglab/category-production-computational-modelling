@@ -1,6 +1,11 @@
 """
 Builds some template jobs
 """
+from os import path, mkdir
+
+job_name = 'job_2_3'
+if not path.isdir(job_name):
+    mkdir(job_name)
 
 number_of_words = 30_000
 importance_threshold = 50
@@ -24,7 +29,7 @@ for firing_threshold in firing_thresholds:
     for conscious_access_threshold in conscious_access_thresholds:
         name = f"job_2_3_sa_{k}_{importance_threshold}im_ft{firing_threshold}_cat{conscious_access_threshold}.sh"
         names.append(name)
-        with open(name, mode="w", encoding="utf-8") as job_file:
+        with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
             job_file.write(f"#$ -S /bin/bash\n")
             job_file.write(f"#$ -q serial\n")
@@ -39,13 +44,13 @@ for firing_threshold in firing_thresholds:
             job_file.write(f"\n")
             job_file.write(f"module add anaconda3\n")
             job_file.write(f"\n")
-            job_file.write(f"python3 ../2_3_category_production_parameter_search.py"
+            job_file.write(f"python3 ../../2_3_category_production_parameter_search.py"
                            f" {int(number_of_words)}"
                            f" {int(importance_threshold)}"
                            f" {float(firing_threshold)}"
                            f" {float(conscious_access_threshold)}\n")
-with open("submit_jobs_2_3_sa_ALL.sh", mode="w", encoding="utf-8") as batch_file:
+with open("job_2_3_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")
     for name in names:
-        batch_file.write(f"qsub {name}\n")
+        batch_file.write(f"qsub {path.join(job_name, name)}\n")

@@ -1,6 +1,11 @@
 """
 Builds some template jobs
 """
+from os import path, mkdir
+
+job_name = 'job_2_4'
+if not path.isdir(job_name):
+    mkdir(job_name)
 
 ram_amount = {
     1_000:  2,
@@ -16,7 +21,7 @@ for size in graph_sizes:
     k = f"{int(size/1000)}k"
     name = f"job_2_4_sa_{k}_ngram.sh"
     names.append(name)
-    with open(name, mode="w", encoding="utf-8") as job_file:
+    with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
         job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
         job_file.write(f"#$ -S /bin/bash\n")
         job_file.write(f"#$ -q serial\n")
@@ -31,9 +36,9 @@ for size in graph_sizes:
         job_file.write(f"\n")
         job_file.write(f"module add anaconda3\n")
         job_file.write(f"\n")
-        job_file.write(f"python3 ../2_4_category_production_ngram_tsa.py {int(size)}\n")
-with open("submit_jobs_2_4_sa_ALL.sh", mode="w", encoding="utf-8") as batch_file:
+        job_file.write(f"python3 ../../2_4_category_production_ngram_tsa.py {int(size)}\n")
+with open("job_2_4_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")
     for name in names:
-        batch_file.write(f"qsub {name}\n")
+        batch_file.write(f"qsub {path.join(job_name, name)}\n")
