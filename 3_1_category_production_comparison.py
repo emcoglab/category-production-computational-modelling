@@ -26,7 +26,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, interpret_path, get_model_ttfas_for_category
+from evaluation.category_production import TTFA, interpret_path, get_model_ttfas_for_category, save_stats
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -104,36 +104,9 @@ def main(results_dir):
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir)
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False)
 
     return available_items
-
-
-def save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir):
-    overall_stats_output_path = path.join(Preferences.results_dir,
-                                          "Category production fit",
-                                          f"model_effectiveness_overall ({path.basename(results_dir)}).txt")
-    with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
-        # Correlation of first response RT with time-to-activation
-        output_file.write(path.basename(results_dir) + "\n\n")
-        output_file.write(f"First rank frequency vs TTFA correlation ("
-                          f"Pearson's; negative is better fit; "
-                          f"N = {n_first_rank_frequent}) "
-                          f"= {corr_frf_vs_ttfa}\n")
-        output_file.write(f"First response RT vs TTFA correlation ("
-                          f"Pearson's; positive is better fit; "
-                          f"FRF≥{MIN_FIRST_RANK_FREQ}; "
-                          f"N = {n_first_rank_frequent}) "
-                          f"= {first_rank_frequent_corr_rt_vs_ttfa}\n")
-        output_file.write(f"Production frequency vs TTFA correlation ("
-                          f"Pearson's; negative is better fit; "
-                          f"N = {len(available_items)}) "
-                          f"= {corr_prodfreq_vs_ttfa}\n")
-        output_file.write(f"Mean rank vs TTFA correlation ("
-                          f"Pearson's; positive is better fit "
-                          f"N = {len(available_items)}) "
-                          f"= {corr_meanrank_vs_ttfa}\n")
 
 
 if __name__ == '__main__':
