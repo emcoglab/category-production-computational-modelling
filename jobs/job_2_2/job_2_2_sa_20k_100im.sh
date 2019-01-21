@@ -12,4 +12,4 @@ echo Job running on compute node `uname -n`
 
 module add anaconda3
 
-python3 ../../2_2_category_production_importance_pruned_tsa.py 20000 100
+python3 ../2_2_category_production_importance_pruned_tsa.py 20000 100
