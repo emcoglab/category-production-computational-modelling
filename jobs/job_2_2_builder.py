@@ -7,30 +7,19 @@ job_name = 'job_2_2'
 if not path.isdir(job_name):
     mkdir(job_name)
 
-importance_thresholds = [
-    0,
-    10,
-    20,
-    30,
-    40,
-    50,
-    60,
-    70,
-    80,
-    90,
-    100,
-]
 ram_amount = {
     1_000:  {100: 2,   90: 2,   80: 2,   70: 2,   60: 2,   50: 2 , 40: 2 , 30: 2 , 20: 2 , 10: 2 , 0: 2  },
     3_000:  {100: 5,   90: 5,   80: 5,   70: 5,   60: 5,   50: 5 , 40: 5 , 30: 5 , 20: 5 , 10: 5 , 0: 5  },
     10_000: {100: 30,  90: 26,  80: 24,  70: 22,  60: 20,  50: 15, 40: 13, 30: 12, 20: 12, 10: 12, 0: 12 },
     20_000: {100: 70,  90: 65,  80: 60,  70: 55,  60: 50,  50: 45, 40: 35, 30: 30, 20: 30, 10: 25, 0: 25 },
     30_000: {100: 160, 90: 140, 80: 120, 70: 110, 60: 100, 50: 85, 40: 80, 30: 70, 20: 70, 10: 60, 0: 60 },
+    40_000: {                                              50: 160,                        10: 160,      },
 }
 graph_sizes = sorted(ram_amount.keys())
 
 names = []
 for size in graph_sizes:
+    importance_thresholds = sorted(ram_amount[size].keys())
     for importance in importance_thresholds:
         k = f"{int(size/1000)}k"
         name = f"job_2_2_sa_{k}_{importance}im.sh"

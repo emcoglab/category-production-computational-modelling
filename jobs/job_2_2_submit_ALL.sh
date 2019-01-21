@@ -55,3 +55,5 @@ qsub job_2_2/job_2_2_sa_30k_70im.sh
 qsub job_2_2/job_2_2_sa_30k_80im.sh
 qsub job_2_2/job_2_2_sa_30k_90im.sh
 qsub job_2_2/job_2_2_sa_30k_100im.sh
+qsub job_2_2/job_2_2_sa_40k_10im.sh
+qsub job_2_2/job_2_2_sa_40k_50im.sh
