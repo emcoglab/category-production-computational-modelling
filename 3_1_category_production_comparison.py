@@ -35,13 +35,13 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 # Analysis settings
-MIN_FIRST_RANK_FREQ = 4
+MIN_FIRST_RANK_FREQ = 1
 
 
 def main(results_dir):
     n_words = interpret_path(results_dir)
 
-    logger.info(f"Looking at output from model with {n_words} words.")
+    logger.info(f"Looking at output from model with {n_words:,} words.")
 
     category_production = CategoryProduction()
 
