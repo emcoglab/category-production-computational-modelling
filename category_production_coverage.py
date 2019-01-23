@@ -17,78 +17,20 @@ caiwingfield.net
 
 import logging
 import sys
-from os import path
 
-from numpy import nan as nnan
 from pandas import DataFrame
 
-from category_production.category_production import CategoryProduction
+from category_production.category_production import CategoryProduction, ColNames as CPColNames
 from ldm.core.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from preferences import Preferences
 
 logger = logging.getLogger()
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def briony_vocab_overlap(top_n_words):
-    """Coverage of vocabulary in Briony's Category Production dataset."""
-    # Category production words
-    category_production = CategoryProduction()
-    category_production_words = category_production.vocabulary_single_word
-
-    # Frequent words in corpus
-    corpus = CorpusPreferences.source_corpus_metas.bbc
-    freq_dist = FreqDist.load(corpus.freq_dist_path)
-    corpus_words = freq_dist.most_common_tokens(top_n_words)
-
-    # Useful numbers to report
-    n_cat_prod_words = len(category_production_words)
-    n_intersection = len(set(category_production_words).intersection(set(corpus_words)))
-    n_missing = len(set(category_production_words) - set(corpus_words))
-    n_unused = len(set(corpus_words) - set(category_production_words))
-
-    logger.info(f"Category production dataset contains {n_cat_prod_words} words.")
-    logger.info(f"This includes {n_intersection} of the top {top_n_words} words in the {corpus.name} corpus.")
-    logger.info(f"{n_missing} category production words are not present.")
-    logger.info(f"{n_unused} graph words are not used in the category production set.")
-
-
-def briony_categories_overlap(top_n_words):
-    """Coverage of individual category responses in Briony's Category Production dataset."""
-    # Category production words
-    category_production = CategoryProduction()
-    categories = category_production.category_labels
-
-    # Frequent words in corpus
-    corpus = CorpusPreferences.source_corpus_metas.bbc
-    freq_dist = FreqDist.load(corpus.freq_dist_path)
-    corpus_words = set(freq_dist.most_common_tokens(top_n_words))
-
-    logger.info(f"Top {top_n_words:,} words:")
-
-    results = []
-    for category in categories:
-        # Skip multi-word categories
-        if " " in category:
-            continue
-        if category in corpus_words:
-            responses = category_production.responses_for_category(category, single_word_only=True)
-            n_present_responses = len(set(responses).intersection(set(corpus_words)))
-            percent_present_responses = 100 * n_present_responses / len(responses)
-            logger.info(f"{category}:\t{percent_present_responses:0.2f}%")
-        else:
-            logger.info(f"{category}:\t(not present)")
-            n_present_responses = nnan
-            percent_present_responses = nnan
-        results.append({
-            "Number of words": top_n_words,
-            "Category": category,
-            "Number of single-word responses covered": n_present_responses,
-            "% of single-word responses covered": percent_present_responses
-        })
-    return results
+def is_single_word(word: str) -> bool:
+    return " " not in word
 
 
 def main():
@@ -104,19 +46,39 @@ def main():
         200_000,
         300_000,
     ]
-    results = DataFrame()
-    for word_count in word_counts:
-        results_this_word_count = DataFrame(briony_categories_overlap(word_count))
-        results = results.append(results_this_word_count, ignore_index=True)
 
-    # Save the overall data
-    filename = f"category production coverage words.csv"
-    results.to_csv(path.join(Preferences.output_dir, filename),
-                   columns=["Number of words",
-                            "Category",
-                            "Number of single-word responses covered",
-                            "% of single-word responses covered"],
-                   index=False)
+    cp = CategoryProduction()
+    corpus = CorpusPreferences.source_corpus_metas.bbc
+    freq_dist = FreqDist.load(corpus.freq_dist_path)
+
+    for word_count in word_counts:
+        corpus_words = set(freq_dist.most_common_tokens(word_count))
+        results = []
+        for category in cp.category_labels:
+            if not is_single_word(category):
+                continue
+            single_word_responses = cp.responses_for_category(category, single_word_only=True, sort_by=CPColNames.Response)
+            single_word_responses_within_word_limit = [
+                word
+                for word in single_word_responses
+                if word in corpus_words
+            ]
+
+            n_single_word_responses = len(single_word_responses)
+            n_single_word_responses_in_graph = len(single_word_responses_within_word_limit) if category in corpus_words else 0
+
+            results.append({
+                "Single-word category": category,
+                "Single-word responses": n_single_word_responses,
+                "Single-word responses within graph": n_single_word_responses_in_graph,
+                "% coverage": 100 * n_single_word_responses_in_graph / n_single_word_responses,
+            })
+        DataFrame.from_records(results).to_csv(f"/Users/caiwingfield/Desktop/{word_count:,} words overlap.csv", columns=[
+            "Single-word category",
+            "Single-word responses",
+            "Single-word responses within graph",
+            "% coverage",
+        ], index=False)
 
 
 if __name__ == '__main__':
