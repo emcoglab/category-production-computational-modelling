@@ -98,8 +98,12 @@ def main():
         # Save node label dictionary
         node_label_filename = f"{corpus.name} {word_count} words.nodelabels"
         node_label_filename = path.join(Preferences.graphs_dir, node_label_filename)
-        with open(node_label_filename, mode="w", encoding="utf-8") as node_label_file:
-            json.dump(node_label_dict, node_label_file)
+        if path.isfile(node_label_filename):
+            logger.info(f"{path.basename(node_label_filename)} exists, skipping")
+        else:
+            logger.info(f"Saving node label dictionary to {path.basename(node_label_filename)}")
+            with open(node_label_filename, mode="w", encoding="utf-8") as node_label_file:
+                json.dump(node_label_dict, node_label_file)
 
 
 if __name__ == '__main__':
