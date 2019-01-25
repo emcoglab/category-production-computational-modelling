@@ -38,7 +38,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 MIN_FIRST_RANK_FREQ = 1
 
 
-def main(results_dir):
+def main(results_dir: str, conscious_access_threshold: float):
     n_words = interpret_path(results_dir)
 
     logger.info(f"Looking at output from model with {n_words:,} words.")
@@ -62,7 +62,7 @@ def main(results_dir):
     # Add model TTFA column to main_dataframe
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in category_production.category_labels:
-        model_ttfas[category] = get_model_ttfas_for_category(category, results_dir, n_words)
+        model_ttfas[category] = get_model_ttfas_for_category(category, results_dir, n_words, conscious_access_threshold)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]],
         axis=1)
@@ -112,8 +112,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
+    parser.add_argument("cat", type=float, help="The conscious-access threshold.")
     args = parser.parse_args()
 
-    main(args.path)
+    main(args.path, args.cat)
 
     logger.info("Done!")

@@ -45,7 +45,6 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-REACHED_CAT = "Reached conc.acc. θ"
 
 
 def main(n_words: int):
@@ -55,7 +54,6 @@ def main(n_words: int):
     n_ticks = 3_000
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.3
-    conscious_access_threshold = 0.4
     node_decay_factor = 0.99
     edge_decay_sd_frac = 15
 
@@ -119,7 +117,6 @@ def main(n_words: int):
         response_dir = path.join(Preferences.output_dir,
                                  f"Category production traces ({n_words:,} words; "
                                  f"firing {firing_threshold}; "
-                                 f"access {conscious_access_threshold}; "
                                  f"sd_frac {edge_decay_sd_frac}; "
                                  f"length {length_factor}; "
                                  f"model [{distributional_model.name}])")
@@ -143,7 +140,6 @@ def main(n_words: int):
         csv_comments.append(f"\t        edges = {n_edges:_}")
         csv_comments.append(f"\tlength factor = {length_factor}")
         csv_comments.append(f"\t     firing θ = {firing_threshold}")
-        csv_comments.append(f"\t  conc.acc. θ = {conscious_access_threshold}")
         csv_comments.append(f"\t            δ = {node_decay_factor}")
         csv_comments.append(f"\t      sd_frac = {edge_decay_sd_frac}")
         csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
@@ -176,7 +172,6 @@ def main(n_words: int):
                     tsa.label2idx[na.label],
                     na.activation,
                     na.time_activated,
-                    True if na.activation >= conscious_access_threshold else False
                 ))
 
             # Break early if we've got a probable explosion
@@ -191,7 +186,6 @@ def main(n_words: int):
             NODE_ID,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
-            REACHED_CAT
         ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
