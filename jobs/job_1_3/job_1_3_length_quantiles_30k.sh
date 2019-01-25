@@ -12,4 +12,4 @@ echo Job running on compute node `uname -n`
 
 module add anaconda3
 
-python3 ../1_3_pruning_quantile_lengths.py 30000
+python3 ../1_3_pruning_quantile_lengths.py 30000 1000 bbc cosine log_co-occurrence 5

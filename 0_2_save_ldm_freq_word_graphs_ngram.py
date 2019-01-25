@@ -14,17 +14,17 @@ caiwingfield.net
 2018
 ---------------------------
 """
-
+import argparse
 import json
 import logging
 import sys
 from os import path
 
+from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.base import DistributionalSemanticModel
-from ldm.core.model.ngram import NgramModel, LogNgramModel
+from ldm.core.model.ngram import NgramModel
 from ldm.core.utils.logging import log_message, date_format
-from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_similarity_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
@@ -32,14 +32,12 @@ from preferences import Preferences
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main(length_factor: int, corpus_name: str, model_name: str, radius: int):
 
-    length_factor = 100
-
-    corpus = CorpusPreferences.source_corpus_metas.bbc
+    corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model: NgramModel = LogNgramModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distributional_model: NgramModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     for word_count in Preferences.graph_sizes:
         logger.info(f"{word_count:,} words:")
@@ -67,7 +65,7 @@ def main():
             # Count, predict and n-gram models will be treated differently when building the graph
             if distributional_model.model_type.metatype is DistributionalSemanticModel.MetaType.ngram:
 
-                logger.info("Saving edgelist")
+                logger.info(f"Saving graph edgelist to {edgelist_filename}")
 
                 # Convert to csr for slicing rows and to csc for slicing columns
                 similarity_matrix = distributional_model.underlying_count_model.matrix
@@ -101,5 +99,14 @@ def main():
 if __name__ == '__main__':
     logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main()
+
+    parser = argparse.ArgumentParser(description="Save a number of commonly-used graphs built from the most frequent words in the corpora.")
+    parser.add_argument("length_factor", type=int, help="The length factor.")
+    parser.add_argument("corpus", type=str, help="The corpus.")
+    parser.add_argument("model", type=str, help="The model.")
+    parser.add_argument("radius", type=int, help="The radius.")
+    args = parser.parse_args()
+
+    main(args.length_factor, args.corpus, args.model, args.radius)
+
     logger.info("Done!")

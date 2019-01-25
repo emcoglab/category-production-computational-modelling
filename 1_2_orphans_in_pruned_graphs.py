@@ -21,10 +21,10 @@ from os import path
 
 from numpy import linspace
 
+from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.core.model.count import CountVectorModel
 from ldm.core.utils.maths import DistanceType
-from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.component import load_labels
 from model.graph import Graph, edge_length_quantile
 from preferences import Preferences
@@ -34,14 +34,12 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int):
+def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):
 
-    length_factor = 1_000
-
-    corpus = CorpusPreferences.source_corpus_metas.bbc
-    distance_type = DistanceType.cosine
+    corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
-    distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distance_type = DistanceType.from_name(distance_type_name)
+    distributional_model: CountVectorModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
 
@@ -102,9 +100,13 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
-    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
-                        nargs='?', default='1000')
+    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("length_factor", type=int, help="The length factor.")
+    parser.add_argument("corpus", type=str, help="The corpus.")
+    parser.add_argument("distance_type", type=str, help="The distance type.")
+    parser.add_argument("model", type=str, help="The model.")
+    parser.add_argument("radius", type=int, help="The radius.")
     args = parser.parse_args()
 
-    main(n_words=args.n_words)
+    main(args.n_words, args.length_factor, args.corpus, args.distance_type, args.model, args.radius)
     logger.info("Done!")

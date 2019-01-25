@@ -12,4 +12,17 @@ echo Job running on compute node `uname -n`
 
 module add anaconda3
 
-python3 ../2_1_category_production_pruned_tsa.py 10000 50
+python3 ../2_1_category_production_pruned_tsa.py \
+           -b 2000 \
+           -c bbc \
+           -f 0.8 \
+           -i 0.05 \
+           -d cosine \
+           -l 1000 \
+           -m log_co-occurrence \
+           -n 0.99 \
+           -p 50 \
+           -r 5 \
+           -s 0.4 \
+           -t 3000 \
+           -w 10000 \

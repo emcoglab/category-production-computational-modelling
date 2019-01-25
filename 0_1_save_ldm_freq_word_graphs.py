@@ -14,7 +14,7 @@ caiwingfield.net
 2018
 ---------------------------
 """
-
+import argparse
 import json
 import logging
 import sys
@@ -22,12 +22,12 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
+from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.base import DistributionalSemanticModel, VectorSemanticModel
-from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.core.model.base import DistributionalSemanticModel
+from ldm.core.model.count import CountVectorModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.core.utils.maths import DistanceType
-from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
@@ -35,15 +35,13 @@ from preferences import Preferences
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main(length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):
 
-    length_factor = 10
-
-    corpus = CorpusPreferences.source_corpus_metas.bbc
+    corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distance_type = DistanceType.cosine
-    distributional_model: VectorSemanticModel = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distance_type = DistanceType.from_name(distance_type_name)
+    distributional_model: CountVectorModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     for word_count in Preferences.graph_sizes:
         logger.info(f"{word_count:,} words:")
@@ -77,7 +75,7 @@ def main():
                 # free ram
                 del embedding_matrix
 
-                logger.info(f"Saving edgelist")
+                logger.info(f"Saving graph edgelist to {edgelist_filename}")
                 save_edgelist_from_distance_matrix(
                     file_path=edgelist_path,
                     distance_matrix=distance_matrix,
@@ -109,5 +107,15 @@ def main():
 if __name__ == '__main__':
     logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
-    main()
+
+    parser = argparse.ArgumentParser(description="Save a number of commonly-used graphs built from the most frequent words in the corpora.")
+    parser.add_argument("length_factor", type=int, help="The length factor.")
+    parser.add_argument("corpus", type=str, help="The corpus.")
+    parser.add_argument("distance_type", type=str, help="The distance type.")
+    parser.add_argument("model", type=str, help="The model.")
+    parser.add_argument("radius", type=int, help="The radius.")
+    args = parser.parse_args()
+
+    main(args.length_factor, args.corpus, args.distance_type, args.model, args.radius)
+
     logger.info("Done!")

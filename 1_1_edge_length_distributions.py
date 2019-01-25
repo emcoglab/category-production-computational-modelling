@@ -37,9 +37,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int):
-
-    length_factor = 1_000
+def main(n_words: int, length_factor: int):
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
@@ -67,12 +65,12 @@ def main(n_words: int):
 
     f = pyplot.figure()
     distplot([length for edge, lengths in edge_lengths_from_node.items() for length in lengths])
-    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"length_distributions_[{distributional_model.name}]_length_{n_words}.png"))
+    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"length_distributions_[{distributional_model.name}]_length_{length_factor}_{n_words} words.png"))
     pyplot.close(f)
 
     f = pyplot.figure()
     distplot([length for node, length in min_edge_length.items()])
-    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"min_length_distributions_[{distributional_model.name}]_{n_words}.png"))
+    f.savefig(path.join(Preferences.figures_dir, "length distributions", f"min_length_distributions_[{distributional_model.name}]_length_{length_factor}_{n_words} words.png"))
     pyplot.close(f)
 
 
@@ -83,7 +81,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
                         nargs='?', default='3000')
+    parser.add_argument("length_factor", type=int, help="The length factor.")
     args = parser.parse_args()
 
-    main(n_words=args.n_words)
+    main(n_words=args.n_words, length_factor=args.length_factor)
     logger.info("Done!")
