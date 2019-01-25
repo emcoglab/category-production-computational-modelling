@@ -57,7 +57,7 @@ def main(n_words: int):
     firing_threshold = 0.3
     conscious_access_threshold = 0.4
     node_decay_factor = 0.99
-    edge_decay_sd = 15
+    edge_decay_sd_frac = 1.5
 
     # Bail if too many words get activated
     bailout = n_words * .5
@@ -120,7 +120,7 @@ def main(n_words: int):
                                  f"Category production traces ({n_words:,} words; "
                                  f"firing {firing_threshold}; "
                                  f"access {conscious_access_threshold}; "
-                                 f"sd {edge_decay_sd}; "
+                                 f"sd_frac {edge_decay_sd_frac}; "
                                  f"length {length_factor}; "
                                  f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
@@ -145,7 +145,7 @@ def main(n_words: int):
         csv_comments.append(f"\t     firing θ = {firing_threshold}")
         csv_comments.append(f"\t  conc.acc. θ = {conscious_access_threshold}")
         csv_comments.append(f"\t            δ = {node_decay_factor}")
-        csv_comments.append(f"\t           sd = {edge_decay_sd}")
+        csv_comments.append(f"\t      sd_frac = {edge_decay_sd_frac}")
         csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
             csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
@@ -160,7 +160,7 @@ def main(n_words: int):
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd*length_factor))
+                sd=edge_decay_sd_frac*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
 
