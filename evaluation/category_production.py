@@ -35,7 +35,10 @@ def interpret_path(results_dir_path: str) -> int:
         raise ParseError(f"Could not parse number of words from {dir_name}")
 
 
-def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) -> DefaultDict[str, int]:
+def get_model_ttfas_for_category(category: str,
+                                 results_dir: str,
+                                 n_words: int,
+                                 conscious_access_threshold: float) -> DefaultDict[str, int]:
     """
     Dictionary of
         response -> time to first activation
@@ -46,6 +49,7 @@ def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) 
     :param category:
     :param results_dir:
     :param n_words:
+    :param conscious_access_threshold:
     :return:
     """
 
@@ -61,7 +65,7 @@ def get_model_ttfas_for_category(category: str, results_dir: str, n_words: int) 
         for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
 
             # Only consider items whose activation exceeded the CAT
-            if not row[REACHED_CAT]:
+            if row[ACTIVATION] < conscious_access_threshold:
                 continue
 
             activation_event = ItemActivatedEvent(label=row[RESPONSE],

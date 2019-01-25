@@ -38,7 +38,9 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 MIN_FIRST_RANK_FREQ = 4
 
 
-def main_restricted(results_dir: str, category_production: CategoryProduction, available_items: Set[Tuple[str, str]]):
+def main_restricted(results_dir: str, category_production: CategoryProduction,
+                    available_items: Set[Tuple[str, str]],
+                    conscious_access_threshold: float):
 
     n_words = interpret_path(results_dir)
 
@@ -57,7 +59,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction, a
     # Add model TTFA column
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in category_production.category_labels:
-        model_ttfas[category] = get_model_ttfas_for_category(category, results_dir, n_words)
+        model_ttfas[category] = get_model_ttfas_for_category(category, results_dir, n_words, conscious_access_threshold)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]], axis=1)
 
@@ -129,7 +131,7 @@ def get_available_items_from_path(p: str, cp: CategoryProduction) -> Set[Tuple[s
     return available_items
 
 
-def main(paths):
+def main(paths, conscious_access_threshold: float):
 
     logger.info(f'Only looking at outputs shared between models with {" and ".join(f"{n:,}" for n in [interpret_path(p) for p in paths])} words')
 
@@ -147,7 +149,7 @@ def main(paths):
     logger.info(f"Looking at restricted set of {len(available_items)} items")
     first_path = paths[0]
     logger.info(path.basename(first_path))
-    main_restricted(first_path, cp, available_items)
+    main_restricted(first_path, cp, available_items, conscious_access_threshold)
 
 
 if __name__ == '__main__':
@@ -158,8 +160,9 @@ if __name__ == '__main__':
     parser.add_argument("paths", type=str, nargs="+", help="The paths in which to find the results. Will use only "
                                                            "items present in all cases, but will compute results based "
                                                            "on the FIRST path.")
+    parser.add_argument("cat", type=float, help="The conscious-access threshold.")
     args = parser.parse_args()
 
-    main(args.paths)
+    main(args.paths, args.cat)
 
     logger.info("Done!")

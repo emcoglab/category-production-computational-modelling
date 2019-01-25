@@ -46,7 +46,6 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-REACHED_CAT = "Reached conc.acc. θ"
 
 
 def main(n_words: int, prune_importance: int = None):
@@ -55,7 +54,6 @@ def main(n_words: int, prune_importance: int = None):
     length_factor = 1_000
     impulse_pruning_threshold = 0.05
     firing_threshold = 0.8
-    conscious_access_threshold = 0.9
     node_decay_factor = 0.99
     edge_decay_sd_frac = 0.4
 
@@ -128,13 +126,11 @@ def main(n_words: int, prune_importance: int = None):
             response_dir = path.join(Preferences.output_dir,
                                      f"Category production traces ({n_words:,} words; "
                                      f"firing {firing_threshold}; "
-                                     f"access {conscious_access_threshold}; "
                                      f"edge importance threshold {prune_importance})")
         else:
             response_dir = path.join(Preferences.output_dir,
                                      f"Category production traces ({n_words:,} words; "
-                                     f"firing {firing_threshold}; "
-                                     f"access {conscious_access_threshold})")
+                                     f"firing {firing_threshold}; ")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             mkdir(response_dir)
@@ -156,7 +152,6 @@ def main(n_words: int, prune_importance: int = None):
         if prune_importance is not None:
             csv_comments.append(f"\t    pruning = {prune_importance}")
         csv_comments.append(f"\t   firing θ = {firing_threshold}")
-        csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
         csv_comments.append(f"\t          δ = {node_decay_factor}")
         csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
         csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
@@ -189,7 +184,6 @@ def main(n_words: int, prune_importance: int = None):
                     tsa.label2idx[na.label],
                     na.activation,
                     na.time_activated,
-                    True if na.activation >= conscious_access_threshold else False
                 ))
 
             # Break early if we've got a probable explosion
@@ -204,7 +198,6 @@ def main(n_words: int, prune_importance: int = None):
             NODE_ID,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
-            REACHED_CAT
         ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results

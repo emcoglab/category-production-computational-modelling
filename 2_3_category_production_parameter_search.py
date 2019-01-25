@@ -46,10 +46,9 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-REACHED_CAT = "Reached conc.acc. θ"
 
 
-def main(n_words: int, prune_importance: int, firing_threshold: float, conscious_access_threshold: float):
+def main(n_words: int, prune_importance: int, firing_threshold: float):
     run_for_ticks = 3_000
 
     length_factor = 1_000
@@ -122,7 +121,6 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
         response_dir = path.join(Preferences.output_dir,
                                  f"Category production traces ({n_words:,} words; "
                                  f"firing {firing_threshold}; "
-                                 f"access {conscious_access_threshold}; "
                                  f"edge importance threshold {prune_importance})")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -145,7 +143,6 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
         if prune_importance is not None:
             csv_comments.append(f"\t    pruning = {prune_importance}")
         csv_comments.append(f"\t   firing θ = {firing_threshold}")
-        csv_comments.append(f"\tconc.acc. θ = {conscious_access_threshold}")
         csv_comments.append(f"\t          δ = {node_decay_factor}")
         csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
         csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
@@ -178,7 +175,6 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
                     tsa.label2idx[na.label],
                     na.activation,
                     na.time_activated,
-                    True if na.activation >= conscious_access_threshold else False
                 ))
 
             # Break early if we've got a probable explosion
@@ -193,7 +189,6 @@ def main(n_words: int, prune_importance: int, firing_threshold: float, conscious
             NODE_ID,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
-            REACHED_CAT
         ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
@@ -214,11 +209,10 @@ if __name__ == '__main__':
     parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
     parser.add_argument("prune_importance", type=int, help="Edge importance above which to prune.")
     parser.add_argument("firing_threshold", type=float, help="The firing threshold.")
-    parser.add_argument("conscious_access_threshold", type=float, help="The conscious access threshold.")
     args = parser.parse_args()
 
     main(n_words=args.n_words, prune_importance=args.prune_importance,
-         firing_threshold=args.firing_threshold, conscious_access_threshold=args.conscious_access_threshold)
+         firing_threshold=args.firing_threshold)
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
