@@ -14,6 +14,7 @@ caiwingfield.net
 2018
 ---------------------------
 """
+from os import path
 
 
 class Preferences(object):
@@ -21,19 +22,21 @@ class Preferences(object):
     Global preferences for spreading activation models.
     """
 
+    data = "/Volumes/Data"
+
     # Paths
 
     email_connection_details_path = "/Users/caiwingfield/Box Sync/Admin dox/notify@cwcomplex.net.txt"
     target_email_address = "c.wingfield@lancaster.ac.uk"
 
-    graphs_dir = "/Users/caiwingfield/data/graphs/"
+    graphs_dir = path.join(data, "graphs")
 
-    node_distributions_dir = "/Users/caiwingfield/data/node_distributions/"
+    node_distributions_dir = path.join(data, "node_distributions/")
 
-    output_dir = "/Volumes/Data/spreading activation model/Model output/"
-    results_dir = "/Volumes/Data/spreading activation model/Evaluation/"
+    output_dir = path.join(data, "spreading activation model/Model output/")
+    results_dir = path.join(data, "spreading activation model/Evaluation/")
 
-    figures_dir = "/Volumes/Data/spreading activation model/Figures/"
+    figures_dir = path.join(data, "spreading activation model/Figures/")
 
     graph_sizes = [
         1_000,

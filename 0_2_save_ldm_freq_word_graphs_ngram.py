@@ -22,7 +22,7 @@ from os import path
 
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
 from ldm.core.model.base import DistributionalSemanticModel
-from ldm.core.model.ngram import PPMINgramModel, NgramModel
+from ldm.core.model.ngram import NgramModel, LogNgramModel
 from ldm.core.utils.logging import log_message, date_format
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_similarity_matrix
@@ -34,12 +34,12 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    length_factor = 10
+    length_factor = 100
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model: NgramModel = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distributional_model: NgramModel = LogNgramModel(corpus, window_radius=5, freq_dist=freq_dist)
 
     for word_count in Preferences.graph_sizes:
         logger.info(f"{word_count:,} words:")
