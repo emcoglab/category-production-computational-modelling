@@ -100,10 +100,10 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, MIN_FIRST_RANK_FREQ)
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, MIN_FIRST_RANK_FREQ, conscious_access_threshold)
 
 
-def get_available_items_from_path(p: str, cp: CategoryProduction) -> Set[Tuple[str, str]]:
+def get_available_items_from_path(p: str, cp: CategoryProduction, conscious_access_threshold) -> Set[Tuple[str, str]]:
     n_words = interpret_path(p)
 
     # Main dataframe holds category production data and model response data
@@ -112,7 +112,7 @@ def get_available_items_from_path(p: str, cp: CategoryProduction) -> Set[Tuple[s
     # Add model TTFA column
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in cp.category_labels:
-        model_ttfas[category] = get_model_ttfas_for_category(category, p, n_words)
+        model_ttfas[category] = get_model_ttfas_for_category(category, p, n_words, conscious_access_threshold)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]], axis=1)
 
@@ -141,9 +141,9 @@ def main(paths, conscious_access_threshold: float):
     available_items: Set = None
     for p in paths:
         if not available_items:
-            available_items = get_available_items_from_path(p, cp)
+            available_items = get_available_items_from_path(p, cp, conscious_access_threshold)
         else:
-            new_available_items = get_available_items_from_path(p, cp)
+            new_available_items = get_available_items_from_path(p, cp, conscious_access_threshold)
             available_items = set.intersection(available_items, new_available_items)
 
     logger.info(f"Looking at restricted set of {len(available_items)} items")

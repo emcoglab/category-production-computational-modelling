@@ -49,7 +49,8 @@ def main(results_dir: str, conscious_access_threshold: float):
 
     per_category_stats_output_path = path.join(Preferences.results_dir,
                                                "Category production fit",
-                                               f"item-level data ({path.basename(results_dir)}).csv")
+                                               f"item-level data ({path.basename(results_dir)}) "
+                                               f"CAT={conscious_access_threshold}.csv")
 
     # region Build main dataframe
 
@@ -103,7 +104,7 @@ def main(results_dir: str, conscious_access_threshold: float):
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False, MIN_FIRST_RANK_FREQ)
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False, MIN_FIRST_RANK_FREQ, conscious_access_threshold)
 
 
 if __name__ == '__main__':

@@ -82,27 +82,36 @@ def get_model_ttfas_for_category(category: str,
 
 
 def save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted, MIN_FIRST_RANK_FREQ):
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted, min_first_rank_freq, conscious_access_threshold):
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
-                                          f"model_effectiveness_overall {'(restricted) ' if restricted else ''}({path.basename(results_dir)}).txt")
-    with open(overall_stats_output_path, mode="w", encoding="utf-8") as output_file:
-        # Correlation of first response RT with time-to-activation
-        output_file.write(path.basename(results_dir) + "\n\n")
-        output_file.write(f"First rank frequency vs TTFA correlation ("
-                          f"Pearson's; negative is better fit; "
-                          f"N = {n_first_rank_frequent}) "
-                          f"= {corr_frf_vs_ttfa}\n")
-        output_file.write(f"First response RT vs TTFA correlation ("
-                          f"Pearson's; positive is better fit; "
-                          f"FRF≥{MIN_FIRST_RANK_FREQ}; "
-                          f"N = {n_first_rank_frequent}) "
-                          f"= {first_rank_frequent_corr_rt_vs_ttfa}\n")
-        output_file.write(f"Production frequency vs TTFA correlation ("
-                          f"Pearson's; negative is better fit; "
-                          f"N = {len(available_items)}) "
-                          f"= {corr_prodfreq_vs_ttfa}\n")
-        output_file.write(f"Mean rank vs TTFA correlation ("
-                          f"Pearson's; positive is better fit "
-                          f"N = {len(available_items)}) "
-                          f"= {corr_meanrank_vs_ttfa}\n")
+                                          f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
+                                          f"({path.basename(results_dir)}) CAT={conscious_access_threshold}.csv")
+
+    data_records = {
+        f"Model":                                   path.basename(results_dir),
+        f"CAT":                                     conscious_access_threshold,
+        f"FRF corr (-)":                            corr_frf_vs_ttfa,
+        f"FRF N":                                   n_first_rank_frequent,
+        f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
+        f"zRT N":                                   n_first_rank_frequent,
+        f"ProdFreq corr (-)":                       corr_prodfreq_vs_ttfa,
+        f"ProdFreq N":                              len(available_items),
+        f"MeanRank corr (+)":                       corr_meanrank_vs_ttfa,
+        f"Mean Rank N":                             len(available_items),
+    }
+    data: DataFrame = DataFrame.from_records([data_records])
+
+    with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
+        data.to_csv(data_file, index=False, columns=[
+            f"Model",
+            f"CAT",
+            f"FRF corr (-)",
+            f"FRF N",
+            f"zRT corr (+; FRF≥{min_first_rank_freq})",
+            f"zRT N",
+            f"ProdFreq corr (-)",
+            f"ProdFreq N",
+            f"MeanRank corr (+)",
+            f"Mean Rank N",
+        ])
