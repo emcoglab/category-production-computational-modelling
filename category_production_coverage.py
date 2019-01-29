@@ -37,13 +37,10 @@ def main():
     word_counts = [
         1_000,
         3_000,
-        5_000,
         10_000,
-        20_000,
         30_000,
-        50_000,
+        40_000,
         100_000,
-        200_000,
         300_000,
     ]
 
@@ -54,9 +51,14 @@ def main():
     for word_count in word_counts:
         corpus_words = set(freq_dist.most_common_tokens(word_count))
         results = []
+        n_categories_overall = 0
+        n_categories_covered = 0
+        n_responses_overall = 0
+        n_responses_covered = 0
         for category in cp.category_labels:
             if not is_single_word(category):
                 continue
+            n_categories_overall += 1
             single_word_responses = cp.responses_for_category(category, single_word_only=True, sort_by=CPColNames.Response)
             single_word_responses_within_word_limit = [
                 word
@@ -65,7 +67,13 @@ def main():
             ]
 
             n_single_word_responses = len(single_word_responses)
-            n_single_word_responses_in_graph = len(single_word_responses_within_word_limit) if category in corpus_words else 0
+            n_responses_overall += n_single_word_responses
+            if category in corpus_words:
+                n_categories_covered += 1
+                n_single_word_responses_in_graph = len(single_word_responses_within_word_limit)
+            else:
+                n_single_word_responses_in_graph = 0
+            n_responses_covered += n_single_word_responses_in_graph
 
             results.append({
                 "Single-word category": category,
@@ -79,6 +87,12 @@ def main():
             "Single-word responses within graph",
             "% coverage",
         ], index=False)
+
+        logger.info(f"{word_count:,} words: "
+                    f"categories {n_categories_covered}/{n_categories_overall}"
+                    f" ({100*n_categories_covered/n_categories_overall:.1f}%); "
+                    f"responses {n_responses_covered}/{n_responses_overall}"
+                    f" ({100*n_responses_covered/n_responses_overall:.1f}%)")
 
 
 if __name__ == '__main__':

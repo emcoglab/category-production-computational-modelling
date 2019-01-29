@@ -16,6 +16,15 @@ python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activat
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.9 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 1.0 &
 
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.3 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.4 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.5 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.6 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.7 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.8 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.9 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 1.0 &
+
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.4 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.5 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.6 &
@@ -24,8 +33,19 @@ python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activat
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.9 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 1.0 &
 
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])" 0.5 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])" 0.6 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])" 0.7 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])" 0.8 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])" 0.9 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])" 1.0 &
+
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.9; sd_frac 6; length 100; model [log n-gram (BBC), r=5])" 0.9 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.9; sd_frac 6; length 100; model [log n-gram (BBC), r=5])" 1.0 &
+
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])" 0.8 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])" 0.9 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (30,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])" 1.0 &
 
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.3 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.4 &
@@ -36,6 +56,14 @@ python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activat
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.9 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 1.0 &
 
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.4 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.5 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.6 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.7 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.8 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 0.9 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])" 1.0 &
+
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.3 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.4 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.5 &
@@ -44,6 +72,10 @@ python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activat
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.8 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 0.9 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])" 1.0 &
+
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])" 0.8 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])" 0.9 &
+python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])" 1.0 &
 
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.9; sd_frac 6; length 100; model [log n-gram (BBC), r=5])" 0.9 &
 python ../3_1_category_production_comparison.py "/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019/Category production traces (40,000 words; firing 0.9; sd_frac 6; length 100; model [log n-gram (BBC), r=5])" 1.0 &
