@@ -12,4 +12,16 @@ echo Job running on compute node `uname -n`
 
 module add anaconda3
 
-python3 ../2_3_category_production_ngram_tsa.py 3000
+python3 ../2_3_category_production_ngram_tsa.py \
+           -b 1500 \
+           -c bbc \
+           -f 0.3 \
+           -i 0.05 \
+           -d cosine \
+           -l 10 \
+           -m log_ngram \
+           -n 0.99 \
+           -r 5 \
+           -s 15 \
+           -t 3000 \
+           -w 3000 

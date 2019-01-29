@@ -13,7 +13,7 @@ echo Job running on compute node `uname -n`
 module add anaconda3
 
 python3 ../2_2_category_production_importance_pruned_tsa.py \
-           -b 2000 \
+           -b 5000 \
            -c bbc \
            -f 0.8 \
            -i 0.05 \
@@ -25,4 +25,4 @@ python3 ../2_2_category_production_importance_pruned_tsa.py \
            -r 5 \
            -s 0.4 \
            -t 3000 \
-           -w 40000 \
+           -w 40000 

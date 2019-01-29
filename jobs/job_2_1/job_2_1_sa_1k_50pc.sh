@@ -25,4 +25,4 @@ python3 ../2_1_category_production_pruned_tsa.py \
            -r 5 \
            -s 0.4 \
            -t 3000 \
-           -w 1000 \
+           -w 1000 

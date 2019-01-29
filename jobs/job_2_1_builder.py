@@ -59,7 +59,7 @@ for size in graph_sizes:
             job_file.write(f"           -r 5 \\\n")
             job_file.write(f"           -s 0.4 \\\n")
             job_file.write(f"           -t 3000 \\\n")
-            job_file.write(f"           -w {int(size)} \\\n")
+            job_file.write(f"           -w {int(size)} \n")
 with open("job_2_1_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")

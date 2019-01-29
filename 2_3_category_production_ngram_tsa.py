@@ -23,9 +23,9 @@ from os import path, mkdir
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
+from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.ngram import PPMINgramModel
-from ldm.preferences.preferences import Preferences as CorpusPreferences
+from ldm.core.model.base import DistributionalSemanticModel
 from model.component import load_labels
 from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
@@ -47,23 +47,23 @@ ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def main(n_words: int):
+def main(n_words: int,
+         corpus_name: str,
+         model_name: str,
+         radius: int,
+         length_factor: int,
+         firing_threshold: float,
+         node_decay_factor: float,
+         edge_decay_sd_factor: float,
+         impulse_pruning_threshold: float,
+         run_for_ticks: int,
+         bailout: int,
+         ):
 
-    length_factor = 10
-
-    n_ticks = 3_000
-    impulse_pruning_threshold = 0.05
-    firing_threshold = 0.3
-    node_decay_factor = 0.99
-    edge_decay_sd_frac = 15
-
-    # Bail if too many words get activated
-    bailout = n_words * .5
-
-    corpus = CorpusPreferences.source_corpus_metas.bbc
+    corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
     filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
@@ -117,7 +117,7 @@ def main(n_words: int):
         response_dir = path.join(Preferences.output_dir,
                                  f"Category production traces ({n_words:,} words; "
                                  f"firing {firing_threshold}; "
-                                 f"sd_frac {edge_decay_sd_frac}; "
+                                 f"sd_factor {edge_decay_sd_factor}; "
                                  f"length {length_factor}; "
                                  f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
@@ -141,7 +141,7 @@ def main(n_words: int):
         csv_comments.append(f"\tlength factor = {length_factor}")
         csv_comments.append(f"\t     firing θ = {firing_threshold}")
         csv_comments.append(f"\t            δ = {node_decay_factor}")
-        csv_comments.append(f"\t      sd_frac = {edge_decay_sd_frac}")
+        csv_comments.append(f"\t      sd_factor = {edge_decay_sd_factor}")
         csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
             csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
@@ -156,12 +156,12 @@ def main(n_words: int):
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_frac*length_factor))
+                sd=edge_decay_sd_factor*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
-        for tick in range(1, n_ticks):
+        for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
             node_activations = tsa.tick()
@@ -203,10 +203,32 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
-    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
+
+    parser.add_argument("-b", "--bailout", required=True, type=int)
+    parser.add_argument("-c", "--corpus_name", required=True, type=str)
+    parser.add_argument("-f", "--firing_threshold", required=True, type=float)
+    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
+    parser.add_argument("-l", "--length_factor", required=True, type=int)
+    parser.add_argument("-m", "--model_name", required=True, type=str)
+    parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
+    parser.add_argument("-r", "--radius", required=True, type=int)
+    parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
+    parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
+    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. (Top n words.)")
+
     args = parser.parse_args()
 
-    main(n_words=args.n_words)
+    main(n_words=args.n_words,
+         corpus_name=args.corpus_name,
+         model_name=args.model_name,
+         radius=args.radius,
+         length_factor=args.length_factor,
+         firing_threshold=args.firing_threshold,
+         node_decay_factor=args.node_decay_factor,
+         edge_decay_sd_factor=args.edge_decay_sd_factor,
+         impulse_pruning_threshold=args.impulse_pruning_threshold,
+         run_for_ticks=args.run_for_ticks,
+         bailout=args.bailout)
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
