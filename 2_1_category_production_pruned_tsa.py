@@ -17,7 +17,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from os import path, mkdir, makedirs
+from os import path, makedirs
 
 from pandas import DataFrame
 

@@ -18,17 +18,17 @@ import argparse
 import logging
 import sys
 from collections import defaultdict
-from os import path, mkdir
+from os import path, makedirs
 
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
+from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.count import LogCoOccurrenceCountModel
+from ldm.core.model.base import DistributionalSemanticModel
 from ldm.core.utils.maths import DistanceType
-from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph, iter_edges_from_edgelist
 from model.component import load_labels
+from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -48,23 +48,26 @@ ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def main(n_words: int, prune_importance: int = None):
-    run_for_ticks = 3_000
+def main(n_words: int,
+         prune_importance: int,
+         corpus_name: str,
+         model_name: str,
+         radius: int,
+         distance_type_name: str,
+         length_factor: int,
+         firing_threshold: float,
+         node_decay_factor: float,
+         edge_decay_sd_factor: float,
+         impulse_pruning_threshold: float,
+         run_for_ticks: int,
+         bailout: int,
+         ):
 
-    length_factor = 1_000
-    impulse_pruning_threshold = 0.05
-    firing_threshold = 0.8
-    node_decay_factor = 0.99
-    edge_decay_sd_frac = 0.4
-
-    # Bail if too many words get activated
-    bailout = 5_000
-
-    corpus = CorpusPreferences.source_corpus_metas.bbc
-    distance_type = DistanceType.cosine
+    corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     token_index = TokenIndex.from_freqdist_ranks(freq_dist)
-    distributional_model = LogCoOccurrenceCountModel(corpus, window_radius=5, freq_dist=freq_dist)
+    distance_type = DistanceType.from_name(distance_type_name)
+    distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
     filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
@@ -133,7 +136,7 @@ def main(n_words: int, prune_importance: int = None):
                                      f"firing {firing_threshold}; ")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
-            mkdir(response_dir)
+            makedirs(response_dir)
         model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
 
         # Only run the TSA if we've not already done it
@@ -153,7 +156,7 @@ def main(n_words: int, prune_importance: int = None):
             csv_comments.append(f"\t    pruning = {prune_importance}")
         csv_comments.append(f"\t   firing θ = {firing_threshold}")
         csv_comments.append(f"\t          δ = {node_decay_factor}")
-        csv_comments.append(f"\t    sd_frac = {edge_decay_sd_frac}")
+        csv_comments.append(f"\t  sd_factor = {edge_decay_sd_factor}")
         csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
         if not connected:
             csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
@@ -168,7 +171,7 @@ def main(n_words: int, prune_importance: int = None):
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_frac*length_factor))
+                sd=edge_decay_sd_factor*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
 
@@ -215,11 +218,36 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
-    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)")
-    parser.add_argument("prune_importance", type=int, nargs="?", help="Edge importance above which to prune.", default=None)
+
+    parser.add_argument("-b", "--bailout", required=True, type=int)
+    parser.add_argument("-c", "--corpus_name", required=True, type=str)
+    parser.add_argument("-f", "--firing_threshold", required=True, type=float)
+    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
+    parser.add_argument("-d", "--distance_type", required=True, type=str)
+    parser.add_argument("-l", "--length_factor", required=True, type=int)
+    parser.add_argument("-m", "--model_name", required=True, type=str)
+    parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
+    parser.add_argument("-p", "--prune_importance", required=False, type=int, help="The importance level from which to prune from the graph.", default=None)
+    parser.add_argument("-r", "--radius", required=True, type=int)
+    parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
+    parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
+    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. (Top n words.)")
+
     args = parser.parse_args()
 
-    main(n_words=args.n_words, prune_importance=args.prune_importance)
+    main(n_words=args.n_words,
+         prune_importance=args.prune_importance,
+         corpus_name=args.corpus_name,
+         model_name=args.model_name,
+         radius=args.radius,
+         distance_type_name=args.distance_type_name,
+         length_factor=args.length_factor,
+         firing_threshold=args.firing_threshold,
+         node_decay_factor=args.node_decay_factor,
+         edge_decay_sd_factor=args.edge_decay_sd_factor,
+         impulse_pruning_threshold=args.impulse_pruning_threshold,
+         run_for_ticks=args.run_for_ticks,
+         bailout=args.bailout)
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
