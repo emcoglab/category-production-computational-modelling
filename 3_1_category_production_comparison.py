@@ -34,11 +34,12 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-# Analysis settings
-MIN_FIRST_RANK_FREQ = 1
+def main(results_dir: str, conscious_access_threshold: float, min_first_rank_freq: int = None):
 
+    # Set defaults
+    if min_first_rank_freq is None:
+        min_first_rank_freq = 1
 
-def main(results_dir: str, conscious_access_threshold: float):
     n_words = interpret_path(results_dir)
 
     logger.info(f"Looking at output from model with {n_words:,} words.")
@@ -91,7 +92,7 @@ def main(results_dir: str, conscious_access_threshold: float):
 
     # The Pearson's correlation over all categories between average first-response RT (for responses with
     # first-rank frequency ≥4) and the time to the first activation (TTFA) within the model.
-    first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= MIN_FIRST_RANK_FREQ]
+    first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= min_first_rank_freq]
     n_first_rank_frequent = first_rank_frequent_data.shape[0]
     first_rank_frequent_corr_rt_vs_ttfa = first_rank_frequent_data[CPColNames.MeanZRT].corr(
         first_rank_frequent_data[TTFA], method='pearson')
@@ -104,7 +105,7 @@ def main(results_dir: str, conscious_access_threshold: float):
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False, MIN_FIRST_RANK_FREQ, conscious_access_threshold)
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, False, min_first_rank_freq, conscious_access_threshold)
 
 
 if __name__ == '__main__':
@@ -114,8 +115,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
     parser.add_argument("cat", type=float, help="The conscious-access threshold.")
+    parser.add_argument("min_frf", type=int, required=False, default=None, help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
-    main(args.path, args.cat)
+    main(args.path, args.cat, args.min_frf)
 
     logger.info("Done!")

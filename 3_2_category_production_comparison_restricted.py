@@ -34,13 +34,11 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
-# Analysis settings
-MIN_FIRST_RANK_FREQ = 4
-
 
 def main_restricted(results_dir: str, category_production: CategoryProduction,
                     available_items: Set[Tuple[str, str]],
-                    conscious_access_threshold: float):
+                    conscious_access_threshold: float,
+                    min_first_rank_freq: int):
 
     n_words = interpret_path(results_dir)
 
@@ -88,7 +86,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
 
     # The Pearson's correlation over all categories between average first-response RT (for responses with
     # first-rank frequency ≥4) and the time to the first activation (TTFA) within the model.
-    first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= MIN_FIRST_RANK_FREQ]
+    first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= min_first_rank_freq]
     n_first_rank_frequent = first_rank_frequent_data.shape[0]
     first_rank_frequent_corr_rt_vs_ttfa = first_rank_frequent_data[CPColNames.MeanZRT].corr(first_rank_frequent_data[TTFA], method='pearson')
 
@@ -100,7 +98,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
     # endregion
 
     save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, MIN_FIRST_RANK_FREQ, conscious_access_threshold)
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, min_first_rank_freq, conscious_access_threshold)
 
 
 def get_available_items_from_path(p: str, cp: CategoryProduction, conscious_access_threshold) -> Set[Tuple[str, str]]:
@@ -131,7 +129,11 @@ def get_available_items_from_path(p: str, cp: CategoryProduction, conscious_acce
     return available_items
 
 
-def main(paths, conscious_access_threshold: float):
+def main(paths, conscious_access_threshold: float, min_first_rank_freq: int = None):
+
+    # Set defaults
+    if min_first_rank_freq is None:
+        min_first_rank_freq = 1
 
     logger.info(f'Only looking at outputs shared between models with {" and ".join(f"{n:,}" for n in [interpret_path(p) for p in paths])} words')
 
@@ -149,7 +151,7 @@ def main(paths, conscious_access_threshold: float):
     logger.info(f"Looking at restricted set of {len(available_items)} items")
     first_path = paths[0]
     logger.info(path.basename(first_path))
-    main_restricted(first_path, cp, available_items, conscious_access_threshold)
+    main_restricted(first_path, cp, available_items, conscious_access_threshold, min_first_rank_freq)
 
 
 if __name__ == '__main__':
@@ -161,8 +163,9 @@ if __name__ == '__main__':
                                                            "items present in all cases, but will compute results based "
                                                            "on the FIRST path.")
     parser.add_argument("cat", type=float, help="The conscious-access threshold.")
+    parser.add_argument("min_frf", type=int, required=False, default=None, help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
-    main(args.paths, args.cat)
+    main(args.paths, args.cat, args.min_frf)
 
     logger.info("Done!")
