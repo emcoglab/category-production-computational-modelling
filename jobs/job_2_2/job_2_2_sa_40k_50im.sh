@@ -13,16 +13,16 @@ echo Job running on compute node `uname -n`
 module add anaconda3
 
 python3 ../2_2_category_production_importance_pruned_tsa.py \
-           -b 5000 \
-           -c bbc \
-           -f 0.8 \
-           -i 0.05 \
-           -d cosine \
-           -l 1000 \
-           -m log_co-occurrence \
-           -n 0.99 \
-           -p 50 \
-           -r 5 \
-           -s 0.4 \
-           -t 3000 \
-           -w 40000 
+           --bailout 5000 \
+           --corpus_name bbc \
+           --firing_threshold 0.8 \
+           --impulse_pruning_threshold 0.05 \
+           --distance_type cosine \
+           --length_factor 1000 \
+           --model_name log_co-occurrence \
+           --node_decay_factor 0.99 \
+           --prune_importance 50 \
+           --radius 5 \
+           --edge_decay_sd_factor 0.4 \
+           --run_for_ticks 3000 \
+           --words 40000 
