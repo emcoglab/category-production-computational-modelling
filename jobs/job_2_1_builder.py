@@ -4,6 +4,9 @@ Builds some template jobs
 from os import path, mkdir
 
 job_name = 'job_2_1'
+short_name = "j21"
+script_name = "2_1_category_production_pruned_tsa"
+
 if not path.isdir(job_name):
     mkdir(job_name)
 
@@ -29,13 +32,13 @@ names = []
 for size in graph_sizes:
     for percent in pruning_percents:
         k = f"{int(size/1000)}k"
-        name = f"job_2_1_sa_{k}_{percent}pc.sh"
+        name = f"{job_name}_{k}_{percent}pc.sh"
         names.append(name)
         with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
             job_file.write(f"#$ -S /bin/bash\n")
             job_file.write(f"#$ -q serial\n")
-            job_file.write(f"#$ -N j21_{k}_{percent}pc_sa\n")
+            job_file.write(f"#$ -N {short_name}_{k}_{percent}pc_sa\n")
             job_file.write(f"#$ -m e\n")
             job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
             job_file.write(f"#$ -l h_vmem={ram_amount[size][percent]}G\n")
@@ -46,7 +49,7 @@ for size in graph_sizes:
             job_file.write(f"\n")
             job_file.write(f"module add anaconda3\n")
             job_file.write(f"\n")
-            job_file.write(f"python3 ../2_1_category_production_pruned_tsa.py \\\n")
+            job_file.write(f"python3 ../{script_name}.py \\\n")
             job_file.write(f"           --bailout 2000 \\\n")
             job_file.write(f"           --corpus_name bbc \\\n")
             job_file.write(f"           --firing_threshold 0.8 \\\n")
@@ -60,7 +63,7 @@ for size in graph_sizes:
             job_file.write(f"           --edge_decay_sd_factor 0.4 \\\n")
             job_file.write(f"           --run_for_ticks 3000 \\\n")
             job_file.write(f"           --words {int(size)} \n")
-with open("job_2_1_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
+with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")
     for name in names:

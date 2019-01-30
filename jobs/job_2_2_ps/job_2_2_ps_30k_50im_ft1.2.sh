@@ -1,7 +1,7 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j22_30k_50im_ft1.2
+#$ -N j22ps_30k_50im_ft1.2
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=100G

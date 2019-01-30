@@ -4,6 +4,9 @@ Builds some template jobs
 from os import path, mkdir
 
 job_name = 'job_2_2'
+short_name = "j22"
+script_name = "2_2_category_production_importance_pruned_tsa"
+
 if not path.isdir(job_name):
     mkdir(job_name)
 
@@ -22,13 +25,13 @@ for size in graph_sizes:
     importance_thresholds = sorted(ram_amount[size].keys())
     for importance in importance_thresholds:
         k = f"{int(size/1000)}k"
-        name = f"job_2_2_sa_{k}_{importance}im.sh"
+        name = f"{job_name}_{k}_{importance}im.sh"
         names.append(name)
         with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
             job_file.write(f"#$ -S /bin/bash\n")
             job_file.write(f"#$ -q serial\n")
-            job_file.write(f"#$ -N j22_{k}_{importance}im_sa\n")
+            job_file.write(f"#$ -N {short_name}_{k}_{importance}im_sa\n")
             job_file.write(f"#$ -m e\n")
             job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
             job_file.write(f"#$ -l h_vmem={ram_amount[size][importance]}G\n")
@@ -39,7 +42,7 @@ for size in graph_sizes:
             job_file.write(f"\n")
             job_file.write(f"module add anaconda3\n")
             job_file.write(f"\n")
-            job_file.write(f"python3 ../2_2_category_production_importance_pruned_tsa.py \\\n")
+            job_file.write(f"python3 ../{script_name}.py \\\n")
             job_file.write(f"           --bailout 5000 \\\n")
             job_file.write(f"           --corpus_name bbc \\\n")
             job_file.write(f"           --firing_threshold 0.8 \\\n")
@@ -53,7 +56,7 @@ for size in graph_sizes:
             job_file.write(f"           --edge_decay_sd_factor 0.4 \\\n")
             job_file.write(f"           --run_for_ticks 3000 \\\n")
             job_file.write(f"           --words {int(size)} \n")
-with open("job_2_2_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
+with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")
     for name in names:
