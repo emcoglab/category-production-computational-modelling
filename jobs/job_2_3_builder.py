@@ -4,6 +4,9 @@ Builds some template jobs
 from os import path, mkdir
 
 job_name = 'job_2_3'
+short_name = "j23"
+script_name = "2_3_category_production_parameter_search"
+
 if not path.isdir(job_name):
     mkdir(job_name)
 
@@ -27,13 +30,13 @@ k = f"{int(number_of_words/1000)}k"
 for firing_threshold in firing_thresholds:
     conscious_access_thresholds = thresholds[firing_threshold]
     for conscious_access_threshold in conscious_access_thresholds:
-        name = f"job_2_3_sa_{k}_{importance_threshold}im_ft{firing_threshold}_cat{conscious_access_threshold}.sh"
+        name = f"{job_name}_{k}_{importance_threshold}im_ft{firing_threshold}_cat{conscious_access_threshold}.sh"
         names.append(name)
         with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
             job_file.write(f"#$ -S /bin/bash\n")
             job_file.write(f"#$ -q serial\n")
-            job_file.write(f"#$ -N j23_{k}_{importance_threshold}im_ft{firing_threshold}_cat{conscious_access_threshold}\n")
+            job_file.write(f"#$ -N {short_name}_{k}_{importance_threshold}im_ft{firing_threshold}_cat{conscious_access_threshold}\n")
             job_file.write(f"#$ -m e\n")
             job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
             job_file.write(f"#$ -l h_vmem={ram_amount}G\n")
@@ -44,12 +47,12 @@ for firing_threshold in firing_thresholds:
             job_file.write(f"\n")
             job_file.write(f"module add anaconda3\n")
             job_file.write(f"\n")
-            job_file.write(f"python3 ../2_3_category_production_parameter_search.py"
+            job_file.write(f"python3 ../{script_name}.py"
                            f" {int(number_of_words)}"
                            f" {int(importance_threshold)}"
                            f" {float(firing_threshold)}"
                            f" {float(conscious_access_threshold)}\n")
-with open("job_2_3_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
+with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")
     for name in names:
