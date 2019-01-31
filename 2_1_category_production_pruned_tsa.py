@@ -22,9 +22,9 @@ from os import path, mkdir
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.component import load_labels
 from model.graph import Graph

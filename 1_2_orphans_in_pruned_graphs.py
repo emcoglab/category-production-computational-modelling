@@ -21,9 +21,9 @@ from os import path
 
 from numpy import linspace
 
-from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.component import load_labels
 from model.graph import Graph, edge_length_quantile

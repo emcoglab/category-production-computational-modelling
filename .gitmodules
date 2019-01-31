@@ -4,3 +4,6 @@
 [submodule "approximate_comparator"]
 	path = tests/approximate_comparator
 	url = https://caiw@github.com/caiw/approximate_comparator.git
+[submodule "ldm"]
+	path = ldm
+	url = git@github.com:emcoglab/ldm-core.git

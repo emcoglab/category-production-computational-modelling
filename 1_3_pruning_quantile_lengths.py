@@ -21,9 +21,9 @@ from os import path
 
 from pandas import DataFrame
 
-from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import edge_length_quantile, iter_edges_from_edgelist
 from preferences import Preferences

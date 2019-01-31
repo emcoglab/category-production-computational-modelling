@@ -23,8 +23,8 @@ from os import path, mkdir
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.ngram import PPMINgramModel
+from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.model.ngram import PPMINgramModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.component import load_labels
 from model.graph import Graph, iter_edges_from_edgelist

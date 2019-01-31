@@ -24,10 +24,10 @@ from matplotlib import pyplot
 from numpy import inf
 from seaborn import distplot
 
-from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.base import DistributionalSemanticModel
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist
+from ldm.model.base import DistributionalSemanticModel
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import iter_edges_from_edgelist
 from preferences import Preferences

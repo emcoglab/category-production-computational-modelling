@@ -20,10 +20,10 @@ import logging
 import sys
 from os import path
 
-from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.base import DistributionalSemanticModel
-from ldm.core.model.ngram import NgramModel, LogNgramModel
-from ldm.core.utils.logging import log_message, date_format
+from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.model.base import DistributionalSemanticModel
+from ldm.model.ngram import NgramModel, LogNgramModel
+from ldm.utils.logging import log_message, date_format
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_similarity_matrix
 from model.utils.indexing import list_index_dictionaries

@@ -22,11 +22,11 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.base import DistributionalSemanticModel, VectorSemanticModel
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.logging import log_message, date_format
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.model.base import DistributionalSemanticModel, VectorSemanticModel
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.utils.logging import log_message, date_format
+from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
