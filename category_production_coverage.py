@@ -21,7 +21,7 @@ import sys
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
-from ldm.core.corpus.indexing import FreqDist
+from ldm.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 
 logger = logging.getLogger()

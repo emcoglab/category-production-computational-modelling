@@ -22,10 +22,10 @@ from os import path
 from pandas import DataFrame
 from sklearn.metrics.pairwise import pairwise_distances
 
-from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.utils.logging import log_message, date_format
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.utils.logging import log_message, date_format
+from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation

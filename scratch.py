@@ -20,14 +20,11 @@ import logging
 import sys
 from os import path
 
-from numpy import linspace
-
-from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.count import LogCoOccurrenceCountModel, PPMIModel
-from ldm.core.model.ngram import LogNgramModel, PPMINgramModel
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist
+from ldm.model.ngram import PPMINgramModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
-from model.graph import Graph, edge_length_quantile
+from ldm.utils.maths import DistanceType
+from model.graph import Graph
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)

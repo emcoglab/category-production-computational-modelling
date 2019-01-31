@@ -1,9 +1,9 @@
-[submodule "ldm"]
-	path = ldm
-	url = git@github.com:emcoglab/linguistic-distributional-models.git
 [submodule "category_production"]
 	path = category_production
 	url = git@github.com:emcoglab/category_production.git
 [submodule "approximate_comparator"]
 	path = tests/approximate_comparator
 	url = https://caiw@github.com/caiw/approximate_comparator.git
+[submodule "ldm"]
+	path = ldm
+	url = git@github.com:emcoglab/ldm-core.git

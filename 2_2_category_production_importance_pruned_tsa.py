@@ -24,9 +24,9 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.core.corpus.indexing import FreqDist, TokenIndex
-from ldm.core.model.base import DistributionalSemanticModel
-from ldm.core.utils.maths import DistanceType
+from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.model.base import DistributionalSemanticModel
+from ldm.utils.maths import DistanceType
 from model.component import load_labels
 from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
