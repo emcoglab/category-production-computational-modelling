@@ -1,8 +1,8 @@
 -r ldm/requirements.txt
-matplotlib==3.0.2
-numpy==1.15.4
-pandas==0.23.4
-scipy==1.2.0
-seaborn==0.9.0
+matplotlib
+numpy
+pandas
+scipy
+seaborn
 sklearn
-sortedcontainers==2.1.0
+sortedcontainers
