@@ -23,9 +23,8 @@ from pandas import DataFrame
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
-from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import edge_length_quantile, iter_edges_from_edgelist
 from preferences import Preferences
 

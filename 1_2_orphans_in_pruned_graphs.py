@@ -23,9 +23,8 @@ from numpy import linspace
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
-from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.component import load_labels
 from model.graph import Graph, edge_length_quantile
 from preferences import Preferences

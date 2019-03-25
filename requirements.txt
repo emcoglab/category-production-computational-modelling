@@ -1,0 +1,8 @@
+-r ldm/requirements.txt
+matplotlib
+numpy
+pandas
+scipy
+seaborn
+sklearn
+sortedcontainers

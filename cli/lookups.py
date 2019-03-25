@@ -16,11 +16,11 @@ caiwingfield.net
 """
 
 
-from ldm.core.corpus.corpus import CorpusMetadata
-from ldm.core.corpus.indexing import FreqDist
-from ldm.core.model.base import DistributionalSemanticModel
-from ldm.core.model.count import LogCoOccurrenceCountModel
-from ldm.core.model.ngram import LogNgramModel, PPMINgramModel, PMINgramModel
+from ldm.corpus.corpus import CorpusMetadata
+from ldm.corpus.indexing import FreqDist
+from ldm.model.base import DistributionalSemanticModel
+from ldm.model.count import LogCoOccurrenceCountModel
+from ldm.model.ngram import LogNgramModel, PPMINgramModel, PMINgramModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 
 

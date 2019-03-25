@@ -23,9 +23,8 @@ from os import path
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
-from ldm.model.ngram import NgramModel, LogNgramModel
+from ldm.model.ngram import NgramModel
 from ldm.utils.logging import log_message, date_format
-from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.graph import save_edgelist_from_similarity_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
