@@ -79,10 +79,9 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
-    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
-                        nargs='?', default='3000')
-    parser.add_argument("length_factor", type=int, help="The length factor.")
+    parser.add_argument("-l", "--length_factor", required=True, type=int)
+    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. (Top n words.)")
     args = parser.parse_args()
 
-    main(n_words=args.n_words, length_factor=args.length_factor)
+    main(n_words=args.words, length_factor=args.length_factor)
     logger.info("Done!")

@@ -109,13 +109,17 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Save a number of commonly-used graphs built from the most frequent words in the corpora.")
-    parser.add_argument("length_factor", type=int, help="The length factor.")
-    parser.add_argument("corpus", type=str, help="The corpus.")
-    parser.add_argument("distance_type", type=str, help="The distance type.")
-    parser.add_argument("model", type=str, help="The model.")
-    parser.add_argument("radius", type=int, help="The radius.")
+    parser.add_argument("-l", "--length_factor", required=True, type=int)
+    parser.add_argument("-c", "--corpus_name", required=True, type=str)
+    parser.add_argument("-d", "--distance_type", required=True, type=str)
+    parser.add_argument("-m", "--model_name", required=True, type=str)
+    parser.add_argument("-r", "--radius", required=True, type=int)
     args = parser.parse_args()
 
-    main(args.length_factor, args.corpus, args.distance_type, args.model, args.radius)
+    main(length_factor=args.length_factor,
+         corpus_name=args.corpus_name,
+         distance_type_name=args.distance_type,
+         model_name=args.model_name,
+         radius=args.radius)
 
     logger.info("Done!")

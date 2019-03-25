@@ -12,4 +12,10 @@ echo Job running on compute node `uname -n`
 
 module add anaconda3
 
-python3 ../1_2_orphans_in_pruned_graphs.py 10000 1000 bbc cosine log_co-occurrence 5
+python3 ../1_2_orphans_in_pruned_graphs.py \
+           --corpus_name bbc \
+           --distance_type cosine \
+           --length_factor 1000 \
+           --model_name log_co-occurrence \
+           --radius 5 \
+           --words 10000
