@@ -20,10 +20,12 @@ import argparse
 import glob
 import logging
 import sys
-from os import path, mkdir
+from os import path, makedirs
 
 import yaml
-from pandas import concat, read_csv, DataFrame, pivot_table, ExcelWriter
+from pandas import concat, read_csv, DataFrame, pivot_table
+
+from model.utils.file import pivot_table_to_csv
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -41,13 +43,13 @@ def main(results_dir: str) -> None:
     models = all_data["Model"].unique()
     dvs = [
         "FRF corr (-)",
-        "FRF N",
         "zRT corr (+; FRF≥1)",
-        "zRT N",
         'ProdFreq corr (-)',
-        'ProdFreq N',
         'MeanRank corr (+)',
-        'Mean Rank N',
+        # "FRF N",
+        # "zRT N",
+        'ProdFreq N',
+        # 'Mean Rank N',
     ]
 
     for model in models:
@@ -57,25 +59,18 @@ def main(results_dir: str) -> None:
 
         for wc in word_counts:
 
-            this_model_data = this_model_data[this_model_data["Words"] == wc]
+            this_wc_data = this_model_data[this_model_data["Words"] == wc]
 
             # Select only min CAT
-            this_model_data = this_model_data[this_model_data["Firing threshold"].eq(this_model_data["CAT"])]
+            this_wc_data = this_wc_data[this_wc_data["Firing threshold"].eq(this_wc_data["CAT"])]
 
             for dv in dvs:
 
                 # pivot
-                p = pivot_table(data=this_model_data, index="SD factor", columns="Firing threshold", values=dv)
-                if not path.isdir(path.join(results_dir, "tabulated")):
-                    mkdir(path.join(results_dir, "tabulated"))
-                # csv
-                p.to_csv(path.join(results_dir, "tabulated", f"{model} {wc} {dv}.csv"))
-                # xls
-                w = ExcelWriter(path.join(results_dir, "tabulated", f"{model} {wc} {dv}.xls"))
-                p.to_excel(w, "Sheet 1")
-                w.save()
-
-    pass
+                p = pivot_table(data=this_wc_data, index="SD factor", columns="Firing threshold", values=dv)
+                save_dir = path.join(results_dir, " tabulated", f"{model}, {wc} words")
+                makedirs(save_dir, exist_ok=True)
+                pivot_table_to_csv(p, path.join(save_dir, f"{dv}.csv"))
 
 
 def collate_data(results_dir: str) -> DataFrame:
