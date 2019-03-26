@@ -24,6 +24,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
+from evaluation.model_specs import save_model_spec
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from model.component import load_labels
@@ -105,6 +106,16 @@ def main(n_words: int,
     logger.info(f"Loading node labels")
     node_labelling_dictionary = load_labels(corpus, n_words)
 
+    # Output file path
+    response_dir = path.join(Preferences.output_dir,
+                             f"Category production traces ({n_words:,} words; "
+                             f"firing {firing_threshold}; "
+                             f"sd_factor {edge_decay_sd_factor}; "
+                             f"length {length_factor}; "
+                             f"model [{distributional_model.name}])")
+
+    save_model_spec(edge_decay_sd_factor, firing_threshold, length_factor, model_name, n_words, response_dir)
+
     cp = CategoryProduction()
 
     for category_label in cp.category_labels:
@@ -112,14 +123,6 @@ def main(n_words: int,
         # Skip the check if the category won't be in the network
         if category_label not in filtered_words:
             continue
-
-        # Output file path
-        response_dir = path.join(Preferences.output_dir,
-                                 f"Category production traces ({n_words:,} words; "
-                                 f"firing {firing_threshold}; "
-                                 f"sd_factor {edge_decay_sd_factor}; "
-                                 f"length {length_factor}; "
-                                 f"model [{distributional_model.name}])")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             mkdir(response_dir)
@@ -141,7 +144,7 @@ def main(n_words: int,
         csv_comments.append(f"\tlength factor = {length_factor}")
         csv_comments.append(f"\t     firing θ = {firing_threshold}")
         csv_comments.append(f"\t            δ = {node_decay_factor}")
-        csv_comments.append(f"\t      sd_factor = {edge_decay_sd_factor}")
+        csv_comments.append(f"\t    sd_factor = {edge_decay_sd_factor}")
         csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
             csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")

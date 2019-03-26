@@ -159,11 +159,9 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
-    parser.add_argument("paths", type=str, nargs="+", help="The paths in which to find the results. Will use only "
-                                                           "items present in all cases, but will compute results based "
-                                                           "on the FIRST path.")
-    parser.add_argument("cat", type=float, help="The conscious-access threshold.")
-    parser.add_argument("min_frf", type=int, required=False, default=None, help="The minimum FRF required for zRT and FRF correlations.")
+    parser.add_argument("-p", "--path", required=True, type=str, help="Path in which to find the results.")
+    parser.add_argument("-c", "--cat", required=True, type=float, help="Conscious-access threshold.")
+    parser.add_argument("-m", "--min_frf", type=int, required=False, default=None, help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
     main(args.paths, args.cat, args.min_frf)

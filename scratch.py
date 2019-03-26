@@ -1,73 +1,53 @@
-"""
-===========================
-Look for orphaned nodes in pruned graphs.
-===========================
-
-Dr. Cai Wingfield
----------------------------
-Embodied Cognition Lab
-Department of Psychology
-University of Lancaster
-c.wingfield@lancaster.ac.uk
-caiwingfield.net
----------------------------
-2018
----------------------------
-"""
-import argparse
-import json
-import logging
-import sys
+import re
 from os import path
 
-from ldm.corpus.indexing import FreqDist
-from ldm.model.ngram import PPMINgramModel
-from ldm.preferences.preferences import Preferences as CorpusPreferences
-from ldm.utils.maths import DistanceType
-from model.graph import Graph
-from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
+from evaluation.model_specs import save_model_spec
 
 
-def main(n_words: int):
+def main():
+    base="/Volumes/Data/spreading activation model/Model output/n-gram runs for CogSci 2019"
+    dirs = [
+        "Category production traces (30,000 words; firing 0.3; sd_frac 15; length 10; model [PMI n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PMI n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.6; sd_frac 4; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.6; sd_frac 5; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.7; sd_frac 4; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (30,000 words; firing 0.9; sd_frac 6; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.3; sd_frac 15; length 10; model [PMI n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.3; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.3; sd_frac 20; length 10; model [PMI n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PMI n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.4; sd_frac 15; length 10; model [PPMI n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.5; sd_frac 20; length 10; model [PPMI n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.6; sd_frac 4; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.7; sd_frac 4; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.8; sd_frac 5; length 100; model [log n-gram (BBC), r=5])",
+        "Category production traces (40,000 words; firing 0.9; sd_frac 6; length 100; model [log n-gram (BBC), r=5])",
+    ]
 
-    length_factor = 1_000
+    pattern_re = re.compile(r"Category production traces \("
+                            r"(?P<words>[0-9,]+) words; "
+                            r"firing (?P<firing>[0-9\.]+); "
+                            r"sd_frac (?P<sd_frac>[0-9/.]+); "
+                            r"length (?P<length>[0-9]+); "
+                            r"model \[(?P<model>[^\]]+)\]\)")
 
-    corpus = CorpusPreferences.source_corpus_metas.bbc
-    distance_type = DistanceType.cosine
-    freq_dist = FreqDist.load(corpus.freq_dist_path)
-    distributional_model = PPMINgramModel(corpus, window_radius=5, freq_dist=freq_dist)
-
-    graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
-
-    # Load node relabelling dictionary
-    logger.info(f"Loading node labels")
-    # TODO: this is duplicated code and can be refactored out in to a library function
-    # TODO: in fact, it SHOULD be
-    with open(path.join(Preferences.graphs_dir, f"{corpus.name} {n_words} words.nodelabels"), mode="r",
-              encoding="utf-8") as nrd_file:
-        node_relabelling_dictionary_json = json.load(nrd_file)
-    node_relabelling_dictionary = dict()
-    for k, v in node_relabelling_dictionary_json.items():
-        node_relabelling_dictionary[int(k)] = v
-
-    # Load the full graph
-    logger.info(f"Loading graph from {graph_file_name}")
-    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))
-    logger.info(f"Graph has {len(graph.nodes):,} nodes")
+    for d in dirs:
+        pattern_match = re.match(pattern_re, d)
+        save_model_spec(
+            edge_decay_sd_factor=float(pattern_match.group("sd_frac")),
+            firing_threshold=float(pattern_match.group("firing")),
+            length_factor=int(pattern_match.group("length")),
+            model_name=pattern_match.group("model"),
+            n_words=int(pattern_match.group("words").replace(",", "")),
+            response_dir=path.join(base, d)
+        )
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
-    logger.info("Running %s" % " ".join(sys.argv))
-
-    parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
-    parser.add_argument("n_words", type=int, help="The number of words to use from the corpus. (Top n words.)",
-                        nargs='?', default='40000')
-    args = parser.parse_args()
-
-    main(n_words=args.n_words)
-    logger.info("Done!")
+    main()

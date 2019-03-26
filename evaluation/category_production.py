@@ -6,6 +6,7 @@ from typing import DefaultDict
 from numpy import nan
 from pandas import DataFrame, read_csv
 
+from evaluation.model_specs import load_model_spec
 from model.component import ItemActivatedEvent
 from model.utils.exceptions import ParseError
 from preferences import Preferences
@@ -88,8 +89,14 @@ def save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_pr
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}) CAT={conscious_access_threshold}.csv")
 
+    model_spec = load_model_spec(results_dir)
+
     data_records = {
-        f"Model":                                   path.basename(results_dir),
+        f"Model":                                   model_spec["Model name"],
+        f"Length factor":                           model_spec["Length factor"],
+        f"SD factor":                               model_spec["SD factor"],
+        f"Firing threshold":                        model_spec["Firing threshold"],
+        f"Words":                                   model_spec["Words"],
         f"CAT":                                     conscious_access_threshold,
         f"FRF corr (-)":                            corr_frf_vs_ttfa,
         f"FRF N":                                   n_first_rank_frequent,
@@ -105,6 +112,10 @@ def save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_pr
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
         data.to_csv(data_file, index=False, columns=[
             f"Model",
+            f"Length factor",
+            f"SD factor",
+            f"Firing threshold",
+            f"Words",
             f"CAT",
             f"FRF corr (-)",
             f"FRF N",
