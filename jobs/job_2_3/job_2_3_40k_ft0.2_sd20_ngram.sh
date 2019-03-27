@@ -1,7 +1,7 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j23_40k_ngram_sa
+#$ -N j23_40k_f0.2_s20_ngram_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=15G
@@ -15,13 +15,13 @@ module add anaconda3
 python3 ../2_3_category_production_ngram_tsa.py \
            --bailout 20000 \
            --corpus_name bbc \
-           --firing_threshold 0.3 \
+           --firing_threshold 0.2 \
            --impulse_pruning_threshold 0.05 \
            --distance_type cosine \
            --length_factor 10 \
-           --model_name log_ngram \
+           --model_name pmi_ngram \
            --node_decay_factor 0.99 \
            --radius 5 \
-           --edge_decay_sd_factor 15 \
+           --edge_decay_sd_factor 20 \
            --run_for_ticks 3000 \
            --words 40000 
