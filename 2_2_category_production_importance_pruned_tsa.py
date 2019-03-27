@@ -235,7 +235,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(n_words=args.n_words,
+    main(n_words=args.words,
          prune_importance=args.prune_importance,
          corpus_name=args.corpus_name,
          model_name=args.model_name,
@@ -252,9 +252,9 @@ if __name__ == '__main__':
 
     emailer = Emailer(Preferences.email_connection_details_path)
     if args.prune_importance is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words"
+        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words"
                            f" and words at least {args.prune_importance} importance.",
                            Preferences.target_email_address)
     else:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words.",
+        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
                            Preferences.target_email_address)

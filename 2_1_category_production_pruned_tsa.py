@@ -236,7 +236,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(n_words=args.n_words,
+    main(n_words=args.words,
          prune_percent=args.prune_percent,
          corpus_name=args.corpus_name,
          model_name=args.model_name,
@@ -253,8 +253,8 @@ if __name__ == '__main__':
 
     emailer = Emailer(Preferences.email_connection_details_path)
     if args.prune_percent is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words and {args.prune_percent:.2f}% pruning.",
+        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words and {args.prune_percent:.2f}% pruning.",
                            Preferences.target_email_address)
     else:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.n_words} words.",
+        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
                            Preferences.target_email_address)
