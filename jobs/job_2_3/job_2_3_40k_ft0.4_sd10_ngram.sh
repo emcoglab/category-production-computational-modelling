@@ -17,7 +17,6 @@ python3 ../2_3_category_production_ngram_tsa.py \
            --corpus_name bbc \
            --firing_threshold 0.4 \
            --impulse_pruning_threshold 0.05 \
-           --distance_type cosine \
            --length_factor 10 \
            --model_name pmi_ngram \
            --node_decay_factor 0.99 \
