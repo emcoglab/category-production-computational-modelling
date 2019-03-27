@@ -113,6 +113,10 @@ def main(n_words: int,
                              f"length {length_factor}; "
                              f"model [{distributional_model.name}])")
 
+    if not path.isdir(response_dir):
+        logger.warning(f"{response_dir} directory does not exist; making it.")
+        mkdir(response_dir)
+
     save_model_spec(edge_decay_sd_factor, firing_threshold, length_factor, model_name, n_words, response_dir)
 
     cp = CategoryProduction()
@@ -122,9 +126,7 @@ def main(n_words: int,
         # Skip the check if the category won't be in the network
         if category_label not in filtered_words:
             continue
-        if not path.isdir(response_dir):
-            logger.warning(f"{response_dir} directory does not exist; making it.")
-            mkdir(response_dir)
+            
         model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
 
         # Only run the TSA if we've not already done it
