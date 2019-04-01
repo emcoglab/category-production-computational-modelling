@@ -219,7 +219,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--radius", required=True, type=int)
     parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True, 
+    parser.add_argument("-w", "--words", type=int, required=True,
                         help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
