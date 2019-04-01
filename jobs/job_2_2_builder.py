@@ -40,7 +40,7 @@ for size in graph_sizes:
             job_file.write(f"\n")
             job_file.write(f"echo Job running on compute node `uname -n`\n")
             job_file.write(f"\n")
-            job_file.write(f"module add anaconda3\n")
+            job_file.write(f"module add anaconda3/2018.12\n")
             job_file.write(f"\n")
             job_file.write(f"python3 ../{script_name}.py \\\n")
             job_file.write(f"           --bailout 5000 \\\n")

@@ -10,7 +10,7 @@ source /etc/profile
 
 echo Job running on compute node `uname -n`
 
-module add anaconda3
+module add anaconda3/2018.12
 
 python3 ../2_3_category_production_ngram_tsa.py \
            --bailout 20000 \
