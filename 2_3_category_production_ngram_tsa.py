@@ -58,8 +58,7 @@ def main(n_words: int,
          edge_decay_sd_factor: float,
          impulse_pruning_threshold: float,
          run_for_ticks: int,
-         bailout: int,
-         ):
+         bailout: int):
 
     corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
