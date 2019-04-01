@@ -179,7 +179,7 @@ def main(n_words: int,
                 ))
 
             # Break early if we've got a probable explosion
-            if tsa.n_suprathreshold_nodes() > bailout:
+            if tsa.n_suprathreshold_nodes() > bailout > 0:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
                                     f"with {tsa.n_suprathreshold_nodes()} nodes activated.")
@@ -208,7 +208,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-b", "--bailout", required=True, type=int)
+    parser.add_argument("-b", "--bailout", required=False, default=0, type=int,
+                        help="The number of concurrent activations necessary to pull the emergency handbrake. Set to 0 to never bailout.")
     parser.add_argument("-c", "--corpus_name", required=True, type=str)
     parser.add_argument("-f", "--firing_threshold", required=True, type=float)
     parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
@@ -218,8 +219,8 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--radius", required=True, type=int)
     parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. "
-                                                                       "(Top n words.)")
+    parser.add_argument("-w", "--words", type=int, required=True,
+                        help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
 
