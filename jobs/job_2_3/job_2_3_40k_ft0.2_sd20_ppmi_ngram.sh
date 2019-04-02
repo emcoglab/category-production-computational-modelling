@@ -1,7 +1,7 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j23_40k_f0.2_s20_ngram_sa
+#$ -N j23_40k_f0.2_s20_ppmi_ngram_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=15G
