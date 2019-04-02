@@ -22,7 +22,6 @@ import logging
 import sys
 from os import path, makedirs
 
-import yaml
 from pandas import concat, read_csv, DataFrame, pivot_table
 
 from model.utils.file import pivot_table_to_csv
@@ -30,11 +29,6 @@ from model.utils.file import pivot_table_to_csv
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-
-def load_model_spec(response_dir) -> dict:
-    with open(path.join(response_dir, " model_spec.yaml"), mode="r", encoding="utf-8") as spec_file:
-        return yaml.load(spec_file)
 
 
 def main(results_dir: str) -> None:

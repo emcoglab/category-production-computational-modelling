@@ -117,7 +117,7 @@ def main(n_words: int,
         logger.warning(f"{response_dir} directory does not exist; making it.")
         mkdir(response_dir)
 
-    save_model_spec(edge_decay_sd_factor, firing_threshold, length_factor, model_name, n_words, response_dir)
+    save_model_spec(edge_decay_sd_factor, firing_threshold, length_factor, distributional_model.name, n_words, response_dir)
 
     cp = CategoryProduction()
 

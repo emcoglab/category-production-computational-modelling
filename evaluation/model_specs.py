@@ -15,8 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 
-
-
 from os import path
 
 import yaml
