@@ -20,13 +20,13 @@ ram_amount = {
 graph_sizes = sorted(ram_amount.keys())
 names = []
 
-for ft, sd in [
-    (0.3, 10), (0.4, 10),
-    (0.2, 15), (0.4, 15), (0.5, 15),
-    (0.2, 20), (0.4, 20),
-    (0.3, 25)
-]:
-    for model in ["pmi_ngram", "ppmi_ngram"]:
+for model in ["pmi_ngram", "ppmi_ngram"]:
+    for ft, sd in [
+        (0.3, 10), (0.4, 10),
+        (0.2, 15), (0.4, 15), (0.5, 15),
+        (0.2, 20), (0.4, 20),
+        (0.3, 25)
+    ]:
         for size in graph_sizes:
             k = f"{int(size / 1000)}k"
             name = f"{job_name}_{k}_ft{ft}_sd{sd}_{model}.sh"
