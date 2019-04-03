@@ -18,7 +18,7 @@ python3 ../2_3_category_production_ngram_tsa.py \
            --firing_threshold 0.2 \
            --impulse_pruning_threshold 0.05 \
            --length_factor 10 \
-           --model_name pmi_ngram \
+           --model_name ppmi_ngram \
            --node_decay_factor 0.99 \
            --radius 5 \
            --edge_decay_sd_factor 20 \

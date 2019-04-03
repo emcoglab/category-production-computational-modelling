@@ -52,7 +52,7 @@ for model in ["pmi_ngram", "ppmi_ngram"]:
                 job_file.write(f"           --firing_threshold {ft} \\\n")
                 job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")
                 job_file.write(f"           --length_factor 10 \\\n")
-                job_file.write(f"           --model_name pmi_ngram \\\n")
+                job_file.write(f"           --model_name {model} \\\n")
                 job_file.write(f"           --node_decay_factor 0.99 \\\n")
                 job_file.write(f"           --radius 5 \\\n")
                 job_file.write(f"           --edge_decay_sd_factor {sd} \\\n")
