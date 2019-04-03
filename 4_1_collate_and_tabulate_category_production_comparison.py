@@ -47,10 +47,13 @@ def main(results_dir: str) -> None:
     ]
 
     for model in models:
-        this_model_data = all_data[all_data["Model"].str.startswith(model)]
+        this_model_data = all_data[all_data["Model"].str.startswith(model)].copy()
+
+        # In case there is insufficient data available, there will be nans in the correlation columns.
+        # For display purposes, we replace those with "-"s, to be picked up by the pivot table.
+        this_model_data.fillna("-", inplace=True)
 
         word_counts = this_model_data["Words"].unique()
-
         for wc in word_counts:
 
             this_wc_data = this_model_data[this_model_data["Words"] == wc]
@@ -61,7 +64,10 @@ def main(results_dir: str) -> None:
             for dv in dvs:
 
                 # pivot
-                p = pivot_table(data=this_wc_data, index="SD factor", columns="Firing threshold", values=dv)
+                p = pivot_table(data=this_wc_data, index="SD factor", columns="Firing threshold", values=dv,
+                                # there should be only one value for each group, but we need to use "first" because the
+                                # default is "mean", which doesn't work with the "-"s we used to replace nans.
+                                aggfunc="first")
                 save_dir = path.join(results_dir, " tabulated", f"{model}, {wc} words")
                 makedirs(save_dir, exist_ok=True)
                 pivot_table_to_csv(p, path.join(save_dir, f"{dv}.csv"))

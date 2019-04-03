@@ -30,7 +30,6 @@ from ldm.model.base import DistributionalSemanticModel
 from model.component import load_labels
 from model.graph import Graph, iter_edges_from_edgelist
 from model.temporal_spreading_activation import TemporalSpreadingActivation
-from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
 from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
@@ -237,6 +236,7 @@ if __name__ == '__main__':
          bailout=args.bailout)
     logger.info("Done!")
 
-    emailer = Emailer(Preferences.email_connection_details_path)
-    emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
-                       Preferences.target_email_address)
+    # from model.utils.email import Emailer
+    # emailer = Emailer(Preferences.email_connection_details_path)
+    # emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
+    #                    Preferences.target_email_address)
