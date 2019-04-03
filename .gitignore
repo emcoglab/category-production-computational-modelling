@@ -21,3 +21,6 @@ venv/
 
 # Logs and output
 jobs/logs/
+jobs/*.o*
+jobs/*.e*
+
