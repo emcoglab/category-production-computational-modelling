@@ -15,7 +15,7 @@ ram_amount = {
     # 3_000:  3,
     # 10_000: 7,
     # 30_000: 11,
-    40_000: 12,
+    40_000: 15,
 }
 graph_sizes = sorted(ram_amount.keys())
 names = []
