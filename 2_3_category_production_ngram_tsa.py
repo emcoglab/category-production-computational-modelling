@@ -17,7 +17,6 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from collections import defaultdict
 from os import path, mkdir
 
 from pandas import DataFrame
@@ -27,9 +26,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from evaluation.model_specs import save_model_spec
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
-from model.component import load_labels
-from model.graph import Graph, iter_edges_from_edgelist
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.graph import Graph
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
 from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
@@ -72,14 +70,6 @@ def main(n_words: int,
 
     # Load distance matrix
     graph_file_name = f"{distributional_model.name} {n_words} words length {length_factor}.edgelist"
-
-    # Build edge distributions
-    logger.info("Collating edge length distributions.")
-    edge_lengths_from_node = defaultdict(list)
-    for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
-        for node in edge:
-            edge_lengths_from_node[node].append(length)
-    edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
 
     logger.info(f"Loading graph from {graph_file_name}")
 

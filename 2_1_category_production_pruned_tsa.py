@@ -26,9 +26,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.component import load_labels
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
