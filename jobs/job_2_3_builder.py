@@ -11,18 +11,15 @@ if not path.isdir(job_name):
     mkdir(job_name)
 
 ram_amount = {
-    # 1_000:  2,
-    # 3_000:  3,
-    # 10_000: 7,
-    # 30_000: 11,
+    # 1_000: 2, 3_000: 3, 10_000: 7, 30_000: 11,
     40_000: 15,
 }
 graph_sizes = sorted(ram_amount.keys())
 names = []
 
 for model in ["pmi_ngram", "ppmi_ngram"]:
-    for ft in [0.2, 0.3, 0.4, 0.5, 0.6]:
-        for sd in [8, 10, 15, 20, 25]:
+    for ft in [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]:
+        for sd in [8, 10, 15, 20, 25, 30, 35]:
             for size in graph_sizes:
                 k = f"{int(size / 1000)}k"
                 name = f"{job_name}_{k}_ft{ft}_sd{sd}_{model}.sh"
