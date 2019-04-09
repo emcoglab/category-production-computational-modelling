@@ -1,4 +1,5 @@
 -r ldm/requirements.txt
+-r sensorimotor_norms/requirements.txt
 cython
 matplotlib
 numpy
