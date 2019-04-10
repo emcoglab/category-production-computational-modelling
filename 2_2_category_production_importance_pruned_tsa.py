@@ -27,8 +27,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.graph import Graph, iter_edges_from_edgelist
-from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels
+from model.graph import Graph, iter_edges_from_edgelist, log_graph_topology
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
@@ -99,21 +99,11 @@ def main(n_words: int,
     )
     n_edges = len(graph.edges)
 
-    # Topology
-    orphans = graph.has_orphaned_nodes()
-    connected = graph.is_connected()
-    if connected:
-        logger.info("Graph is connected")
-    else:
-        logger.warning("Graph is disconnected")
-        if orphans:
-            logger.warning("Graph has orphans")
-        else:
-            logger.info("Graph has no orphans")
+    log_graph_topology(graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels(corpus, n_words)
+    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
 
     cp = CategoryProduction()
 

@@ -25,7 +25,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from model.graph import Graph
+from model.graph import Graph, log_graph_topology
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -57,17 +57,7 @@ def main(n_words: int, prune_top_percentile: int, length_factor: int, corpus_nam
     graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name),
                                      ignore_edges_longer_than=pruning_length,
                                      keep_at_least_n_edges=keep_at_least)
-    logger.info(f"Graph has {len(graph.edges):,} edges")
-
-    if graph.has_orphaned_nodes():
-        logger.info("Graph has orphaned nodes.")
-    else:
-        logger.info("Graph does not have orphaned nodes")
-    if graph.is_connected():
-        logger.info("Graph is connected")
-    else:
-        logger.info("Graph is not connected")
-    logger.info("")
+    log_graph_topology(graph)
 
 
 if __name__ == '__main__':

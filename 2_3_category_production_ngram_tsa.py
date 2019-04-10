@@ -26,8 +26,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from evaluation.model_specs import save_model_spec
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
-from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels
+from model.graph import Graph, log_graph_topology
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
 from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
@@ -75,24 +75,13 @@ def main(n_words: int,
 
     # Load graph
     graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
-    n_nodes = len(graph.nodes)
     n_edges = len(graph.edges)
 
-    # Topology
-    orphans = graph.has_orphaned_nodes() or n_nodes != n_words
-    connected = graph.is_connected() and not orphans
-    if connected:
-        logger.info("Graph is connected")
-    else:
-        logger.warning("Graph is disconnected")
-        if orphans:
-            logger.warning("Graph has orphans")
-        else:
-            logger.info("Graph has no orphans")
+    log_graph_topology(graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels(corpus, n_words)
+    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
 
     # Output file path
     response_dir = path.join(Preferences.output_dir,

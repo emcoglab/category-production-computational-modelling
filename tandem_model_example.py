@@ -23,7 +23,7 @@ from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.graph import Graph
 from model.temporal_spatial_expansion import TemporalSpatialExpansion
-from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
 from model.utils.indexing import list_index_dictionaries
 from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from preferences import Preferences
@@ -57,7 +57,7 @@ def main(n_words, corpus_name, model_name, radius, length_factor, firing_thresho
 
     linguistic_component: TemporalSpreadingActivation = TemporalSpreadingActivation(
         graph=graph,
-        item_labelling_dictionary=load_labels(corpus, n_words),
+        item_labelling_dictionary=load_labels_from_corpus(corpus, n_words),
         firing_threshold=firing_threshold,
         impulse_pruning_threshold=impulse_pruning_threshold,
         node_decay_function=decay_function_exponential_with_decay_factor(

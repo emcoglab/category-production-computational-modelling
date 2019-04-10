@@ -65,7 +65,7 @@ def main(length_factor: int, distance_type_name: str):
             length_factor=length_factor)
 
     # Save node label dictionary
-    node_label_filename = f"sensorimotor words.nodelabels"
+    node_label_filename = "sensorimotor words.nodelabels"
     node_label_filename = path.join(Preferences.graphs_dir, node_label_filename)
     if path.isfile(node_label_filename):
         logger.info(f"{path.basename(node_label_filename)} exists, skipping")

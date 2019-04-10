@@ -25,7 +25,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from model.temporal_spreading_activation import load_labels
+from model.temporal_spreading_activation import load_labels_from_corpus
 from model.graph import Graph, edge_length_quantile
 from preferences import Preferences
 
@@ -45,7 +45,7 @@ def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name:
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels(corpus, n_words)
+    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
 
     # Load the full graph
     logger.info(f"Loading graph from {graph_file_name}")
