@@ -30,7 +30,7 @@ from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
-from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)

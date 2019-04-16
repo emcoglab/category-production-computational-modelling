@@ -53,7 +53,11 @@ def main(length_factor: int, distance_type_name: str):
         data_matrix = sm_norms.matrix_for_words(list(
             # Get words in idx order
             w for _, w in sorted(node_label_dict.items(), key=lambda iw: iw[0])))
-        distance_matrix = pairwise_distances(data_matrix, metric=distance_type.name, n_jobs=-1)
+        if distance_type is DistanceType.Minkowski3:
+            # Need to pass p=3 param specifically when using Minkowski-3 distance
+            distance_matrix = pairwise_distances(data_matrix, metric="minkowski", n_jobs=-1, p=3)
+        else:
+            distance_matrix = pairwise_distances(data_matrix, metric=distance_type.name, n_jobs=-1)
 
         save_edgelist_from_distance_matrix(
             file_path=edgelist_path,

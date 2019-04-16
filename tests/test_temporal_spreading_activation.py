@@ -23,7 +23,7 @@ from .approximate_comparator.approximate_comparator import is_almost_equal
 
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation
-from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
+from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
     decay_function_gaussian_with_sd
 
 
