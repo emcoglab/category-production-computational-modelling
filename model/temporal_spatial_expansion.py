@@ -19,7 +19,7 @@ from typing import Dict, Set
 from ldm.utils.maths import DistanceType
 from model.component import ModelComponent, ActivationValue, ItemLabel, ActivationRecord, ItemActivatedEvent
 from model.points_in_space import PointsInSpace, PointIdx
-from model.utils.math import decay_function_lognormal_median
+from model.utils.maths import decay_function_lognormal_median
 
 
 class TemporalSpatialExpansion(ModelComponent):
@@ -47,6 +47,20 @@ class TemporalSpatialExpansion(ModelComponent):
 
         # Dictionary point_idx -> radius
         self.spheres = dict()
+
+    # TODO: repeated code
+    def n_suprathreshold_items(self) -> int:
+        """
+        The number of nodes which are above the firing threshold.
+        May take a long time to compute.
+        :return:
+        """
+        return len([
+            p
+            for p in self.points.iter_points()
+            # TODO: this is the wrong threshold to use
+            if self.activation_of_item_with_idx(p.idx) >= self.decay_threshold
+        ])
 
     def activation_of_item_with_idx(self, idx) -> ActivationValue:
         initial_activation, time_activated = self._activation_records[idx]

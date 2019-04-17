@@ -29,7 +29,7 @@ from scipy.stats import percentileofscore
 from sortedcontainers import SortedSet
 
 from model.component import ItemIdx
-from model.utils.math import mean
+from model.utils.maths import mean
 from ldm.utils.logging import print_progress
 
 logger = logging.getLogger()
@@ -493,7 +493,7 @@ class Graph:
 
 def save_edgelist_from_distance_matrix(file_path: str,
                                        distance_matrix: ndarray,
-                                       length_granularity: int):
+                                       length_factor: int):
     """
     Saves a graph of the correct form to underlie a TemporalSpreadingActivation.
     Saved as a networkx-compatible edgelist format.
@@ -504,7 +504,7 @@ def save_edgelist_from_distance_matrix(file_path: str,
 
     :param file_path:
     :param distance_matrix:
-    :param length_granularity:
+    :param length_factor:
     :return:
     """
 
@@ -517,6 +517,7 @@ def save_edgelist_from_distance_matrix(file_path: str,
     with open(temp_file_path, mode="w", encoding="utf8") as temp_file:
         for i in range(0, distance_matrix.shape[0]):
             # Log progress
+            # TODO: make this a progress bar!
             percent_done = int(ceil(100 * i / distance_matrix.shape[0]))
             if (percent_done % 10 == 0) and (percent_done > logged_percent_milestone):
                 logger.info(f"\t{percent_done}% done")
@@ -524,7 +525,7 @@ def save_edgelist_from_distance_matrix(file_path: str,
             # Write
             for j in range(i + 1, distance_matrix.shape[1]):
                 distance = distance_matrix[i, j]
-                length = Length(ceil(distance * length_granularity))
+                length = Length(ceil(distance * length_factor))
                 assert length > 0
                 # Write edge to file
                 temp_file.write(f"{i} {j} {length}\n")
@@ -637,3 +638,22 @@ def iter_edges_from_edgelist(file_path: str) -> Iterator[Tuple[Edge, Length]]:
             n1, n2, length = line.split()
             assert Length(length) > 0
             yield Edge((Node(n1), Node(n2))), Length(length)
+
+
+def log_graph_topology(graph) -> Tuple[bool, bool]:
+    """
+    :param graph:
+    :return: graph.is_connected, graph.has_orphans
+    """
+    logger.info(f"Graph has {len(graph.edges):,} edges")
+    connected = graph.is_connected()
+    orphans = graph.has_orphaned_nodes()
+    if orphans:
+        logger.info("Graph has orphaned nodes.")
+    else:
+        logger.info("Graph does not have orphaned nodes")
+    if connected:
+        logger.info("Graph is connected")
+    else:
+        logger.info("Graph is not connected")
+    return connected, orphans

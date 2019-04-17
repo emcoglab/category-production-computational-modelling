@@ -1,6 +1,6 @@
 """
 ===========================
-Spreading activation on graphs pruned by importance rather than length.
+Model responses to Briony's category production categories using the sensorimotor model.
 ===========================
 
 Dr. Cai Wingfield
@@ -11,122 +11,84 @@ University of Lancaster
 c.wingfield@lancaster.ac.uk
 caiwingfield.net
 ---------------------------
-2018
+2019
 ---------------------------
 """
 import argparse
 import logging
 import sys
-from collections import defaultdict
 from os import path, makedirs
 
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist, TokenIndex
-from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.graph import Graph, iter_edges_from_edgelist, log_graph_topology
-from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
+from model.graph import Graph, log_graph_topology
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
-from model.utils.indexing import list_index_dictionaries
-from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_constant
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
-
 # Results DataFrame column names
 RESPONSE = "Response"
 NODE_ID = "Node ID"
-ACTIVATION = "Activation"
+ACTIVATION = "ActivationValue"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
-def main(n_words: int,
-         prune_importance: int,
-         corpus_name: str,
-         model_name: str,
-         radius: int,
-         distance_type_name: str,
+def main(distance_type_name: str,
          length_factor: int,
-         firing_threshold: float,
+         pruning_length: int,
          node_decay_factor: float,
-         edge_decay_sd_factor: float,
          impulse_pruning_threshold: float,
          run_for_ticks: int,
          bailout: int,
          ):
-
-    corpus = get_corpus_from_name(corpus_name)
-    freq_dist = FreqDist.load(corpus.freq_dist_path)
-    token_index = TokenIndex.from_freqdist_ranks(freq_dist)
     distance_type = DistanceType.from_name(distance_type_name)
-    distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
-    filtered_words = set(freq_dist.most_common_tokens(n_words))
-    filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
-
-    # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
-    _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
-
-    # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-
-    # Build edge distributions
-    logger.info("Collating edge length distributions.")
-    edge_lengths_from_node = defaultdict(list)
-    for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
-        for node in edge:
-            edge_lengths_from_node[node].append(length)
-    edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
-
-    # Get pruning length
-    if prune_importance is not None:
-        logger.info(f"Loading graph from {graph_file_name}, pruning importance {prune_importance}")
-    else:
-        logger.info(f"Loading graph from {graph_file_name}")
+    edgelist_filename = f"sensorimotor {distance_type.name} distance length {length_factor}.edgelist"
+    edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
     # Load graph
-    graph = Graph.load_from_edgelist_with_importance_pruning(
-        file_path=path.join(Preferences.graphs_dir, graph_file_name),
-        ignore_edges_with_importance_greater_than=prune_importance,
-        keep_at_least_n_edges=Preferences.min_edges_per_node
-    )
-    n_edges = len(graph.edges)
+    sensorimotor_graph = Graph.load_from_edgelist(file_path=edgelist_path,
+                                                  ignore_edges_longer_than=pruning_length)
 
-    log_graph_topology(graph)
+    n_edges = len(sensorimotor_graph.edges)
+
+    # Topology
+    connected, orphans = log_graph_topology(sensorimotor_graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
+    node_labelling_dictionary = load_labels_from_sensorimotor()
+    sm_words = set(w for i, w in node_labelling_dictionary.items())
 
     cp = CategoryProduction()
 
     for category_label in cp.category_labels:
 
+        # Get the SM-compatible version if there is one
+        category_label = cp.apply_sensorimotor_substitution(category_label)
+
         # Skip the check if the category won't be in the network
-        if category_label not in filtered_words:
+        if category_label not in sm_words:
             continue
 
         # Output file path
-        if prune_importance is not None:
-            response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words; "
-                                     f"firing {firing_threshold}; "
-                                     f"edge importance threshold {prune_importance})")
-        else:
-            response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces ({n_words:,} words; "
-                                     f"firing {firing_threshold}; ")
+        response_dir = path.join(Preferences.output_dir,
+                                 f"Category production traces [sensorimotor {distance_type.name}]",
+                                 f"length {length_factor}, pruning at {pruning_length}"
+                                 f"df {node_decay_factor}; pt {impulse_pruning_threshold}; "
+                                 f"rft {run_for_ticks}; bailout {bailout}")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             makedirs(response_dir)
-        model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
+        model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
 
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
@@ -137,30 +99,29 @@ def main(n_words: int,
 
         logger.info(f"Running spreading activation for category {category_label}")
 
-        csv_comments.append(f"Running spreading activation using parameters:")
-        csv_comments.append(f"\t      words = {n_words:_}")
+        csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
         csv_comments.append(f"\t      edges = {n_edges:_}")
         csv_comments.append(f"\tgranularity = {length_factor:_}")
-        if prune_importance is not None:
-            csv_comments.append(f"\t    pruning = {prune_importance}")
-        csv_comments.append(f"\t   firing θ = {firing_threshold}")
+        csv_comments.append(f"\t    pruning = {pruning_length}")
         csv_comments.append(f"\t          δ = {node_decay_factor}")
-        csv_comments.append(f"\t  sd_factor = {edge_decay_sd_factor}")
         csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
         if not connected:
             csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
 
         # Do the spreading activation
 
-        tsa: TemporalSpreadingActivation = TemporalSpreadingActivation(
-            graph=graph,
+        tsa = TemporalSpreadingActivation(
+            graph=sensorimotor_graph,
             item_labelling_dictionary=node_labelling_dictionary,
-            firing_threshold=firing_threshold,
+            # Points can't reactivate as long as they are still in the buffer
+            # (for now this just means that they have a non-zero activation)
+            firing_threshold=0,
             impulse_pruning_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
-            edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_factor*length_factor))
+            # Once pruning has been done, we don't need to decay, as target nodes receive the full activations of
+            # incident impulses. The maximum sphere radius is achieved by the initial graph pruning.
+            edge_decay_function=decay_function_constant())
 
         tsa.activate_item_with_label(category_label, 1)
 
@@ -173,10 +134,9 @@ def main(n_words: int,
             for na in node_activations:
                 model_response_entries.append((
                     na.label,
-                    tsa.label2idx[na.label],
+                    tsa.label2idx[na.node],
                     na.activation,
-                    na.time_activated,
-                ))
+                    na.time_activated))
 
             # Break early if we've got a probable explosion
             if tsa.n_suprathreshold_nodes() > bailout:
@@ -216,34 +176,30 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-m", "--model_name", required=True, type=str)
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-p", "--prune_importance", required=False, type=int, help="The importance level from which to prune from the graph.", default=None)
+    parser.add_argument("-p", "--prune_percent", required=False, type=int,
+                        help="The percentage of longest edges to prune from the graph.", default=None)
     parser.add_argument("-r", "--radius", required=True, type=int)
     parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("-w", "--words", type=int, required=True,
+                        help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
 
-    main(n_words=args.words,
-         prune_importance=args.prune_importance,
-         corpus_name=args.corpus_name,
-         model_name=args.model_name,
-         radius=args.radius,
+    main(pruning_length=args.pruning_length,
          distance_type_name=args.distance_type_name,
          length_factor=args.length_factor,
-         firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
-         edge_decay_sd_factor=args.edge_decay_sd_factor,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          bailout=args.bailout)
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
-    if args.prune_importance is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words"
-                           f" and words at least {args.prune_importance} importance.",
-                           Preferences.target_email_address)
+    if args.prune_percent is not None:
+        emailer.send_email(
+            f"Done running {path.basename(__file__)} with {args.words} words and {args.prune_percent:.2f}% pruning.",
+            Preferences.target_email_address)
     else:
         emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
                            Preferences.target_email_address)

@@ -1,6 +1,6 @@
 """
 ===========================
-Look for disconnections in pruned graphs.
+Investigate connectivity of sensorimotor graphs.
 ===========================
 
 Dr. Cai Wingfield
@@ -11,7 +11,7 @@ University of Lancaster
 c.wingfield@lancaster.ac.uk
 caiwingfield.net
 ---------------------------
-2018
+2019
 ---------------------------
 """
 import argparse
@@ -19,11 +19,6 @@ import logging
 import sys
 from os import path
 
-from pandas import DataFrame
-
-from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist
-from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology
 from preferences import Preferences
@@ -33,30 +28,19 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int, prune_top_percentile: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):
+def main(pruning_length: int,
+         length_factor: int,
+         distance_type_name: str):
 
-    corpus = get_corpus_from_name(corpus_name)
-    freq_dist = FreqDist.load(corpus.freq_dist_path)
     distance_type = DistanceType.from_name(distance_type_name)
-    distributional_model: CountVectorModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-    quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
-    quantile_data = DataFrame.from_csv(path.join(Preferences.graphs_dir, quantile_file_name), header=0, index_col=None)
-    if prune_top_percentile is not None:
-        pruning_length = quantile_data[
-            # Use 1 - so that smallest top quantiles get converted to longest edges
-            quantile_data["Top quantile"] == 1 - (prune_top_percentile / 100)
-        ]["Pruning length"].iloc[0]
-    else:
-        pruning_length = None
+    edgelist_filename = f"sensorimotor {distance_type.name} distance length {length_factor}.edgelist"
+    edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
     # Load the full graph
-    keep_at_least = 10
-    logger.info(f"Loading graph from {graph_file_name}, pruning edges longer than {pruning_length}, but keeping at least {keep_at_least} edges per node")
-    graph = Graph.load_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name),
-                                     ignore_edges_longer_than=pruning_length,
-                                     keep_at_least_n_edges=keep_at_least)
+    graph = Graph.load_from_edgelist(edgelist_path,
+                                     ignore_edges_longer_than=pruning_length)
+
     log_graph_topology(graph)
 
 

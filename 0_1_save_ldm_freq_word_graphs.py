@@ -79,7 +79,7 @@ def main(length_factor: int, corpus_name: str, distance_type_name: str, model_na
                 save_edgelist_from_distance_matrix(
                     file_path=edgelist_path,
                     distance_matrix=distance_matrix,
-                    length_granularity=length_factor)
+                    length_factor=length_factor)
                 # free ram
                 del distance_matrix
 

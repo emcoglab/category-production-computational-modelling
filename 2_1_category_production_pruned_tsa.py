@@ -26,13 +26,12 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.component import load_labels
-from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.graph import Graph, log_graph_topology
+from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
-from model.utils.math import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -101,21 +100,11 @@ def main(n_words: int,
 
     n_edges = len(graph.edges)
 
-    # Topology
-    orphans = graph.has_orphaned_nodes()
-    connected = graph.is_connected()
-    if connected:
-        logger.info("Graph is connected")
-    else:
-        logger.info("Graph is disconnected")
-        if orphans:
-            logger.info("Graph has orphans")
-        else:
-            logger.info("Graph has no orphans")
+    connected, orphans = log_graph_topology(graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels(corpus, n_words)
+    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
 
     cp = CategoryProduction()
 

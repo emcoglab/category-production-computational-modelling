@@ -19,5 +19,5 @@ from distutils.core import setup
 from Cython.Build import cythonize
 
 setup(
-    ext_modules=cythonize("model/utils/math_core.pyx")
+    ext_modules=cythonize("model/utils/maths_core.pyx")
 )
