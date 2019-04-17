@@ -27,13 +27,12 @@ from model.graph import Graph, log_graph_topology
 from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
-from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_constant
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -50,20 +49,19 @@ def main(distance_type_name: str,
          run_for_ticks: int,
          bailout: int,
          ):
-
     distance_type = DistanceType.from_name(distance_type_name)
 
     edgelist_filename = f"sensorimotor {distance_type.name} distance length {length_factor}.edgelist"
     edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
     # Load graph
-    graph = Graph.load_from_edgelist(file_path=edgelist_path,
-                                     ignore_edges_longer_than=pruning_length)
+    sensorimotor_graph = Graph.load_from_edgelist(file_path=edgelist_path,
+                                                  ignore_edges_longer_than=pruning_length)
 
-    n_edges = len(graph.edges)
+    n_edges = len(sensorimotor_graph.edges)
 
     # Topology
-    connected, orphans = log_graph_topology(graph)
+    connected, orphans = log_graph_topology(sensorimotor_graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
@@ -75,7 +73,7 @@ def main(distance_type_name: str,
     for category_label in cp.category_labels:
 
         # Get the SM-compatible version if there is one
-        category_label = cp.apply_sensorimotor_substitutions(category_label)
+        category_label = cp.apply_sensorimotor_substitution(category_label)
 
         # Skip the check if the category won't be in the network
         if category_label not in sm_words:
@@ -113,14 +111,13 @@ def main(distance_type_name: str,
         # Do the spreading activation
 
         tsa = TemporalSpreadingActivation(
-            graph=graph,
+            graph=sensorimotor_graph,
             item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=0,
             impulse_pruning_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
-            edge_decay_function=decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_factor * length_factor))
+            edge_decay_function=decay_function_constant())
 
         tsa.activate_item_with_label(category_label, 1)
 
@@ -175,24 +172,20 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-m", "--model_name", required=True, type=str)
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-p", "--prune_percent", required=False, type=int, help="The percentage of longest edges to prune from the graph.", default=None)
+    parser.add_argument("-p", "--prune_percent", required=False, type=int,
+                        help="The percentage of longest edges to prune from the graph.", default=None)
     parser.add_argument("-r", "--radius", required=True, type=int)
     parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("-w", "--words", type=int, required=True,
+                        help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
 
-    main(n_words=args.words,
-         prune_percent=args.prune_percent,
-         corpus_name=args.corpus_name,
-         model_name=args.model_name,
-         radius=args.radius,
+    main(pruning_length=args.pruning_length,
          distance_type_name=args.distance_type_name,
          length_factor=args.length_factor,
-         firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
-         edge_decay_sd_factor=args.edge_decay_sd_factor,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          bailout=args.bailout)
@@ -200,8 +193,9 @@ if __name__ == '__main__':
 
     emailer = Emailer(Preferences.email_connection_details_path)
     if args.prune_percent is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words and {args.prune_percent:.2f}% pruning.",
-                           Preferences.target_email_address)
+        emailer.send_email(
+            f"Done running {path.basename(__file__)} with {args.words} words and {args.prune_percent:.2f}% pruning.",
+            Preferences.target_email_address)
     else:
         emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
                            Preferences.target_email_address)

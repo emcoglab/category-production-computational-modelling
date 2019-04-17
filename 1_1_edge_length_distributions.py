@@ -65,7 +65,7 @@ def main(n_words: int, length_factor: int):
         edge_lengths_from_node[n2].append(length)
 
         n_edges_considered += 1
-        if n_edges_considered % 1_000 == 0:
+        if n_edges_considered % 1_000_000 == 0:
             logger.info(f"Considered {n_edges_considered:,} edges...")
 
     f = pyplot.figure()
