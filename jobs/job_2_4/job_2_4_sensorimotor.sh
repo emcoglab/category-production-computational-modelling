@@ -14,6 +14,7 @@ module add anaconda3/2018.12
 
 python3 ../2_4_sensorimotor_tsa.py \
            --bailout 3000 \
+           --distance_type Minkowski-3 \
            --pruning_length 100 \
            --impulse_pruning_threshold 0.05 \
            --length_factor 100 \

@@ -169,6 +169,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
     parser.add_argument("-b", "--bailout", required=True, type=int)
+    parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)

@@ -32,6 +32,7 @@ with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
     job_file.write(f"\n")
     job_file.write(f"python3 ../{script_name}.py \\\n")
     job_file.write(f"           --bailout {3000} \\\n")
+    job_file.write(f"           --distance_type Minkowski-3 \\\n")
     job_file.write(f"           --pruning_length {100} \\\n")
     job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")
     job_file.write(f"           --length_factor 100 \\\n")
