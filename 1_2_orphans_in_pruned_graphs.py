@@ -26,7 +26,8 @@ from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
 from model.temporal_spreading_activation import load_labels_from_corpus
-from model.graph import Graph, edge_length_quantile
+from model.graph import Graph
+from model.utils.maths import nearest_value_at_quantile
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name:
 
     for i, top_quantile in enumerate(linspace(0.0, 1.0, 11)):
         # Invert the quantiles so q of 0.1 gives TOP 10%
-        pruning_length = edge_length_quantile([length for edge, length in graph.edge_lengths], 1-top_quantile)
+        pruning_length = nearest_value_at_quantile([length for edge, length in graph.edge_lengths], 1 - top_quantile)
         logger.info(f"Pruning longest {int(100*top_quantile)}% of edges (anything longer than {pruning_length}).")
         graph.prune_longest_edges_by_quantile(top_quantile)
         logger.info(f"Graph has {len(graph.edges):,} edges")

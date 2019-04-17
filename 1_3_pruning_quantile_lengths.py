@@ -25,7 +25,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from model.graph import edge_length_quantile, iter_edges_from_edgelist
+from model.graph import iter_edges_from_edgelist
+from model.utils.maths import nearest_value_at_quantile
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name:
     data = []
     # Prune by quantile
     for i, top_quantile in enumerate([.0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0]):
-        pruning_length = edge_length_quantile(
+        pruning_length = nearest_value_at_quantile(
             [length for _edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name))],
             top_quantile)
         logger.info(f"Edges above the {int(100*top_quantile)}% percentile are those longer than {pruning_length}).")
