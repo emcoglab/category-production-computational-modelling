@@ -113,10 +113,14 @@ def main(distance_type_name: str,
         tsa = TemporalSpreadingActivation(
             graph=sensorimotor_graph,
             item_labelling_dictionary=node_labelling_dictionary,
+            # Points can't reactivate as long as they are still in the buffer
+            # (for now this just means that they have a non-zero activation)
             firing_threshold=0,
             impulse_pruning_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
+            # Once pruning has been done, we don't need to decay, as target nodes receive the full activations of
+            # incident impulses. The maximum sphere radius is achieved by the initial graph pruning.
             edge_decay_function=decay_function_constant())
 
         tsa.activate_item_with_label(category_label, 1)
