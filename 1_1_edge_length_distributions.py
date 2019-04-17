@@ -17,18 +17,18 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from collections import defaultdict
+from collections import defaultdict, Counter
 from os import path
 
-from matplotlib import pyplot
+from matplotlib import pyplot, ticker
 from numpy import inf
-from seaborn import distplot
+from seaborn import distplot, barplot
 
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.model.count import LogCoOccurrenceCountModel
-from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
+from ldm.utils.maths import DistanceType
 from model.graph import iter_edges_from_edgelist
 from preferences import Preferences
 
@@ -37,7 +37,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int, length_factor: int):
+def main_linguistic(n_words: int, length_factor: int):
 
     corpus = CorpusPreferences.source_corpus_metas.bbc
     distance_type = DistanceType.cosine
@@ -69,14 +69,14 @@ def main(n_words: int, length_factor: int):
             logger.info(f"Considered {n_edges_considered:,} edges...")
 
     f = pyplot.figure()
-    distplot([length for edge, lengths in edge_lengths_from_node.items() for length in lengths])
+    distplot([length for _node, lengths in edge_lengths_from_node.items() for length in lengths])
     f.savefig(path.join(Preferences.figures_dir,
                         "length distributions",
                         f"length_distributions_[{distributional_model.name}]_length_{length_factor}_{n_words} words.png"))
     pyplot.close(f)
 
     f = pyplot.figure()
-    distplot([length for node, length in min_edge_length.items()])
+    distplot([length for _node, length in min_edge_length.items()])
     f.savefig(path.join(Preferences.figures_dir,
                         "length distributions",
                         f"min_length_distributions_[{distributional_model.name}]_length_{length_factor}_{n_words} words.png"))
@@ -88,24 +88,33 @@ def main_sensorimotor(length_factor: int, distance_type_name: str):
     distance_type = DistanceType.from_name(distance_type_name)
 
     edgelist_filename = f"sensorimotor {distance_type.name} distance length {length_factor}.edgelist"
-    edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
-    edge_lengths_from_node = defaultdict(list)
+    edge_lengths = Counter()
     min_edge_length = defaultdict(lambda: inf)
     n_edges_considered = 0
-    for edge, length in iter_edges_from_edgelist(edgelist_path):
+    for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, edgelist_filename)):
         n1, n2 = edge
         min_edge_length[n1] = min(min_edge_length[n1], length)
         min_edge_length[n2] = min(min_edge_length[n2], length)
-        edge_lengths_from_node[n1].append(length)
-        edge_lengths_from_node[n2].append(length)
+        edge_lengths[length] += 1
 
         n_edges_considered += 1
-        if n_edges_considered % 1_000 == 0:
+        if n_edges_considered % 1_000_000 == 0:
             logger.info(f"Considered {n_edges_considered:,} edges...")
 
+    # add zero intermediate counts to edge lengths
+    edge_lengths.update({
+        l: 0
+        for l in range(min(edge_lengths.keys()), max(edge_lengths.keys()))
+    })
+
     f = pyplot.figure()
-    distplot([length for edge, lengths in edge_lengths_from_node.items() for length in lengths])
+    edge_lengths = sorted([(length, count) for length, count in edge_lengths.items()], key=lambda tup: tup[0])
+    barplot(x=[length for length, count in edge_lengths],
+            y=[count for length, count in edge_lengths])
+    ax = pyplot.gca()
+    ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(base=50))
     f.savefig(path.join(Preferences.figures_dir,
                         "length distributions",
                         f"length_distributions_sensorimotor_length_{length_factor}_{distance_type.name} words.png"))
@@ -131,7 +140,7 @@ if __name__ == '__main__':
     mode_linguistic_parser = mode_subparser.add_parser("linguistic")
 
     mode_linguistic_parser.add_argument("-w", "--words", type=int, required=True,
-                        help="The number of words to use from the corpus. (Top n words.)")
+                                        help="The number of words to use from the corpus. (Top n words.)")
     mode_sensorimotor_parser.add_argument("-d", "--distance_type", required=True, type=str)
     for mp in [mode_sensorimotor_parser, mode_linguistic_parser]:
         mp.add_argument("-l", "--length_factor", required=True, type=int)
@@ -141,7 +150,7 @@ if __name__ == '__main__':
     if args.mode == "sensorimotor":
         main_sensorimotor(length_factor=args.length_factor, distance_type_name=args.distance_type)
     elif args.mode == "linguistic":
-        main(n_words=args.words, length_factor=args.length_factor)
+        main_linguistic(n_words=args.words, length_factor=args.length_factor)
     else:
         raise NotImplementedError()
     logger.info("Done!")
