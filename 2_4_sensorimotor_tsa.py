@@ -169,25 +169,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
     parser.add_argument("-b", "--bailout", required=True, type=int)
-    parser.add_argument("-c", "--corpus_name", required=True, type=str)
-    parser.add_argument("-f", "--firing_threshold", required=True, type=float)
     parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
-    parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
-    parser.add_argument("-m", "--model_name", required=True, type=str)
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-p", "--prune_percent", required=False, type=int,
+    parser.add_argument("-p", "--pruning_length", required=False, type=int,
                         help="The percentage of longest edges to prune from the graph.", default=None)
-    parser.add_argument("-r", "--radius", required=True, type=int)
-    parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True,
-                        help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
 
     main(pruning_length=args.pruning_length,
-         distance_type_name=args.distance_type_name,
+         distance_type_name=args.distance_type,
          length_factor=args.length_factor,
          node_decay_factor=args.node_decay_factor,
          impulse_pruning_threshold=args.impulse_pruning_threshold,

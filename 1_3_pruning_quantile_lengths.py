@@ -23,7 +23,6 @@ from pandas import DataFrame
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
-from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
 from model.graph import iter_edges_from_edgelist
 from model.utils.maths import nearest_value_at_quantile
@@ -40,7 +39,7 @@ def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name:
     corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distance_type = DistanceType.from_name(distance_type_name)
-    distributional_model: CountVectorModel = get_model_from_params(corpus, freq_dist, model_name, radius)
+    distributional_model = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
     quantile_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor} edge length quantiles.csv"
