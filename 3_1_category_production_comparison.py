@@ -57,7 +57,7 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
     main_dataframe: DataFrame = category_production.data.copy()
 
     # Drop precomputed distance measures
-    main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor', 'Linguistic'], axis=1, inplace=True)
+    main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor.proximity', 'Linguistic.proximity'], axis=1, inplace=True)
 
     # Add model TTFA column to main_dataframe
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA

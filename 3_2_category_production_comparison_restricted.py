@@ -52,7 +52,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
     main_dataframe: DataFrame = category_production.data.copy()
 
     # Drop precomputed distance measures
-    main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor', 'Linguistic'], axis=1, inplace=True)
+    main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor.proximity', 'Linguistic.proximity'], axis=1, inplace=True)
 
     # Add model TTFA column
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
