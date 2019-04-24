@@ -137,7 +137,7 @@ def main(distance_type_name: str,
             for na in node_activations:
                 model_response_entries.append((
                     na.label,
-                    tsa.label2idx[na.node],
+                    tsa.label2idx[na.label],
                     na.activation,
                     na.time_activated))
 

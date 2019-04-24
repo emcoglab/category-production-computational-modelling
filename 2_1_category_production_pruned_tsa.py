@@ -175,7 +175,7 @@ def main(n_words: int,
             for na in node_activations:
                 model_response_entries.append((
                     na.label,
-                    tsa.label2idx[na.node],
+                    tsa.label2idx[na.label],
                     na.activation,
                     na.time_activated))
 
