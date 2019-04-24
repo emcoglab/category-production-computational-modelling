@@ -109,9 +109,9 @@ def main_sensorimotor(length_factor: int, distance_type_name: str):
     })
 
     f = pyplot.figure()
-    edge_lengths = sorted([(length, count) for length, count in edge_lengths.items()], key=lambda tup: tup[0])
-    barplot(x=[length for length, count in edge_lengths],
-            y=[count for length, count in edge_lengths])
+    edge_lengths_sorted = sorted([(length, count) for length, count in edge_lengths.items()], key=lambda tup: tup[0])
+    barplot(x=[length for length, count in edge_lengths_sorted],
+            y=[count for length, count in edge_lengths_sorted])
     ax = pyplot.gca()
     ax.xaxis.set_major_formatter(ticker.FormatStrFormatter('%d'))
     ax.xaxis.set_major_locator(ticker.MultipleLocator(base=50))
@@ -126,6 +126,13 @@ def main_sensorimotor(length_factor: int, distance_type_name: str):
                         "length distributions",
                         f"min_length_distributions_sensorimotor_length_{length_factor}_{distance_type.name} words.png"))
     pyplot.close(f)
+
+    logger.info(f"Edge lengths fall in range ["
+                f"{min(edge_lengths.keys())}, "
+                f"{max(edge_lengths.keys())}]")
+    logger.info(f"Node-minimum edge lengths fall in range ["
+                f"{min([length for node, length in min_edge_length.items()])}, "
+                f"{max([length for node, length in min_edge_length.items()])}]")
 
 
 if __name__ == '__main__':

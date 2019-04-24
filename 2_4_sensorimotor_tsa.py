@@ -55,6 +55,7 @@ def main(distance_type_name: str,
     edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
     # Load graph
+    logger.info(f"Loading sensorimotor graph ({edgelist_filename})")
     sensorimotor_graph = Graph.load_from_edgelist(file_path=edgelist_path,
                                                   ignore_edges_longer_than=pruning_length)
 
