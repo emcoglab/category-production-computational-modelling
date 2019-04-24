@@ -82,8 +82,8 @@ def main(distance_type_name: str,
 
         # Output file path
         response_dir = path.join(Preferences.output_dir,
-                                 f"Category production traces [sensorimotor {distance_type.name}]",
-                                 f"length {length_factor}, pruning at {pruning_length}"
+                                 f"Category production traces [sensorimotor {distance_type.name}]"
+                                 f"length {length_factor}, pruning at {pruning_length} "
                                  f"df {node_decay_factor}; pt {impulse_pruning_threshold}; "
                                  f"rft {run_for_ticks}; bailout {bailout}")
         if not path.isdir(response_dir):
@@ -114,10 +114,12 @@ def main(distance_type_name: str,
         tsa = TemporalSpreadingActivation(
             graph=sensorimotor_graph,
             item_labelling_dictionary=node_labelling_dictionary,
-            # Points can't reactivate as long as they are still in the buffer
-            # (for now this just means that they have a non-zero activation)
-            firing_threshold=0,
             impulse_pruning_threshold=impulse_pruning_threshold,
+            # Points can't reactivate as long as they are still in the buffer
+            # (for now this just means that they have a non-zero activation
+            #  (in fact we use the impulse-pruning threshold instead of 0, as no node will ever receive activation less
+            #   than this, by definition))
+            firing_threshold=impulse_pruning_threshold,
             node_decay_function=decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
             # Once pruning has been done, we don't need to decay, as target nodes receive the full activations of
@@ -140,10 +142,10 @@ def main(distance_type_name: str,
                     na.time_activated))
 
             # Break early if we've got a probable explosion
-            if tsa.n_suprathreshold_nodes() > bailout:
+            if len(tsa.suprathreshold_nodes()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {tsa.n_suprathreshold_nodes()} nodes activated.")
+                                    f"with {len(tsa.suprathreshold_nodes())} nodes activated.")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[
@@ -192,7 +194,7 @@ if __name__ == '__main__':
     emailer = Emailer(Preferences.email_connection_details_path)
     if args.prune_percent is not None:
         emailer.send_email(
-            f"Done running {path.basename(__file__)} with {args.words} words and {args.prune_percent:.2f}% pruning.",
+            f"Done running {path.basename(__file__)} with {args.words} words and {args.pruning_length:.2f}% pruning.",
             Preferences.target_email_address)
     else:
         emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",

@@ -179,10 +179,10 @@ def main(n_words: int,
                 ))
 
             # Break early if we've got a probable explosion
-            if tsa.n_suprathreshold_nodes() > bailout:
+            if len(tsa.suprathreshold_nodes()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {tsa.n_suprathreshold_nodes()} nodes activated.")
+                                    f"with {len(tsa.suprathreshold_nodes())} nodes activated.")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[

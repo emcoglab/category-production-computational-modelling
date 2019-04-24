@@ -10,7 +10,7 @@ script_name = "2_4_sensorimotor_tsa"
 if not path.isdir(job_name):
     mkdir(job_name)
 
-ram_amount = 60
+ram_amount = 10
 names = []
 
 name = f"{job_name}_sensorimotor.sh"
