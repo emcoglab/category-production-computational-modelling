@@ -12,10 +12,9 @@ if not path.isdir(job_name):
 
 prune_ram = {
     100: 10,
-    150: 10,
-    200: 15,
-    225: 15,
-    250: 20,
+    150: 12,
+    # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
+    198: 15,
 }
 
 names = []
