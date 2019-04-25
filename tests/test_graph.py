@@ -30,15 +30,16 @@ class TestGraphPruning(unittest.TestCase):
         STRIPES = 2
 
         distance_matrix = array([
-            [.0, .3, .6],  # Lion
-            [.3, .0, .4],  # Tiger
-            [.6, .4, .0],  # Stripes
+            [0, 3, 6],  # Lion
+            [3, 0, 4],  # Tiger
+            [6, 4, 0],  # Stripes
         ])
-        pruning_threshold = .5
+        pruning_threshold = 5
 
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
-            ignore_edges_longer_than=pruning_threshold
+            ignore_edges_longer_than=pruning_threshold,
+            length_granularity=1,
         )
         self.assertFalse((LION, STRIPES) in graph.edges)
 
@@ -48,15 +49,16 @@ class TestGraphPruning(unittest.TestCase):
         STRIPES = 2
 
         distance_matrix = array([
-            [.0, .3, .6],  # Lion
-            [.3, .0, .4],  # Tiger
-            [.6, .4, .0],  # Stripes
+            [0, 3, 6],  # Lion
+            [3, 0, 4],  # Tiger
+            [6, 4, 0],  # Stripes
         ])
-        pruning_threshold = .5
+        pruning_threshold = 5
 
         graph = Graph.from_distance_matrix(
             distance_matrix=distance_matrix,
-            ignore_edges_longer_than=pruning_threshold
+            ignore_edges_longer_than=pruning_threshold,
+            length_granularity=1
         )
         self.assertTrue(Edge((LION, TIGER)) in graph.edges)
         self.assertTrue(Edge((TIGER, STRIPES)) in graph.edges)
