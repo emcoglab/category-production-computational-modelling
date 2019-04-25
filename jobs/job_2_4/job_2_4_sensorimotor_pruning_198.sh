@@ -4,7 +4,7 @@
 #$ -N j24_sm_p198_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=40G
+#$ -l h_vmem=50G
 
 source /etc/profile
 
