@@ -18,6 +18,11 @@ prune_ram = {
     200: 40
 }
 
+bailout = 5000
+run_for_ticks = 5000
+
+# ---
+
 names = []
 
 for pruning_length, ram_amount in prune_ram.items():
@@ -39,13 +44,13 @@ for pruning_length, ram_amount in prune_ram.items():
         job_file.write(f"module add anaconda3/2018.12\n")
         job_file.write(f"\n")
         job_file.write(f"python3 ../{script_name}.py \\\n")
-        job_file.write(f"           --bailout {3000} \\\n")
+        job_file.write(f"           --bailout {bailout} \\\n")
         job_file.write(f"           --distance_type Minkowski-3 \\\n")
         job_file.write(f"           --pruning_length {pruning_length} \\\n")
         job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")
         job_file.write(f"           --length_factor 100 \\\n")
         job_file.write(f"           --node_decay_factor 0.99 \\\n")
-        job_file.write(f"           --run_for_ticks 3000 \\\n")
+        job_file.write(f"           --run_for_ticks {run_for_ticks} \\\n")
 with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")

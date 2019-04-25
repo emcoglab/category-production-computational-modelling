@@ -82,7 +82,7 @@ def main(distance_type_name: str,
 
         # Output file path
         response_dir = path.join(Preferences.output_dir,
-                                 f"Category production traces [sensorimotor {distance_type.name}]"
+                                 f"Category production traces [sensorimotor {distance_type.name}] "
                                  f"length {length_factor}, pruning at {pruning_length} "
                                  f"df {node_decay_factor}; pt {impulse_pruning_threshold}; "
                                  f"rft {run_for_ticks}; bailout {bailout}")
