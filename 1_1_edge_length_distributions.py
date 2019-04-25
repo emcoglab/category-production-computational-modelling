@@ -117,14 +117,14 @@ def main_sensorimotor(length_factor: int, distance_type_name: str):
     ax.xaxis.set_major_locator(ticker.MultipleLocator(base=50))
     f.savefig(path.join(Preferences.figures_dir,
                         "length distributions",
-                        f"length_distributions_sensorimotor_length_{length_factor}_{distance_type.name} words.png"))
+                        f"length_distributions_sensorimotor_length_{length_factor}_{distance_type.name}.png"))
     pyplot.close(f)
 
     f = pyplot.figure()
     distplot([length for node, length in min_edge_length.items()])
     f.savefig(path.join(Preferences.figures_dir,
                         "length distributions",
-                        f"min_length_distributions_sensorimotor_length_{length_factor}_{distance_type.name} words.png"))
+                        f"min_length_distributions_sensorimotor_length_{length_factor}_{distance_type.name}.png"))
     pyplot.close(f)
 
     logger.info(f"Edge lengths fall in range ["

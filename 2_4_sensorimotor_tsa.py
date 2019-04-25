@@ -192,5 +192,5 @@ if __name__ == '__main__':
     logger.info("Done!")
 
     Emailer(Preferences.email_connection_details_path).send_email(
-        f"Done running {path.basename(__file__)} with {args.pruning_length:.2f}% pruning.",
+        f"Done running {path.basename(__file__)} with {args.pruning_length} pruning.",
         Preferences.target_email_address)

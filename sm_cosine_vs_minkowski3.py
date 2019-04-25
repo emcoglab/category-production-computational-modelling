@@ -37,8 +37,6 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 _COSINE_DISTANCE = "Cosine distance"
 _MINKOWSKI_DISTANCE = "Minkowski-3 distance"
 
-_MIN_FRF = 1
-
 
 def main():
     sensorimotor_norms = SensorimotorNorms()
@@ -46,7 +44,7 @@ def main():
 
     main_dataframe: DataFrame = category_production.data.copy()
 
-    # category -> sm_response -> dist
+    # category -> sm_response -> distance
     cosine_distances: Dict[str, DefaultDict[str, float]] = dict()
     minkowski_distances: Dict[str, DefaultDict[str, float]] = dict()
     for category in category_production.category_labels:
@@ -85,33 +83,6 @@ def main():
     main_dataframe.to_csv(path.join(Preferences.results_dir,
                                     "Category production fit sensorimotor",
                                     "item-level data (cosine vs Minkowski-3).csv"))
-
-    first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= _MIN_FRF]
-
-    # Run correlations: FRF
-    corr_frf_vs_cosine = main_dataframe[CPColNames.FirstRankFrequency].corr(main_dataframe[_COSINE_DISTANCE],
-                                                                            method='pearson')
-    corr_frf_vs_minkowski = main_dataframe[CPColNames.FirstRankFrequency].corr(main_dataframe[_MINKOWSKI_DISTANCE],
-                                                                               method='pearson')
-
-    # Run correlations: ProdFreq
-    corr_prodfreq_vs_cosine = main_dataframe[CPColNames.ProductionFrequency].corr(main_dataframe[_COSINE_DISTANCE],
-                                                                                  method='pearson')
-    corr_prodfreq_vs_minkowski = main_dataframe[CPColNames.ProductionFrequency].corr(
-        main_dataframe[_MINKOWSKI_DISTANCE],
-        method='pearson')
-
-    # Run correlations: Mean Rank
-    corr_meanrank_vs_cosine = main_dataframe[CPColNames.MeanRank].corr(main_dataframe[_COSINE_DISTANCE],
-                                                                       method='pearson')
-    corr_meanrank_vs_minkowski = main_dataframe[CPColNames.MeanRank].corr(main_dataframe[_MINKOWSKI_DISTANCE],
-                                                                          method='pearson')
-
-    # Run correlations: RT
-    first_rank_frequent_corr_rt_vs_cosine = first_rank_frequent_data[CPColNames.MeanZRT].corr(
-        first_rank_frequent_data[_COSINE_DISTANCE], method='pearson')
-    first_rank_frequent_corr_rt_vs_minkowski = first_rank_frequent_data[CPColNames.MeanZRT].corr(
-        first_rank_frequent_data[_MINKOWSKI_DISTANCE], method='pearson')
 
 
 if __name__ == '__main__':
