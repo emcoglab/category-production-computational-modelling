@@ -191,11 +191,6 @@ if __name__ == '__main__':
          bailout=args.bailout)
     logger.info("Done!")
 
-    emailer = Emailer(Preferences.email_connection_details_path)
-    if args.pruning_length is not None:
-        emailer.send_email(
-            f"Done running {path.basename(__file__)} with {args.words} words and {args.pruning_length:.2f}% pruning.",
-            Preferences.target_email_address)
-    else:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
-                           Preferences.target_email_address)
+    Emailer(Preferences.email_connection_details_path).send_email(
+        f"Done running {path.basename(__file__)} with {args.pruning_length:.2f}% pruning.",
+        Preferences.target_email_address)
