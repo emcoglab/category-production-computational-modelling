@@ -27,7 +27,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import interpret_path, get_model_ttfas_for_category, TTFA, save_stats
+from evaluation.category_production import interpret_path_linguistic, get_model_ttfas_for_category_linguistic, TTFA, save_stats_linguistic
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
                     conscious_access_threshold: float,
                     min_first_rank_freq: int):
 
-    n_words = interpret_path(results_dir)
+    n_words = interpret_path_linguistic(results_dir)
 
     per_category_stats_output_path = path.join(Preferences.results_dir,
                                                "Category production fit",
@@ -57,7 +57,7 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
     # Add model TTFA column
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in category_production.category_labels:
-        model_ttfas[category] = get_model_ttfas_for_category(category, results_dir, n_words, conscious_access_threshold)
+        model_ttfas[category] = get_model_ttfas_for_category_linguistic(category, results_dir, n_words, conscious_access_threshold)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]], axis=1)
 
@@ -97,12 +97,12 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
 
     # endregion
 
-    save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, min_first_rank_freq, conscious_access_threshold)
+    save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
+                          first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, min_first_rank_freq, conscious_access_threshold)
 
 
 def get_available_items_from_path(p: str, cp: CategoryProduction, conscious_access_threshold) -> Set[Tuple[str, str]]:
-    n_words = interpret_path(p)
+    n_words = interpret_path_linguistic(p)
 
     # Main dataframe holds category production data and model response data
     main_dataframe: DataFrame = cp.data.copy()
@@ -110,7 +110,7 @@ def get_available_items_from_path(p: str, cp: CategoryProduction, conscious_acce
     # Add model TTFA column
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in cp.category_labels:
-        model_ttfas[category] = get_model_ttfas_for_category(category, p, n_words, conscious_access_threshold)
+        model_ttfas[category] = get_model_ttfas_for_category_linguistic(category, p, n_words, conscious_access_threshold)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]], axis=1)
 
@@ -135,7 +135,7 @@ def main(paths, conscious_access_threshold: float, min_first_rank_freq: int = No
     if min_first_rank_freq is None:
         min_first_rank_freq = 1
 
-    logger.info(f'Only looking at outputs shared between models with {" and ".join(f"{n:,}" for n in [interpret_path(p) for p in paths])} words')
+    logger.info(f'Only looking at outputs shared between models with {" and ".join(f"{n:,}" for n in [interpret_path_linguistic(p) for p in paths])} words')
 
     cp = CategoryProduction()
 

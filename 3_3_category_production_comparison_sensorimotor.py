@@ -13,7 +13,7 @@ University of Lancaster
 c.wingfield@lancaster.ac.uk
 caiwingfield.net
 ---------------------------
-2018
+2019
 ---------------------------
 """
 import argparse
@@ -26,7 +26,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, interpret_path_linguistic, get_model_ttfas_for_category_linguistic, save_stats_linguistic
+from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -34,22 +34,19 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(input_results_dir: str, conscious_access_threshold: float, min_first_rank_freq: int = None):
+def main(input_results_dir: str, min_first_rank_freq: int = None):
+
+    category_production = CategoryProduction()
 
     # Set defaults
     if min_first_rank_freq is None:
         min_first_rank_freq = 1
 
-    n_words = interpret_path_linguistic(input_results_dir)
-
-    logger.info(f"Looking at output from model with {n_words:,} words.")
-
-    category_production = CategoryProduction()
+    logger.info(f"Looking at output from model.")
 
     per_category_stats_output_path = path.join(Preferences.results_dir,
                                                "Category production fit",
-                                               f"item-level data ({path.basename(input_results_dir)}) "
-                                               f"CAT={conscious_access_threshold}.csv")
+                                               f"item-level data ({path.basename(input_results_dir)}).csv")
 
     # region Build main dataframe
 
@@ -62,7 +59,7 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
     # Add model TTFA column to main_dataframe
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in category_production.category_labels:
-        model_ttfas[category] = get_model_ttfas_for_category_linguistic(category, input_results_dir, n_words, conscious_access_threshold)
+        model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]],
         axis=1)
@@ -102,8 +99,9 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
 
     # endregion
 
-    save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-                          first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, input_results_dir, False, min_first_rank_freq, conscious_access_threshold)
+    save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
+                            first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, input_results_dir,
+                            False, min_first_rank_freq)
 
 
 if __name__ == '__main__':
@@ -112,10 +110,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("cat", type=float, help="The conscious-access threshold.")
     parser.add_argument("min_frf", type=int, nargs="?", default=None, help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
-    main(args.path, args.cat, args.min_frf)
+    main(args.path, args.min_frf)
 
     logger.info("Done!")

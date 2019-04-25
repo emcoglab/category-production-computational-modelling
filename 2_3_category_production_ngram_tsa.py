@@ -23,7 +23,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from evaluation.model_specs import save_model_spec
+from evaluation.model_specs import save_model_spec_linguistic
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from model.graph import Graph, log_graph_topology
@@ -95,7 +95,7 @@ def main(n_words: int,
         logger.warning(f"{response_dir} directory does not exist; making it.")
         mkdir(response_dir)
 
-    save_model_spec(edge_decay_sd_factor, firing_threshold, length_factor, distributional_model.name, n_words, response_dir)
+    save_model_spec_linguistic(edge_decay_sd_factor, firing_threshold, length_factor, distributional_model.name, n_words, response_dir)
 
     cp = CategoryProduction()
 

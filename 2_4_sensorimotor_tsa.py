@@ -37,7 +37,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 # Results DataFrame column names
 RESPONSE = "Response"
 NODE_ID = "Node ID"
-ACTIVATION = "ActivationValue"
+ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 
 
