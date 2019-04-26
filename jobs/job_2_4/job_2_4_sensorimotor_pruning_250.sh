@@ -1,10 +1,10 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j24_sm_p198_sa
+#$ -N j24_sm_p250_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=45G
+#$ -l h_vmem=80G
 
 source /etc/profile
 
@@ -15,7 +15,7 @@ module add anaconda3/2018.12
 python3 ../2_4_sensorimotor_tsa.py \
            --bailout 10000 \
            --distance_type Minkowski-3 \
-           --pruning_length 198 \
+           --pruning_length 250 \
            --impulse_pruning_threshold 0.05 \
            --length_factor 100 \
            --node_decay_factor 0.99 \

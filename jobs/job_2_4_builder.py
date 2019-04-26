@@ -11,11 +11,13 @@ if not path.isdir(job_name):
     mkdir(job_name)
 
 prune_ram = {
-    50:  10,
-    100: 10,
+    50:  2,
+    100: 5,
     150: 20,
     # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
-    198: 50,
+    198: 45,
+    200: 45,
+    250: 80,
 }
 
 bailout = 10_000
