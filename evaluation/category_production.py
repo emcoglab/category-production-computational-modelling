@@ -178,6 +178,9 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
 
     data_records = {
         f"Length factor":                           model_spec["Length factor"],
+        f"Max sphere radius":                       model_spec["Max sphere radius"],
+        f"Run for ticks":                           model_spec["Run for ticks"],
+        f"Bailout":                                 model_spec["Bailout"],
         f"FRF corr (-)":                            corr_frf_vs_ttfa,
         f"FRF N":                                   n_first_rank_frequent,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
@@ -192,6 +195,9 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
         data.to_csv(data_file, index=False, columns=[
             f"Length factor",
+            f"Max sphere radius",
+            f"Run for ticks",
+            f"Bailout",
             f"FRF corr (-)",
             f"FRF N",
             f"zRT corr (+; FRF≥{min_first_rank_freq})",

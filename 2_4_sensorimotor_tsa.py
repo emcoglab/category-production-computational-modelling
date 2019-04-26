@@ -22,6 +22,7 @@ from os import path, makedirs
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
+from evaluation.model_specs import save_model_spec_sensorimotor
 from ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology
 from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_sensorimotor
@@ -69,6 +70,18 @@ def main(distance_type_name: str,
     node_labelling_dictionary = load_labels_from_sensorimotor()
     sm_words = set(w for i, w in node_labelling_dictionary.items())
 
+    # Output file path
+    response_dir = path.join(Preferences.output_dir,
+                             f"Category production traces [sensorimotor {distance_type.name}] "
+                             f"length {length_factor}, pruning at {pruning_length} "
+                             f"df {node_decay_factor}; pt {impulse_pruning_threshold}; "
+                             f"rft {run_for_ticks}; bailout {bailout}")
+    if not path.isdir(response_dir):
+        logger.warning(f"{response_dir} directory does not exist; making it.")
+        makedirs(response_dir)
+
+    save_model_spec_sensorimotor(length_factor, pruning_length, run_for_ticks, bailout, response_dir)
+
     cp = CategoryProduction()
 
     for category_label in cp.category_labels:
@@ -80,15 +93,6 @@ def main(distance_type_name: str,
         if category_label not in sm_words:
             continue
 
-        # Output file path
-        response_dir = path.join(Preferences.output_dir,
-                                 f"Category production traces [sensorimotor {distance_type.name}] "
-                                 f"length {length_factor}, pruning at {pruning_length} "
-                                 f"df {node_decay_factor}; pt {impulse_pruning_threshold}; "
-                                 f"rft {run_for_ticks}; bailout {bailout}")
-        if not path.isdir(response_dir):
-            logger.warning(f"{response_dir} directory does not exist; making it.")
-            makedirs(response_dir)
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
 
         # Only run the TSA if we've not already done it

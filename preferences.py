@@ -47,5 +47,3 @@ class Preferences(object):
     ]
 
     min_edges_per_node = 10
-
-    sensorimotor_norms_path = "/Users/caiwingfield/Box Sync/LANGBOOT Project/Model/sensorimotor_norms_for_39731_words_low_N_known_removed.csv"

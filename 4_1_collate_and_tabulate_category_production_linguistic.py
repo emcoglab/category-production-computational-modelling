@@ -32,19 +32,20 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(results_dir: str) -> None:
-    all_data: DataFrame = collate_data(results_dir)
-
-    models = all_data["Model"].unique()
     dvs = [
         "FRF corr (-)",
         "zRT corr (+; FRF≥1)",
         'ProdFreq corr (-)',
         'MeanRank corr (+)',
-        # "FRF N",
-        # "zRT N",
+        "FRF N",
+        "zRT N",
         'ProdFreq N',
-        # 'Mean Rank N',
+        'Mean Rank N',
     ]
+
+    all_data: DataFrame = collate_data(results_dir)
+
+    models = all_data["Model"].unique()
 
     for model in models:
         this_model_data = all_data[all_data["Model"].str.startswith(model)].copy()
