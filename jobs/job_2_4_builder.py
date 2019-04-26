@@ -18,8 +18,8 @@ prune_ram = {
     198: 50,
 }
 
-bailout = 5000
-run_for_ticks = 5000
+bailout = 10_000
+run_for_ticks = 10_000
 
 # ---
 
