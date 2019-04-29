@@ -16,12 +16,12 @@ prune_ram = {
     150: 20,
     # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
     198: 45,
-    200: 45,
-    250: 80,
+    200: 60,
+    250: 120,
 }
 
-bailout = 10_000
-run_for_ticks = 10_000
+bailout = 20_000
+run_for_ticks = 20_000
 
 # ---
 

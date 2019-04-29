@@ -4,7 +4,7 @@
 #$ -N j24_sm_p250_sa
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=80G
+#$ -l h_vmem=120G
 
 source /etc/profile
 
@@ -13,10 +13,10 @@ echo Job running on compute node `uname -n`
 module add anaconda3/2018.12
 
 python3 ../2_4_sensorimotor_tsa.py \
-           --bailout 10000 \
+           --bailout 20000 \
            --distance_type Minkowski-3 \
            --pruning_length 250 \
            --impulse_pruning_threshold 0.05 \
            --length_factor 100 \
            --node_decay_factor 0.99 \
-           --run_for_ticks 10000 \
+           --run_for_ticks 20000 \
