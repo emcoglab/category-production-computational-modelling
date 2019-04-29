@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument()
+    parser.add_argument("-p", "--prune_length", required=True, type=int)
 
     args = parser.parse_args()
 

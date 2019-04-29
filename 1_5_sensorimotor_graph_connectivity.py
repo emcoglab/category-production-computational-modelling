@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-p", "--prune_length", required=True, type=int, help="The length of the longest edges to prune from the graph.", default=None)
+    parser.add_argument("-p", "--prune_length", required=True, type=int, help="The length of the longest edges to prune from the graph.")
 
     args = parser.parse_args()
 
