@@ -78,7 +78,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     main_dataframe: DataFrame = category_production.data.copy()
 
     # Drop precomputed distance measures
-    main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor.proximity', 'Linguistic.proximity'], axis=1, inplace=True)
+    main_dataframe.drop(['Sensorimotor.proximity', 'Linguistic.proximity'], axis=1, inplace=True)
 
     # Get TTFAs and distances
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
