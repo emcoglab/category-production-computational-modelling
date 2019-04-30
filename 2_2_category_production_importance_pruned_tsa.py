@@ -99,7 +99,7 @@ def main(n_words: int,
     )
     n_edges = len(graph.edges)
 
-    log_graph_topology(graph)
+    connected, orphans = log_graph_topology(graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")

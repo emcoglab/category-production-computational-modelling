@@ -19,40 +19,42 @@ prune_ram = {
     200: 60,
     250: 120,
 }
+sigmas = [0.1, 0.2, 0.3]
 
-bailout = 20_000
-run_for_ticks = 20_000
+bailout = 1_000
+run_for_ticks = 10_000
 
 # ---
 
 names = []
 
 for pruning_length, ram_amount in prune_ram.items():
-    name = f"{job_name}_sensorimotor_pruning_{pruning_length}.sh"
-    names.append(name)
-    with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
-        job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
-        job_file.write(f"#$ -S /bin/bash\n")
-        job_file.write(f"#$ -q serial\n")
-        job_file.write(f"#$ -N {short_name}_sm_p{pruning_length}_sa\n")
-        job_file.write(f"#$ -m e\n")
-        job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
-        job_file.write(f"#$ -l h_vmem={ram_amount}G\n")
-        job_file.write(f"\n")
-        job_file.write(f"source /etc/profile\n")
-        job_file.write(f"\n")
-        job_file.write(f"echo Job running on compute node `uname -n`\n")
-        job_file.write(f"\n")
-        job_file.write(f"module add anaconda3/2018.12\n")
-        job_file.write(f"\n")
-        job_file.write(f"python3 ../{script_name}.py \\\n")
-        job_file.write(f"           --bailout {bailout} \\\n")
-        job_file.write(f"           --distance_type Minkowski-3 \\\n")
-        job_file.write(f"           --pruning_length {pruning_length} \\\n")
-        job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")
-        job_file.write(f"           --length_factor 100 \\\n")
-        job_file.write(f"           --node_decay_factor 0.99 \\\n")
-        job_file.write(f"           --run_for_ticks {run_for_ticks} \\\n")
+    for sigma in sigmas:
+        name = f"{job_name}_sm_s{sigma}_p{pruning_length}.sh"
+        names.append(name)
+        with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
+            job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
+            job_file.write(f"#$ -S /bin/bash\n")
+            job_file.write(f"#$ -q serial\n")
+            job_file.write(f"#$ -N {short_name}_sm_s{sigma}_p{pruning_length}_sa\n")
+            job_file.write(f"#$ -m e\n")
+            job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
+            job_file.write(f"#$ -l h_vmem={ram_amount}G\n")
+            job_file.write(f"\n")
+            job_file.write(f"source /etc/profile\n")
+            job_file.write(f"\n")
+            job_file.write(f"echo Job running on compute node `uname -n`\n")
+            job_file.write(f"\n")
+            job_file.write(f"module add anaconda3/2018.12\n")
+            job_file.write(f"\n")
+            job_file.write(f"python3 ../{script_name}.py \\\n")
+            job_file.write(f"           --bailout {bailout} \\\n")
+            job_file.write(f"           --distance_type Minkowski-3 \\\n")
+            job_file.write(f"           --pruning_length {pruning_length} \\\n")
+            job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")
+            job_file.write(f"           --length_factor 100 \\\n")
+            job_file.write(f"           --node_decay_sigma {sigma} \\\n")
+            job_file.write(f"           --run_for_ticks {run_for_ticks} \\\n")
 with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")

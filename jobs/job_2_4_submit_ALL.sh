@@ -1,8 +1,20 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #!/usr/bin/env bash
-qsub job_2_4/job_2_4_sensorimotor_pruning_50.sh
-qsub job_2_4/job_2_4_sensorimotor_pruning_100.sh
-qsub job_2_4/job_2_4_sensorimotor_pruning_150.sh
-qsub job_2_4/job_2_4_sensorimotor_pruning_198.sh
-qsub job_2_4/job_2_4_sensorimotor_pruning_200.sh
-qsub job_2_4/job_2_4_sensorimotor_pruning_250.sh
+qsub job_2_4/job_2_4_sm_s0.1_p50.sh
+qsub job_2_4/job_2_4_sm_s0.2_p50.sh
+qsub job_2_4/job_2_4_sm_s0.3_p50.sh
+qsub job_2_4/job_2_4_sm_s0.1_p100.sh
+qsub job_2_4/job_2_4_sm_s0.2_p100.sh
+qsub job_2_4/job_2_4_sm_s0.3_p100.sh
+qsub job_2_4/job_2_4_sm_s0.1_p150.sh
+qsub job_2_4/job_2_4_sm_s0.2_p150.sh
+qsub job_2_4/job_2_4_sm_s0.3_p150.sh
+qsub job_2_4/job_2_4_sm_s0.1_p198.sh
+qsub job_2_4/job_2_4_sm_s0.2_p198.sh
+qsub job_2_4/job_2_4_sm_s0.3_p198.sh
+qsub job_2_4/job_2_4_sm_s0.1_p200.sh
+qsub job_2_4/job_2_4_sm_s0.2_p200.sh
+qsub job_2_4/job_2_4_sm_s0.3_p200.sh
+qsub job_2_4/job_2_4_sm_s0.1_p250.sh
+qsub job_2_4/job_2_4_sm_s0.2_p250.sh
+qsub job_2_4/job_2_4_sm_s0.3_p250.sh

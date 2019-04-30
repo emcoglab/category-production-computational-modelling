@@ -28,7 +28,7 @@ from model.graph import Graph, log_graph_topology
 from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
-from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_constant
+from model.utils.maths import decay_function_constant, decay_function_lognormal
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -48,8 +48,9 @@ def main(distance_type_name: str,
          node_decay_factor: float,
          impulse_pruning_threshold: float,
          run_for_ticks: int,
-         bailout: int,
-         ):
+         sigma: float,
+         bailout: int):
+
     distance_type = DistanceType.from_name(distance_type_name)
 
     edgelist_filename = f"sensorimotor {distance_type.name} distance length {length_factor}.edgelist"
@@ -80,7 +81,7 @@ def main(distance_type_name: str,
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
 
-    save_model_spec_sensorimotor(length_factor, pruning_length, run_for_ticks, bailout, response_dir)
+    save_model_spec_sensorimotor(length_factor, pruning_length, run_for_ticks, bailout, sigma, response_dir)
 
     cp = CategoryProduction()
 
@@ -105,13 +106,14 @@ def main(distance_type_name: str,
         logger.info(f"Running spreading activation for category {category_label}")
 
         csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
-        csv_comments.append(f"\t      edges = {n_edges:_}")
-        csv_comments.append(f"\tgranularity = {length_factor:_}")
-        csv_comments.append(f"\t    pruning = {pruning_length}")
-        csv_comments.append(f"\t          δ = {node_decay_factor}")
-        csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
+        csv_comments.append(f"\t        edges = {n_edges:_}")
+        csv_comments.append(f"\tlength_factor = {length_factor:_}")
+        csv_comments.append(f"\t      pruning = {pruning_length}")
+        csv_comments.append(f"\t            δ = {node_decay_factor}")
+        csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
+        csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
-            csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
+            csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
 
         # Do the spreading activation
 
@@ -124,8 +126,9 @@ def main(distance_type_name: str,
             #  (in fact we use the impulse-pruning threshold instead of 0, as no node will ever receive activation less
             #   than this, by definition))
             firing_threshold=impulse_pruning_threshold,
-            node_decay_function=decay_function_exponential_with_decay_factor(
-                decay_factor=node_decay_factor),
+            # Sigma for the log-normal decay gets multiplied by the length factor, so that if we change the length
+            # factor, sigma doesn't also  have to change for the behaviour of the model to be approximately equivalent.
+            node_decay_function=decay_function_lognormal(sigma=sigma * length_factor),
             # Once pruning has been done, we don't need to decay, as target nodes receive the full activations of
             # incident impulses. The maximum sphere radius is achieved by the initial graph pruning.
             edge_decay_function=decay_function_constant())
@@ -182,6 +185,7 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
     parser.add_argument("-p", "--pruning_length", required=False, type=int,
                         help="The percentage of longest edges to prune from the graph.", default=None)
+    parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
 
     args = parser.parse_args()
@@ -192,6 +196,7 @@ if __name__ == '__main__':
          node_decay_factor=args.node_decay_factor,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
+         sigma=args.node_decay_sigma,
          bailout=args.bailout)
     logger.info("Done!")
 

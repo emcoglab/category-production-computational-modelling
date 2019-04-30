@@ -77,7 +77,7 @@ def main(n_words: int,
     graph = Graph.load_from_edgelist(file_path=path.join(Preferences.graphs_dir, graph_file_name))
     n_edges = len(graph.edges)
 
-    log_graph_topology(graph)
+    connected, orphans = log_graph_topology(graph)
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")

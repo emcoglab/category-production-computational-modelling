@@ -33,12 +33,13 @@ def save_model_spec_linguistic(edge_decay_sd_factor, firing_threshold, length_fa
         yaml.dump(spec, spec_file, yaml.SafeDumper)
 
 
-def save_model_spec_sensorimotor(length_factor, max_sphere_radius, run_for_ticks, bailout,
+def save_model_spec_sensorimotor(length_factor, max_sphere_radius, run_for_ticks, bailout, sigma,
                                  response_dir):
     spec = {
         "Length factor":     length_factor,
         "Max sphere radius": max_sphere_radius,
         "Run for ticks":     run_for_ticks,
+        "Log-normal sigma":   sigma,
         "Bailout":           bailout,
     }
     with open(path.join(response_dir, " model_spec.yaml"), mode="w", encoding="utf-8") as spec_file:
