@@ -22,7 +22,7 @@ from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.graph import Graph
-from model.temporal_spatial_expansion import TemporalSpatialExpansion
+from model.temporal_spatial_propagation import TemporalSpatialPropagation
 from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
 from model.utils.indexing import list_index_dictionaries
 from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
@@ -64,7 +64,7 @@ def main(n_words, corpus_name, model_name, radius, length_factor, firing_thresho
             decay_factor=node_decay_factor),
         edge_decay_function=decay_function_gaussian_with_sd(
             sd=edge_decay_sd_factor*length_factor))
-    sensorimotor_component: TemporalSpatialExpansion = TemporalSpatialExpansion(
+    sensorimotor_component: TemporalSpatialPropagation = TemporalSpatialPropagation(
         points_in_space=,
         item_labelling_dictionary=,
         expansion_rate=,

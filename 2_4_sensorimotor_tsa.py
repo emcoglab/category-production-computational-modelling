@@ -25,10 +25,11 @@ from category_production.category_production import CategoryProduction
 from evaluation.model_specs import save_model_spec_sensorimotor
 from ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology
-from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_sensorimotor
+from model.temporal_spatial_propagation import TemporalSpatialPropagation
+from model.temporal_spreading_activation import load_labels_from_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
-from model.utils.maths import decay_function_constant, decay_function_lognormal
+from model.utils.maths import decay_function_lognormal
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -115,42 +116,35 @@ def main(distance_type_name: str,
 
         # Do the spreading activation
 
-        tsa = TemporalSpreadingActivation(
-            graph=sensorimotor_graph,
-            item_labelling_dictionary=node_labelling_dictionary,
-            impulse_pruning_threshold=impulse_pruning_threshold,
-            # Points can't reactivate as long as they are still in the buffer
-            # (for now this just means that they have a non-zero activation
-            #  (in fact we use the impulse-pruning threshold instead of 0, as no node will ever receive activation less
-            #   than this, by definition))
-            firing_threshold=impulse_pruning_threshold,
+        tse = TemporalSpatialPropagation(
+            underlying_graph=sensorimotor_graph,
+            point_labelling_dictionary=node_labelling_dictionary,
+            buffer_pruning_threshold=impulse_pruning_threshold,
             # Sigma for the log-normal decay gets multiplied by the length factor, so that if we change the length
             # factor, sigma doesn't also  have to change for the behaviour of the model to be approximately equivalent.
-            node_decay_function=decay_function_lognormal(sigma=sigma * length_factor),
-            # Once pruning has been done, we don't need to decay, as target nodes receive the full activations of
-            # incident impulses. The maximum sphere radius is achieved by the initial graph pruning.
-            edge_decay_function=decay_function_constant())
+            node_decay_function=decay_function_lognormal(sigma=sigma * length_factor)
+        )
 
-        tsa.activate_item_with_label(category_label, 1)
+        tse.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            node_activations = tsa.tick()
+            node_activations = tse.tick()
 
             for na in node_activations:
                 model_response_entries.append((
                     na.label,
-                    tsa.label2idx[na.label],
+                    tse.label2idx[na.label],
                     na.activation,
                     na.time_activated))
 
             # Break early if we've got a probable explosion
-            if bailout is not None and len(tsa.suprathreshold_nodes()) > bailout:
+            if bailout is not None and len(tse.items_in_buffer()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(tsa.suprathreshold_nodes())} nodes activated.")
+                                    f"with {len(tse.items_in_buffer())} nodes activated.")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[

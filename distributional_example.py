@@ -132,12 +132,12 @@ def main():
                         "ActivationValue threshold": firing_threshold,
                         "Node decay factor": node_decay_factor,
                         "Edge decay SD": edge_decay_sd,
-                        "Activated nodes": len(tsa.suprathreshold_nodes())
+                        "Activated nodes": len(tsa.suprathreshold_items())
                     })
 
                     # Every so often, check if we've got explosive behaviour
                     if tick % 10 == 0:
-                        if len(tsa.suprathreshold_nodes()) >= bailout:
+                        if len(tsa.suprathreshold_items()) >= bailout:
                             logger.warning("Bailout!")
                             break
 
