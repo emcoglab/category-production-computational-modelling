@@ -47,10 +47,46 @@ class TestCython(unittest.TestCase):
             lognormal_cdf(x, sigma)
         )
 
-    def test_lognormal_sf(self):
+    def test_lognormal_sf_3_2(self):
 
-        x = 3.2
-        sigma = 2.2
+        x = 3
+        sigma = 2
+
+        self.assertAlmostEqual(
+            # Library version
+            lognorm.sf(x, s=sigma),
+            # cythonised version
+            lognormal_sf(x, sigma)
+        )
+
+    def test_lognormal_sf_30_20(self):
+
+        x = 30
+        sigma = 20
+
+        self.assertAlmostEqual(
+            # Library version
+            lognorm.sf(x, s=sigma),
+            # cythonised version
+            lognormal_sf(x, sigma)
+        )
+
+    def test_lognormal_sf_300_200(self):
+
+        x = 300
+        sigma = 200
+
+        self.assertAlmostEqual(
+            # Library version
+            lognorm.sf(x, s=sigma),
+            # cythonised version
+            lognormal_sf(x, sigma)
+        )
+
+    def test_lognormal_sf_03_02(self):
+
+        x = 0.3
+        sigma = 0.2
 
         self.assertAlmostEqual(
             # Library version
