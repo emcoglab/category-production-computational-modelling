@@ -51,11 +51,13 @@ def main(length_factor: int,
         for n in graph.nodes
     ]
 
+    output_dir = path.join(Preferences.figures_dir, "neighbourhood distributions")
+
     f = pyplot.figure()
-    distplot(neighbour_counts)
-    f.savefig(path.join(Preferences.figures_dir,
-                        "neighbourhood distributions",
-                        f"points_within_radius_{radius}.png"))
+    ax = distplot(neighbour_counts, kde=False)
+    ax.set_title(f"Radius {radius}")
+    ax.set_xlabel("Reachable neighbours")
+    f.savefig(path.join(output_dir, f"points_within_radius_{radius}.png"))
     pyplot.close(f)
 
 
