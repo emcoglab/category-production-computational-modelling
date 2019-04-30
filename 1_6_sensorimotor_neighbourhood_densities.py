@@ -40,12 +40,12 @@ def main(length_factor: int,
     edgelist_filename = f"sensorimotor {distance_type.name} distance length {length_factor}.edgelist"
     edgelist_path = path.join(Preferences.graphs_dir, edgelist_filename)
 
-    logger.info(f"Computing neighbourhood distribution for {radius}...")
-
+    logger.info(f"Loading graph from {edgelist_filename}...")
     graph = Graph.load_from_edgelist(edgelist_path, ignore_edges_longer_than=radius)
 
     log_graph_topology(graph)
 
+    logger.info(f"Computing neighbourhood distribution for {radius}...")
     neighbour_counts = [
         len(list(graph.neighbourhood(n)))
         for n in graph.nodes
