@@ -52,7 +52,7 @@ def main(results_dir: str) -> None:
     for dv in dvs:
 
         # pivot
-        p = pivot_table(data=all_data, index="Max sphere radius", columns="Bailout", values=dv,
+        p = pivot_table(data=all_data, index="Max sphere radius", columns="Sigma", values=dv,
                         # there should be only one value for each group, but we need to use "first" because the
                         # default is "mean", which doesn't work with the "-"s we used to replace nans.
                         aggfunc="first")

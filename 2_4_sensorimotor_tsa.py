@@ -48,7 +48,7 @@ def main(distance_type_name: str,
          impulse_pruning_threshold: float,
          run_for_ticks: int,
          sigma: float,
-         bailout: int):
+         bailout: int = None):
 
     distance_type = DistanceType.from_name(distance_type_name)
 
@@ -147,7 +147,7 @@ def main(distance_type_name: str,
                     na.time_activated))
 
             # Break early if we've got a probable explosion
-            if len(tsa.suprathreshold_nodes()) > bailout:
+            if bailout is not None and len(tsa.suprathreshold_nodes()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
                                     f"with {len(tsa.suprathreshold_nodes())} nodes activated.")
@@ -176,7 +176,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-b", "--bailout", required=True, type=int)
+    parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
     parser.add_argument("-l", "--length_factor", required=True, type=int)

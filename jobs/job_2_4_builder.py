@@ -21,7 +21,7 @@ prune_ram = {
 }
 sigmas = [0.1, 0.2, 0.3]
 
-bailout = 1_000
+# bailout = 1_000
 run_for_ticks = 10_000
 
 # ---
@@ -48,7 +48,7 @@ for pruning_length, ram_amount in prune_ram.items():
             job_file.write(f"module add anaconda3/2018.12\n")
             job_file.write(f"\n")
             job_file.write(f"python3 ../{script_name}.py \\\n")
-            job_file.write(f"           --bailout {bailout} \\\n")
+            # job_file.write(f"           --bailout {bailout} \\\n")
             job_file.write(f"           --distance_type Minkowski-3 \\\n")
             job_file.write(f"           --pruning_length {pruning_length} \\\n")
             job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")

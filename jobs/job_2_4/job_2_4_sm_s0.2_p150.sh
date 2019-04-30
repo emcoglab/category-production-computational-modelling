@@ -13,7 +13,6 @@ echo Job running on compute node `uname -n`
 module add anaconda3/2018.12
 
 python3 ../2_4_sensorimotor_tsa.py \
-           --bailout 1000 \
            --distance_type Minkowski-3 \
            --pruning_length 150 \
            --impulse_pruning_threshold 0.05 \
