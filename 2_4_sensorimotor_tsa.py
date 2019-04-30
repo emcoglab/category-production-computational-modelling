@@ -45,7 +45,6 @@ TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 def main(distance_type_name: str,
          length_factor: int,
          pruning_length: int,
-         node_decay_factor: float,
          impulse_pruning_threshold: float,
          run_for_ticks: int,
          sigma: float,
@@ -75,7 +74,7 @@ def main(distance_type_name: str,
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
                              f"length {length_factor}, pruning at {pruning_length} "
-                             f"df {node_decay_factor}; pt {impulse_pruning_threshold}; "
+                             f"sigma {sigma}; pt {impulse_pruning_threshold}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -109,7 +108,6 @@ def main(distance_type_name: str,
         csv_comments.append(f"\t        edges = {n_edges:_}")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {pruning_length}")
-        csv_comments.append(f"\t            δ = {node_decay_factor}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
         csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
         if not connected:
@@ -182,9 +180,7 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
-    parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-p", "--pruning_length", required=False, type=int,
-                        help="The percentage of longest edges to prune from the graph.", default=None)
+    parser.add_argument("-p", "--pruning_length", required=True, type=int)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
 
@@ -193,7 +189,6 @@ if __name__ == '__main__':
     main(pruning_length=args.pruning_length,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
-         node_decay_factor=args.node_decay_factor,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,
