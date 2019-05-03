@@ -38,10 +38,10 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-_MINKOWSKI_DISTANCE = "Minkowski-3 distance"
-
-
 def main(input_results_dir: str, min_first_rank_freq: int = None):
+
+    distance_type = DistanceType.Minkowski3
+    distance_column = f"{distance_type.name} distance"
 
     category_production = CategoryProduction()
     sensorimotor_norms = SensorimotorNorms()
@@ -88,15 +88,15 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]],
         axis=1)
-    main_dataframe[_MINKOWSKI_DISTANCE] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
+    main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
 
     # Drop rows corresponding to responses which weren't produced by the model
     main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[_MINKOWSKI_DISTANCE].notnull()]
+    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
 
     # Now we can convert TTFAs to ints and distances to floats as there won't be null values
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
-    main_dataframe[_MINKOWSKI_DISTANCE] = main_dataframe[_MINKOWSKI_DISTANCE].astype(float)
+    main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
 
     # Collect
     available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]

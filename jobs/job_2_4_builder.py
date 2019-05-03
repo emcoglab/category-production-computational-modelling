@@ -3,6 +3,8 @@ Builds some template jobs
 """
 from os import path, mkdir
 
+from ldm.utils.maths import DistanceType
+
 job_name = 'job_2_4'
 short_name = "j24"
 script_name = "2_4_sensorimotor_tsa"
@@ -22,8 +24,11 @@ prune_ram = {
 }
 sigmas = [0.01, 0.1, 0.2, 0.3, 0.5, 1.0, 2.0]
 
-# bailout = 1_000
 run_for_ticks = 10_000
+
+pruning_threshold = 0.05
+length_factor = 100
+distance_type = DistanceType.Minkowski3
 
 # ---
 
@@ -49,11 +54,10 @@ for pruning_length, ram_amount in prune_ram.items():
             job_file.write(f"module add anaconda3/2018.12\n")
             job_file.write(f"\n")
             job_file.write(f"python3 ../{script_name}.py \\\n")
-            # job_file.write(f"           --bailout {bailout} \\\n")
-            job_file.write(f"           --distance_type Minkowski-3 \\\n")
+            job_file.write(f"           --distance_type {distance_type.name} \\\n")
             job_file.write(f"           --pruning_length {pruning_length} \\\n")
-            job_file.write(f"           --impulse_pruning_threshold 0.05 \\\n")
-            job_file.write(f"           --length_factor 100 \\\n")
+            job_file.write(f"           --impulse_pruning_threshold {pruning_threshold} \\\n")
+            job_file.write(f"           --length_factor {length_factor} \\\n")
             job_file.write(f"           --node_decay_sigma {sigma} \\\n")
             job_file.write(f"           --run_for_ticks {run_for_ticks} \\\n")
 with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file:
