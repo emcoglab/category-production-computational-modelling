@@ -26,7 +26,7 @@ from evaluation.model_specs import save_model_spec_sensorimotor
 from ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology, Node
 from model.temporal_spatial_propagation import TemporalSpatialPropagation
-from model.temporal_spreading_activation import load_labels_from_sensorimotor
+from model.temporal_spreading_activation import load_labels_from_sensorimotor, ActivationValue
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.maths import make_decay_function_lognormal
@@ -41,6 +41,8 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+
+FULL_ACTIVATION = ActivationValue(1.0)
 
 
 def main(distance_type_name: str,
@@ -135,12 +137,14 @@ def main(distance_type_name: str,
             underlying_graph=sensorimotor_graph,
             point_labelling_dictionary=node_labelling_dictionary,
             buffer_pruning_threshold=impulse_pruning_threshold,
+            # Once a node is fully activated, that's enough.
+            activation_cap=FULL_ACTIVATION,
             # Sigma for the log-normal decay gets multiplied by the length factor, so that if we change the length
             # factor, sigma doesn't also  have to change for the behaviour of the model to be approximately equivalent.
             node_decay_function=make_decay_function_lognormal(sigma=sigma * length_factor)
         )
 
-        tsp.activate_item_with_label(category_label, 1)
+        tsp.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         model_response_entries = []
         for tick in range(1, run_for_ticks):
