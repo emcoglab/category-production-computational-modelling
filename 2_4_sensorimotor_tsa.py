@@ -29,7 +29,7 @@ from model.temporal_spatial_propagation import TemporalSpatialPropagation
 from model.temporal_spreading_activation import load_labels_from_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
-from model.utils.maths import decay_function_lognormal
+from model.utils.maths import make_decay_function_lognormal
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -137,7 +137,7 @@ def main(distance_type_name: str,
             buffer_pruning_threshold=impulse_pruning_threshold,
             # Sigma for the log-normal decay gets multiplied by the length factor, so that if we change the length
             # factor, sigma doesn't also  have to change for the behaviour of the model to be approximately equivalent.
-            node_decay_function=decay_function_lognormal(sigma=sigma * length_factor)
+            node_decay_function=make_decay_function_lognormal(sigma=sigma * length_factor)
         )
 
         tsp.activate_item_with_label(category_label, 1)

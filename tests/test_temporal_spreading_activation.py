@@ -23,8 +23,8 @@ from .approximate_comparator.approximate_comparator import is_almost_equal
 
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation
-from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_exponential_with_half_life, \
-    decay_function_gaussian_with_sd
+from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_exponential_with_half_life, \
+    make_decay_function_gaussian_with_sd
 
 
 class TestUnsummedCoOccurrenceModel(unittest.TestCase):
@@ -44,8 +44,8 @@ class TestUnsummedCoOccurrenceModel(unittest.TestCase):
             item_labelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
             firing_threshold=0.3,
             impulse_pruning_threshold=.1,
-            node_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
-            edge_decay_function=decay_function_exponential_with_decay_factor(decay_factor=0.9),
+            node_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
+            edge_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
         )
 
         tsa.activate_item_with_label("lion", 1)
@@ -66,7 +66,7 @@ class TestDecayFunctions(unittest.TestCase):
         a_0 = 0.64
         self.assertEqual(
             a_0,
-            decay_function_exponential_with_decay_factor(d)(t, a_0)
+            make_decay_function_exponential_with_decay_factor(d)(t, a_0)
         )
 
     def test_two_form_of_exponential_decay_are_equal(self):
@@ -75,8 +75,8 @@ class TestDecayFunctions(unittest.TestCase):
         hl = log(2) / λ
         t = 30
         a_0 = .7
-        exponential_decay_via_d  = decay_function_exponential_with_decay_factor(decay_factor=d)
-        exponential_decay_via_hl = decay_function_exponential_with_half_life(half_life=hl)
+        exponential_decay_via_d  = make_decay_function_exponential_with_decay_factor(decay_factor=d)
+        exponential_decay_via_hl = make_decay_function_exponential_with_half_life(half_life=hl)
         self.assertAlmostEqual(
             exponential_decay_via_d(t, a_0),
             exponential_decay_via_hl(t, a_0)
@@ -99,8 +99,8 @@ class TestDecayFunctions(unittest.TestCase):
             ),
             firing_threshold=0.3,
             impulse_pruning_threshold=0,
-            node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd(0.42 * 100),
+            node_decay_function=make_decay_function_exponential_with_half_life(50),
+            edge_decay_function=make_decay_function_gaussian_with_sd(0.42 * 100),
             item_labelling_dictionary=dict()
         )
         tsa = TemporalSpreadingActivation(
@@ -110,8 +110,8 @@ class TestDecayFunctions(unittest.TestCase):
             ),
             firing_threshold=0.3,
             impulse_pruning_threshold=0,
-            node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd(42),
+            node_decay_function=make_decay_function_exponential_with_half_life(50),
+            edge_decay_function=make_decay_function_gaussian_with_sd(42),
             item_labelling_dictionary=dict()
         )
 
@@ -147,8 +147,8 @@ class TestDecayFunctions(unittest.TestCase):
             ),
             impulse_pruning_threshold=0,
             firing_threshold=0.5,
-            node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
+            node_decay_function=make_decay_function_exponential_with_half_life(50),
+            edge_decay_function=make_decay_function_gaussian_with_sd(sd_frac * granularity),
             item_labelling_dictionary=dict()
         )
         granularity = 1000
@@ -159,8 +159,8 @@ class TestDecayFunctions(unittest.TestCase):
             ),
             impulse_pruning_threshold=0,
             firing_threshold=0.5,
-            node_decay_function=decay_function_exponential_with_half_life(50),
-            edge_decay_function=decay_function_gaussian_with_sd(sd_frac * granularity),
+            node_decay_function=make_decay_function_exponential_with_half_life(50),
+            edge_decay_function=make_decay_function_gaussian_with_sd(sd_frac * granularity),
             item_labelling_dictionary=dict()
         )
 

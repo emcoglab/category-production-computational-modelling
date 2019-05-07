@@ -32,7 +32,7 @@ from model.temporal_spreading_activation import TemporalSpreadingActivation, loa
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.indexing import list_index_dictionaries
-from model.utils.maths import decay_function_exponential_with_decay_factor, decay_function_gaussian_with_sd
+from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_gaussian_with_sd
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -157,9 +157,9 @@ def main(n_words: int,
             item_labelling_dictionary=node_labelling_dictionary,
             firing_threshold=firing_threshold,
             impulse_pruning_threshold=impulse_pruning_threshold,
-            node_decay_function=decay_function_exponential_with_decay_factor(
+            node_decay_function=make_decay_function_exponential_with_decay_factor(
                 decay_factor=node_decay_factor),
-            edge_decay_function=decay_function_gaussian_with_sd(
+            edge_decay_function=make_decay_function_gaussian_with_sd(
                 sd=edge_decay_sd_factor*length_factor))
 
         tsa.activate_item_with_label(category_label, 1)
