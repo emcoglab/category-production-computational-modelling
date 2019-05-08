@@ -23,7 +23,8 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
-from model.component import ActivationValue, SensorimotorComponent, save_model_spec_sensorimotor
+from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
+from model.common import ActivationValue
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
@@ -44,7 +45,7 @@ FULL_ACTIVATION = ActivationValue(1.0)
 def main(distance_type_name: str,
          length_factor: int,
          pruning_length: int,
-         impulse_pruning_threshold: float,
+         buffer_pruning_threshold: float,
          run_for_ticks: int,
          sigma: float,
          use_prepruned: bool,
@@ -57,7 +58,7 @@ def main(distance_type_name: str,
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
                              f"length {length_factor}, pruning at {pruning_length} "
-                             f"sigma {sigma}; pt {impulse_pruning_threshold}; "
+                             f"sigma {sigma}; pt {buffer_pruning_threshold}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -69,7 +70,8 @@ def main(distance_type_name: str,
         length_factor=length_factor,
         pruning_length=pruning_length,
         lognormal_sigma=sigma,
-        buffer_pruning_threshold=impulse_pruning_threshold,
+        impulse_pruning_threshold=buffer_pruning_threshold,
+        buffer_pruning_threshold=buffer_pruning_threshold,
         # Once a node is fully activated, that's enough.
         activation_cap=FULL_ACTIVATION,
         use_prepruned=use_prepruned,
@@ -104,11 +106,11 @@ def main(distance_type_name: str,
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {pruning_length}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
-        if sc.is_connected:
+        if sc.graph.is_connected():
             csv_comments.append(f"\t    connected = yes")
         else:
             csv_comments.append(f"\t    connected = no")
-            csv_comments.append(f"\t      orphans = {'yes' if sc.has_orphans else 'no'}")
+            csv_comments.append(f"\t      orphans = {'yes' if sc.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
 
@@ -159,7 +161,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
+    parser.add_argument("-f", "--buffer_pruning_threshold", required=True, type=float)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-p", "--pruning_length", required=True, type=int)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
@@ -171,7 +173,7 @@ if __name__ == '__main__':
     main(pruning_length=args.pruning_length,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
-         impulse_pruning_threshold=args.impulse_pruning_threshold,
+         buffer_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,
          bailout=args.bailout,

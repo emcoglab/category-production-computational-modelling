@@ -25,7 +25,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from model.temporal_spreading_activation import load_labels_from_corpus
+from model.linguistic_component import load_labels_from_corpus
 from model.graph import Graph
 from model.utils.maths import nearest_value_at_quantile
 from preferences import Preferences

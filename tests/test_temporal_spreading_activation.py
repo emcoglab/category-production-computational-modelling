@@ -41,7 +41,7 @@ class TestToyExample(unittest.TestCase):
         )
         tsa = TemporalSpreadingActivation(
             graph=graph,
-            item_labelling_dictionary={0: "lion", 1: "tiger", 2: "stripes"},
+            idx2label={0: "lion", 1: "tiger", 2: "stripes"},
             firing_threshold=0.3,
             impulse_pruning_threshold=.1,
             node_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
@@ -101,7 +101,7 @@ class TestDecayFunctions(unittest.TestCase):
             impulse_pruning_threshold=0,
             node_decay_function=make_decay_function_exponential_with_half_life(50),
             edge_decay_function=make_decay_function_gaussian_with_sd(0.42 * 100),
-            item_labelling_dictionary=dict()
+            idx2label=dict()
         )
         tsa = TemporalSpreadingActivation(
             graph=Graph.from_distance_matrix(
@@ -112,7 +112,7 @@ class TestDecayFunctions(unittest.TestCase):
             impulse_pruning_threshold=0,
             node_decay_function=make_decay_function_exponential_with_half_life(50),
             edge_decay_function=make_decay_function_gaussian_with_sd(42),
-            item_labelling_dictionary=dict()
+            idx2label=dict()
         )
 
         tsa_frac.activate_item_with_idx(n=0, activation=1.0)
@@ -149,7 +149,7 @@ class TestDecayFunctions(unittest.TestCase):
             firing_threshold=0.5,
             node_decay_function=make_decay_function_exponential_with_half_life(50),
             edge_decay_function=make_decay_function_gaussian_with_sd(sd_frac * granularity),
-            item_labelling_dictionary=dict()
+            idx2label=dict()
         )
         granularity = 1000
         tsa_1000 = TemporalSpreadingActivation(
@@ -161,7 +161,7 @@ class TestDecayFunctions(unittest.TestCase):
             firing_threshold=0.5,
             node_decay_function=make_decay_function_exponential_with_half_life(50),
             edge_decay_function=make_decay_function_gaussian_with_sd(sd_frac * granularity),
-            item_labelling_dictionary=dict()
+            idx2label=dict()
         )
 
         tsa_390.activate_item_with_idx(n=0, activation=1.0)

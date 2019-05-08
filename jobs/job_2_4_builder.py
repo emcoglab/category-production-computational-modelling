@@ -56,7 +56,7 @@ for pruning_length, ram_amount in prune_ram.items():
             job_file.write(f"python3 ../{script_name}.py \\\n")
             job_file.write(f"           --distance_type {distance_type.name} \\\n")
             job_file.write(f"           --pruning_length {pruning_length} \\\n")
-            job_file.write(f"           --impulse_pruning_threshold {pruning_threshold} \\\n")
+            job_file.write(f"           --buffer_pruning_threshold {pruning_threshold} \\\n")
             job_file.write(f"           --length_factor {length_factor} \\\n")
             job_file.write(f"           --node_decay_sigma {sigma} \\\n")
             job_file.write(f"           --run_for_ticks {run_for_ticks} \\\n")

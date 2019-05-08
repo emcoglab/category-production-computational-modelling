@@ -107,7 +107,7 @@ def main():
                     graph=graph,
                     firing_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
-                    item_labelling_dictionary=node_labelling_dictionary,
+                    idx2label=node_labelling_dictionary,
                     node_decay_function=make_decay_function_exponential_with_decay_factor(
                         decay_factor=node_decay_factor),
                     edge_decay_function=make_decay_function_gaussian_with_sd(

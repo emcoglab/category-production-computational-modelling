@@ -25,7 +25,8 @@ from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
-from model.component import save_model_spec_linguistic, LinguisticComponent, ActivationValue
+from model.linguistic_component import LinguisticComponent, save_model_spec_linguistic
+from model.common import ActivationValue
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
@@ -110,11 +111,11 @@ def main(n_words: int,
         csv_comments.append(f"\t     firing θ = {firing_threshold}")
         csv_comments.append(f"\t            δ = {node_decay_factor}")
         csv_comments.append(f"\t    sd_factor = {edge_decay_sd_factor}")
-        if lc.is_connected:
+        if lc.graph.is_connected():
             csv_comments.append(f"\t    connected = yes")
         else:
             csv_comments.append(f"\t    connected = no")
-            csv_comments.append(f"\t      orphans = {'yes' if lc.has_orphans else 'no'}")
+            csv_comments.append(f"\t      orphans = {'yes' if lc.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
 
