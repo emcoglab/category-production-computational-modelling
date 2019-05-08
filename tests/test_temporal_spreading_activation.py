@@ -64,7 +64,7 @@ class TestDecayFunctions(unittest.TestCase):
         d = 1
         t = 27
         a_0 = 0.64
-        self.assertEqual(
+        self.assertAlmostEqual(
             a_0,
             make_decay_function_exponential_with_decay_factor(d)(t, a_0)
         )
