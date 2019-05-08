@@ -7,7 +7,7 @@ from numpy import nan
 from pandas import DataFrame, read_csv
 
 from evaluation.model_specs import load_model_spec
-from model.temporal_spreading_activation import ItemActivatedEvent
+from model.component import ItemActivatedEvent
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 

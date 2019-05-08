@@ -26,7 +26,8 @@ from evaluation.model_specs import save_model_spec_sensorimotor
 from ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology, Node
 from model.temporal_spatial_propagation import TemporalSpatialPropagation
-from model.temporal_spreading_activation import load_labels_from_sensorimotor, ActivationValue
+from model.temporal_spreading_activation import load_labels_from_sensorimotor
+from model.component import ActivationValue
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.utils.maths import make_decay_function_lognormal
