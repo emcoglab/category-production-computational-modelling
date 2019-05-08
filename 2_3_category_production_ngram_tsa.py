@@ -23,7 +23,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from evaluation.model_specs import save_model_spec_linguistic
+from model.component import save_model_spec_linguistic
 from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from model.graph import Graph, log_graph_topology

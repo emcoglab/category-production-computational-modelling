@@ -6,8 +6,7 @@ from typing import DefaultDict
 from numpy import nan
 from pandas import DataFrame, read_csv
 
-from evaluation.model_specs import load_model_spec
-from model.component import ItemActivatedEvent
+from model.component import ItemActivatedEvent, load_model_spec
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 
