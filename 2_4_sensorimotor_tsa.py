@@ -100,15 +100,15 @@ def main(distance_type_name: str,
         sc.reset()
 
         # Record topology
-        connected = sc.is_connected
-        orphans = sc.has_orphans
         csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {pruning_length}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
-        csv_comments.append(f"\t    connected = {'yes' if connected else 'no'}")
-        if not connected:
-            csv_comments.append(f"\t      orphans = {'yes' if orphans else 'no'}")
+        if sc.is_connected:
+            csv_comments.append(f"\t    connected = yes")
+        else:
+            csv_comments.append(f"\t    connected = no")
+            csv_comments.append(f"\t      orphans = {'yes' if sc.has_orphans else 'no'}")
 
         # Do the spreading activation
 

@@ -17,22 +17,18 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from collections import defaultdict
 from os import path, makedirs
 
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist, TokenIndex
+from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.graph import Graph, iter_edges_from_edgelist, log_graph_topology
-from model.temporal_spreading_activation import TemporalSpreadingActivation, load_labels_from_corpus
+from model.component import LinguisticComponent, EdgePruningType
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
-from model.utils.indexing import list_index_dictionaries
-from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_gaussian_with_sd
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -64,48 +60,26 @@ def main(n_words: int,
 
     corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
-    token_index = TokenIndex.from_freqdist_ranks(freq_dist)
     distance_type = DistanceType.from_name(distance_type_name)
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
-    filtered_ldm_ids = sorted([token_index.token2id[w] for w in filtered_words])
-
-    # These dictionaries translate between matrix-row/column indices (after filtering) and token indices within the LDM.
-    _, matrix_to_ldm = list_index_dictionaries(filtered_ldm_ids)
-
-    # Load distance matrix
-    graph_file_name = f"{distributional_model.name} {distance_type.name} {n_words} words length {length_factor}.edgelist"
-
-    # Build edge distributions
-    logger.info("Collating edge length distributions.")
-    edge_lengths_from_node = defaultdict(list)
-    for edge, length in iter_edges_from_edgelist(path.join(Preferences.graphs_dir, graph_file_name)):
-        for node in edge:
-            edge_lengths_from_node[node].append(length)
-    edge_lengths_from_node.default_factory = None  # Make into a dict, to catch KeyErrors
-
-    # Get pruning length
-    if prune_importance is not None:
-        logger.info(f"Loading graph from {graph_file_name}, pruning importance {prune_importance}")
-    else:
-        logger.info(f"Loading graph from {graph_file_name}")
-
-    # Load graph
-    graph = Graph.load_from_edgelist_with_importance_pruning(
-        file_path=path.join(Preferences.graphs_dir, graph_file_name),
-        ignore_edges_with_importance_greater_than=prune_importance,
-        keep_at_least_n_edges=Preferences.min_edges_per_node
-    )
-    n_edges = len(graph.edges)
-
-    connected, orphans = log_graph_topology(graph)
-
-    # Load node relabelling dictionary
-    logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
 
     cp = CategoryProduction()
+
+    lc = LinguisticComponent(
+        n_words=n_words,
+        distributional_model=distributional_model,
+        freq_dist=freq_dist,
+        length_factor=length_factor,
+        impulse_pruning_threshold=impulse_pruning_threshold,
+        edge_decay_sd_factor=edge_decay_sd_factor,
+        node_decay_factor=node_decay_factor,
+        firing_threshold=firing_threshold,
+        distance_type=distance_type,
+        edge_pruning_type=EdgePruningType.Importance,
+        edge_pruning=prune_importance,
+    )
 
     for category_label in cp.category_labels:
 
@@ -139,50 +113,41 @@ def main(n_words: int,
 
         csv_comments.append(f"Running spreading activation using parameters:")
         csv_comments.append(f"\t      words = {n_words:_}")
-        csv_comments.append(f"\t      edges = {n_edges:_}")
         csv_comments.append(f"\tgranularity = {length_factor:_}")
         if prune_importance is not None:
             csv_comments.append(f"\t    pruning = {prune_importance}")
         csv_comments.append(f"\t   firing θ = {firing_threshold}")
         csv_comments.append(f"\t          δ = {node_decay_factor}")
         csv_comments.append(f"\t  sd_factor = {edge_decay_sd_factor}")
-        csv_comments.append(f"\t  connected = {'yes' if connected else 'no'}")
-        if not connected:
-            csv_comments.append(f"\t    orphans = {'yes' if orphans else 'no'}")
+        if lc.is_connected:
+            csv_comments.append(f"\t    connected = yes")
+        else:
+            csv_comments.append(f"\t    connected = no")
+            csv_comments.append(f"\t      orphans = {'yes' if lc.has_orphans else 'no'}")
 
         # Do the spreading activation
 
-        tsa: TemporalSpreadingActivation = TemporalSpreadingActivation(
-            graph=graph,
-            item_labelling_dictionary=node_labelling_dictionary,
-            firing_threshold=firing_threshold,
-            impulse_pruning_threshold=impulse_pruning_threshold,
-            node_decay_function=make_decay_function_exponential_with_decay_factor(
-                decay_factor=node_decay_factor),
-            edge_decay_function=make_decay_function_gaussian_with_sd(
-                sd=edge_decay_sd_factor*length_factor))
-
-        tsa.activate_item_with_label(category_label, 1)
+        lc.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            node_activations = tsa.tick()
+            node_activations = lc.tick()
 
             for na in node_activations:
                 model_response_entries.append((
                     na.label,
-                    tsa.label2idx[na.label],
+                    lc.label2idx[na.label],
                     na.activation,
                     na.time_activated,
                 ))
 
             # Break early if we've got a probable explosion
-            if len(tsa.suprathreshold_items()) > bailout:
+            if len(lc.suprathreshold_items()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(tsa.suprathreshold_items())} nodes activated.")
+                                    f"with {len(lc.suprathreshold_items())} nodes activated.")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[
