@@ -173,7 +173,7 @@ if __name__ == '__main__':
     main(pruning_length=args.pruning_length,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
-         buffer_pruning_threshold=args.impulse_pruning_threshold,
+         buffer_pruning_threshold=args.buffer_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,
          bailout=args.bailout,
