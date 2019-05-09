@@ -17,7 +17,7 @@ caiwingfield.net
 
 import unittest
 
-from numpy import array, Infinity
+from numpy import array
 
 from model.graph import Graph
 from model.temporal_spatial_propagation import TemporalSpatialPropagation
@@ -41,7 +41,6 @@ class TestToyExample(unittest.TestCase):
             idx2label={0: "lion", 1: "tiger", 2: "stripes"},
             impulse_pruning_threshold=.1,
             node_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
-            activation_cap=Infinity,
         )
 
         tsp.activate_item_with_label("lion", 1)
