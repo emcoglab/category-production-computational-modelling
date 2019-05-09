@@ -66,11 +66,9 @@ def main(n_words: int,
     filtered_words = set(freq_dist.most_common_tokens(n_words))
 
     cp = CategoryProduction()
-
     lc = LinguisticComponent(
         n_words=n_words,
         distributional_model=distributional_model,
-        freq_dist=freq_dist,
         length_factor=length_factor,
         impulse_pruning_threshold=impulse_pruning_threshold,
         edge_decay_sd_factor=edge_decay_sd_factor,

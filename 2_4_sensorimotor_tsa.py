@@ -44,7 +44,7 @@ FULL_ACTIVATION = ActivationValue(1.0)
 
 def main(distance_type_name: str,
          length_factor: int,
-         pruning_length: int,
+         max_sphere_radius: int,
          buffer_pruning_threshold: float,
          run_for_ticks: int,
          sigma: float,
@@ -57,8 +57,8 @@ def main(distance_type_name: str,
     # Output file path
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
-                             f"length {length_factor}, pruning at {pruning_length} "
-                             f"sigma {sigma}; pt {buffer_pruning_threshold}; "
+                             f"length {length_factor}, max r {max_sphere_radius} "
+                             f"sigma {sigma}; bpt {buffer_pruning_threshold}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -68,7 +68,7 @@ def main(distance_type_name: str,
     sc = SensorimotorComponent(
         distance_type=distance_type,
         length_factor=length_factor,
-        pruning_length=pruning_length,
+        max_sphere_radius=max_sphere_radius,
         lognormal_sigma=sigma,
         impulse_pruning_threshold=buffer_pruning_threshold,
         buffer_pruning_threshold=buffer_pruning_threshold,
@@ -77,7 +77,7 @@ def main(distance_type_name: str,
         use_prepruned=use_prepruned,
     )
 
-    save_model_spec_sensorimotor(length_factor, pruning_length, sigma, response_dir)
+    save_model_spec_sensorimotor(length_factor, max_sphere_radius, sigma, response_dir)
 
     for category_label in cp.category_labels:
 
@@ -104,7 +104,7 @@ def main(distance_type_name: str,
         # Record topology
         csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
-        csv_comments.append(f"\t      pruning = {pruning_length}")
+        csv_comments.append(f"\t      pruning = {max_sphere_radius}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
         if sc.graph.is_connected():
             csv_comments.append(f"\t    connected = yes")
@@ -163,14 +163,14 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-f", "--buffer_pruning_threshold", required=True, type=float)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
-    parser.add_argument("-p", "--pruning_length", required=True, type=int)
+    parser.add_argument("-r", "--max_sphere_radius", required=True, type=int)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
 
     args = parser.parse_args()
 
-    main(pruning_length=args.pruning_length,
+    main(max_sphere_radius=args.max_sphere_radius,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
          buffer_pruning_threshold=args.buffer_pruning_threshold,

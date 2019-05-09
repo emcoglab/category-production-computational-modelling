@@ -34,15 +34,15 @@ distance_type = DistanceType.Minkowski3
 
 names = []
 
-for pruning_length, ram_amount in prune_ram.items():
+for sphere_radius, ram_amount in prune_ram.items():
     for sigma in sigmas:
-        name = f"{job_name}_sm_s{sigma}_p{pruning_length}.sh"
+        name = f"{job_name}_sm_s{sigma}_r{sphere_radius}.sh"
         names.append(name)
         with open(path.join(job_name, name), mode="w", encoding="utf-8") as job_file:
             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
             job_file.write(f"#$ -S /bin/bash\n")
             job_file.write(f"#$ -q serial\n")
-            job_file.write(f"#$ -N {short_name}_sm_s{sigma}_p{pruning_length}_sa\n")
+            job_file.write(f"#$ -N {short_name}_sm_s{sigma}_r{sphere_radius}_sa\n")
             job_file.write(f"#$ -m e\n")
             job_file.write(f"#$ -M c.wingfield@lancaster.ac.uk\n")
             job_file.write(f"#$ -l h_vmem={ram_amount}G\n")
@@ -55,7 +55,7 @@ for pruning_length, ram_amount in prune_ram.items():
             job_file.write(f"\n")
             job_file.write(f"python3 ../{script_name}.py \\\n")
             job_file.write(f"           --distance_type {distance_type.name} \\\n")
-            job_file.write(f"           --pruning_length {pruning_length} \\\n")
+            job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
             job_file.write(f"           --buffer_pruning_threshold {pruning_threshold} \\\n")
             job_file.write(f"           --length_factor {length_factor} \\\n")
             job_file.write(f"           --node_decay_sigma {sigma} \\\n")
