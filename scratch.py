@@ -18,7 +18,6 @@ def main():
     tsp = TemporalSpatialPropagation(
         underlying_graph=graph,
         idx2label={0: "lion", 1: "tiger", 2: "stripes"},
-        buffer_pruning_threshold=.1,
         impulse_pruning_threshold=.1,
         node_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
         activation_cap=Infinity,
