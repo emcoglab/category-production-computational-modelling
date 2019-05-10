@@ -20,6 +20,8 @@ import unittest
 from model.utils.maths_core import lognormal_sf, lognormal_pdf, lognormal_cdf
 from scipy.stats import lognorm
 
+from model.utils.maths import scale01, affine_scale
+
 
 class TestCython(unittest.TestCase):
 
@@ -94,6 +96,37 @@ class TestCython(unittest.TestCase):
             # cythonised version
             lognormal_sf(x, sigma)
         )
+
+
+class TestAffineScale(unittest.TestCase):
+
+    def test_scale01_9_10(self):
+        self.assertEqual(
+            scale01((0, 10), 7),
+            0.7
+        )
+
+    def test_affine_scale_n2_2_10_20_1(self):
+        self.assertEqual(
+            affine_scale((-2, 2), (10, 20), 1),
+            17.5
+        )
+
+    def test_affine_inverted_n1_n3_n1_3_n25(self):
+        self.assertEqual(
+            affine_scale((-1, -3), (-1, 3), -2.5),
+            2
+        )
+
+    def test_affine_scale_to_zero(self):
+        self.assertEqual(
+            affine_scale((2, 3), (4, 4), 4),
+            4
+        )
+
+    def test_affine_scale_from_zero(self):
+        with self.assertRaises(Exception):
+            affine_scale((4, 4), (2, 3), 4)
 
 
 if __name__ == '__main__':
