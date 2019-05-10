@@ -85,6 +85,7 @@ def main(distance_type_name: str,
         category_label_sm = cp.apply_sensorimotor_substitution(category_label)
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
+        concurrent_activations_path = path.join(response_dir, f"concurrent_activations_{category_label}.csv")
 
         csv_comments = []
 
@@ -116,11 +117,14 @@ def main(distance_type_name: str,
 
         sc.activate_item_with_label(category_label_sm, FULL_ACTIVATION)
 
+        n_concurrent_activations = []
         model_response_entries = []
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
             node_activations = sc.tick()
+
+            n_concurrent_activations.append((tick, len(node_activations), len(sc.items_in_buffer())))
 
             for na in node_activations:
                 model_response_entries.append((
@@ -145,12 +149,19 @@ def main(distance_type_name: str,
 
         # Output results
 
+        # Model ouput
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
             # Write comments
             for comment in csv_comments:
                 output_file.write(comment_line_from_str(comment))
             # Write data
             model_responses_df.to_csv(output_file, index=False)
+
+        # Concurrent activations
+        with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
+            DataFrame.from_records(n_concurrent_activations,
+                                   columns=["Tick", "New activations", "Concurrent activations"])\
+                     .to_csv(concurrent_activations_file, index=False)
 
 
 if __name__ == '__main__':
