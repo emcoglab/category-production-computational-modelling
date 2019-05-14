@@ -47,20 +47,19 @@ def main():
     # category -> sm_response -> distance
     cosine_distances: Dict[str, DefaultDict[str, float]] = dict()
     minkowski_distances: Dict[str, DefaultDict[str, float]] = dict()
-    for category in category_production.category_labels:
+    for category in category_production.category_labels_sensorimotor:
         cosine_distances[category] = defaultdict(lambda: nan)
         minkowski_distances[category] = defaultdict(lambda: nan)
 
-        sm_category = category_production.apply_sensorimotor_substitution(category)
-
         try:
-            category_sm_vector = array(sensorimotor_norms.vector_for_word(sm_category))
+            category_sm_vector = array(sensorimotor_norms.vector_for_word(category))
         except WordNotInNormsError:
             continue
 
         logger.info(f"Category: {category}")
 
-        for sm_response in category_production.responses_for_category(category, use_sensorimotor_responses=True,
+        for sm_response in category_production.responses_for_category(category,
+                                                                      use_sensorimotor=True,
                                                                       single_word_only=True):
 
             try:

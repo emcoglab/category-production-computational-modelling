@@ -79,10 +79,7 @@ def main(distance_type_name: str,
 
     save_model_spec_sensorimotor(length_factor, max_sphere_radius, sigma, response_dir)
 
-    for category_label in cp.category_labels:
-
-        # Get the SM-compatible version if there is one
-        category_label_sm = cp.apply_sensorimotor_substitution(category_label)
+    for category_label in cp.category_labels_sensorimotor:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
         concurrent_activations_path = path.join(response_dir, f"concurrent_activations_{category_label}.csv")
@@ -90,7 +87,7 @@ def main(distance_type_name: str,
         csv_comments = []
 
         # Skip the check if the category won't be in the network
-        if category_label_sm not in sc.concept_labels:
+        if category_label not in sc.concept_labels:
             continue
 
         # Only run the TSA if we've not already done it
@@ -115,7 +112,7 @@ def main(distance_type_name: str,
 
         # Do the spreading activation
 
-        sc.activate_item_with_label(category_label_sm, FULL_ACTIVATION)
+        sc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         n_concurrent_activations = []
         model_response_entries = []

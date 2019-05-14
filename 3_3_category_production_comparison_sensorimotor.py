@@ -47,7 +47,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     sensorimotor_norms = SensorimotorNorms()
 
     def get_sensorimotor_distance_minkowski3(row):
-        c = category_production.apply_sensorimotor_substitution(row[CPColNames.Category])
+        c = row[CPColNames.CategorySensorimotor]
         r = row[CPColNames.ResponseSensorimotor]
 
         try:
@@ -78,7 +78,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     main_dataframe: DataFrame = category_production.data.copy()
 
     # Drop precomputed distance measures
-    main_dataframe.drop(['Sensorimotor.proximity', 'Linguistic.proximity'], axis=1, inplace=True)
+    main_dataframe.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
 
     # Get TTFAs and distances
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
@@ -86,7 +86,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
         model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
 
     main_dataframe[TTFA] = main_dataframe.apply(
-        lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]],
+        lambda row: model_ttfas[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
         axis=1)
     main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
 
@@ -99,8 +99,8 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
 
     # Collect
-    available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]
-                          .groupby([CPColNames.Category, CPColNames.Response])
+    available_items = set(main_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
+                          .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                           .groups.keys())
 
     # Save main dataframe

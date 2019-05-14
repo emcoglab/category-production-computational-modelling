@@ -44,7 +44,7 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
 
     logger.info(f"Looking at output from model with {n_words:,} words.")
 
-    category_production = CategoryProduction()
+    cp = CategoryProduction()
 
     per_category_stats_output_path = path.join(Preferences.results_dir,
                                                "Category production fit",
@@ -54,14 +54,14 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
     # region Build main dataframe
 
     # Main dataframe holds category production data and model response data
-    main_dataframe: DataFrame = category_production.data.copy()
+    main_dataframe: DataFrame = cp.data.copy()
 
     # Drop precomputed distance measures
     main_dataframe.drop(['LgSUBTLWF', 'Sensorimotor.proximity', 'Linguistic.proximity'], axis=1, inplace=True)
 
     # Add model TTFA column to main_dataframe
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
-    for category in category_production.category_labels:
+    for category in cp.category_labels:
         model_ttfas[category] = get_model_ttfas_for_category_linguistic(category, input_results_dir, n_words, conscious_access_threshold)
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]],
