@@ -23,11 +23,11 @@ from .approximate_comparator.approximate_comparator import is_almost_equal
 
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation
-from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_exponential_with_half_life, \
-    make_decay_function_gaussian_with_sd
+from model.utils.maths import make_decay_function_exponential_with_decay_factor, \
+    make_decay_function_exponential_with_half_life, make_decay_function_gaussian_with_sd
 
 
-class TestToyExample(unittest.TestCase):
+class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
     def test_worked_example_unweighted_node_values(self):
         distance_matrix = array([

@@ -14,6 +14,7 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import logging
 from os import path
 from typing import Set
@@ -44,7 +45,8 @@ class SensorimotorComponent(TemporalSpatialPropagation):
                  length_factor: int,
                  max_sphere_radius: int,
                  lognormal_sigma: float,
-                 impulse_pruning_threshold: ActivationValue,
+                 buffer_size_limit: int,
+                 buffer_entry_threshold: ActivationValue,
                  buffer_pruning_threshold: ActivationValue,
                  activation_cap: ActivationValue,
                  use_prepruned: bool = False,
@@ -58,8 +60,13 @@ class SensorimotorComponent(TemporalSpatialPropagation):
             What is the maximum radius of a sphere
         :param lognormal_sigma:
             The sigma parameter for the lognormal decay.
+        :param buffer_size_limit:
+            The maximum size of the buffer. After this, qualifying items will displace existing items rather than just
+            being added.
+        :param buffer_entry_threshold:
+            The minimum activation required for a concept to enter the working_memory_buffer.
         :param buffer_pruning_threshold:
-            The activation threshold at which to remove items from the buffer.
+            The activation threshold at which to remove items from the working_memory_buffer.
         :param activation_cap:
             If None is supplied, no cap is used.
         :param use_prepruned:
@@ -77,23 +84,105 @@ class SensorimotorComponent(TemporalSpatialPropagation):
             # Sigma for the log-normal decay gets multiplied by the length factor, so that if we change the length
             # factor, sigma doesn't also  have to change for the behaviour of the model to be approximately equivalent.
             node_decay_function=make_decay_function_lognormal(sigma=lognormal_sigma * length_factor),
-            impulse_pruning_threshold=impulse_pruning_threshold,
         )
 
         # region Set once
         # These fields are set on first init and then don't need to change even if .reset() is used.
 
         # Thresholds
-        # Use >= and < to test for above/below
-        self.buffer_pruning_threshold = buffer_pruning_threshold
 
+        # Use >= and < to test for above/below
+        self.buffer_entry_threshold: ActivationValue = buffer_entry_threshold
+        self.buffer_pruning_threshold: ActivationValue = buffer_pruning_threshold
         # Cap on a node's total activation after receiving incoming.
-        self.activation_cap = activation_cap
+        self.activation_cap: ActivationValue = activation_cap
+
+        self.buffer_size_limit = buffer_size_limit
 
         # A local copy of the sensorimotor norms data
-        self.sensorimotor_norms = SensorimotorNorms()
+        self.sensorimotor_norms: SensorimotorNorms = SensorimotorNorms()
 
         # endregion
+
+        # region Resettable
+        # These fields are reinitialised in .reset()
+
+        # The set of items which are currently being consciously considered.
+        #
+        # A fixed size (self.buffer_size_limit).  Items may enter the buffer when they are activated and leave when they
+        # decay sufficiently (self.buffer_pruning_threshold) or are displaced.
+        #
+        # Currently this *could* be implemented as a simple property which lists the top-n most activated things, rather
+        # than being meticulously maintained during as the model runs.  However it is better to maintain it as we go as
+        # it will be easier to extend it into a multi-component buffer in the future.
+        self.working_memory_buffer: Set[ItemIdx] = set()
+
+        # endregion
+
+    def reset(self):
+        super(SensorimotorComponent, self).reset()
+        self.working_memory_buffer = set()
+
+    def tick(self):
+        super(SensorimotorComponent, self).tick()
+        self._prune_decayed_items_in_buffer()
+
+    def activate_item_with_idx(self, n: ItemIdx, activation: ActivationValue) -> bool:
+        # Activate the item
+        item_did_activate = super(SensorimotorComponent, self).activate_item_with_idx(n, activation)
+
+        # Present it as available to enter the buffer
+        self._present_to_working_memory_buffer(n)
+
+        return item_did_activate
+
+    def _present_to_working_memory_buffer(self, item: ItemIdx) -> bool:
+        """
+        Try to get an item into the buffer just as it's being activated.
+        :param item:
+            The candidate item
+        :return:
+            True if the item got into the buffer, else False.
+        """
+        activation: ActivationValue = self.activation_of_item_with_idx(item)
+
+        # Check if item can enter buffer
+        if activation < self.buffer_entry_threshold:
+            return False
+
+        # The item is eligible for adding, but if only if there is room for it, else it may displace something
+        # already in the buffer.
+
+        # If there is room, it just goes in
+        if len(self.working_memory_buffer) < self.buffer_size_limit:
+            self.working_memory_buffer.add(item)
+            return True
+
+        # If there wasn't room, we may displace something
+
+        # Item with the lowest activation in the WM buffer
+        lowest_item, lowest_activation = min(
+            ((n, self.activation_of_item_with_idx(n)) for n in self.working_memory_buffer),
+            key=lambda tup: tup[1])
+
+        # If everything already in the buffer is larger than the candidate, it doesn't get let in
+        if activation < lowest_activation:
+            return False
+
+        # If it's larger than something, it does
+        self.working_memory_buffer.remove(lowest_item)
+        self.working_memory_buffer.add(item)
+        return True
+
+    def _prune_decayed_items_in_buffer(self):
+        """Removes items from the buffer which have dropped below threshold."""
+        items_to_prune = []
+        for item in self.working_memory_buffer:
+            if self.activation_of_item_with_idx(item) < self.buffer_pruning_threshold:
+                items_to_prune.append(item)
+
+        for item in items_to_prune:
+            self.working_memory_buffer.remove(item)
 
     @property
     def concept_labels(self) -> Set[ItemLabel]:
@@ -101,7 +190,7 @@ class SensorimotorComponent(TemporalSpatialPropagation):
         return set(w for i, w in self.idx2label.items())
 
     def items_in_buffer(self) -> Set[ItemIdx]:
-        """Items which are above the buffer-pruning threshold."""
+        """Items which are above the working_memory_buffer-pruning threshold."""
         return set(
             n
             for n in self.graph.nodes
@@ -113,7 +202,7 @@ class SensorimotorComponent(TemporalSpatialPropagation):
         return set(
             n
             for n in self.graph.nodes
-            if self.activation_of_item_with_idx(n) >= self.impulse_pruning_threshold
+            if self.activation_of_item_with_idx(n) > 0
         )
 
     def _presynaptic_modulation(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
@@ -125,9 +214,9 @@ class SensorimotorComponent(TemporalSpatialPropagation):
         # so applying the cap does not effect whether the node will fire or not.
         return activation if activation <= self.activation_cap else self.activation_cap
 
-    def _presynaptic_guard(self, activation: ActivationValue) -> bool:
-        # Node can only fire if not in the buffer (i.e. activation below pruning threshold)
-        return activation < self.buffer_pruning_threshold
+    def _presynaptic_guard(self, item: ItemIdx, activation: ActivationValue) -> bool:
+        # Node can only fire if not in the working_memory_buffer (i.e. activation below pruning threshold)
+        return item not in self.accessible_set()
 
     def _attenuate_by_prevalence(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
         """Attenuates the activation by the prevalence of the item."""
