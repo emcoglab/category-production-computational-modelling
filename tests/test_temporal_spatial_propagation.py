@@ -24,7 +24,7 @@ from model.temporal_spatial_propagation import TemporalSpatialPropagation
 from model.utils.maths import make_decay_function_exponential_with_decay_factor
 
 
-class TestToyExample(unittest.TestCase):
+class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
 
     def test_worked_example_unweighted_node_values(self):
         distance_matrix = array([
