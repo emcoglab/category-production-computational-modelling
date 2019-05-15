@@ -121,7 +121,7 @@ def main(distance_type_name: str,
             logger.info(f"Clock = {tick}")
             node_activations = sc.tick()
 
-            n_concurrent_activations.append((tick, len(node_activations), len(sc.items_in_buffer())))
+            n_concurrent_activations.append((tick, len(node_activations), len(sc.accessible_set())))
 
             for na in node_activations:
                 model_response_entries.append((
@@ -131,10 +131,10 @@ def main(distance_type_name: str,
                     na.time_activated))
 
             # Break early if we've got a probable explosion
-            if bailout is not None and len(sc.items_in_buffer()) > bailout:
+            if bailout is not None and len(sc.accessible_set()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(sc.items_in_buffer())} nodes activated.")
+                                    f"with {len(sc.accessible_set())} nodes activated.")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[
