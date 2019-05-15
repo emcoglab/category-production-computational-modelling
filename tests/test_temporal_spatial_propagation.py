@@ -51,9 +51,9 @@ class TestToyExample(unittest.TestCase):
 
         # WARNING!!!
         # These numbers not manually verified, just copied from the output for the purposes of refactoring!!!!!
-        self.assertAlmostEqual(tsp.activation_of_item_with_label("lion"),    0.2059, places=4)
-        self.assertAlmostEqual(tsp.activation_of_item_with_label("tiger"),   0.2824, places=4)
-        self.assertAlmostEqual(tsp.activation_of_item_with_label("stripes"), 0.3874, places=4)
+        self.assertAlmostEqual(tsp.activation_of_item_with_label("lion"),    10.7028, places=4)
+        self.assertAlmostEqual(tsp.activation_of_item_with_label("tiger"),    6.8101, places=4)
+        self.assertAlmostEqual(tsp.activation_of_item_with_label("stripes"), 10.6471, places=4)
 
 
 if __name__ == '__main__':
