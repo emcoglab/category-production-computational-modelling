@@ -26,6 +26,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
+from model.events import ItemActivatedEvent
 from model.linguistic_component import EdgePruningType, LinguisticComponent
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -131,15 +132,15 @@ def main(n_words: int,
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            node_activations = lc.tick()
+            events = lc.tick()
+            node_activations = [e for e in events if isinstance(e, ItemActivatedEvent)]
 
             for na in node_activations:
                 model_response_entries.append((
-                    na.label,
-                    lc.label2idx[na.label],
+                    lc.idx2label[na.item],
+                    na.item,
                     na.activation,
-                    na.time_activated,
-                ))
+                    na.time))
 
             # Break early if we've got a probable explosion
             if len(lc.suprathreshold_items()) > bailout:
