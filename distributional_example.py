@@ -121,11 +121,11 @@ def main():
                 for tick in range(1, run_for_ticks):
                     logger.info(f"Clock = {tick}")
                     events = tsa.tick()
-                    node_activations = [e for e in events if isinstance(e, ItemActivatedEvent)]
-                    nodes_activated_str = ", ".join([f"{node_labelling_dictionary[na.item]} ({na.activation:.3})"
-                                                     for na in node_activations])
+                    activation_events = [e for e in events if isinstance(e, ItemActivatedEvent)]
+                    nodes_activated_str = ", ".join([f"{node_labelling_dictionary[e.item]} ({e.activation:.3})"
+                                                     for e in activation_events])
 
-                    if len(node_activations) > 0:
+                    if len(activation_events) > 0:
                         logger.info("\t" + nodes_activated_str)
 
                     # Record results

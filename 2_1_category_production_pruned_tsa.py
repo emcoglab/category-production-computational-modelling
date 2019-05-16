@@ -138,14 +138,14 @@ def main(n_words: int,
 
             logger.info(f"Clock = {tick}")
             events = lc.tick()
-            node_activations = [e for e in events if isinstance(e, ItemActivatedEvent)]
+            activation_events = (e for e in events if isinstance(e, ItemActivatedEvent))
 
-            for na in node_activations:
+            for event in activation_events:
                 model_response_entries.append((
-                    lc.idx2label[na.item],
-                    na.item,
-                    na.activation,
-                    na.time))
+                    lc.idx2label[event.item],
+                    event.item,
+                    event.activation,
+                    event.time))
 
             # Break early if we've got a probable explosion
             if len(lc.suprathreshold_items()) > bailout:
