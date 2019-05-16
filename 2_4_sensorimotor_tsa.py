@@ -23,6 +23,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
+from model.graph import Length
 from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
 from model.common import ActivationValue
 from model.utils.email import Emailer
@@ -172,11 +173,13 @@ if __name__ == '__main__':
 
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-f", "--buffer_pruning_threshold", required=True, type=float)
-    parser.add_argument("-l", "--length_factor", required=True, type=int)
-    parser.add_argument("-r", "--max_sphere_radius", required=True, type=int)
+    parser.add_argument("-e", "--buffer_entry_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-f", "--buffer_pruning_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-l", "--length_factor", required=True, type=Length)
+    parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
+    parser.add_argument("-w", "--buffer_size_limit", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
 
     args = parser.parse_args()
@@ -184,6 +187,8 @@ if __name__ == '__main__':
     main(max_sphere_radius=args.max_sphere_radius,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
+         buffer_size_limit=args.buffer_size_limit,
+         buffer_entry_threshold=args.buffer_entry_threshold,
          buffer_pruning_threshold=args.buffer_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,

@@ -28,6 +28,8 @@ run_for_ticks = 10_000
 
 pruning_threshold = 0.05
 length_factor = 100
+buffer_size_limit = 10
+buffer_entry_threshold = 0.5
 distance_type = DistanceType.Minkowski3
 
 # ---
@@ -56,6 +58,8 @@ for sphere_radius, ram_amount in prune_ram.items():
             job_file.write(f"python3 ../{script_name}.py \\\n")
             job_file.write(f"           --distance_type {distance_type.name} \\\n")
             job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
+            job_file.write(f"           --buffer_size_limit {buffer_size_limit} \\\n")
+            job_file.write(f"           --buffer_entry_threshold {buffer_entry_threshold} \\\n")
             job_file.write(f"           --buffer_pruning_threshold {pruning_threshold} \\\n")
             job_file.write(f"           --length_factor {length_factor} \\\n")
             job_file.write(f"           --node_decay_sigma {sigma} \\\n")

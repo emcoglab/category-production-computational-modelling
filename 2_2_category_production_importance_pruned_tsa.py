@@ -26,6 +26,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
+from model.common import ActivationValue
 from model.linguistic_component import EdgePruningType, LinguisticComponent
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -173,17 +174,19 @@ if __name__ == '__main__':
 
     parser.add_argument("-b", "--bailout", required=True, type=int)
     parser.add_argument("-c", "--corpus_name", required=True, type=str)
-    parser.add_argument("-f", "--firing_threshold", required=True, type=float)
-    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
+    parser.add_argument("-f", "--firing_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=ActivationValue)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-m", "--model_name", required=True, type=str)
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-p", "--prune_importance", required=False, type=int, help="The importance level from which to prune from the graph.", default=None)
+    parser.add_argument("-p", "--prune_importance", required=False, type=int,
+                        help="The importance level from which to prune from the graph.", default=None)
     parser.add_argument("-r", "--radius", required=True, type=int)
     parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True, help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("-w", "--words", type=int, required=True,
+                        help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
 

@@ -15,6 +15,8 @@ module add anaconda3/2018.12
 python3 ../2_4_sensorimotor_tsa.py \
            --distance_type Minkowski-3 \
            --max_sphere_radius 250 \
+           --buffer_size_limit 10 \
+           --buffer_entry_threshold 0.5 \
            --buffer_pruning_threshold 0.05 \
            --length_factor 100 \
            --node_decay_sigma 0.2 \

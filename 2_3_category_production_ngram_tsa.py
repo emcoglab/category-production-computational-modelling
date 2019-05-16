@@ -165,10 +165,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
     parser.add_argument("-b", "--bailout", required=False, default=0, type=int,
-                        help="The number of concurrent activations necessary to pull the emergency handbrake. Set to 0 to never bailout.")
+                        help="The number of concurrent activations necessary to "
+                             "pull the emergency handbrake. Set to 0 to never bailout.")
     parser.add_argument("-c", "--corpus_name", required=True, type=str)
-    parser.add_argument("-f", "--firing_threshold", required=True, type=float)
-    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=float)
+    parser.add_argument("-f", "--firing_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=ActivationValue)
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-m", "--model_name", required=True, type=str)
     parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
