@@ -17,11 +17,12 @@ caiwingfield.net
 
 from typing import Set, Dict
 
-from model.common import ActivationValue, ItemIdx, GraphPropagationComponent
+from model.graph_propagation import GraphPropagation
+from model.basic_types import ActivationValue, ItemIdx
 from model.graph import Graph
 
 
-class TemporalSpreadingActivation(GraphPropagationComponent):
+class TemporalSpreadingActivation(GraphPropagation):
     """
     Spreading activation on a graph over time.
     Nodes have a firing threshold and an activation cap.
@@ -77,11 +78,11 @@ class TemporalSpreadingActivation(GraphPropagationComponent):
             if n in activation_arriving_at_time_t.keys()
         }
 
-    def _postsynaptic_guard(self, item: ItemIdx, activation: ActivationValue) -> bool:
+    def _postsynaptic_guard(self, idx: ItemIdx, activation: ActivationValue) -> bool:
         # Activation must exceed a firing threshold to cause further propagation.
         return activation >= self.firing_threshold
 
-    def _presynaptic_guard(self, item: ItemIdx, activation: ActivationValue) -> bool:
+    def _presynaptic_guard(self, idx: ItemIdx, activation: ActivationValue) -> bool:
         # If this node is currently suprathreshold, it acts as activation sink.
         # It doesn't accumulate new activation and cannot fire.
         return activation < self.firing_threshold

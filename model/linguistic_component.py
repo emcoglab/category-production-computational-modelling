@@ -28,7 +28,8 @@ from ldm.corpus.corpus import CorpusMetadata
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.common import ActivationValue, ItemLabel, _load_labels, ItemIdx
+from model.graph_propagation import _load_labels
+from model.basic_types import ActivationValue, ItemIdx, ItemLabel
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_gaussian_with_sd
@@ -114,7 +115,7 @@ class LinguisticComponent(TemporalSpreadingActivation):
 
         # endregion
 
-    def _postsynaptic_modulation(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
+    def _postsynaptic_modulation(self, idx: ItemIdx, activation: ActivationValue) -> ActivationValue:
         # The activation cap, if used, MUST be greater than the firing threshold (this is checked in __init__,
         # so applying the cap does not effect whether the node will fire or not.
         return activation if activation <= self.activation_cap else self.activation_cap

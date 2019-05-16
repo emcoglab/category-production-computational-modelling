@@ -1,6 +1,6 @@
 """
 ===========================
-Common aspects of model components.
+Base class for all components.
 ===========================
 
 Dr. Cai Wingfield
@@ -14,21 +14,18 @@ caiwingfield.net
 2019
 ---------------------------
 """
-
 import json
 from abc import ABCMeta
 from collections import namedtuple, defaultdict
 from os import path
-from typing import Dict, Set, DefaultDict
+from typing import Dict, DefaultDict, Optional, List
 
 import yaml
 
-from model.graph import Node, Graph
+from model.basic_types import ActivationValue, ItemIdx, ItemLabel
+from model.events import ModelEvent, ItemActivatedEvent, ItemFiredEvent
+from model.graph import Graph
 from model.utils.maths import make_decay_function_constant
-
-ActivationValue = float
-ItemIdx = Node
-ItemLabel = str
 
 
 class ActivationRecord(namedtuple('ActivationRecord', ['activation',
@@ -52,30 +49,7 @@ def blank_node_activation_record() -> ActivationRecord:
     return ActivationRecord(activation=0, time_activated=-1)
 
 
-class ItemActivatedEvent:
-    """
-    A node activation event.
-    Used to pass out of TSA.tick().
-    """
-
-    def __init__(self, label: str, activation: ActivationValue, time_activated: int):
-        self.label = label
-        # Use an ActivationRecord to store this so we don't have repeated code
-        self._record = ActivationRecord(activation=activation, time_activated=time_activated)
-
-    @property
-    def activation(self) -> ActivationValue:
-        return self._record.activation
-
-    @property
-    def time_activated(self) -> int:
-        return self._record.time_activated
-
-    def __repr__(self) -> str:
-        return f"<'{self.label}' ({self.activation}) @ {self.time_activated}>"
-
-
-class GraphPropagationComponent(metaclass=ABCMeta):
+class GraphPropagation(metaclass=ABCMeta):
 
     def __init__(self,
                  graph: Graph,
@@ -145,6 +119,8 @@ class GraphPropagationComponent(metaclass=ABCMeta):
         # process.  Nice!
         # ACTUALLY we'll use a defaultdict here, so we can quickly and easily add a scheduled activation in the right
         # place without verbose checks.
+        #
+        # arrival-time → destination-item → activation-to-apply
         self._scheduled_activations: DefaultDict[int, DefaultDict[ItemIdx, ActivationValue]] = defaultdict(
             # In case the aren't any scheduled activations due to arrive at a particular time, we'll just find an empty
             # defaultdict
@@ -157,45 +133,42 @@ class GraphPropagationComponent(metaclass=ABCMeta):
         # endregion
 
     def reset(self):
-        """Resets the spreading to its initial state without having to reload any data"""
+        """Resets the spreading to its initial state without having to reload any data."""
         self.clock = 0
-        self._activation_records: DefaultDict[ItemIdx, ActivationRecord] = defaultdict(blank_node_activation_record)
-        self._scheduled_activations: DefaultDict[int, DefaultDict[ItemIdx, ActivationValue]] = defaultdict(lambda: defaultdict(ActivationValue))
+        self._activation_records = defaultdict(blank_node_activation_record)
+        self._scheduled_activations = defaultdict(lambda: defaultdict(ActivationValue))
 
-    def tick(self) -> Set[ItemActivatedEvent]:
+    def tick(self) -> List[ModelEvent]:
         """
         Performs the spreading activation algorithm for one tick of the clock.
         :return:
-            Set of nodes which became activated.
+            List of items which were activated.
         """
         self.clock += 1
 
-        nodes_which_became_active = self._apply_activations()
+        activation_events = self._apply_activations()
 
-        return set(
-            ItemActivatedEvent(label=self.idx2label[node],
-                               activation=self.activation_of_item_with_idx(node),
-                               time_activated=self.clock)
-            for node in nodes_which_became_active)
+        return activation_events
 
-    def activate_item_with_label(self, label: ItemLabel, activation: ActivationValue) -> bool:
+    def activate_item_with_label(self, label: ItemLabel, activation: ActivationValue) -> Optional[ItemActivatedEvent]:
         """
-        Activate a node.
+        Activate an item.
         :param label:
         :param activation:
         :return:
-            True if the item was activated, else false.
+            ItemActivatedEvent if the item did activate.
+            None if not.
         """
         return self.activate_item_with_idx(self.label2idx[label], activation)
 
-    def _apply_activations(self) -> Set:
+    def _apply_activations(self) -> List[ItemActivatedEvent]:
         """
         Applies scheduled all scheduled activations.
         :return:
-            Set of nodes which became activated.
+            Events for items which became activated.
         """
 
-        items_which_became_activated = set()
+        activation_events = []
 
         if self.clock in self._scheduled_activations:
 
@@ -204,17 +177,17 @@ class GraphPropagationComponent(metaclass=ABCMeta):
 
             if len(scheduled_activation) > 0:
                 for destination_item, activation in scheduled_activation.items():
-                    item_did_become_activated = self.activate_item_with_idx(destination_item, activation)
-                    if item_did_become_activated:
-                        items_which_became_activated.add(destination_item)
+                    activation_event = self.activate_item_with_idx(destination_item, activation)
+                    if activation_event:
+                        activation_events.append(activation_event)
 
-        return items_which_became_activated
+        return activation_events
 
-    def activation_of_item_with_idx(self, n: ItemIdx) -> ActivationValue:
+    def activation_of_item_with_idx(self, idx: ItemIdx) -> ActivationValue:
         """Returns the current activation of a node."""
-        assert n in self.graph.nodes
+        assert idx in self.graph.nodes
 
-        activation_record: ActivationRecord = self._activation_records[n]
+        activation_record: ActivationRecord = self._activation_records[idx]
         return self.node_decay_function(
             self.clock - activation_record.time_activated,  # node age
             activation_record.activation)
@@ -227,50 +200,67 @@ class GraphPropagationComponent(metaclass=ABCMeta):
         """Returns the current activation of a node."""
         return self.activation_of_item_with_idx(self.label2idx[label])
 
-    def activate_item_with_idx(self, n: ItemIdx, activation: ActivationValue) -> bool:
+    def activate_item_with_idx(self, idx: ItemIdx, activation: ActivationValue) -> Optional[ItemActivatedEvent]:
         """
-        Activate a node.
-        :param n:
+        Activate an item.
+        :param idx:
+            Item to activate.
         :param activation:
+            Activation to apply (presynaptic).
+            May have presynaptic and postynaptic modulation applied, and activation may or may not be prevented.
         :return:
-            True if the node fired, else false.
+            ItemActivatedEvent if the item did activate.
+            ItemFiredEvent if the item activated and fired.
+            None if neither.
         """
-        assert n in self.graph.nodes
+        assert idx in self.graph.nodes
 
-        current_activation = self.activation_of_item_with_idx(n)
+        current_activation = self.activation_of_item_with_idx(idx)
 
-        if not self._presynaptic_guard(n, current_activation):
-            # Node didn't fire
-            return False
+        # Check if something will prevent the activation from occurring
+        if not self._presynaptic_guard(idx, current_activation):
+            # If activation was blocked, node didn't activate or fire
+            return None
 
         # Otherwise, we proceed with the activation:
 
-        # Apply presynaptic function
-        activation = self._presynaptic_modulation(n, activation)
+        # Apply presynaptic modulation
+        activation = self._presynaptic_modulation(idx, activation)
 
         # Accumulate activation
         new_activation = current_activation + activation
 
-        # Apply postsynaptic function
-        new_activation = self._postsynaptic_modulation(n, new_activation)
+        # Apply postsynaptic modulation to accumulated value
+        new_activation = self._postsynaptic_modulation(idx, new_activation)
 
-        self._activation_records[n] = ActivationRecord(new_activation, self.clock)
+        # The item activated, so an activation event occurs
+        event = ItemActivatedEvent(
+            time=self.clock,
+            item=idx,
+            activation=new_activation
+        )
 
-        # Check if we reached the firing threshold.
-        if self._postsynaptic_guard(n, new_activation):
+        # Record the activation
+        self._activation_records[idx] = ActivationRecord(new_activation, self.clock)
+
+        # Check if the postsynaptic firing guard is passed
+        if self._postsynaptic_guard(idx, new_activation):
+
+            # If we did, not only did this node activated, it fired as well, so we upgrade the event
+            event = ItemFiredEvent.from_activation_event(event)
 
             # If so, fire and rebroadcast!
-            rebroadcast_source_node = n
+            source_idx = idx
 
             # For each incident edge
-            for edge in self.graph.incident_edges(rebroadcast_source_node):
+            for edge in self.graph.incident_edges(source_idx):
 
                 # Find which node in the edge is the source node and which is the target
                 n1, n2 = edge
-                if rebroadcast_source_node == n1:
-                    target_node = n2
-                elif rebroadcast_source_node == n2:
-                    target_node = n1
+                if source_idx == n1:
+                    target_idx = n2
+                elif source_idx == n2:
+                    target_idx = n1
                 else:
                     raise ValueError()
 
@@ -283,23 +273,17 @@ class GraphPropagationComponent(metaclass=ABCMeta):
                     continue
 
                 # Accumulate activation at target node at time when it's due to arrive
-                self.schedule_activation_of_item_with_idx(target_node,
-                                                          arrival_activation,
+                self.schedule_activation_of_item_with_idx(idx=target_idx,
+                                                          activation=arrival_activation,
                                                           arrival_time=self.clock + length)
 
-            # Node did fire
-            return True
+        return event
 
-        else:
-            # If not, we're done
-            # Node didn't fire
-            return False
-
-    def _presynaptic_modulation(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
+    def _presynaptic_modulation(self, idx: ItemIdx, activation: ActivationValue) -> ActivationValue:
         """
         Modulates the incoming activations to items.
         (E.g. scaling incoming activation by some property of the item).
-        :param item:
+        :param idx:
             The item receiving the activation.
         :param activation:
             The unmodified presynaptic activation.
@@ -309,11 +293,11 @@ class GraphPropagationComponent(metaclass=ABCMeta):
         # Default implementation: no modification
         return activation
 
-    def _postsynaptic_modulation(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
+    def _postsynaptic_modulation(self, idx: ItemIdx, activation: ActivationValue) -> ActivationValue:
         """
         Modulates the activations of items after accumulation, but before firing.
         (E.g. applying an activation cap).
-        :param item:
+        :param idx:
             The item receiving the activation.
         :param activation:
             The unmodified presynaptic activation.
@@ -323,11 +307,11 @@ class GraphPropagationComponent(metaclass=ABCMeta):
         # Default implementation: no modification
         return activation
 
-    def _presynaptic_guard(self, item: ItemIdx, activation: ActivationValue) -> bool:
+    def _presynaptic_guard(self, idx: ItemIdx, activation: ActivationValue) -> bool:
         """
         Guards a node's accumulation (and firing) based on its activation before incoming activation has accumulated.
         (E.g. making sufficiently-activated nodes into sinks until they decay.)
-        :param item:
+        :param idx:
             The item receiving the activation.
         :param activation:
             The activation level of the item before accumulation.
@@ -337,11 +321,11 @@ class GraphPropagationComponent(metaclass=ABCMeta):
         # Default implementation: never prevent firing.
         return True
 
-    def _postsynaptic_guard(self, item: ItemIdx, activation: ActivationValue) -> bool:
+    def _postsynaptic_guard(self, idx: ItemIdx, activation: ActivationValue) -> bool:
         """
         Guards a node's firing based on its activation after incoming activation has accumulated.
         (E.g. applying a firing threshold.)
-        :param item:
+        :param idx:
             The item receiving the activation.
         :param activation:
             The activation level of the item after accumulation.

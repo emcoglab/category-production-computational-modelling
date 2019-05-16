@@ -6,7 +6,7 @@ from typing import DefaultDict
 from numpy import nan
 from pandas import DataFrame, read_csv
 
-from model.common import ItemActivatedEvent, load_model_spec
+from model.graph_propagation import load_model_spec
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 
@@ -68,12 +68,11 @@ def get_model_ttfas_for_category_linguistic(category: str,
             if row[ACTIVATION] < conscious_access_threshold:
                 continue
 
-            activation_event = ItemActivatedEvent(label=row[RESPONSE],
-                                                  activation=row[ACTIVATION],
-                                                  time_activated=row[TICK_ON_WHICH_ACTIVATED])
+            item_label = row[RESPONSE]
+
             # We've sorted by activation time, so we only need to consider the first entry for each item
-            if activation_event.label not in ttfas.keys():
-                ttfas[activation_event.label] = activation_event.time_activated
+            if item_label not in ttfas.keys():
+                ttfas[item_label] = row[TICK_ON_WHICH_ACTIVATED]
         return ttfas
 
     # If the category wasn't found, there are no TTFAs
@@ -106,12 +105,11 @@ def get_model_ttfas_for_category_sensorimotor(category: str,
         ttfas = defaultdict(lambda: nan)
         for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
 
-            activation_event = ItemActivatedEvent(label=row[RESPONSE],
-                                                  activation=row[ACTIVATION],
-                                                  time_activated=row[TICK_ON_WHICH_ACTIVATED])
+            item_label = row[RESPONSE]
+
             # We've sorted by activation time, so we only need to consider the first entry for each item
-            if activation_event.label not in ttfas.keys():
-                ttfas[activation_event.label] = activation_event.time_activated
+            if item_label not in ttfas.keys():
+                ttfas[item_label] = row[TICK_ON_WHICH_ACTIVATED]
         return ttfas
 
     # If the category wasn't found, there are no TTFAs
@@ -120,7 +118,8 @@ def get_model_ttfas_for_category_sensorimotor(category: str,
 
 
 def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-                          first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted, min_first_rank_freq, conscious_access_threshold):
+                          first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted,
+                          min_first_rank_freq, conscious_access_threshold):
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"

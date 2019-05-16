@@ -18,14 +18,15 @@ import argparse
 import logging
 import sys
 from os import path, makedirs
+from typing import List
 
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
-from model.graph import Length
+from model.basic_types import ActivationValue, Length
+from model.events import ModelEvent, ItemActivatedEvent
 from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
-from model.common import ActivationValue
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
@@ -123,16 +124,18 @@ def main(distance_type_name: str,
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            node_activations = sc.tick()
+            events: List[ModelEvent] = sc.tick()
+
+            node_activations = [e for e in events if isinstance(e, ItemActivatedEvent)]
 
             n_concurrent_activations.append((tick, len(node_activations), len(sc.accessible_set())))
 
             for na in node_activations:
                 model_response_entries.append((
-                    na.label,
-                    sc.label2idx[na.label],
+                    sc.idx2label[na.item],
+                    na.item,
                     na.activation,
-                    na.time_activated))
+                    na.time))
 
             # Break early if we've got a probable explosion
             if bailout is not None and len(sc.accessible_set()) > bailout:

@@ -27,6 +27,7 @@ from ldm.model.count import LogCoOccurrenceCountModel
 from ldm.utils.logging import log_message, date_format
 from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.events import ItemActivatedEvent
 from model.graph import Graph
 from model.temporal_spreading_activation import TemporalSpreadingActivation
 from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_gaussian_with_sd
@@ -119,10 +120,12 @@ def main():
                 logger.info("Running spreading output")
                 for tick in range(1, run_for_ticks):
                     logger.info(f"Clock = {tick}")
-                    node_activations = tsa.tick()
-                    nodes_activated_str = ", ".join([f"{na.node} ({na.activation:.3})" for na in node_activations])
+                    events = tsa.tick()
+                    activation_events = [e for e in events if isinstance(e, ItemActivatedEvent)]
+                    nodes_activated_str = ", ".join([f"{node_labelling_dictionary[e.item]} ({e.activation:.3})"
+                                                     for e in activation_events])
 
-                    if len(node_activations) > 0:
+                    if len(activation_events) > 0:
                         logger.info("\t" + nodes_activated_str)
 
                     # Record results

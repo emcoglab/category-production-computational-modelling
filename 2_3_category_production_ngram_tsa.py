@@ -25,8 +25,9 @@ from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
+from model.events import ItemActivatedEvent
 from model.linguistic_component import LinguisticComponent, save_model_spec_linguistic
-from model.common import ActivationValue
+from model.basic_types import ActivationValue
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
@@ -124,15 +125,15 @@ def main(n_words: int,
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            node_activations = lc.tick()
+            events = lc.tick()
+            activation_events = (e for e in events if isinstance(e, ItemActivatedEvent))
 
-            for na in node_activations:
+            for event in activation_events:
                 model_response_entries.append((
-                    na.label,
-                    lc.label2idx[na.label],
-                    na.activation,
-                    na.time_activated,
-                ))
+                    lc.idx2label[event.item],
+                    event.item,
+                    event.activation,
+                    event.time))
 
             # Break early if we've got a probable explosion
             if len(lc.suprathreshold_items()) > bailout > 0:

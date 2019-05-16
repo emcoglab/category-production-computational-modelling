@@ -17,13 +17,15 @@ caiwingfield.net
 
 import logging
 from os import path
-from typing import Set
+from typing import Set, Optional, List
 
 import yaml
 
 from ldm.utils.maths import DistanceType
-from model.common import ActivationValue, ItemLabel, _load_labels, ItemIdx
-from model.graph import Graph, Node
+from model.graph_propagation import _load_labels
+from model.basic_types import ActivationValue, ItemIdx, ItemLabel, Node
+from model.events import ModelEvent, ItemActivatedEvent, ItemEnteredBufferEvent
+from model.graph import Graph
 from model.temporal_spatial_propagation import TemporalSpatialPropagation
 from model.utils.maths import make_decay_function_lognormal, prevalence_from_fraction_known, scale01
 from preferences import Preferences
@@ -123,18 +125,25 @@ class SensorimotorComponent(TemporalSpatialPropagation):
         super(SensorimotorComponent, self).reset()
         self.working_memory_buffer = set()
 
-    def tick(self):
-        super(SensorimotorComponent, self).tick()
+    def tick(self) -> List[ModelEvent]:
+        # Clear cruft from the buffer
         self._prune_decayed_items_in_buffer()
 
-    def activate_item_with_idx(self, n: ItemIdx, activation: ActivationValue) -> bool:
+        # Proceed with the tick
+        return super(SensorimotorComponent, self).tick()
+
+    def activate_item_with_idx(self, idx: ItemIdx, activation: ActivationValue) -> Optional[ItemActivatedEvent]:
         # Activate the item
-        item_did_activate = super(SensorimotorComponent, self).activate_item_with_idx(n, activation)
+        activation_event = super(SensorimotorComponent, self).activate_item_with_idx(idx, activation)
 
-        # Present it as available to enter the buffer
-        self._present_to_working_memory_buffer(n)
+        # Present it as available to enter the buffer if it activated
+        if activation_event:
+            item_did_enter_buffer = self._present_to_working_memory_buffer(idx)
+            if item_did_enter_buffer:
+                # If it entered the buffer, upgrade the event
+                activation_event = ItemEnteredBufferEvent.from_activation_event(activation_event)
 
-        return item_did_activate
+        return activation_event
 
     def _present_to_working_memory_buffer(self, item: ItemIdx) -> bool:
         """
@@ -205,18 +214,18 @@ class SensorimotorComponent(TemporalSpatialPropagation):
             if self.activation_of_item_with_idx(n) > 0
         )
 
-    def _presynaptic_modulation(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
+    def _presynaptic_modulation(self, idx: ItemIdx, activation: ActivationValue) -> ActivationValue:
         # Attenuate the incoming activations to a concept based on a statistic of the concept
-        return self._attenuate_by_fraction_known(item, activation)
+        return self._attenuate_by_fraction_known(idx, activation)
 
-    def _postsynaptic_modulation(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
+    def _postsynaptic_modulation(self, idx: ItemIdx, activation: ActivationValue) -> ActivationValue:
         # The activation cap, if used, MUST be greater than the firing threshold (this is checked in __init__,
         # so applying the cap does not effect whether the node will fire or not.
         return activation if activation <= self.activation_cap else self.activation_cap
 
-    def _presynaptic_guard(self, item: ItemIdx, activation: ActivationValue) -> bool:
+    def _presynaptic_guard(self, idx: ItemIdx, activation: ActivationValue) -> bool:
         # Node can only fire if not in the working_memory_buffer (i.e. activation below pruning threshold)
-        return item not in self.accessible_set()
+        return idx not in self.accessible_set()
 
     def _attenuate_by_prevalence(self, item: ItemIdx, activation: ActivationValue) -> ActivationValue:
         """Attenuates the activation by the prevalence of the item."""
