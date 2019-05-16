@@ -58,25 +58,25 @@ def main():
 
         logger.info(f"Category: {category}")
 
-        for sm_response in category_production.responses_for_category(category,
-                                                                      use_sensorimotor=True,
-                                                                      single_word_only=True):
+        for response in category_production.responses_for_category(category,
+                                                                   use_sensorimotor=True,
+                                                                   single_word_only=True):
 
             try:
-                response_sm_vector = array(sensorimotor_norms.vector_for_word(sm_response))
+                response_sm_vector = array(sensorimotor_norms.vector_for_word(response))
             except WordNotInNormsError:
                 continue
 
-            cosine_distances[category][sm_response] = distance(category_sm_vector, response_sm_vector,
-                                                               DistanceType.cosine)
-            minkowski_distances[category][sm_response] = distance(category_sm_vector, response_sm_vector,
-                                                                  DistanceType.Minkowski3)
+            cosine_distances[category][response] = distance(category_sm_vector, response_sm_vector,
+                                                            DistanceType.cosine)
+            minkowski_distances[category][response] = distance(category_sm_vector, response_sm_vector,
+                                                               DistanceType.Minkowski3)
 
     main_dataframe[_COSINE_DISTANCE] = main_dataframe.apply(
-        lambda row: cosine_distances[row[CPColNames.Category]][row[CPColNames.ResponseSensorimotor]],
+        lambda row: cosine_distances[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
         axis=1)
     main_dataframe[_MINKOWSKI_DISTANCE] = main_dataframe.apply(
-        lambda row: minkowski_distances[row[CPColNames.Category]][row[CPColNames.ResponseSensorimotor]],
+        lambda row: minkowski_distances[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
         axis=1)
 
     main_dataframe.to_csv(path.join(Preferences.results_dir,
