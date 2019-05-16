@@ -25,9 +25,9 @@ from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
-from model.events import ItemActivatedEvent
-from model.linguistic_component import LinguisticComponent, save_model_spec_linguistic
 from model.basic_types import ActivationValue
+from model.events import ItemFiredEvent
+from model.linguistic_component import LinguisticComponent, save_model_spec_linguistic
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
@@ -126,7 +126,7 @@ def main(n_words: int,
 
             logger.info(f"Clock = {tick}")
             events = lc.tick()
-            activation_events = (e for e in events if isinstance(e, ItemActivatedEvent))
+            activation_events = (e for e in events if isinstance(e, ItemFiredEvent))
 
             for event in activation_events:
                 model_response_entries.append((
