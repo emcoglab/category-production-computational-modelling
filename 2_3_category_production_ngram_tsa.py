@@ -27,7 +27,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from model.events import ItemActivatedEvent
 from model.linguistic_component import LinguisticComponent, save_model_spec_linguistic
-from model.graph_propagation import ActivationValue
+from model.basic_types import ActivationValue
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 

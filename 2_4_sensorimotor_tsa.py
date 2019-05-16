@@ -25,7 +25,7 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
 from model.events import ModelEvent, ItemActivatedEvent
-from model.graph_propagation import ActivationValue
+from model.basic_types import ActivationValue
 from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
