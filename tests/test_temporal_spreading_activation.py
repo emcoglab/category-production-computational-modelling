@@ -115,8 +115,8 @@ class TestDecayFunctions(unittest.TestCase):
             idx2label=dict()
         )
 
-        tsa_frac.activate_item_with_idx(n=0, activation=1.0)
-        tsa.activate_item_with_idx(n=0, activation=1.0)
+        tsa_frac.activate_item_with_idx(idx=0, activation=1.0)
+        tsa.activate_item_with_idx(idx=0, activation=1.0)
 
         for tick in range(1, 50):
             tsa_frac.tick()
@@ -164,8 +164,8 @@ class TestDecayFunctions(unittest.TestCase):
             idx2label=dict()
         )
 
-        tsa_390.activate_item_with_idx(n=0, activation=1.0)
-        tsa_1000.activate_item_with_idx(n=0, activation=1.0)
+        tsa_390.activate_item_with_idx(idx=0, activation=1.0)
+        tsa_1000.activate_item_with_idx(idx=0, activation=1.0)
 
         # Different granularity, same function-maker
         almost_equal = is_almost_equal(
