@@ -18,14 +18,14 @@ import argparse
 import logging
 import sys
 from os import path, makedirs
-from typing import Set
+from typing import List
 
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
-from model.events import ModelEvent, ItemActivatedEvent
 from model.basic_types import ActivationValue
+from model.events import ModelEvent, ItemActivatedEvent
 from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -124,7 +124,7 @@ def main(distance_type_name: str,
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            events: Set[ModelEvent] = sc.tick()
+            events: List[ModelEvent] = sc.tick()
 
             node_activations = [e for e in events if isinstance(e, ItemActivatedEvent)]
 
