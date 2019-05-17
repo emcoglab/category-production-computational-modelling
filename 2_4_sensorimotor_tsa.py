@@ -17,7 +17,6 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from collections import defaultdict
 from os import path, makedirs
 
 from pandas import DataFrame
@@ -63,7 +62,7 @@ def main(distance_type_name: str,
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
                              f"length {length_factor}, max r {max_sphere_radius} "
-                             f"sigma {sigma}; bpt {buffer_pruning_threshold}; "
+                             f"sigma {sigma}; bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -117,50 +116,56 @@ def main(distance_type_name: str,
             csv_comments.append(f"\t    connected = no")
             csv_comments.append(f"\t      orphans = {'yes' if sc.graph.has_orphaned_nodes() else 'no'}")
 
-        # Do the spreading activation
+        # Event log
+        with open(event_log_path, mode="w", encoding="utf-8") as event_log_file:
 
-        sc.activate_item_with_label(category_label, FULL_ACTIVATION)
+            # Do the spreading activation
 
-        n_concurrent_activations = []
-        model_response_entries = []
-        # tick → list of events
-        event_log = defaultdict(list)
-        for tick in range(1, run_for_ticks):
+            activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
+            log_event(activation_event, event_log_file)
 
-            logger.info(f"Clock = {tick}")
-            tick_events = sc.tick()
-            event_log[tick].extend(tick_events)
+            n_concurrent_activations = []
+            model_response_entries = []
+            for tick in range(1, run_for_ticks):
 
-            activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
-            buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
+                event_log_file.flush()
 
-            n_concurrent_activations.append((tick, len(buffer_entries), len(sc.accessible_set())))
+                logger.info(f"Clock = {tick}")
+                tick_events = sc.tick()
 
-            for event in activation_events:
-                model_response_entries.append({
-                    RESPONSE:                sc.idx2label[event.item],
-                    NODE_ID:                 event.item,
-                    ACTIVATION:              event.activation,
-                    TICK_ON_WHICH_ACTIVATED: event.time,
-                    ENTERED_BUFFER:          isinstance(event, ItemEnteredBufferEvent),
-                })
+                for e in tick_events:
+                    log_event(e, event_log_file)
 
-            # Break early if we've got a probable explosion
-            if bailout is not None and len(sc.accessible_set()) > bailout:
-                csv_comments.append(f"")
-                csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(sc.accessible_set())} nodes activated.")
-                event_log[tick].append(BailoutEvent(time=tick, concurrent_activations=len(sc.accessible_set())))
-                break
+                activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
+                buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
 
-        model_responses_df = DataFrame.from_records(
-            model_response_entries,
-            columns=[
-                RESPONSE,
-                NODE_ID,
-                ACTIVATION,
-                TICK_ON_WHICH_ACTIVATED,
-            ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
+                n_concurrent_activations.append((tick, len(buffer_entries), len(sc.accessible_set())))
+
+                for event in activation_events:
+                    model_response_entries.append({
+                        RESPONSE:                sc.idx2label[event.item],
+                        NODE_ID:                 event.item,
+                        ACTIVATION:              event.activation,
+                        TICK_ON_WHICH_ACTIVATED: event.time,
+                        ENTERED_BUFFER:          isinstance(event, ItemEnteredBufferEvent),
+                    })
+
+                # Break early if we've got a probable explosion
+                if bailout is not None and len(sc.accessible_set()) > bailout:
+                    csv_comments.append(f"")
+                    csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
+                                        f"with {len(sc.accessible_set())} nodes activated.")
+                    log_event(BailoutEvent(time=tick, concurrent_activations=len(sc.accessible_set())), event_log_file)
+                    break
+
+            model_responses_df = DataFrame.from_records(
+                model_response_entries,
+                columns=[
+                    RESPONSE,
+                    NODE_ID,
+                    ACTIVATION,
+                    TICK_ON_WHICH_ACTIVATED,
+                ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
 
@@ -178,11 +183,9 @@ def main(distance_type_name: str,
                                    columns=["Tick", "New activations", "Concurrent activations"])\
                      .to_csv(concurrent_activations_file, index=False)
 
-        # Event log
-        with open(event_log_path, mode="w", encoding="utf-8") as event_log_file:
-            for t, events in event_log.items():
-                for e in events:
-                    event_log_file.write(f"{t}:\t{e}\n")
+
+def log_event(e, event_log_file):
+    event_log_file.write(f"{e.time}:\t{e}\n")
 
 
 if __name__ == '__main__':
