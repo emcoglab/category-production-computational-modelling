@@ -17,6 +17,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
+from collections import defaultdict
 from os import path, makedirs
 
 from pandas import DataFrame
@@ -24,7 +25,7 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
-from model.events import ItemEnteredBufferEvent
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent
 from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -39,6 +40,7 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+ENTERED_BUFFER = "Item entered WM buffer"
 
 FULL_ACTIVATION = ActivationValue(1.0)
 
@@ -87,6 +89,7 @@ def main(distance_type_name: str,
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
         concurrent_activations_path = path.join(response_dir, f"concurrent_activations_{category_label}.csv")
+        event_log_path = path.join(response_dir, f"event_log_{category_label}.txt")
 
         csv_comments = []
 
@@ -120,35 +123,44 @@ def main(distance_type_name: str,
 
         n_concurrent_activations = []
         model_response_entries = []
+        # tick → list of events
+        event_log = defaultdict(list)
         for tick in range(1, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
-            events = sc.tick()
+            tick_events = sc.tick()
+            event_log[tick].extend(tick_events)
 
-            buffer_entries = [e for e in events if isinstance(e, ItemEnteredBufferEvent)]
+            activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
+            buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
 
             n_concurrent_activations.append((tick, len(buffer_entries), len(sc.accessible_set())))
 
-            for event in buffer_entries:
-                model_response_entries.append((
-                    sc.idx2label[event.item],
-                    event.item,
-                    event.activation,
-                    event.time))
+            for event in activation_events:
+                model_response_entries.append({
+                    RESPONSE:                sc.idx2label[event.item],
+                    NODE_ID:                 event.item,
+                    ACTIVATION:              event.activation,
+                    TICK_ON_WHICH_ACTIVATED: event.time,
+                    ENTERED_BUFFER:          isinstance(event, ItemEnteredBufferEvent),
+                })
 
             # Break early if we've got a probable explosion
             if bailout is not None and len(sc.accessible_set()) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
                                     f"with {len(sc.accessible_set())} nodes activated.")
+                event_log[tick].append(BailoutEvent(time=tick, concurrent_activations=len(sc.accessible_set())))
                 break
 
-        model_responses_df = DataFrame(model_response_entries, columns=[
-            RESPONSE,
-            NODE_ID,
-            ACTIVATION,
-            TICK_ON_WHICH_ACTIVATED,
-        ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
+        model_responses_df = DataFrame.from_records(
+            model_response_entries,
+            columns=[
+                RESPONSE,
+                NODE_ID,
+                ACTIVATION,
+                TICK_ON_WHICH_ACTIVATED,
+            ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
 
@@ -165,6 +177,12 @@ def main(distance_type_name: str,
             DataFrame.from_records(n_concurrent_activations,
                                    columns=["Tick", "New activations", "Concurrent activations"])\
                      .to_csv(concurrent_activations_file, index=False)
+
+        # Event log
+        with open(event_log_path, mode="w", encoding="utf-8") as event_log_file:
+            for t, events in event_log.items():
+                for e in events:
+                    event_log_file.write(f"{t}:\t{e}\n")
 
 
 if __name__ == '__main__':
