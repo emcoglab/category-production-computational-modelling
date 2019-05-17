@@ -47,30 +47,30 @@ def main():
     # category -> sm_response -> distance
     cosine_distances: Dict[str, DefaultDict[str, float]] = dict()
     minkowski_distances: Dict[str, DefaultDict[str, float]] = dict()
-    for category in category_production.category_labels_sensorimotor:
-        cosine_distances[category] = defaultdict(lambda: nan)
-        minkowski_distances[category] = defaultdict(lambda: nan)
+    for sm_category in category_production.category_labels_sensorimotor:
+        cosine_distances[sm_category] = defaultdict(lambda: nan)
+        minkowski_distances[sm_category] = defaultdict(lambda: nan)
 
         try:
-            category_sm_vector = array(sensorimotor_norms.vector_for_word(category))
+            category_sm_vector = array(sensorimotor_norms.vector_for_word(sm_category))
         except WordNotInNormsError:
             continue
 
-        logger.info(f"Category: {category}")
+        logger.info(f"Category: {sm_category}")
 
-        for response in category_production.responses_for_category(category,
-                                                                   use_sensorimotor=True,
-                                                                   single_word_only=True):
+        for sm_response in category_production.responses_for_category(sm_category,
+                                                                      use_sensorimotor=True,
+                                                                      single_word_only=True):
 
             try:
-                response_sm_vector = array(sensorimotor_norms.vector_for_word(response))
+                response_sm_vector = array(sensorimotor_norms.vector_for_word(sm_response))
             except WordNotInNormsError:
                 continue
 
-            cosine_distances[category][response] = distance(category_sm_vector, response_sm_vector,
-                                                            DistanceType.cosine)
-            minkowski_distances[category][response] = distance(category_sm_vector, response_sm_vector,
-                                                               DistanceType.Minkowski3)
+            cosine_distances[sm_category][sm_response] = distance(category_sm_vector, response_sm_vector,
+                                                                  DistanceType.cosine)
+            minkowski_distances[sm_category][sm_response] = distance(category_sm_vector, response_sm_vector,
+                                                                     DistanceType.Minkowski3)
 
     main_dataframe[_COSINE_DISTANCE] = main_dataframe.apply(
         lambda row: cosine_distances[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
@@ -81,7 +81,8 @@ def main():
 
     main_dataframe.to_csv(path.join(Preferences.results_dir,
                                     "Category production fit sensorimotor",
-                                    "item-level data (cosine vs Minkowski-3).csv"))
+                                    "item-level data (cosine vs Minkowski-3).csv"),
+                          index=False)
 
 
 if __name__ == '__main__':
