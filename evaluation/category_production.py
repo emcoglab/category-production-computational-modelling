@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from os import path
-from typing import DefaultDict
+from typing import DefaultDict, Set
 
 from numpy import nan
 from pandas import DataFrame, read_csv
@@ -80,6 +80,25 @@ def get_model_ttfas_for_category_linguistic(category: str,
         return defaultdict(lambda: nan)
 
 
+def get_model_unique_responses_sensorimotor(category: str, results_dir: str) -> Set[str]:
+    """
+    Set of unique responses for the specified category.
+    """
+
+    # Try to load model response
+    try:
+        model_responses_path = path.join(
+            results_dir,
+            f"responses_{category}.csv")
+        with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
+            return set(row[RESPONSE]
+                       for _i, row in read_csv(model_responses_file, header=0, comment="#", index_col=False).iterrows())
+
+    # If the category wasn't found, there are no responses
+    except FileNotFoundError:
+        return set()
+
+
 def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> DefaultDict[str, int]:
     """
     Dictionary of
@@ -87,10 +106,6 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     for the specified category.
 
     DefaultDict gives nans where response not found
-
-    :param category:
-    :param results_dir:
-    :return:
     """
 
     # Try to load model response
