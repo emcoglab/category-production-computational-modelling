@@ -113,9 +113,11 @@ def main(input_results_dir: str):
     # region summary tables
 
     production_proportion_per_rfop = get_summary_table(main_dataframe, RANK_FREQUENCY_OF_PRODUCTION)
+    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], RANK_FREQUENCY_OF_PRODUCTION)
 
     # Produciton proportion per rounded mean rank
     production_proportion_per_rmr = get_summary_table(main_dataframe, ROUNDED_MEAN_RANK)
+    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], ROUNDED_MEAN_RANK)
 
     # endregion
 
@@ -131,6 +133,13 @@ def main(input_results_dir: str):
                                                    f"Production proportion per rounded mean rank"
                                                    f" ({path.basename(input_results_dir)}).csv"))
 
+    production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+                                                               f"Production proportion per rank frequency of production"
+                                                               f" ({path.basename(input_results_dir)}) restricted.csv"))
+
+    production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+                                                              f"Production proportion per rounded mean rank"
+                                                              f" ({path.basename(input_results_dir)}) restricted.csv"))
 
     # endregion
 
