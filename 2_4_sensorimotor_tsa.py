@@ -165,6 +165,7 @@ def main(distance_type_name: str,
                     NODE_ID,
                     ACTIVATION,
                     TICK_ON_WHICH_ACTIVATED,
+                    ENTERED_BUFFER,
                 ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results

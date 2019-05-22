@@ -84,10 +84,10 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
     for category in category_production.category_labels:
         model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
-
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
         axis=1)
+
     main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
 
     # Drop rows corresponding to responses which weren't produced by the model

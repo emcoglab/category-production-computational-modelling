@@ -80,8 +80,7 @@ def get_model_ttfas_for_category_linguistic(category: str,
         return defaultdict(lambda: nan)
 
 
-def get_model_ttfas_for_category_sensorimotor(category: str,
-                                              results_dir: str) -> DefaultDict[str, int]:
+def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> DefaultDict[str, int]:
     """
     Dictionary of
         response -> time to first activation
