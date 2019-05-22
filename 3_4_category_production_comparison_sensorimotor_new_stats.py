@@ -24,6 +24,7 @@ from os import path
 from typing import Dict, DefaultDict
 
 from pandas import DataFrame, isna
+from matplotlib import pyplot
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
@@ -143,20 +144,33 @@ def main(input_results_dir: str):
 
     # endregion
 
+    # region Graph tables
+
+    pyplot.scatter(x=production_proportion_per_rfop.reset_index()[RANK_FREQUENCY_OF_PRODUCTION], y=production_proportion_per_rfop[PRODUCTION_PROPORTION + ' Mean'])
+    pyplot.errorbar(x=production_proportion_per_rfop.reset_index()[RANK_FREQUENCY_OF_PRODUCTION], y=production_proportion_per_rfop[PRODUCTION_PROPORTION + ' Mean'], yerr=production_proportion_per_rfop[PRODUCTION_PROPORTION + ' CI95'])
+    pyplot.savefig("/Users/caiwingfield/Desktop/rfop.png")
+    pyplot.clf()
+    pyplot.cla()
+    pyplot.close()
+
+    # endregion
+
 
 def get_summary_table(main_dataframe, groupby_column):
     df = DataFrame()
     # Participant columns
-    df['Mean'] = (
+    df[PRODUCTION_PROPORTION + ' Mean'] = (
         main_dataframe.groupby(groupby_column).mean()[PRODUCTION_PROPORTION])
-    df['SD'] = (
+    df[PRODUCTION_PROPORTION + ' SD'] = (
         main_dataframe.groupby(groupby_column).std()[PRODUCTION_PROPORTION])
-    df['Count'] = (
+    df[PRODUCTION_PROPORTION + ' Count'] = (
         main_dataframe.groupby(groupby_column).count()[PRODUCTION_PROPORTION])
-    df['CI95'] = df.apply(lambda row: t_confidence_interval(row['SD'], row['Count'], 0.95), axis=1)
+    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'], row[PRODUCTION_PROPORTION + ' Count'], 0.95), axis=1)
     # Model columns
     df['Model hitrate'] = (
         main_dataframe.groupby(groupby_column).mean()[MODEL_HIT])
+    # Forget rows with nans
+    df = df.dropna().reset_index()
     return df
 
 
