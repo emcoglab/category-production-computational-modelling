@@ -19,16 +19,16 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from math import sqrt, floor
+from math import floor
 from os import path
 from typing import Dict, DefaultDict
 
 from pandas import DataFrame, isna
-from scipy.stats import t as studentt
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
 from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, TTFA
+from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
@@ -153,24 +153,11 @@ def get_summary_table(main_dataframe, groupby_column):
         main_dataframe.groupby(groupby_column).std()[PRODUCTION_PROPORTION])
     df['Count'] = (
         main_dataframe.groupby(groupby_column).count()[PRODUCTION_PROPORTION])
-    df['CI95'] = df.apply(lambda row: t_ci(row['SD'], row['Count'], 0.95), axis=1)
+    df['CI95'] = df.apply(lambda row: t_confidence_interval(row['SD'], row['Count'], 0.95), axis=1)
     # Model columns
     df['Model hitrate'] = (
         main_dataframe.groupby(groupby_column).mean()[MODEL_HIT])
     return df
-
-
-def t_ci(sd, n, alpha):
-    """
-    Confidence interval for t distribution.
-    Roughly equivalent to Excell's confidence.t()
-    :param sd:
-    :param n:
-    :param alpha:
-    :return:
-    """
-    sem = sd/sqrt(n)
-    return sem * studentt.ppf((1 + alpha) / 2, df=n-1)
 
 
 if __name__ == '__main__':
