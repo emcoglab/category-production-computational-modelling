@@ -6,7 +6,7 @@ from typing import DefaultDict
 from numpy import nan
 from pandas import DataFrame, read_csv
 
-from model.graph_propagation import load_model_spec
+from model.graph_propagation import GraphPropagation
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 
@@ -129,7 +129,7 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}) CAT={conscious_access_threshold}.csv")
 
-    model_spec = load_model_spec(results_dir)
+    model_spec = GraphPropagation.load_model_spec(results_dir)
 
     data_records = {
         f"Model":                                   model_spec["Model name"],
@@ -176,7 +176,7 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}).csv")
 
-    model_spec = load_model_spec(results_dir)
+    model_spec = GraphPropagation.load_model_spec(results_dir)
 
     data_records = {
         f"Length factor":                           model_spec["Length factor"],
