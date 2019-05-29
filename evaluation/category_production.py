@@ -15,6 +15,7 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+ITEM_ENTERED_BUFFER = "Item entered WM buffer"
 TTFA = "TTFA"
 REACHED_CAT = "Reached conc.acc. θ"
 
@@ -105,6 +106,10 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
         for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
 
             item_label = row[RESPONSE]
+
+            # Only interested if item entered the buffer
+            if not row[ITEM_ENTERED_BUFFER]:
+                continue
 
             # We've sorted by activation time, so we only need to consider the first entry for each item
             if item_label not in ttfas.keys():
