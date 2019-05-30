@@ -132,45 +132,46 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
     model_spec = GraphPropagation.load_model_spec(results_dir)
 
     data_records = {
-        f"Model":                                   model_spec["Model name"],
-        f"Length factor":                           model_spec["Length factor"],
-        f"SD factor":                               model_spec["SD factor"],
-        f"Firing threshold":                        model_spec["Firing threshold"],
-        f"Words":                                   model_spec["Words"],
-        f"CAT":                                     conscious_access_threshold,
-        f"FRF corr (-)":                            corr_frf_vs_ttfa,
-        f"FRF N":                                   n_first_rank_frequent,
+        "Model":                                    model_spec["Model name"],
+        "Length factor":                            model_spec["Length factor"],
+        "SD factor":                                model_spec["SD factor"],
+        "Firing threshold":                         model_spec["Firing threshold"],
+        "Words":                                    model_spec["Words"],
+        "CAT":                                      conscious_access_threshold,
+        "FRF corr (-)":                             corr_frf_vs_ttfa,
+        "FRF N":                                    n_first_rank_frequent,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
-        f"zRT N":                                   n_first_rank_frequent,
-        f"ProdFreq corr (-)":                       corr_prodfreq_vs_ttfa,
-        f"ProdFreq N":                              len(available_items),
-        f"MeanRank corr (+)":                       corr_meanrank_vs_ttfa,
-        f"Mean Rank N":                             len(available_items),
+        "zRT N":                                    n_first_rank_frequent,
+        "ProdFreq corr (-)":                        corr_prodfreq_vs_ttfa,
+        "ProdFreq N":                               len(available_items),
+        "MeanRank corr (+)":                        corr_meanrank_vs_ttfa,
+        "Mean Rank N":                              len(available_items),
     }
     data: DataFrame = DataFrame.from_records([data_records])
 
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
         data.to_csv(data_file, index=False, columns=[
-            f"Model",
-            f"Length factor",
-            f"SD factor",
-            f"Firing threshold",
-            f"Words",
-            f"CAT",
-            f"FRF corr (-)",
-            f"FRF N",
+            "Model",
+            "Length factor",
+            "SD factor",
+            "Firing threshold",
+            "Words",
+            "CAT",
+            "FRF corr (-)",
+            "FRF N",
             f"zRT corr (+; FRF≥{min_first_rank_freq})",
-            f"zRT N",
-            f"ProdFreq corr (-)",
-            f"ProdFreq N",
-            f"MeanRank corr (+)",
-            f"Mean Rank N",
+            "zRT N",
+            "ProdFreq corr (-)",
+            "ProdFreq N",
+            "MeanRank corr (+)",
+            "Mean Rank N",
         ])
 
 
 def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
                             first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir,
                             restricted, min_first_rank_freq):
+
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
@@ -179,31 +180,33 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
     model_spec = GraphPropagation.load_model_spec(results_dir)
 
     data_records = {
-        f"Length factor":                           model_spec["Length factor"],
-        f"Max sphere radius":                       model_spec["Max sphere radius"],
-        f"Sigma":                                   model_spec["Log-normal sigma"],
-        f"FRF corr (-)":                            corr_frf_vs_ttfa,
-        f"FRF N":                                   n_first_rank_frequent,
+        "Length factor":                            model_spec["Length factor"],
+        "Max sphere radius":                        model_spec["Max sphere radius"],
+        "Sigma":                                    model_spec["Log-normal sigma"],
+        "Buffer entry threshold":                   model_spec["Buffer entry threshold"],
+        "FRF corr (-)":                             corr_frf_vs_ttfa,
+        "FRF N":                                    n_first_rank_frequent,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
-        f"zRT N":                                   n_first_rank_frequent,
-        f"ProdFreq corr (-)":                       corr_prodfreq_vs_ttfa,
-        f"ProdFreq N":                              len(available_items),
-        f"MeanRank corr (+)":                       corr_meanrank_vs_ttfa,
-        f"Mean Rank N":                             len(available_items),
+        "zRT N":                                    n_first_rank_frequent,
+        "ProdFreq corr (-)":                        corr_prodfreq_vs_ttfa,
+        "ProdFreq N":                               len(available_items),
+        "MeanRank corr (+)":                        corr_meanrank_vs_ttfa,
+        "Mean Rank N":                              len(available_items),
     }
     data: DataFrame = DataFrame.from_records([data_records])
 
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
         data.to_csv(data_file, index=False, columns=[
-            f"Length factor",
-            f"Max sphere radius",
-            f"Sigma",
-            f"FRF corr (-)",
-            f"FRF N",
+            "Length factor",
+            "Max sphere radius",
+            "Sigma",
+            "Buffer entry threshold",
+            "FRF corr (-)",
+            "FRF N",
             f"zRT corr (+; FRF≥{min_first_rank_freq})",
-            f"zRT N",
-            f"ProdFreq corr (-)",
-            f"ProdFreq N",
-            f"MeanRank corr (+)",
-            f"Mean Rank N",
+            "zRT N",
+            "ProdFreq corr (-)",
+            "ProdFreq N",
+            "MeanRank corr (+)",
+            "Mean Rank N",
         ])

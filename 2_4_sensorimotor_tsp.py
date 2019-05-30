@@ -82,7 +82,7 @@ def main(distance_type_name: str,
         use_prepruned=use_prepruned,
     )
 
-    SensorimotorComponent.save_model_spec(response_dir, length_factor, sigma, max_sphere_radius)
+    SensorimotorComponent.save_model_spec(response_dir, length_factor, sigma, max_sphere_radius, buffer_entry_threshold)
 
     for category_label in cp.category_labels_sensorimotor:
 
