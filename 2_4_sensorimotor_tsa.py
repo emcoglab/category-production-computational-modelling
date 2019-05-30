@@ -25,7 +25,7 @@ from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent
-from model.sensorimotor_component import SensorimotorComponent, save_model_spec_sensorimotor
+from model.sensorimotor_component import SensorimotorComponent
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
@@ -82,7 +82,7 @@ def main(distance_type_name: str,
         use_prepruned=use_prepruned,
     )
 
-    save_model_spec_sensorimotor(length_factor, max_sphere_radius, sigma, response_dir)
+    SensorimotorComponent.save_model_spec(response_dir, length_factor, sigma, max_sphere_radius)
 
     for category_label in cp.category_labels_sensorimotor:
 

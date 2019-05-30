@@ -6,7 +6,7 @@ from typing import DefaultDict, Set
 from numpy import nan
 from pandas import DataFrame, read_csv
 
-from model.graph_propagation import load_model_spec
+from model.graph_propagation import GraphPropagation
 from model.utils.exceptions import ParseError
 from preferences import Preferences
 
@@ -15,6 +15,7 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+ITEM_ENTERED_BUFFER = "Item entered WM buffer"
 TTFA = "TTFA"
 REACHED_CAT = "Reached conc.acc. θ"
 
@@ -121,6 +122,10 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
 
             item_label = row[RESPONSE]
 
+            # Only interested if item entered the buffer
+            if not row[ITEM_ENTERED_BUFFER]:
+                continue
+
             # We've sorted by activation time, so we only need to consider the first entry for each item
             if item_label not in ttfas.keys():
                 ttfas[item_label] = row[TICK_ON_WHICH_ACTIVATED]
@@ -139,7 +144,7 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}) CAT={conscious_access_threshold}.csv")
 
-    model_spec = load_model_spec(results_dir)
+    model_spec = GraphPropagation.load_model_spec(results_dir)
 
     data_records = {
         f"Model":                                   model_spec["Model name"],
@@ -186,14 +191,12 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}).csv")
 
-    model_spec = load_model_spec(results_dir)
+    model_spec = GraphPropagation.load_model_spec(results_dir)
 
     data_records = {
         f"Length factor":                           model_spec["Length factor"],
         f"Max sphere radius":                       model_spec["Max sphere radius"],
-        f"Run for ticks":                           model_spec["Run for ticks"],
         f"Sigma":                                   model_spec["Log-normal sigma"],
-        f"Bailout":                                 model_spec["Bailout"],
         f"FRF corr (-)":                            corr_frf_vs_ttfa,
         f"FRF N":                                   n_first_rank_frequent,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
@@ -209,9 +212,7 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
         data.to_csv(data_file, index=False, columns=[
             f"Length factor",
             f"Max sphere radius",
-            f"Run for ticks",
             f"Sigma",
-            f"Bailout",
             f"FRF corr (-)",
             f"FRF N",
             f"zRT corr (+; FRF≥{min_first_rank_freq})",

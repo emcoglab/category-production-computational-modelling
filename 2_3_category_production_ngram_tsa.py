@@ -27,7 +27,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from model.basic_types import ActivationValue
 from model.events import ItemFiredEvent
-from model.linguistic_component import LinguisticComponent, save_model_spec_linguistic
+from model.linguistic_component import LinguisticComponent
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
@@ -82,7 +82,7 @@ def main(n_words: int,
         firing_threshold=firing_threshold,
     )
 
-    save_model_spec_linguistic(edge_decay_sd_factor, firing_threshold, length_factor, distributional_model.name, n_words, response_dir)
+    LinguisticComponent.save_model_spec(response_dir, length_factor, edge_decay_sd_factor, firing_threshold, model_name, n_words)
 
     for category_label in cp.category_labels:
 
