@@ -38,29 +38,28 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
+category_production = CategoryProduction()
+sensorimotor_norms = SensorimotorNorms()
+
+
+def get_sensorimotor_distance_minkowski3(row):
+    c = row[CPColNames.CategorySensorimotor]
+    r = row[CPColNames.ResponseSensorimotor]
+
+    try:
+        category_vector = array(sensorimotor_norms.vector_for_word(c))
+    except WordNotInNormsError:
+        return nan
+
+    try:
+        response_vector = array(sensorimotor_norms.vector_for_word(r))
+    except WordNotInNormsError:
+        return nan
+
+    return distance(category_vector, response_vector, DistanceType.Minkowski3)
+
+
 def main(input_results_dir: str, min_first_rank_freq: int = None):
-
-    distance_type = DistanceType.Minkowski3
-    distance_column = f"{distance_type.name} distance"
-
-    category_production = CategoryProduction()
-    sensorimotor_norms = SensorimotorNorms()
-
-    def get_sensorimotor_distance_minkowski3(row):
-        c = row[CPColNames.CategorySensorimotor]
-        r = row[CPColNames.ResponseSensorimotor]
-
-        try:
-            category_vector = array(sensorimotor_norms.vector_for_word(c))
-        except WordNotInNormsError:
-            return nan
-
-        try:
-            response_vector = array(sensorimotor_norms.vector_for_word(r))
-        except WordNotInNormsError:
-            return nan
-
-        return distance(category_vector, response_vector, DistanceType.Minkowski3)
 
     # Set defaults
     if min_first_rank_freq is None:
@@ -68,47 +67,22 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
 
     logger.info(f"Looking at output from model.")
 
-    per_category_stats_output_path = path.join(Preferences.results_dir,
-                                               "Category production fit",
-                                               f"item-level data ({path.basename(input_results_dir)}).csv")
-
-    # region Build main dataframe
+    # region Build main dataframe and save item-level data
 
     # Main dataframe holds category production data and model response data
     main_dataframe: DataFrame = category_production.data.copy()
 
-    # Drop precomputed distance measures
-    main_dataframe.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
+    main_dataframe = add_predictor_columns(main_dataframe, input_results_dir, distance_column=f"{DistanceType.Minkowski3.name} distance")
 
-    # Get TTFAs and distances
-    model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
-    for category in category_production.category_labels_sensorimotor:
-        model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
-    main_dataframe[TTFA] = main_dataframe.apply(
-        lambda row: model_ttfas[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
-        axis=1)
-
-    main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
-
-    # Drop rows corresponding to responses which weren't produced by the model
-    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
-
-    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
-    main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
-    main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
-
-    # Collect
-    available_items = set(main_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
-                          .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
-                          .groups.keys())
-
-    # Save main dataframe
+    # Save item-level data
+    per_category_stats_output_path = path.join(Preferences.results_dir,
+                                               "Category production fit",
+                                               f"item-level data ({path.basename(input_results_dir)}).csv")
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
 
     # endregion
 
-    # region Compute overall stats
+    # region Compute correlations with DVs
 
     # frf vs ttfa
     corr_frf_vs_ttfa = main_dataframe[CPColNames.FirstRankFrequency].corr(main_dataframe[TTFA], method='pearson')
@@ -127,9 +101,34 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
 
     # endregion
 
-    save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
+    # Save model-performance stats
+    available_pairs = set(main_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
+                          .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
+                          .groups.keys())
+    save_stats_sensorimotor(available_pairs, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
                             first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, input_results_dir,
                             False, min_first_rank_freq)
+
+
+def add_predictor_columns(main_dataframe, input_results_dir, distance_column):
+    """Add columns for TTFA and distance, dropping appropriate rows."""
+    # Drop precomputed distance measures
+    main_dataframe.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
+    # Get TTFAs and distances
+    model_ttfas: Dict[str, DefaultDict[str, int]] = dict()  # category -> response -> TTFA
+    for category in category_production.category_labels_sensorimotor:
+        model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
+    main_dataframe[TTFA] = main_dataframe.apply(
+        lambda row: model_ttfas[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
+        axis=1)
+    main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
+    # Drop rows corresponding to responses which weren't produced by the model
+    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
+    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
+    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
+    main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
+    main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
+    return main_dataframe
 
 
 if __name__ == '__main__':
