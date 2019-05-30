@@ -22,9 +22,9 @@ import logging
 import sys
 from os import path, makedirs
 
-from pandas import concat, read_csv, DataFrame, pivot_table
+from pandas import concat, read_csv, DataFrame
 
-from model.utils.file import pivot_table_to_csv
+from evaluation.tabulation import tabulate, tabulation_to_csv
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -63,15 +63,10 @@ def main(results_dir: str) -> None:
             this_wc_data = this_wc_data[this_wc_data["Firing threshold"].eq(this_wc_data["CAT"])]
 
             for dv in dvs:
-
-                # pivot
-                p = pivot_table(data=this_wc_data, index="SD factor", columns="Firing threshold", values=dv,
-                                # there should be only one value for each group, but we need to use "first" because the
-                                # default is "mean", which doesn't work with the "-"s we used to replace nans.
-                                aggfunc="first")
+                table = tabulate(this_wc_data, dv, rows="SD factor", cols="Firing threshold")
                 save_dir = path.join(results_dir, " tabulated", f"{model}, {wc} words")
                 makedirs(save_dir, exist_ok=True)
-                pivot_table_to_csv(p, path.join(save_dir, f"{dv}.csv"))
+                tabulation_to_csv(table, path.join(save_dir, f"{dv}.csv"))
 
 
 def collate_data(results_dir: str) -> DataFrame:
