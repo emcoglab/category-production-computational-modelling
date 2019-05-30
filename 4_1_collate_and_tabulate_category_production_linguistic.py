@@ -24,7 +24,7 @@ from os import path, makedirs
 
 from pandas import concat, read_csv, DataFrame
 
-from evaluation.tabulation import tabulate, tabulation_to_csv
+from evaluation.tabulation import save_tabulation
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -63,10 +63,9 @@ def main(results_dir: str) -> None:
             this_wc_data = this_wc_data[this_wc_data["Firing threshold"].eq(this_wc_data["CAT"])]
 
             for dv in dvs:
-                table = tabulate(this_wc_data, dv, rows="SD factor", cols="Firing threshold")
                 save_dir = path.join(results_dir, " tabulated", f"{model}, {wc} words")
                 makedirs(save_dir, exist_ok=True)
-                tabulation_to_csv(table, path.join(save_dir, f"{dv}.csv"))
+                save_tabulation(data=this_wc_data, dv=dv, rows="SD factor", cols="Firing threshold", path=path.join(save_dir, f"{dv}.csv"))
 
 
 def collate_data(results_dir: str) -> DataFrame:

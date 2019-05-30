@@ -19,22 +19,29 @@ caiwingfield.net
 from pandas import pivot_table, DataFrame
 
 
-def tabulate(all_data, dv, rows, cols):
+def save_tabulation(data: DataFrame, dv, rows, cols, path: str):
+    """
+    Saves a tabulated form of the DataFrame data, where rows are values of `rows`, columns are values of `cols`, and
+    values are values of `dv`.
+    :param data:
+    :param dv:
+    :param rows:
+    :param cols:
+    :param path:
+    :return:
+    """
     # pivot
-    p = pivot_table(data=all_data, index=rows, columns=cols, values=dv,
+    p = pivot_table(data=data, index=rows, columns=cols, values=dv,
                     # there should be only one value for each group, but we need to use "first" because the
                     # default is "mean", which doesn't work with the "-"s we used to replace nans.
                     aggfunc="first")
-    return p
+    _tabulation_to_csv(p, path)
 
 
-def tabulation_to_csv(pt, csv_path):
+def _tabulation_to_csv(table, csv_path):
     """
     Saves a simple DataFrame.pivot_table to a csv, including columns names.
     Thanks to https://stackoverflow.com/a/55360229/2883198
-    :param pt:
-    :param csv_path:
-    :return:
     """
-    csv_df: DataFrame = DataFrame(columns=pt.columns, index=[pt.index.name]).append(pt)
-    csv_df.to_csv(csv_path, index_label=pt.columns.name)
+    csv_df: DataFrame = DataFrame(columns=table.columns, index=[table.index.name]).append(table)
+    csv_df.to_csv(csv_path, index_label=table.columns.name)
