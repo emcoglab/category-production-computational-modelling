@@ -129,10 +129,8 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
                                           "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}) CAT={conscious_access_threshold}.csv")
-
-    data: DataFrame = DataFrame.from_records([{
-        # Include model spec
-        **GraphPropagation.load_model_spec(results_dir),
+    model_spec = GraphPropagation.load_model_spec(results_dir)
+    stats = {
         "CAT":                                      conscious_access_threshold,
         "FRF corr (-)":                             corr_frf_vs_ttfa,
         "FRF N":                                    n_first_rank_frequent,
@@ -142,10 +140,17 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
         "ProdFreq N":                               len(available_items),
         "MeanRank corr (+)":                        corr_meanrank_vs_ttfa,
         "Mean Rank N":                              len(available_items),
+    }
+    data: DataFrame = DataFrame.from_records([{
+        **model_spec,
+        **stats,
     }])
 
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
-        data.to_csv(data_file, index=False)
+        data.to_csv(data_file, index=False,
+                    # Make sure columns are in consistent order for stacking,
+                    # and make sure the model spec columns come first.
+                    columns=sorted(model_spec.keys()) + sorted(stats.keys()))
 
 
 def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
@@ -156,19 +161,24 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
                                           "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}).csv")
-
-    data: DataFrame = DataFrame.from_records([{
-        # Include model spec
-        **GraphPropagation.load_model_spec(results_dir),
-        "FRF corr (-)":                             corr_frf_vs_ttfa,
-        "FRF N":                                    n_first_rank_frequent,
+    model_spec = GraphPropagation.load_model_spec(results_dir)
+    stats = {
+        "FRF corr (-)": corr_frf_vs_ttfa,
+        "FRF N": n_first_rank_frequent,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
-        "zRT N":                                    n_first_rank_frequent,
-        "ProdFreq corr (-)":                        corr_prodfreq_vs_ttfa,
-        "ProdFreq N":                               len(available_items),
-        "MeanRank corr (+)":                        corr_meanrank_vs_ttfa,
-        "Mean Rank N":                              len(available_items),
+        "zRT N": n_first_rank_frequent,
+        "ProdFreq corr (-)": corr_prodfreq_vs_ttfa,
+        "ProdFreq N": len(available_items),
+        "MeanRank corr (+)": corr_meanrank_vs_ttfa,
+        "Mean Rank N": len(available_items),
+    }
+    data: DataFrame = DataFrame.from_records([{
+        **model_spec,
+        **stats,
     }])
 
     with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
-        data.to_csv(data_file, index=False)
+        data.to_csv(data_file, index=False,
+                    # Make sure columns are in consistent order for stacking,
+                    # and make sure the model spec columns come first.
+                    columns=sorted(model_spec.keys()) + sorted(stats.keys()))
