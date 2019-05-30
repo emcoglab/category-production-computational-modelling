@@ -7,7 +7,7 @@ from ldm.utils.maths import DistanceType
 
 job_name = 'job_2_4'
 short_name = "j24"
-script_name = "2_4_sensorimotor_tsa"
+script_name = "2_4_sensorimotor_tsp"
 
 if not path.isdir(job_name):
     mkdir(job_name)
