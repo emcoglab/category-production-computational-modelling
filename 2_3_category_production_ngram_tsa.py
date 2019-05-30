@@ -82,7 +82,15 @@ def main(n_words: int,
         firing_threshold=firing_threshold,
     )
 
-    LinguisticComponent.save_model_spec(response_dir, length_factor, edge_decay_sd_factor, firing_threshold, model_name, n_words)
+    LinguisticComponent.save_model_spec({
+        "Words": n_words,
+        "Model name": distributional_model.name,
+        "Length factor": length_factor,
+        "Impulse pruning threshold": impulse_pruning_threshold,
+        "SD factor": edge_decay_sd_factor,
+        "Node decay": node_decay_factor,
+        "Firing threshold": firing_threshold,
+    }, response_dir)
 
     for category_label in cp.category_labels:
 
