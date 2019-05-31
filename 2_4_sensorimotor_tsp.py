@@ -25,7 +25,7 @@ from category_production.category_production import CategoryProduction
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent
-from model.sensorimotor_component import SensorimotorComponent
+from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
@@ -57,12 +57,15 @@ def main(distance_type_name: str,
          ):
 
     distance_type = DistanceType.from_name(distance_type_name)
+    norm_attenuation_statistic = NormAttenuationStatistic.Prevalence
+    activation_cap = FULL_ACTIVATION
 
     # Output file path
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
                              f"length {length_factor}, max r {max_sphere_radius} "
                              f"sigma {sigma}; bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
+                             f"attenuate {norm_attenuation_statistic.name}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -78,7 +81,8 @@ def main(distance_type_name: str,
         buffer_entry_threshold=buffer_entry_threshold,
         buffer_pruning_threshold=buffer_pruning_threshold,
         # Once a node is fully activated, that's enough.
-        activation_cap=FULL_ACTIVATION,
+        activation_cap=activation_cap,
+        norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
     )
 
@@ -90,6 +94,8 @@ def main(distance_type_name: str,
         "Buffer size limit": buffer_size_limit,
         "Buffer entry threshold": buffer_entry_threshold,
         "Buffer pruning threshold": buffer_pruning_threshold,
+        "Norm attenuation statistic": norm_attenuation_statistic.name,
+        "Activation cap": activation_cap,
     }, response_dir)
 
     for category_label in cp.category_labels_sensorimotor:
