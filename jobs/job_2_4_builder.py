@@ -7,26 +7,28 @@ from ldm.utils.maths import DistanceType
 
 job_name = 'job_2_4'
 short_name = "j24"
-script_name = "2_4_sensorimotor_tsa"
+script_name = "2_4_sensorimotor_tsp"
 
 if not path.isdir(job_name):
     mkdir(job_name)
 
 prune_ram = {
-    100: 5,
+    # 100: 5,
     150: 20,
     # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
     198: 45,
-    200: 60,
+    # 200: 60,
     250: 120,
 }
 sigmas = [
+    0.01,
     0.1,
     1.0,
 ]
 buffer_entry_thresholds = [
     0.5,
     0.9,
+    0.99,
 ]
 
 run_for_ticks = 10_000
