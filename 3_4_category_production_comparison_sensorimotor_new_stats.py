@@ -167,6 +167,7 @@ def main(input_results_dir: str):
 
 
 def save_figure(summary_table, x_selector, fig_title, fig_name):
+    """Save a summary table as a figure."""
     # add human bounds
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
                         y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[PRODUCTION_PROPORTION + ' CI95'],
@@ -176,6 +177,8 @@ def save_figure(summary_table, x_selector, fig_title, fig_name):
     # add model performance
     pyplot.scatter(x=summary_table.reset_index()[x_selector],
                    y=summary_table[MODEL_HITRATE])
+
+    pyplot.ylim((0, None))
 
     pyplot.title(fig_title)
     pyplot.xlabel(x_selector)
@@ -189,6 +192,9 @@ def save_figure(summary_table, x_selector, fig_title, fig_name):
 
 
 def get_summary_table(main_dataframe, groupby_column):
+    """
+    Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column.
+    """
     df = DataFrame()
     # Participant columns
     df[PRODUCTION_PROPORTION + ' Mean'] = (
