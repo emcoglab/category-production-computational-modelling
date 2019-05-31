@@ -23,8 +23,8 @@ from math import floor
 from os import path
 from typing import Dict, DefaultDict
 
-from pandas import DataFrame, isna
 from matplotlib import pyplot
+from pandas import DataFrame, isna
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
@@ -43,6 +43,7 @@ ROUNDED_MEAN_RANK = "RoundedMeanRank"
 PRODUCTION_PROPORTION = "ProductionProportion"
 CATEGORY_AVAILABLE = "CategoryAvailable"
 MODEL_HIT = "ModelHit"
+MODEL_HITRATE = "Model hitrate"
 
 
 N_PARTICIPANTS = 20
@@ -116,7 +117,7 @@ def main(input_results_dir: str):
     production_proportion_per_rfop = get_summary_table(main_dataframe, RANK_FREQUENCY_OF_PRODUCTION)
     production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], RANK_FREQUENCY_OF_PRODUCTION)
 
-    # Produciton proportion per rounded mean rank
+    # Production proportion per rounded mean rank
     production_proportion_per_rmr = get_summary_table(main_dataframe, ROUNDED_MEAN_RANK)
     production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], ROUNDED_MEAN_RANK)
 
@@ -129,7 +130,6 @@ def main(input_results_dir: str):
     production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                     f"Production proportion per rank frequency of production"
                                                     f" ({path.basename(input_results_dir)}).csv"))
-
     production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                    f"Production proportion per rounded mean rank"
                                                    f" ({path.basename(input_results_dir)}).csv"))
@@ -137,7 +137,6 @@ def main(input_results_dir: str):
     production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                                f"Production proportion per rank frequency of production"
                                                                f" ({path.basename(input_results_dir)}) restricted.csv"))
-
     production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                               f"Production proportion per rounded mean rank"
                                                               f" ({path.basename(input_results_dir)}) restricted.csv"))
@@ -146,28 +145,69 @@ def main(input_results_dir: str):
 
     # region Graph tables
 
-    pyplot.scatter(x=production_proportion_per_rfop.reset_index()[RANK_FREQUENCY_OF_PRODUCTION], y=production_proportion_per_rfop[PRODUCTION_PROPORTION + ' Mean'])
-    pyplot.errorbar(x=production_proportion_per_rfop.reset_index()[RANK_FREQUENCY_OF_PRODUCTION], y=production_proportion_per_rfop[PRODUCTION_PROPORTION + ' Mean'], yerr=production_proportion_per_rfop[PRODUCTION_PROPORTION + ' CI95'])
-    pyplot.savefig("/Users/caiwingfield/Desktop/rfop.png")
+    save_figure(summary_table=production_proportion_per_rfop,
+                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
+                fig_title="Hitrate per RFOP",
+                fig_name=f"hitrate per RFOP {path.basename(input_results_dir)}")
+    save_figure(summary_table=production_proportion_per_rfop_restricted,
+                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
+                fig_title="Hitrate per RFOP (only available categories)",
+                fig_name=f"hitrate per RFOP {path.basename(input_results_dir)} restricted")
+
+    save_figure(summary_table=production_proportion_per_rmr,
+                x_selector=ROUNDED_MEAN_RANK,
+                fig_title="Hitrate per RMR",
+                fig_name=f"hitrate per RMR {path.basename(input_results_dir)}")
+    save_figure(summary_table=production_proportion_per_rmr_restricted,
+                x_selector=ROUNDED_MEAN_RANK,
+                fig_title="Hitrate per RMR (only available categories)",
+                fig_name=f"hitrate per RMR {path.basename(input_results_dir)} restricted")
+
+    # endregion
+
+
+def save_figure(summary_table, x_selector, fig_title, fig_name):
+    # add human bounds
+    pyplot.fill_between(x=summary_table.reset_index()[x_selector],
+                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[PRODUCTION_PROPORTION + ' CI95'],
+                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[PRODUCTION_PROPORTION + ' CI95'])
+    pyplot.scatter(x=summary_table.reset_index()[x_selector],
+                   y=summary_table[PRODUCTION_PROPORTION + ' Mean'])
+    # add model performance
+    pyplot.scatter(x=summary_table.reset_index()[x_selector],
+                   y=summary_table[MODEL_HITRATE])
+
+    pyplot.title(fig_title)
+    pyplot.xlabel(x_selector)
+    pyplot.ylabel("Production proportion / hitrate")
+
+    pyplot.savefig(
+        path.join(Preferences.figures_dir, "hitrates", f"{fig_name}.png"))
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
-
-    # endregion
 
 
 def get_summary_table(main_dataframe, groupby_column):
     df = DataFrame()
     # Participant columns
     df[PRODUCTION_PROPORTION + ' Mean'] = (
-        main_dataframe.groupby(groupby_column).mean()[PRODUCTION_PROPORTION])
+        main_dataframe
+            .groupby(groupby_column)
+            .mean()[PRODUCTION_PROPORTION])
     df[PRODUCTION_PROPORTION + ' SD'] = (
-        main_dataframe.groupby(groupby_column).std()[PRODUCTION_PROPORTION])
+        main_dataframe
+            .groupby(groupby_column)
+            .std()[PRODUCTION_PROPORTION])
     df[PRODUCTION_PROPORTION + ' Count'] = (
-        main_dataframe.groupby(groupby_column).count()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'], row[PRODUCTION_PROPORTION + ' Count'], 0.95), axis=1)
+        main_dataframe
+            .groupby(groupby_column)
+            .count()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
+                                                                                     row[PRODUCTION_PROPORTION + ' Count'],
+                                                                                     0.95), axis=1)
     # Model columns
-    df['Model hitrate'] = (
+    df[MODEL_HITRATE] = (
         main_dataframe.groupby(groupby_column).mean()[MODEL_HIT])
     # Forget rows with nans
     df = df.dropna().reset_index()
