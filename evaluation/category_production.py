@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from os import path
-from typing import DefaultDict
+from typing import DefaultDict, Dict
 
 from numpy import nan
 from pandas import DataFrame, read_csv
@@ -81,14 +81,11 @@ def get_model_ttfas_for_category_linguistic(category: str,
         return defaultdict(lambda: nan)
 
 
-def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> DefaultDict[str, int]:
+def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> Dict[str, int]:
     """
     Dictionary of
         response -> time to first activation
     for the specified category.
-
-    DefaultDict gives nans where response not found
-
     :param category:
     :param results_dir:
     :return:
@@ -102,7 +99,8 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
             model_responses_df: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
-        ttfas = defaultdict(lambda: nan)
+        # We're not using the nan values here, so we just use a straight dictionary
+        ttfas = dict()
         for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
 
             item_label = row[RESPONSE]
@@ -112,7 +110,7 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
                 continue
 
             # We've sorted by activation time, so we only need to consider the first entry for each item
-            if item_label not in ttfas.keys():
+            if item_label not in ttfas:
                 ttfas[item_label] = row[TICK_ON_WHICH_ACTIVATED]
         return ttfas
 
