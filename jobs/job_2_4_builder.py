@@ -87,4 +87,4 @@ with open(f"{job_name}_submit_ALL.sh", mode="w", encoding="utf-8") as batch_file
     batch_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")
     batch_file.write(f"#!/usr/bin/env bash\n")
     for name in names:
-        batch_file.write(f"qsub {path.join(job_name, name)}\n")
+        batch_file.write(f"qsub {path.join(job_name, name)}.sh\n")
