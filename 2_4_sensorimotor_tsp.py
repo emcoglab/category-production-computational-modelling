@@ -17,6 +17,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
+from typing import Dict
 from os import path, makedirs
 
 from pandas import DataFrame
@@ -24,8 +25,8 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue, Length
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent
+from model.basic_types import ActivationValue, Length, ItemLabel, ItemIdx
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent, ModelEvent, ItemEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -134,7 +135,7 @@ def main(distance_type_name: str,
             if category_label in sc.concept_labels:
                 logger.info(f"Running spreading activation for category {category_label}")
                 activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
-                log_event(activation_event, event_log_file)
+                log_event(activation_event, event_log_file, label_dict=sc.idx2label)
 
             # If the category has no single norm, activate all constituent words
             else:
@@ -143,7 +144,7 @@ def main(distance_type_name: str,
                             f" (activating individual words {', '.join(category_words)}")
                 activation_events = sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
                 for activation_event in activation_events:
-                    log_event(activation_event, event_log_file)
+                    log_event(activation_event, event_log_file, label_dict=sc.idx2label)
 
             n_concurrent_activations = []
             model_response_entries = []
@@ -155,7 +156,7 @@ def main(distance_type_name: str,
                 tick_events = sc.tick()
 
                 for e in tick_events:
-                    log_event(e, event_log_file)
+                    log_event(e, event_log_file, label_dict=sc.idx2label)
 
                 activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
                 buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
@@ -206,8 +207,14 @@ def main(distance_type_name: str,
                      .to_csv(concurrent_activations_file, index=False)
 
 
-def log_event(e, event_log_file):
-    event_log_file.write(f"{e.time}:\t{e}\n")
+def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
+    # See if we can label the item
+    if isinstance(e, ItemEvent) and label_dict is not None:
+        event_log_file.write(f"{e.time}:\t{e}\t({label_dict[e.item]})\n")
+
+    # Otherwise just basic log
+    else:
+        event_log_file.write(f"{e.time}:\t{e}\n")
 
 
 if __name__ == '__main__':
