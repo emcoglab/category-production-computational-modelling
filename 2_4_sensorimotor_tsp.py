@@ -146,7 +146,7 @@ def main(distance_type_name: str,
                 for activation_event in activation_events:
                     log_event(activation_event, event_log_file, label_dict=sc.idx2label)
 
-            n_concurrent_activations = []
+            concurrent_activations_records = []
             model_response_entries = []
             for tick in range(1, run_for_ticks):
 
@@ -161,7 +161,9 @@ def main(distance_type_name: str,
                 activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
                 buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
 
-                n_concurrent_activations.append((tick, len(buffer_entries), len(sc.accessible_set())))
+                concurrent_activations = len(sc.accessible_set())
+
+                concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
 
                 for activation_event in activation_events:
                     model_response_entries.append({
@@ -173,11 +175,11 @@ def main(distance_type_name: str,
                     })
 
                 # Break early if we've got a probable explosion
-                if bailout is not None and len(sc.accessible_set()) > bailout:
+                if bailout is not None and concurrent_activations > bailout:
                     csv_comments.append(f"")
                     csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                        f"with {len(sc.accessible_set())} nodes activated.")
-                    log_event(BailoutEvent(time=tick, concurrent_activations=len(sc.accessible_set())), event_log_file)
+                                        f"with {concurrent_activations} nodes activated.")
+                    log_event(BailoutEvent(time=tick, concurrent_activations=concurrent_activations), event_log_file)
                     break
 
             model_responses_df = DataFrame.from_records(
@@ -202,7 +204,7 @@ def main(distance_type_name: str,
 
         # Concurrent activations
         with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
-            DataFrame.from_records(n_concurrent_activations,
+            DataFrame.from_records(concurrent_activations_records,
                                    columns=["Tick", "New activations", "Concurrent activations"])\
                      .to_csv(concurrent_activations_file, index=False)
 
@@ -210,7 +212,7 @@ def main(distance_type_name: str,
 def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
     # See if we can label the item
     if isinstance(e, ItemEvent) and label_dict is not None:
-        event_log_file.write(f"{e.time}:\t{e}\t({label_dict[e.item]})\n")
+        event_log_file.write(f"{e.time}:\t{e}\t\"{label_dict[e.item]}\"\n")
 
     # Otherwise just basic log
     else:
