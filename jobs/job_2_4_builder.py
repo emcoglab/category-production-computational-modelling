@@ -33,7 +33,7 @@ buffer_entry_thresholds = [
 
 run_for_ticks = 10_000
 
-pruning_threshold = 0.05
+pruning_threshold = 0.2
 length_factor = 100
 buffer_size_limit = 10
 distance_type = DistanceType.Minkowski3
