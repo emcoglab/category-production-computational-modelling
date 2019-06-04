@@ -56,7 +56,7 @@ for sphere_radius, ram_amount in prune_ram.items():
                     f"s{sigma}_" \
                     f"a{activation_threshold}_" \
                     f"b{buffer_entry_threshold}_" \
-                    f"r{sphere_radius}.sh"
+                    f"r{sphere_radius}"
                 names.append(name)
                 with open(path.join(job_name, f"{name}.sh"), mode="w", encoding="utf-8") as job_file:
                     job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")

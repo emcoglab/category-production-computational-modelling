@@ -1,7 +1,7 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j24_sm_s0.1_a0.1_b0.9_r198.sh
+#$ -N j24_sm_s0.1_a0.3_b0.9_r198
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=45G
@@ -18,7 +18,7 @@ python3 ../2_4_sensorimotor_tsp.py \
            --buffer_size_limit 10 \
            --buffer_entry_threshold 0.9 \
            --buffer_pruning_threshold 0.2 \
-           --activation_threshold 0.1 \
+           --activation_threshold 0.3 \
            --length_factor 100 \
            --node_decay_sigma 0.1 \
            --run_for_ticks 10000 \

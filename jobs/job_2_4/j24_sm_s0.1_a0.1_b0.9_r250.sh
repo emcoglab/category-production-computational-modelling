@@ -1,7 +1,7 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j24_sm_s0.1_a0.1_b0.9_r250.sh
+#$ -N j24_sm_s0.1_a0.1_b0.9_r250
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
 #$ -l h_vmem=120G
