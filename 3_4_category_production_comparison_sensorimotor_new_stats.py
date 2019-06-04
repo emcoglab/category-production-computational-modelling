@@ -21,14 +21,16 @@ import logging
 import sys
 from math import floor
 from os import path
-from typing import Dict, DefaultDict
+from typing import Dict
 
 from matplotlib import pyplot
+from numpy import nan
 from pandas import DataFrame, isna
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
 from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, TTFA
+from ldm.corpus.tokenising import modified_word_tokenize
 from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
@@ -69,18 +71,53 @@ def main(input_results_dir: str):
 
     # region Add new columns for model
 
-    # category -> response -> TTFA
-    model_ttfas: Dict[str, DefaultDict[str, int]] = dict()
+    model_ttfas: Dict[str, Dict[str, int]] = dict()  # category -> response -> TTFA
     for category in category_production.category_labels_sensorimotor:
         model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
+
+    # TODO: this is copied code from 3_3_cpcs
+    def get_min_ttfa_for_multiword_responses(row) -> int:
+        """
+        Helper function to convert a row in the output into a ttfa when the response is formed either of a single or
+        multiple norms terms.
+        """
+        c = row[CPColNames.CategorySensorimotor]
+        r = row[CPColNames.ResponseSensorimotor]
+
+        # If the category is not found in the dictionary, it was not accessed by the model so no TTFA will be present
+        # for any response.
+        try:
+            # response -> TTFA
+            c_ttfas: Dict[str, int] = model_ttfas[c]
+        except KeyError:
+            return nan
+
+        # If the response was directly found, we can return it
+        if r in c_ttfas:
+            return c_ttfas[r]
+
+        # Otherwise, try to break the response into components and find any one of them
+        else:
+            r_ttfas = [c_ttfas[w]
+                       for w in modified_word_tokenize(r)
+                       if (w not in category_production.ignored_words)
+                       and (w in c_ttfas)]
+
+            # The multi-word response is said to be activated the first time any one of its constituent words are
+            if len(r_ttfas) > 1:
+                return min(r_ttfas)
+            # If none of the constituent words have a ttfa, we have no ttfa for the multiword term
+            else:
+                return nan
+
     # Column for TTFA (int)
-    main_dataframe[TTFA] = main_dataframe.apply(
-        lambda row: model_ttfas[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
-        axis=1)
+    main_dataframe[TTFA] = main_dataframe.apply(get_min_ttfa_for_multiword_responses, axis=1)
+
     # Derived column for whether the model produced the response at all (bool)
     main_dataframe[MODEL_HIT] = main_dataframe.apply(
         lambda row: not isna(row[TTFA]),
         axis=1)
+
     # Whether the category was available to the model
     main_dataframe[CATEGORY_AVAILABLE] = main_dataframe.apply(
         lambda row: SN.has_word(row[CPColNames.CategorySensorimotor]),
