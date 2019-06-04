@@ -1,10 +1,10 @@
 # GENERATED CODE, CHANGES WILL BE OVERWRITTEN
 #$ -S /bin/bash
 #$ -q serial
-#$ -N j24_sm_s1.0_b0.9_r150_sa
+#$ -N j24_sm_s0.1_a0.3_b0.9_r250.sh
 #$ -m e
 #$ -M c.wingfield@lancaster.ac.uk
-#$ -l h_vmem=20G
+#$ -l h_vmem=120G
 
 source /etc/profile
 
@@ -14,10 +14,11 @@ module add anaconda3/2018.12
 
 python3 ../2_4_sensorimotor_tsp.py \
            --distance_type Minkowski-3 \
-           --max_sphere_radius 150 \
+           --max_sphere_radius 250 \
            --buffer_size_limit 10 \
            --buffer_entry_threshold 0.9 \
            --buffer_pruning_threshold 0.2 \
+           --activation_threshold 0.3 \
            --length_factor 100 \
-           --node_decay_sigma 1.0 \
+           --node_decay_sigma 0.1 \
            --run_for_ticks 10000 \

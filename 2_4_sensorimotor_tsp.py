@@ -52,6 +52,7 @@ def main(distance_type_name: str,
          buffer_size_limit: int,
          buffer_entry_threshold: ActivationValue,
          buffer_pruning_threshold: float,
+         activation_threshold: ActivationValue,
          run_for_ticks: int,
          sigma: float,
          use_prepruned: bool,
@@ -60,6 +61,7 @@ def main(distance_type_name: str,
 
     distance_type = DistanceType.from_name(distance_type_name)
     norm_attenuation_statistic = NormAttenuationStatistic.Prevalence
+    # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
     # Output file path
@@ -82,8 +84,8 @@ def main(distance_type_name: str,
         buffer_size_limit=buffer_size_limit,
         buffer_entry_threshold=buffer_entry_threshold,
         buffer_pruning_threshold=buffer_pruning_threshold,
-        # Once a node is fully activated, that's enough.
         activation_cap=activation_cap,
+        activation_threshold=activation_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
     )
@@ -225,6 +227,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
+    parser.add_argument("-a", "--activation_threshold", required=True, type=ActivationValue)
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-e", "--buffer_entry_threshold", required=True, type=ActivationValue)
@@ -244,6 +247,7 @@ if __name__ == '__main__':
          buffer_size_limit=args.buffer_size_limit,
          buffer_entry_threshold=args.buffer_entry_threshold,
          buffer_pruning_threshold=args.buffer_pruning_threshold,
+         activation_threshold=args.activation_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,
          bailout=args.bailout,
