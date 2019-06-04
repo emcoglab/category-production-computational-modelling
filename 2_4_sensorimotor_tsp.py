@@ -22,10 +22,11 @@ from os import path, makedirs
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
+from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent
-from model.sensorimotor_component import SensorimotorComponent
+from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
@@ -57,12 +58,15 @@ def main(distance_type_name: str,
          ):
 
     distance_type = DistanceType.from_name(distance_type_name)
+    norm_attenuation_statistic = NormAttenuationStatistic.Prevalence
+    activation_cap = FULL_ACTIVATION
 
     # Output file path
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
                              f"length {length_factor}, max r {max_sphere_radius} "
                              f"sigma {sigma}; bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
+                             f"attenuate {norm_attenuation_statistic.name}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -78,7 +82,8 @@ def main(distance_type_name: str,
         buffer_entry_threshold=buffer_entry_threshold,
         buffer_pruning_threshold=buffer_pruning_threshold,
         # Once a node is fully activated, that's enough.
-        activation_cap=FULL_ACTIVATION,
+        activation_cap=activation_cap,
+        norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
     )
 
@@ -90,6 +95,8 @@ def main(distance_type_name: str,
         "Buffer size limit": buffer_size_limit,
         "Buffer entry threshold": buffer_entry_threshold,
         "Buffer pruning threshold": buffer_pruning_threshold,
+        "Norm attenuation statistic": norm_attenuation_statistic.name,
+        "Activation cap": activation_cap,
     }, response_dir)
 
     for category_label in cp.category_labels_sensorimotor:
@@ -100,16 +107,10 @@ def main(distance_type_name: str,
 
         csv_comments = []
 
-        # Skip the check if the category won't be in the network
-        if category_label not in sc.concept_labels:
-            continue
-
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
             logger.info(f"{model_responses_path} exists, skipping.")
             continue
-
-        logger.info(f"Running spreading activation for category {category_label}")
 
         sc.reset()
 
@@ -129,8 +130,20 @@ def main(distance_type_name: str,
 
             # Do the spreading activation
 
-            activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
-            log_event(activation_event, event_log_file)
+            # If the category has a single norm, activate it
+            if category_label in sc.concept_labels:
+                logger.info(f"Running spreading activation for category {category_label}")
+                activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
+                log_event(activation_event, event_log_file)
+
+            # If the category has no single norm, activate all constituent words
+            else:
+                category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
+                logger.info(f"Running spreading activation for category {category_label}"
+                            f" (activating individual words {', '.join(category_words)}")
+                activation_events = sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
+                for activation_event in activation_events:
+                    log_event(activation_event, event_log_file)
 
             n_concurrent_activations = []
             model_response_entries = []
@@ -149,13 +162,13 @@ def main(distance_type_name: str,
 
                 n_concurrent_activations.append((tick, len(buffer_entries), len(sc.accessible_set())))
 
-                for event in activation_events:
+                for activation_event in activation_events:
                     model_response_entries.append({
-                        RESPONSE:                sc.idx2label[event.item],
-                        NODE_ID:                 event.item,
-                        ACTIVATION:              event.activation,
-                        TICK_ON_WHICH_ACTIVATED: event.time,
-                        ENTERED_BUFFER:          isinstance(event, ItemEnteredBufferEvent),
+                        RESPONSE:                sc.idx2label[activation_event.item],
+                        NODE_ID:                 activation_event.item,
+                        ACTIVATION:              activation_event.activation,
+                        TICK_ON_WHICH_ACTIVATED: activation_event.time,
+                        ENTERED_BUFFER:          isinstance(activation_event, ItemEnteredBufferEvent),
                     })
 
                 # Break early if we've got a probable explosion
