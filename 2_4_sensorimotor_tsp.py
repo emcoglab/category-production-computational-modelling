@@ -68,7 +68,9 @@ def main(distance_type_name: str,
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
                              f"length {length_factor}, max r {max_sphere_radius} "
-                             f"sigma {sigma}; bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
+                             f"sigma {sigma}; "
+                             f"a {activation_threshold}; "
+                             f"bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
                              f"attenuate {norm_attenuation_statistic.name}; "
                              f"rft {run_for_ticks}; bailout {bailout}")
     if not path.isdir(response_dir):
@@ -100,6 +102,7 @@ def main(distance_type_name: str,
         "Buffer pruning threshold": buffer_pruning_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
+        "Activation threshold": activation_threshold,
     }, response_dir)
 
     for category_label in cp.category_labels_sensorimotor:
