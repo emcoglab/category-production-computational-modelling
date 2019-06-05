@@ -138,21 +138,18 @@ def main(distance_type_name: str,
             # If the category has a single norm, activate it
             if category_label in sc.concept_labels:
                 logger.info(f"Running spreading activation for category {category_label}")
-                activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
-                log_event(activation_event, event_log_file, label_dict=sc.idx2label)
+                sc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
             # If the category has no single norm, activate all constituent words
             else:
                 category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
                 logger.info(f"Running spreading activation for category {category_label}"
                             f" (activating individual words {', '.join(category_words)}")
-                activation_events = sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
-                for activation_event in activation_events:
-                    log_event(activation_event, event_log_file, label_dict=sc.idx2label)
+                sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
             concurrent_activations_records = []
             model_response_entries = []
-            for tick in range(1, run_for_ticks):
+            for tick in range(0, run_for_ticks):
 
                 event_log_file.flush()
 

@@ -135,7 +135,7 @@ def main(n_words: int,
         lc.activate_item_with_label(category_label, 1)
 
         model_response_entries = []
-        for tick in range(1, run_for_ticks):
+        for tick in range(0, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
             events = lc.tick()
