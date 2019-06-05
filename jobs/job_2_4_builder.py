@@ -31,7 +31,7 @@ buffer_entry_thresholds = [
     # 0.99,
 ]
 activation_thresholds = [
-    # 0.0,
+    0.0,
     0.1,
     # 0.4,
     0.2,
