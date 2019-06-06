@@ -30,7 +30,6 @@ from model.utils.maths import make_decay_function_exponential_with_decay_factor,
 
 class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
-    # TODO: this test is failing
     def test_worked_example_unweighted_node_values(self):
         distance_matrix = array([
             [.0, .3, .6],  # Lion
@@ -51,15 +50,21 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
         )
 
         # t = 0
-        e = tsa.activate_item_with_label("lion", 1)
-        self.assertIsNotNone(e)
-        self.assertEqual(e, ItemFiredEvent(time=0, item=0, activation=1.0))
+
+        tsa.activate_item_with_label("lion", 1)
+
+        es = tsa.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=0, item=0, activation=1.0) in es)
+
+        # t = 1
 
         for t in range(1, 3):
             es = tsa.tick()
             self.assertEqual(len(es), 0)
 
         # t = 3
+
         es = tsa.tick()
         self.assertEqual(len(es), 1)
         self.assertTrue(ItemFiredEvent(time=3, item=1, activation=0.7289999127388) in es)
@@ -69,6 +74,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
             self.assertEqual(len(es), 0)
 
         # t = 6
+
         es = tsa.tick()
         self.assertEqual(len(es), 1)
         self.assertTrue(ItemFiredEvent(time=6, item=2, activation=0.5314409136772156) in es)
@@ -78,6 +84,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
             self.assertEqual(len(es), 0)
 
         # t = 12
+
         es = tsa.tick()
         self.assertEqual(len(es), 1)
         self.assertTrue(ItemFiredEvent(time=12, item=0, activation=0.5648589134216309) in es)
@@ -87,6 +94,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
             self.assertEqual(len(es), 0)
 
         # t = 15
+
         es = tsa.tick()
         self.assertEqual(len(es), 1)
         self.assertTrue(ItemFiredEvent(time=15, item=1, activation=0.6176731288433075) in es)
