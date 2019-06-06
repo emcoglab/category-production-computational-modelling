@@ -17,6 +17,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
+from typing import Dict
 from os import path, makedirs
 
 from pandas import DataFrame
@@ -24,8 +25,8 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue, Length
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent
+from model.basic_types import ActivationValue, Length, ItemLabel, ItemIdx
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent, ModelEvent, ItemEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -49,8 +50,8 @@ def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
          buffer_size_limit: int,
-         buffer_entry_threshold: ActivationValue,
-         buffer_pruning_threshold: float,
+         buffer_threshold: ActivationValue,
+         activation_threshold: ActivationValue,
          run_for_ticks: int,
          sigma: float,
          use_prepruned: bool,
@@ -59,15 +60,20 @@ def main(distance_type_name: str,
 
     distance_type = DistanceType.from_name(distance_type_name)
     norm_attenuation_statistic = NormAttenuationStatistic.Prevalence
+    # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
     # Output file path
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
-                             f"length {length_factor}, max r {max_sphere_radius} "
-                             f"sigma {sigma}; bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
+                             f"length {length_factor}; "
+                             f"max r {max_sphere_radius} "
+                             f"sigma {sigma}; "
+                             f"a {activation_threshold}; "
+                             f"b {buffer_threshold}; "
                              f"attenuate {norm_attenuation_statistic.name}; "
-                             f"rft {run_for_ticks}; bailout {bailout}")
+                             f"rft {run_for_ticks}; "
+                             f"bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
@@ -79,10 +85,9 @@ def main(distance_type_name: str,
         max_sphere_radius=max_sphere_radius,
         lognormal_sigma=sigma,
         buffer_size_limit=buffer_size_limit,
-        buffer_entry_threshold=buffer_entry_threshold,
-        buffer_pruning_threshold=buffer_pruning_threshold,
-        # Once a node is fully activated, that's enough.
+        buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
+        activation_threshold=activation_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
     )
@@ -93,10 +98,10 @@ def main(distance_type_name: str,
         "Max sphere radius": max_sphere_radius,
         "Log-normal sigma": sigma,
         "Buffer size limit": buffer_size_limit,
-        "Buffer entry threshold": buffer_entry_threshold,
-        "Buffer pruning threshold": buffer_pruning_threshold,
+        "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
+        "Activation threshold": activation_threshold,
     }, response_dir)
 
     for category_label in cp.category_labels_sensorimotor:
@@ -133,21 +138,18 @@ def main(distance_type_name: str,
             # If the category has a single norm, activate it
             if category_label in sc.concept_labels:
                 logger.info(f"Running spreading activation for category {category_label}")
-                activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
-                log_event(activation_event, event_log_file)
+                sc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
             # If the category has no single norm, activate all constituent words
             else:
                 category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
                 logger.info(f"Running spreading activation for category {category_label}"
                             f" (activating individual words {', '.join(category_words)}")
-                activation_events = sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
-                for activation_event in activation_events:
-                    log_event(activation_event, event_log_file)
+                sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
-            n_concurrent_activations = []
+            concurrent_activations_records = []
             model_response_entries = []
-            for tick in range(1, run_for_ticks):
+            for tick in range(0, run_for_ticks):
 
                 event_log_file.flush()
 
@@ -155,12 +157,14 @@ def main(distance_type_name: str,
                 tick_events = sc.tick()
 
                 for e in tick_events:
-                    log_event(e, event_log_file)
+                    log_event(e, event_log_file, label_dict=sc.idx2label)
 
                 activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
                 buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
 
-                n_concurrent_activations.append((tick, len(buffer_entries), len(sc.accessible_set())))
+                concurrent_activations = len(sc.accessible_set())
+
+                concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
 
                 for activation_event in activation_events:
                     model_response_entries.append({
@@ -172,11 +176,11 @@ def main(distance_type_name: str,
                     })
 
                 # Break early if we've got a probable explosion
-                if bailout is not None and len(sc.accessible_set()) > bailout:
+                if bailout is not None and concurrent_activations > bailout:
                     csv_comments.append(f"")
                     csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                        f"with {len(sc.accessible_set())} nodes activated.")
-                    log_event(BailoutEvent(time=tick, concurrent_activations=len(sc.accessible_set())), event_log_file)
+                                        f"with {concurrent_activations} nodes activated.")
+                    log_event(BailoutEvent(time=tick, concurrent_activations=concurrent_activations), event_log_file)
                     break
 
             model_responses_df = DataFrame.from_records(
@@ -201,13 +205,19 @@ def main(distance_type_name: str,
 
         # Concurrent activations
         with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
-            DataFrame.from_records(n_concurrent_activations,
+            DataFrame.from_records(concurrent_activations_records,
                                    columns=["Tick", "New activations", "Concurrent activations"])\
                      .to_csv(concurrent_activations_file, index=False)
 
 
-def log_event(e, event_log_file):
-    event_log_file.write(f"{e.time}:\t{e}\n")
+def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
+    # See if we can label the item
+    if isinstance(e, ItemEvent) and label_dict is not None:
+        event_log_file.write(f"{e.time}:\t{e}\t\"{label_dict[e.item]}\"\n")
+
+    # Otherwise just basic log
+    else:
+        event_log_file.write(f"{e.time}:\t{e}\n")
 
 
 if __name__ == '__main__':
@@ -216,10 +226,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
+    parser.add_argument("-a", "--activation_threshold", required=True, type=ActivationValue)
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-e", "--buffer_entry_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-f", "--buffer_pruning_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("-l", "--length_factor", required=True, type=Length)
     parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
@@ -233,8 +243,8 @@ if __name__ == '__main__':
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
          buffer_size_limit=args.buffer_size_limit,
-         buffer_entry_threshold=args.buffer_entry_threshold,
-         buffer_pruning_threshold=args.buffer_pruning_threshold,
+         activation_threshold=args.activation_threshold,
+         buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,
          bailout=args.bailout,

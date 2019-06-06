@@ -19,6 +19,7 @@ import unittest
 
 from numpy import array
 
+from model.events import ItemFiredEvent
 from model.graph import Graph
 from model.temporal_spatial_propagation import TemporalSpatialPropagation
 from model.utils.maths import make_decay_function_exponential_with_decay_factor
@@ -42,16 +43,55 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
             node_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
         )
 
+        # t = 0
+
         tsp.activate_item_with_label("lion", 1)
 
-        for i in range(1, 16):
-            tsp.tick()
+        es = tsp.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=0, item=0, activation=1.0) in es)
 
-        # WARNING!!!
-        # These numbers not manually verified, just copied from the output for the purposes of refactoring!!!!!
-        self.assertAlmostEqual(tsp.activation_of_item_with_label("lion"),    10.7028, places=4)
-        self.assertAlmostEqual(tsp.activation_of_item_with_label("tiger"),    6.8101, places=4)
-        self.assertAlmostEqual(tsp.activation_of_item_with_label("stripes"), 10.6471, places=4)
+        for t in range(1, 3):
+            es = tsp.tick()
+            self.assertEqual(len(es), 0)
+
+        # t = 3
+
+        es = tsp.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=3, item=1, activation=1.0) in es)
+
+        for t in range(4, 6):
+            es = tsp.tick()
+            self.assertEqual(len(es), 0)
+
+        # t = 6
+
+        es = tsp.tick()
+        self.assertEqual(len(es), 2)
+        self.assertTrue(ItemFiredEvent(time=6, item=2, activation=1.0) in es)
+        self.assertTrue(ItemFiredEvent(time=6, item=0, activation=1.5314409136772156) in es)
+
+        # t = 7
+
+        es = tsp.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=7, item=2, activation=1.899999976158142) in es)
+
+        for t in range(8, 9):
+            es = tsp.tick()
+            self.assertEqual(len(es), 0)
+
+        for t in range(9, 12):
+            es = tsp.tick()
+            self.assertEqual(len(es), 1)
+
+        # t = 12
+
+        es = tsp.tick()
+        self.assertEqual(len(es), 2)
+        self.assertTrue(ItemFiredEvent(time=12, item=0, activation=3.876752197742462) in es)
+        self.assertTrue(ItemFiredEvent(time=12, item=2, activation=2.653371751308441) in es)
 
 
 if __name__ == '__main__':
