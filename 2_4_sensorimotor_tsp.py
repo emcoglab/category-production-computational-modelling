@@ -50,8 +50,7 @@ def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
          buffer_size_limit: int,
-         buffer_entry_threshold: ActivationValue,
-         buffer_pruning_threshold: float,
+         buffer_threshold: ActivationValue,
          activation_threshold: ActivationValue,
          run_for_ticks: int,
          sigma: float,
@@ -67,12 +66,14 @@ def main(distance_type_name: str,
     # Output file path
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
-                             f"length {length_factor}, max r {max_sphere_radius} "
+                             f"length {length_factor}; "
+                             f"max r {max_sphere_radius} "
                              f"sigma {sigma}; "
                              f"a {activation_threshold}; "
-                             f"bet {buffer_entry_threshold}; bpt {buffer_pruning_threshold}; "
+                             f"b {buffer_threshold}; "
                              f"attenuate {norm_attenuation_statistic.name}; "
-                             f"rft {run_for_ticks}; bailout {bailout}")
+                             f"rft {run_for_ticks}; "
+                             f"bailout {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
@@ -84,8 +85,7 @@ def main(distance_type_name: str,
         max_sphere_radius=max_sphere_radius,
         lognormal_sigma=sigma,
         buffer_size_limit=buffer_size_limit,
-        buffer_entry_threshold=buffer_entry_threshold,
-        buffer_pruning_threshold=buffer_pruning_threshold,
+        buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
         activation_threshold=activation_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
@@ -98,8 +98,7 @@ def main(distance_type_name: str,
         "Max sphere radius": max_sphere_radius,
         "Log-normal sigma": sigma,
         "Buffer size limit": buffer_size_limit,
-        "Buffer entry threshold": buffer_entry_threshold,
-        "Buffer pruning threshold": buffer_pruning_threshold,
+        "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
         "Activation threshold": activation_threshold,
@@ -139,21 +138,18 @@ def main(distance_type_name: str,
             # If the category has a single norm, activate it
             if category_label in sc.concept_labels:
                 logger.info(f"Running spreading activation for category {category_label}")
-                activation_event = sc.activate_item_with_label(category_label, FULL_ACTIVATION)
-                log_event(activation_event, event_log_file, label_dict=sc.idx2label)
+                sc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
             # If the category has no single norm, activate all constituent words
             else:
                 category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
                 logger.info(f"Running spreading activation for category {category_label}"
                             f" (activating individual words {', '.join(category_words)}")
-                activation_events = sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
-                for activation_event in activation_events:
-                    log_event(activation_event, event_log_file, label_dict=sc.idx2label)
+                sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
             concurrent_activations_records = []
             model_response_entries = []
-            for tick in range(1, run_for_ticks):
+            for tick in range(0, run_for_ticks):
 
                 event_log_file.flush()
 
@@ -233,8 +229,7 @@ if __name__ == '__main__':
     parser.add_argument("-a", "--activation_threshold", required=True, type=ActivationValue)
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-e", "--buffer_entry_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-f", "--buffer_pruning_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("-l", "--length_factor", required=True, type=Length)
     parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
@@ -248,9 +243,8 @@ if __name__ == '__main__':
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
          buffer_size_limit=args.buffer_size_limit,
-         buffer_entry_threshold=args.buffer_entry_threshold,
-         buffer_pruning_threshold=args.buffer_pruning_threshold,
          activation_threshold=args.activation_threshold,
+         buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
          sigma=args.node_decay_sigma,
          bailout=args.bailout,

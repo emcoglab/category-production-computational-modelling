@@ -44,15 +44,19 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
         )
 
         # t = 0
-        e = tsp.activate_item_with_label("lion", 1)
-        self.assertIsNotNone(e)
-        self.assertEqual(e, ItemFiredEvent(time=0, item=0, activation=1.0))
+
+        tsp.activate_item_with_label("lion", 1)
+
+        es = tsp.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=0, item=0, activation=1.0) in es)
 
         for t in range(1, 3):
             es = tsp.tick()
             self.assertEqual(len(es), 0)
 
         # t = 3
+
         es = tsp.tick()
         self.assertEqual(len(es), 1)
         self.assertTrue(ItemFiredEvent(time=3, item=1, activation=1.0) in es)
@@ -62,12 +66,14 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
             self.assertEqual(len(es), 0)
 
         # t = 6
+
         es = tsp.tick()
         self.assertEqual(len(es), 2)
         self.assertTrue(ItemFiredEvent(time=6, item=2, activation=1.0) in es)
         self.assertTrue(ItemFiredEvent(time=6, item=0, activation=1.5314409136772156) in es)
 
         # t = 7
+
         es = tsp.tick()
         self.assertEqual(len(es), 1)
         self.assertTrue(ItemFiredEvent(time=7, item=2, activation=1.899999976158142) in es)
@@ -81,6 +87,7 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
             self.assertEqual(len(es), 1)
 
         # t = 12
+
         es = tsp.tick()
         self.assertEqual(len(es), 2)
         self.assertTrue(ItemFiredEvent(time=12, item=0, activation=3.876752197742462) in es)
