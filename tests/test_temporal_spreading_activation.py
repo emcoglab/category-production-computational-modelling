@@ -19,6 +19,7 @@ import unittest
 
 from numpy import array, log
 
+from model.events import ItemFiredEvent
 from .approximate_comparator.approximate_comparator import is_almost_equal
 
 from model.graph import Graph
@@ -49,14 +50,50 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
             edge_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),
         )
 
-        tsa.activate_item_with_label("lion", 1)
+        # t = 0
+        e = tsa.activate_item_with_label("lion", 1)
+        self.assertIsNotNone(e)
+        self.assertEqual(e, ItemFiredEvent(time=0, item=0, activation=1.0))
 
-        for i in range(1, 16):
-            tsa.tick()
+        for t in range(1, 3):
+            es = tsa.tick()
+            self.assertEqual(len(es), 0)
 
-        self.assertAlmostEqual(tsa.activation_of_item_with_label("lion"),    0.4118, places=4)
-        self.assertAlmostEqual(tsa.activation_of_item_with_label("tiger"),   0.6177, places=4)
-        self.assertAlmostEqual(tsa.activation_of_item_with_label("stripes"), 0.2059, places=4)
+        # t = 3
+        es = tsa.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=3, item=1, activation=0.7289999127388) in es)
+
+        for t in range(4, 6):
+            es = tsa.tick()
+            self.assertEqual(len(es), 0)
+
+        # t = 6
+        es = tsa.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=6, item=2, activation=0.5314409136772156) in es)
+
+        for t in range(7, 12):
+            es = tsa.tick()
+            self.assertEqual(len(es), 0)
+
+        # t = 12
+        es = tsa.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=12, item=0, activation=0.5648589134216309) in es)
+
+        for t in range(13, 15):
+            es = tsa.tick()
+            self.assertEqual(len(es), 0)
+
+        # t = 15
+        es = tsa.tick()
+        self.assertEqual(len(es), 1)
+        self.assertTrue(ItemFiredEvent(time=15, item=1, activation=0.6176731288433075) in es)
+
+        for t in range(16, 17):
+            es = tsa.tick()
+            self.assertEqual(len(es), 0)
 
 
 class TestDecayFunctions(unittest.TestCase):
