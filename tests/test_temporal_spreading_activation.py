@@ -29,6 +29,7 @@ from model.utils.maths import make_decay_function_exponential_with_decay_factor,
 
 class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
+    # TODO: this test is failing
     def test_worked_example_unweighted_node_values(self):
         distance_matrix = array([
             [.0, .3, .6],  # Lion
