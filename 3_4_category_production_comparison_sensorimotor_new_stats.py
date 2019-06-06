@@ -207,8 +207,8 @@ def save_figure(summary_table, x_selector, fig_title, fig_name):
     """Save a summary table as a figure."""
     # add human bounds
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
-                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[PRODUCTION_PROPORTION + ' CI95'],
-                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[PRODUCTION_PROPORTION + ' CI95'])
+                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[PRODUCTION_PROPORTION + ' SD'],
+                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[PRODUCTION_PROPORTION + ' SD'])
     pyplot.scatter(x=summary_table.reset_index()[x_selector],
                    y=summary_table[PRODUCTION_PROPORTION + ' Mean'])
     # add model performance
