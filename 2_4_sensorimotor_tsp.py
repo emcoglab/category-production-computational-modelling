@@ -26,7 +26,7 @@ from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length, ItemLabel, ItemIdx
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BailoutEvent, ModelEvent, ItemEvent
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, ModelEvent, ItemEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -108,7 +108,6 @@ def main(distance_type_name: str,
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
         concurrent_activations_path = path.join(response_dir, f"concurrent_activations_{category_label}.csv")
-        event_log_path = path.join(response_dir, f"event_log_{category_label}.txt")
 
         csv_comments = []
 
@@ -130,68 +129,59 @@ def main(distance_type_name: str,
             csv_comments.append(f"\t    connected = no")
             csv_comments.append(f"\t      orphans = {'yes' if sc.graph.has_orphaned_nodes() else 'no'}")
 
-        # Event log
-        with open(event_log_path, mode="w", encoding="utf-8") as event_log_file:
+        # Do the spreading activation
 
-            # Do the spreading activation
+        # If the category has a single norm, activate it
+        if category_label in sc.concept_labels:
+            logger.info(f"Running spreading activation for category {category_label}")
+            sc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
-            # If the category has a single norm, activate it
-            if category_label in sc.concept_labels:
-                logger.info(f"Running spreading activation for category {category_label}")
-                sc.activate_item_with_label(category_label, FULL_ACTIVATION)
+        # If the category has no single norm, activate all constituent words
+        else:
+            category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
+            logger.info(f"Running spreading activation for category {category_label}"
+                        f" (activating individual words {', '.join(category_words)}")
+            sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
-            # If the category has no single norm, activate all constituent words
-            else:
-                category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
-                logger.info(f"Running spreading activation for category {category_label}"
-                            f" (activating individual words {', '.join(category_words)}")
-                sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
+        concurrent_activations_records = []
+        model_response_entries = []
+        for tick in range(0, run_for_ticks):
 
-            concurrent_activations_records = []
-            model_response_entries = []
-            for tick in range(0, run_for_ticks):
+            logger.info(f"Clock = {tick}")
+            tick_events = sc.tick()
 
-                event_log_file.flush()
+            activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
+            buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
 
-                logger.info(f"Clock = {tick}")
-                tick_events = sc.tick()
+            concurrent_activations = len(sc.accessible_set())
 
-                for e in tick_events:
-                    log_event(e, event_log_file, label_dict=sc.idx2label)
+            concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
 
-                activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
-                buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
+            for activation_event in activation_events:
+                model_response_entries.append({
+                    RESPONSE:                sc.idx2label[activation_event.item],
+                    NODE_ID:                 activation_event.item,
+                    ACTIVATION:              activation_event.activation,
+                    TICK_ON_WHICH_ACTIVATED: activation_event.time,
+                    ENTERED_BUFFER:          isinstance(activation_event, ItemEnteredBufferEvent),
+                })
 
-                concurrent_activations = len(sc.accessible_set())
+            # Break early if we've got a probable explosion
+            if bailout is not None and concurrent_activations > bailout:
+                csv_comments.append(f"")
+                csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
+                                    f"with {concurrent_activations} nodes activated.")
+                break
 
-                concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
-
-                for activation_event in activation_events:
-                    model_response_entries.append({
-                        RESPONSE:                sc.idx2label[activation_event.item],
-                        NODE_ID:                 activation_event.item,
-                        ACTIVATION:              activation_event.activation,
-                        TICK_ON_WHICH_ACTIVATED: activation_event.time,
-                        ENTERED_BUFFER:          isinstance(activation_event, ItemEnteredBufferEvent),
-                    })
-
-                # Break early if we've got a probable explosion
-                if bailout is not None and concurrent_activations > bailout:
-                    csv_comments.append(f"")
-                    csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                        f"with {concurrent_activations} nodes activated.")
-                    log_event(BailoutEvent(time=tick, concurrent_activations=concurrent_activations), event_log_file)
-                    break
-
-            model_responses_df = DataFrame.from_records(
-                model_response_entries,
-                columns=[
-                    RESPONSE,
-                    NODE_ID,
-                    ACTIVATION,
-                    TICK_ON_WHICH_ACTIVATED,
-                    ENTERED_BUFFER,
-                ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
+        model_responses_df = DataFrame.from_records(
+            model_response_entries,
+            columns=[
+                RESPONSE,
+                NODE_ID,
+                ACTIVATION,
+                TICK_ON_WHICH_ACTIVATED,
+                ENTERED_BUFFER,
+            ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
         # Output results
 
