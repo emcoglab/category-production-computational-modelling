@@ -51,6 +51,8 @@ for sphere_radius, ram_amount in prune_ram.items():
     for sigma in sigmas:
         for activation_threshold in activation_thresholds:
             for buffer_entry_threshold in buffer_entry_thresholds:
+                if activation_threshold > buffer_entry_threshold:
+                    continue
                 name = f"{short_name}_sm_" \
                     f"s{sigma}_" \
                     f"a{activation_threshold}_" \
