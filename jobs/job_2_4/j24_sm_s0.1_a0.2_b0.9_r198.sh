@@ -16,7 +16,7 @@ python3 ../2_4_sensorimotor_tsp.py \
            --distance_type Minkowski-3 \
            --max_sphere_radius 198 \
            --buffer_size_limit 10 \
-           --buffer_entry_threshold 0.9 \
+           --buffer_threshold 0.9 \
            --buffer_pruning_threshold 0.2 \
            --activation_threshold 0.2 \
            --length_factor 100 \

@@ -25,7 +25,7 @@ sigmas = [
     0.1,
     1.0,
 ]
-buffer_entry_thresholds = [
+buffer_thresholds = [
     0.5,
     0.9,
     # 0.99,
@@ -50,13 +50,13 @@ names = []
 for sphere_radius, ram_amount in prune_ram.items():
     for sigma in sigmas:
         for activation_threshold in activation_thresholds:
-            for buffer_entry_threshold in buffer_entry_thresholds:
-                if activation_threshold > buffer_entry_threshold:
+            for buffer_threshold in buffer_thresholds:
+                if activation_threshold > buffer_threshold:
                     continue
                 name = f"{short_name}_sm_" \
                     f"s{sigma}_" \
                     f"a{activation_threshold}_" \
-                    f"b{buffer_entry_threshold}_" \
+                    f"b{buffer_threshold}_" \
                     f"r{sphere_radius}"
                 names.append(name)
                 with open(path.join(job_name, f"{name}.sh"), mode="w", encoding="utf-8") as job_file:
@@ -78,7 +78,7 @@ for sphere_radius, ram_amount in prune_ram.items():
                     job_file.write(f"           --distance_type {distance_type.name} \\\n")
                     job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
                     job_file.write(f"           --buffer_size_limit {buffer_size_limit} \\\n")
-                    job_file.write(f"           --buffer_entry_threshold {buffer_entry_threshold} \\\n")
+                    job_file.write(f"           --buffer_threshold {buffer_threshold} \\\n")
                     job_file.write(f"           --buffer_pruning_threshold {pruning_threshold} \\\n")
                     job_file.write(f"           --activation_threshold {activation_threshold} \\\n")
                     job_file.write(f"           --length_factor {length_factor} \\\n")
