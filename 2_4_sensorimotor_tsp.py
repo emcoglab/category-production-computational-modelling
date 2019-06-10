@@ -112,7 +112,6 @@ def main(distance_type_name: str,
     for category_label in cp.category_labels_sensorimotor:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
-        concurrent_activations_path = path.join(response_dir, f"concurrent_activations_{category_label}.csv")
 
         csv_comments = []
 
@@ -148,7 +147,6 @@ def main(distance_type_name: str,
                         f" (activating individual words {', '.join(category_words)}")
             sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
-        concurrent_activations_records = []
         model_response_entries = []
         for tick in range(0, run_for_ticks):
 
@@ -156,11 +154,6 @@ def main(distance_type_name: str,
             tick_events = sc.tick()
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
-            buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
-
-            concurrent_activations = len(sc.accessible_set())
-
-            concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
 
             for activation_event in activation_events:
                 model_response_entries.append((
@@ -172,10 +165,10 @@ def main(distance_type_name: str,
                 ))
 
             # Break early if we've got a probable explosion
-            if bailout is not None and concurrent_activations > bailout:
+            if bailout is not None and len(activation_events) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {concurrent_activations} nodes activated.")
+                                    f"with {len(activation_events)} nodes simultaneously receiving activation.")
                 break
 
         model_responses_df = DataFrame.from_records(
@@ -197,12 +190,6 @@ def main(distance_type_name: str,
                 output_file.write(comment_line_from_str(comment))
             # Write data
             model_responses_df.to_csv(output_file, index=False)
-
-        # Concurrent activations
-        with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
-            DataFrame.from_records(concurrent_activations_records,
-                                   columns=["Tick", "New activations", "Concurrent activations"])\
-                     .to_csv(concurrent_activations_file, index=False)
 
 
 def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
