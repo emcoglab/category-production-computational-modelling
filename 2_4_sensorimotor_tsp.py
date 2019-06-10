@@ -53,6 +53,7 @@ def main(distance_type_name: str,
          buffer_threshold: ActivationValue,
          activation_threshold: ActivationValue,
          run_for_ticks: int,
+         median: float,
          sigma: float,
          use_prepruned: bool,
          bailout: int = None,
@@ -83,6 +84,7 @@ def main(distance_type_name: str,
         distance_type=distance_type,
         length_factor=length_factor,
         max_sphere_radius=max_sphere_radius,
+        lognormal_median=median,
         lognormal_sigma=sigma,
         buffer_size_limit=buffer_size_limit,
         buffer_threshold=buffer_threshold,
@@ -221,6 +223,7 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("-l", "--length_factor", required=True, type=Length)
+    parser.add_argument("-m", "--node_decay_median", required=True, type=float)
     parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
@@ -236,6 +239,7 @@ if __name__ == '__main__':
          activation_threshold=args.activation_threshold,
          buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
+         median=args.node_decay_median,
          sigma=args.node_decay_sigma,
          bailout=args.bailout,
          use_prepruned=args.use_prepruned)
