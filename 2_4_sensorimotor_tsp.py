@@ -158,13 +158,13 @@ def main(distance_type_name: str,
             concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
 
             for activation_event in activation_events:
-                model_response_entries.append({
-                    RESPONSE:                sc.idx2label[activation_event.item],
-                    NODE_ID:                 activation_event.item,
-                    ACTIVATION:              activation_event.activation,
-                    TICK_ON_WHICH_ACTIVATED: activation_event.time,
-                    ENTERED_BUFFER:          isinstance(activation_event, ItemEnteredBufferEvent),
-                })
+                model_response_entries.append((
+                    sc.idx2label[activation_event.item],                   # RESPONSE
+                    activation_event.item,                                 # NODE_ID
+                    activation_event.activation,                           # ACTIVATION
+                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
+                    isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER
+                ))
 
             # Break early if we've got a probable explosion
             if bailout is not None and concurrent_activations > bailout:
