@@ -59,11 +59,11 @@ def main():
                         if activation_threshold > buffer_threshold:
                             continue
                         name = f"{short_name}sm_" \
+                            f"r{sphere_radius}_" \
                             f"m{median}_" \
                             f"s{sigma}_" \
                             f"a{activation_threshold}_" \
-                            f"b{buffer_threshold}_" \
-                            f"r{sphere_radius}"
+                            f"b{buffer_threshold}"
                         names.append(name)
                         with open(path.join(job_name, f"{name}.sh"), mode="w", encoding="utf-8") as job_file:
                             job_file.write(f"# GENERATED CODE, CHANGES WILL BE OVERWRITTEN\n")

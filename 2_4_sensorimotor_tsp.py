@@ -67,9 +67,9 @@ def main(distance_type_name: str,
     # Output file path
     response_dir = path.join(Preferences.output_dir,
                              f"Category production traces [sensorimotor {distance_type.name}] "
-                             f"length {length_factor}; "
-                             f"max r {max_sphere_radius} "
-                             f"sigma {sigma}; "
+                             f"r {max_sphere_radius} "
+                             f"m {median}; "
+                             f"s {sigma}; "
                              f"a {activation_threshold}; "
                              f"b {buffer_threshold}; "
                              f"attenuate {norm_attenuation_statistic.name}; "
@@ -98,12 +98,15 @@ def main(distance_type_name: str,
         "Distance type": distance_type.name,
         "Length factor": length_factor,
         "Max sphere radius": max_sphere_radius,
+        "Log-normal median": median,
         "Log-normal sigma": sigma,
         "Buffer size limit": buffer_size_limit,
         "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
         "Activation threshold": activation_threshold,
+        "Run for ticks": run_for_ticks,
+        "Bailout": bailout
     }, response_dir)
 
     for category_label in cp.category_labels_sensorimotor:

@@ -70,6 +70,18 @@ def main(n_words: int,
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
 
+    # Output file path
+    if prune_percent is not None:
+        response_dir = path.join(Preferences.output_dir,
+                                 f"Category production traces [{distributional_model.name} {distance_type.name}]",
+                                 f"{n_words:,} words, length {length_factor}, longest {prune_percent}% edges removed"
+                                 f"ft {firing_threshold}; df {node_decay_factor}; sdf {edge_decay_sd_factor}; pt {impulse_pruning_threshold}; rft {run_for_ticks}; bailout {bailout}")
+    else:
+        response_dir = path.join(Preferences.output_dir,
+                                 f"Category production traces [{distributional_model.name} {distance_type.name}]",
+                                 f"{n_words:,} words, length {length_factor}, no edges removed"
+                                 f"ft {firing_threshold}; df {node_decay_factor}; sdf {edge_decay_sd_factor}; pt {impulse_pruning_threshold}; rft {run_for_ticks}; bailout {bailout}")
+
     cp = CategoryProduction()
     lc = LinguisticComponent(
         n_words=n_words,
@@ -84,19 +96,20 @@ def main(n_words: int,
         edge_pruning_type=EdgePruningType.Percent,
     )
 
+    LinguisticComponent.save_model_spec({
+        "Words": n_words,
+        "Model name": distributional_model.name,
+        "Length factor": length_factor,
+        "Impulse pruning threshold": impulse_pruning_threshold,
+        "SD factor": edge_decay_sd_factor,
+        "Node decay": node_decay_factor,
+        "Firing threshold": firing_threshold,
+        "Run for ticks": run_for_ticks,
+        "Bailout": bailout
+    }, response_dir)
+
     for category_label in cp.category_labels:
 
-        # Output file path
-        if prune_percent is not None:
-            response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces [{distributional_model.name} {distance_type.name}]",
-                                     f"{n_words:,} words, length {length_factor}, longest {prune_percent}% edges removed"
-                                     f"ft {firing_threshold}; df {node_decay_factor}; sdf {edge_decay_sd_factor}; pt {impulse_pruning_threshold}; rft {run_for_ticks}; bailout {bailout}")
-        else:
-            response_dir = path.join(Preferences.output_dir,
-                                     f"Category production traces [{distributional_model.name} {distance_type.name}]",
-                                     f"{n_words:,} words, length {length_factor}, no edges removed"
-                                     f"ft {firing_threshold}; df {node_decay_factor}; sdf {edge_decay_sd_factor}; pt {impulse_pruning_threshold}; rft {run_for_ticks}; bailout {bailout}")
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             makedirs(response_dir)
