@@ -90,6 +90,8 @@ def main(n_words: int,
         "SD factor": edge_decay_sd_factor,
         "Node decay": node_decay_factor,
         "Firing threshold": firing_threshold,
+        "Run for ticks": run_for_ticks,
+        "Bailout": bailout
     }, response_dir)
 
     for category_label in cp.category_labels:
