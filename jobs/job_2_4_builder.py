@@ -33,8 +33,8 @@ def main():
         0.5,
     ]
     medians = [
-        3,
-        5,
+        300,
+        500,
     ]
     buffer_thresholds = [
         0.7,
