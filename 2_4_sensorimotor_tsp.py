@@ -20,6 +20,7 @@ import sys
 from typing import Dict
 from os import path, makedirs
 
+from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
@@ -109,10 +110,11 @@ def main(distance_type_name: str,
         "Bailout": bailout
     }, response_dir)
 
+    concurrent_activations_path = path.join(response_dir, f"concurrent_activations.csv")
+    concurrent_activations_records = []
     for category_label in cp.category_labels_sensorimotor:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
-        concurrent_activations_path = path.join(response_dir, f"concurrent_activations_{category_label}.csv")
 
         csv_comments = []
 
@@ -148,19 +150,19 @@ def main(distance_type_name: str,
                         f" (activating individual words: {', '.join(category_words)})")
             sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
-        concurrent_activations_records = []
         model_response_entries = []
+        # Initialise list of concurrent activations which will be nan-populated if the run ends early
+        concurrent_activations_this_category = [nan] * run_for_ticks
         for tick in range(0, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
             tick_events = sc.tick()
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
-            buffer_entries = [e for e in activation_events if isinstance(e, ItemEnteredBufferEvent)]
 
             concurrent_activations = len(sc.accessible_set())
 
-            concurrent_activations_records.append((tick, len(buffer_entries), concurrent_activations))
+            concurrent_activations_this_category[tick] = concurrent_activations
 
             flood_event = [e for e in tick_events if isinstance(e, BufferFloodEvent)][0] if len([e for e in tick_events if isinstance(e, BufferFloodEvent)]) > 0 else None
             if flood_event:
@@ -192,6 +194,8 @@ def main(distance_type_name: str,
                 ENTERED_BUFFER,
             ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
+        concurrent_activations_records.append([category_label] + concurrent_activations_this_category)
+
         # Output results
 
         # Model ouput
@@ -202,11 +206,11 @@ def main(distance_type_name: str,
             # Write data
             model_responses_df.to_csv(output_file, index=False)
 
-        # Concurrent activations
-        with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
-            DataFrame.from_records(concurrent_activations_records,
-                                   columns=["Tick", "New activations", "Concurrent activations"])\
-                     .to_csv(concurrent_activations_file, index=False)
+    # Concurrent activations
+    with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
+        DataFrame.from_records(concurrent_activations_records,
+                               columns=["Category"] + list(range(0, run_for_ticks)))\
+                 .to_csv(concurrent_activations_file, index=False)
 
 
 def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
