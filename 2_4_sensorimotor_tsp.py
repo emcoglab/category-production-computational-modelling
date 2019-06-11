@@ -26,7 +26,7 @@ from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length, ItemLabel, ItemIdx
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, ModelEvent, ItemEvent
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, ModelEvent, ItemEvent, BufferFloodEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -154,6 +154,10 @@ def main(distance_type_name: str,
             tick_events = sc.tick()
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
+
+            flood_event = [e for e in tick_events if isinstance(e, BufferFloodEvent)][0] if len([e for e in tick_events if isinstance(e, BufferFloodEvent)]) > 0 else None
+            if flood_event:
+                logger.warning(f"Buffer flood occurred at t={flood_event.time}")
 
             for activation_event in activation_events:
                 model_response_entries.append((
