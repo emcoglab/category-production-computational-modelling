@@ -79,7 +79,8 @@ def main(distance_type_name: str,
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
 
-    cp = CategoryProduction()
+    # If we're using the prepruned version, we can risk using the cache too
+    cp = CategoryProduction(use_cache=use_prepruned)
     sc = SensorimotorComponent(
         distance_type=distance_type,
         length_factor=length_factor,
@@ -180,6 +181,8 @@ def main(distance_type_name: str,
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
                                     f"with {accessible_set_size} nodes activated.")
+                logger.warning(f"Spreading activation ended with a bailout after {tick} ticks "
+                               f"with {accessible_set_size} nodes activated.")
                 break
 
         model_responses_df = DataFrame.from_records(
