@@ -110,8 +110,8 @@ def main(distance_type_name: str,
         "Bailout": bailout
     }, response_dir)
 
-    concurrent_activations_path = path.join(response_dir, f"concurrent_activations.csv")
-    concurrent_activations_records = []
+    accessible_set_path = path.join(response_dir, f"accessible_set.csv")
+    accessible_set_records = []
     for category_label in cp.category_labels_sensorimotor:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
@@ -152,7 +152,7 @@ def main(distance_type_name: str,
 
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
-        concurrent_activations_this_category = [nan] * run_for_ticks
+        accessible_set_this_category = [nan] * run_for_ticks
         for tick in range(0, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
@@ -160,9 +160,9 @@ def main(distance_type_name: str,
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
 
-            concurrent_activations = len(sc.accessible_set())
+            accessible_set_size = len(sc.accessible_set())
 
-            concurrent_activations_this_category[tick] = concurrent_activations
+            accessible_set_this_category[tick] = accessible_set_size
 
             flood_event = [e for e in tick_events if isinstance(e, BufferFloodEvent)][0] if len([e for e in tick_events if isinstance(e, BufferFloodEvent)]) > 0 else None
             if flood_event:
@@ -178,10 +178,10 @@ def main(distance_type_name: str,
                 ))
 
             # Break early if we've got a probable explosion
-            if bailout is not None and concurrent_activations > bailout:
+            if bailout is not None and accessible_set_size > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {concurrent_activations} nodes activated.")
+                                    f"with {accessible_set_size} nodes activated.")
                 break
 
         model_responses_df = DataFrame.from_records(
@@ -194,7 +194,7 @@ def main(distance_type_name: str,
                 ENTERED_BUFFER,
             ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
-        concurrent_activations_records.append([category_label] + concurrent_activations_this_category)
+        accessible_set_records.append([category_label] + accessible_set_this_category)
 
         # Output results
 
@@ -207,10 +207,10 @@ def main(distance_type_name: str,
             model_responses_df.to_csv(output_file, index=False)
 
     # Concurrent activations
-    with open(concurrent_activations_path, mode="w", encoding="utf-8") as concurrent_activations_file:
-        DataFrame.from_records(concurrent_activations_records,
+    with open(accessible_set_path, mode="w", encoding="utf-8") as accessible_set_file:
+        DataFrame.from_records(accessible_set_records,
                                columns=["Category"] + list(range(0, run_for_ticks)))\
-                 .to_csv(concurrent_activations_file, index=False)
+                 .to_csv(accessible_set_file, index=False)
 
 
 def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
