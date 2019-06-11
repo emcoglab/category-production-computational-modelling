@@ -44,6 +44,7 @@ def main(results_dir: str) -> None:
     ]
 
     all_data: DataFrame = collate_data(results_dir)
+    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
 
     # In case there is insufficient data available, there will be nans in the correlation columns.
     # For display purposes, we replace those with "-"s, to be picked up by the pivot table.
@@ -53,16 +54,15 @@ def main(results_dir: str) -> None:
 
         save_dir = path.join(results_dir, " tabulated")
         makedirs(save_dir, exist_ok=True)
-        save_tabulation(data=all_data, dv=dv,
+        save_tabulation(data=all_data, values=dv,
                         rows=["Log-normal sigma"],
-                        cols=["Max sphere radius", "Buffer entry threshold"],
+                        cols=["Max sphere radius", "Buffer threshold"],
                         path=path.join(save_dir, f"{dv}.csv"))
 
 
 def collate_data(results_dir: str) -> DataFrame:
     results_paths = glob.iglob(path.join(results_dir, "model_effectiveness*"))
     all_data: DataFrame = concat([read_csv(p, header=0) for p in results_paths])
-    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
     return all_data
 
 

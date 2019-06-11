@@ -194,3 +194,28 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
                     # Make sure columns are in consistent order for stacking,
                     # and make sure the model spec columns come first.
                     columns=sorted(model_spec.keys()) + sorted(stats.keys()))
+
+
+def save_newstats_sensorimotor(results_dir, hitrate_fit_rfop, hitrate_fit_rfop_restricted, hitrate_fit_rmr,
+                               hitrate_fit_rmr_restricted):
+    overall_stats_output_path = path.join(Preferences.results_dir,
+                                          "Category production fit",
+                                          f"model_effectiveness_overall "
+                                          f"({path.basename(results_dir)}).csv")
+    model_spec = GraphPropagation.load_model_spec(results_dir)
+    stats = {
+        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
+        "Hitrate within SD of mean (RFoP; available categories only)": hitrate_fit_rfop_restricted,
+        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
+        "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
+    }
+    data: DataFrame = DataFrame.from_records([{
+        **model_spec,
+        **stats,
+    }])
+
+    with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
+        data.to_csv(data_file, index=False,
+                    # Make sure columns are in consistent order for stacking,
+                    # and make sure the model spec columns come first.
+                    columns=sorted(model_spec.keys()) + sorted(stats.keys()))

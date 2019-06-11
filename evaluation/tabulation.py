@@ -19,19 +19,19 @@ caiwingfield.net
 from pandas import pivot_table, DataFrame
 
 
-def save_tabulation(data: DataFrame, dv, rows, cols, path: str):
+def save_tabulation(data: DataFrame, values, rows, cols, path: str):
     """
     Saves a tabulated form of the DataFrame data, where rows are values of `rows`, columns are values of `cols`, and
-    values are values of `dv`.
+    values are values of `values`.
     :param data:
-    :param dv:
+    :param values:
     :param rows:
     :param cols:
     :param path:
     :return:
     """
     # pivot
-    p = pivot_table(data=data, index=rows, columns=cols, values=dv,
+    p = pivot_table(data=data, index=rows, columns=cols, values=values,
                     # there should be only one value for each group, but we need to use "first" because the
                     # default is "mean", which doesn't work with the "-"s we used to replace nans.
                     aggfunc="first")

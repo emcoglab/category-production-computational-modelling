@@ -25,11 +25,11 @@ from typing import Dict
 
 from matplotlib import pyplot
 from numpy import nan
-from pandas import DataFrame, isna
+from pandas import DataFrame, isna, Series
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, TTFA
+from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, TTFA, save_newstats_sensorimotor
 from ldm.corpus.tokenising import modified_word_tokenize
 from model.utils.maths import t_confidence_interval
 from preferences import Preferences
@@ -166,17 +166,34 @@ def main(input_results_dir: str):
 
     production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                     f"Production proportion per rank frequency of production"
-                                                    f" ({path.basename(input_results_dir)}).csv"))
+                                                    f" ({path.basename(input_results_dir)}).csv"),
+                                          index=False)
     production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                    f"Production proportion per rounded mean rank"
-                                                   f" ({path.basename(input_results_dir)}).csv"))
+                                                   f" ({path.basename(input_results_dir)}).csv"),
+                                         index=False)
 
     production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                                f"Production proportion per rank frequency of production"
-                                                               f" ({path.basename(input_results_dir)}) restricted.csv"))
+                                                               f" ({path.basename(input_results_dir)}) restricted.csv"),
+                                                     index=False)
     production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                               f"Production proportion per rounded mean rank"
-                                                              f" ({path.basename(input_results_dir)}) restricted.csv"))
+                                                              f" ({path.basename(input_results_dir)}) restricted.csv"),
+                                                    index=False)
+
+    # endregion
+
+    # region Compute hitrate fits
+
+    hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop)
+    hitrate_fit_rfop_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop_restricted)
+    hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr)
+    hitrate_fit_rmr_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr_restricted)
+
+    save_newstats_sensorimotor(input_results_dir,
+                               hitrate_fit_rfop, hitrate_fit_rfop_restricted,
+                               hitrate_fit_rmr,  hitrate_fit_rmr_restricted)
 
     # endregion
 
@@ -201,6 +218,15 @@ def main(input_results_dir: str):
                 fig_name=f"hitrate per RMR {path.basename(input_results_dir)} restricted")
 
     # endregion
+
+
+def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
+    # When the model hitrate is within one SD of the production proportion mean
+    within = Series(
+        (df["Model hitrate"] > df["ProductionProportion Mean"] - df["ProductionProportion SD"])
+        & (df["Model hitrate"] < df["ProductionProportion Mean"] + df["ProductionProportion SD"]))
+    # The fraction of times this happens
+    return within.aggregate('mean')
 
 
 def save_figure(summary_table, x_selector, fig_title, fig_name):
