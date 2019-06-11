@@ -17,7 +17,6 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from typing import Dict
 from os import path, makedirs
 
 from numpy import nan
@@ -26,8 +25,8 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue, Length, ItemLabel, ItemIdx
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, ModelEvent, ItemEvent, BufferFloodEvent
+from model.basic_types import ActivationValue, Length
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -110,11 +109,10 @@ def main(distance_type_name: str,
         "Bailout": bailout
     }, response_dir)
 
-    accessible_set_path = path.join(response_dir, f"accessible_set.csv")
-    accessible_set_records = []
     for category_label in cp.category_labels_sensorimotor:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
+        accessible_set_path = path.join(response_dir, f"accessible_set_{category_label}.csv")
 
         csv_comments = []
 
@@ -194,9 +192,12 @@ def main(distance_type_name: str,
                 ENTERED_BUFFER,
             ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
 
-        accessible_set_records.append([category_label] + accessible_set_this_category)
-
         # Output results
+
+        # Record accessible set size
+        with open(accessible_set_path, mode="w", encoding="utf-8") as accessible_set_file:
+            DataFrame.from_records([[category_label] + accessible_set_this_category])\
+                     .to_csv(accessible_set_file, index=False, header=False)
 
         # Model ouput
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
@@ -205,22 +206,6 @@ def main(distance_type_name: str,
                 output_file.write(comment_line_from_str(comment))
             # Write data
             model_responses_df.to_csv(output_file, index=False)
-
-    # Concurrent activations
-    with open(accessible_set_path, mode="w", encoding="utf-8") as accessible_set_file:
-        DataFrame.from_records(accessible_set_records,
-                               columns=["Category"] + list(range(0, run_for_ticks)))\
-                 .to_csv(accessible_set_file, index=False)
-
-
-def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
-    # See if we can label the item
-    if isinstance(e, ItemEvent) and label_dict is not None:
-        event_log_file.write(f"{e.time}:\t{e}\t\"{label_dict[e.item]}\"\n")
-
-    # Otherwise just basic log
-    else:
-        event_log_file.write(f"{e.time}:\t{e}\n")
 
 
 if __name__ == '__main__':
