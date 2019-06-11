@@ -144,7 +144,7 @@ def main(distance_type_name: str,
         else:
             category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
             logger.info(f"Running spreading activation for category {category_label}"
-                        f" (activating individual words {', '.join(category_words)}")
+                        f" (activating individual words: {', '.join(category_words)})")
             sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
