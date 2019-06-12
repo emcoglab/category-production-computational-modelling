@@ -163,9 +163,8 @@ def main(distance_type_name: str,
 
             accessible_set_this_category[tick] = accessible_set_size
 
-            flood_event = [e for e in tick_events if isinstance(e, BufferFloodEvent)][0] if len([e for e in tick_events if isinstance(e, BufferFloodEvent)]) > 0 else None
-            if flood_event:
-                logger.warning(f"Buffer flood occurred at t={flood_event.time}")
+            if any(isinstance(e, BufferFloodEvent) for e in tick_events):
+                logger.warning(f"Buffer flood occurred at t={sc.clock}")
 
             for activation_event in activation_events:
                 model_response_entries.append((
