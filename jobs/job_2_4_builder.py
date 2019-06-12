@@ -32,6 +32,7 @@ def main():
         0.3,
         0.5,
     ]
+    # A short distance is like 100, a long distance is like 700
     medians = [
         300,
         500,
