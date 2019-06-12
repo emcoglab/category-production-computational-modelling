@@ -112,8 +112,9 @@ def main(distance_type_name: str,
 
     for category_label in cp.category_labels_sensorimotor:
 
+        accessible_set_path  = path.join(response_dir, f"accessible_set_{category_label}.csv")
+        buffer_floods_path   = path.join(response_dir, f"buffer_floods_{category_label}.csv")
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
-        accessible_set_path = path.join(response_dir, f"accessible_set_{category_label}.csv")
 
         csv_comments = []
 
@@ -152,6 +153,8 @@ def main(distance_type_name: str,
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
         accessible_set_this_category = [nan] * run_for_ticks
+        # Buffer-floods
+        buffer_floods = []
         for tick in range(0, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
@@ -165,6 +168,7 @@ def main(distance_type_name: str,
 
             if any(isinstance(e, BufferFloodEvent) for e in tick_events):
                 logger.warning(f"Buffer flood occurred at t={sc.clock}")
+                buffer_floods.append(sc.clock)
 
             for activation_event in activation_events:
                 model_response_entries.append((
@@ -200,6 +204,12 @@ def main(distance_type_name: str,
         with open(accessible_set_path, mode="w", encoding="utf-8") as accessible_set_file:
             DataFrame.from_records([[category_label] + accessible_set_this_category])\
                      .to_csv(accessible_set_file, index=False, header=False)
+
+        # Record buffer floods
+        with open(buffer_floods_path, mode="w", encoding="utf-8") as buffer_flood_file:
+            buffer_flood_file.write(f"{len(buffer_floods)} floods\n")
+            if len(buffer_floods) > 0:
+                buffer_flood_file.write(f"first at {min(buffer_floods)}\n")
 
         # Model ouput
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
