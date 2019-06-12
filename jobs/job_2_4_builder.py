@@ -15,6 +15,7 @@ def main():
     length_factor = 100
     buffer_size_limit = 10
     distance_type = DistanceType.Minkowski3
+    bailout = 10_000
 
     if not path.isdir(job_name):
         mkdir(job_name)
@@ -82,6 +83,7 @@ def main():
                             job_file.write(f"module add anaconda3/2018.12\n")
                             job_file.write(f"\n")
                             job_file.write(f"python3 ../{script_name}.py \\\n")
+                            job_file.write(f"           --bailout {bailout} \\\n")
                             job_file.write(f"           --distance_type {distance_type.name} \\\n")
                             job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
                             job_file.write(f"           --buffer_size_limit {buffer_size_limit} \\\n")
