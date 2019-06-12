@@ -19,7 +19,7 @@ import unittest
 
 from numpy import array, log
 
-from model.events import ItemFiredEvent
+from model.events import ItemActivatedEvent
 from .approximate_comparator.approximate_comparator import is_almost_equal
 
 from model.graph import Graph
@@ -55,7 +55,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
         es = tsa.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=0, item=0, activation=1.0) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=0, item=0, activation=1.0) in es)
 
         # t = 1
 
@@ -67,7 +67,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
         es = tsa.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=3, item=1, activation=0.7289999127388) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=3, item=1, activation=0.7289999127388) in es)
 
         for t in range(4, 6):
             es = tsa.tick()
@@ -77,7 +77,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
         es = tsa.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=6, item=2, activation=0.5314409136772156) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=6, item=2, activation=0.5314409136772156) in es)
 
         for t in range(7, 12):
             es = tsa.tick()
@@ -87,7 +87,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
         es = tsa.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=12, item=0, activation=0.5648589134216309) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=12, item=0, activation=0.5648589134216309) in es)
 
         for t in range(13, 15):
             es = tsa.tick()
@@ -97,7 +97,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
 
         es = tsa.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=15, item=1, activation=0.6176731288433075) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=15, item=1, activation=0.6176731288433075) in es)
 
         for t in range(16, 17):
             es = tsa.tick()

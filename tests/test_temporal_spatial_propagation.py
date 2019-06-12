@@ -19,7 +19,7 @@ import unittest
 
 from numpy import array
 
-from model.events import ItemFiredEvent
+from model.events import ItemActivatedEvent
 from model.graph import Graph
 from model.temporal_spatial_propagation import TemporalSpatialPropagation
 from model.utils.maths import make_decay_function_exponential_with_decay_factor
@@ -49,7 +49,7 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
 
         es = tsp.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=0, item=0, activation=1.0) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=0, item=0, activation=1.0) in es)
 
         for t in range(1, 3):
             es = tsp.tick()
@@ -59,7 +59,7 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
 
         es = tsp.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=3, item=1, activation=1.0) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=3, item=1, activation=1.0) in es)
 
         for t in range(4, 6):
             es = tsp.tick()
@@ -69,14 +69,14 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
 
         es = tsp.tick()
         self.assertEqual(len(es), 2)
-        self.assertTrue(ItemFiredEvent(time=6, item=2, activation=1.0) in es)
-        self.assertTrue(ItemFiredEvent(time=6, item=0, activation=1.5314409136772156) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=6, item=2, activation=1.0) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=6, item=0, activation=1.5314409136772156) in es)
 
         # t = 7
 
         es = tsp.tick()
         self.assertEqual(len(es), 1)
-        self.assertTrue(ItemFiredEvent(time=7, item=2, activation=1.899999976158142) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=7, item=2, activation=1.899999976158142) in es)
 
         for t in range(8, 9):
             es = tsp.tick()
@@ -90,8 +90,8 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
 
         es = tsp.tick()
         self.assertEqual(len(es), 2)
-        self.assertTrue(ItemFiredEvent(time=12, item=0, activation=3.876752197742462) in es)
-        self.assertTrue(ItemFiredEvent(time=12, item=2, activation=2.653371751308441) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=12, item=0, activation=3.876752197742462) in es)
+        self.assertTrue(ItemActivatedEvent(fired=True, time=12, item=2, activation=2.653371751308441) in es)
 
 
 if __name__ == '__main__':
