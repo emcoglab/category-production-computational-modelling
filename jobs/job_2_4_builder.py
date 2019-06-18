@@ -32,9 +32,11 @@ def main():
     sigmas = [
         0.3,
         0.5,
+        0.9,
     ]
     # A short distance is like 100, a long distance is like 700
     medians = [
+        100,
         300,
         500,
     ]
