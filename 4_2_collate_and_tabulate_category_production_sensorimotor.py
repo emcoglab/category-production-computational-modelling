@@ -55,8 +55,8 @@ def main(results_dir: str) -> None:
         save_dir = path.join(results_dir, " tabulated")
         makedirs(save_dir, exist_ok=True)
         save_tabulation(data=all_data, values=dv,
-                        rows=["Log-normal sigma"],
-                        cols=["Max sphere radius", "Buffer threshold"],
+                        rows=["Log-normal median", "Log-normal sigma"],
+                        cols=["Max sphere radius", "Buffer threshold", "Activation threshold"],
                         path=path.join(save_dir, f"{dv}.csv"))
 
 

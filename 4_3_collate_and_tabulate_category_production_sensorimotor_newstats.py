@@ -51,12 +51,12 @@ def main(results_dir: str) -> None:
         makedirs(save_dir, exist_ok=True)
         save_tabulation(data=all_data, values=dv,
                         rows=["Log-normal median", "Log-normal sigma"],
-                        cols=["Max sphere radius", "Activation threshold", "Buffer threshold"],
+                        cols=["Max sphere radius", "Buffer threshold", "Activation threshold"],
                         path=path.join(save_dir, f"{dv}.csv"))
 
 
 def collate_data(results_dir: str) -> DataFrame:
-    results_paths = glob.iglob(path.join(results_dir, "model_effectiveness*"))
+    results_paths = glob.iglob(path.join(results_dir, "newstats model_effectiveness*"))
     all_data: DataFrame = concat([read_csv(p, header=0) for p in results_paths])
     return all_data
 
