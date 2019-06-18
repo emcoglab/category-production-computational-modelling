@@ -44,7 +44,7 @@ def main(results_dir: str) -> None:
     # In case there is insufficient data available, there will be nans in the correlation columns.
     # For display purposes, we replace those with "-"s, to be picked up by the pivot table.
     all_data.fillna("-", inplace=True)
-    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
+    all_data.to_csv(path.join(results_dir, "all newstats.csv"), index=False)
 
     for dv in dvs:
         save_dir = path.join(results_dir, " tabulated")

@@ -39,7 +39,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-category_production = CategoryProduction()
+category_production = CategoryProduction(use_cache=True)
 sensorimotor_norms = SensorimotorNorms()
 
 

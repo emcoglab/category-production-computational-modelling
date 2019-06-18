@@ -1,29 +1,39 @@
 #!/usr/bin/env bash
 
-DATA_LOC="/Volumes/Data/spreading activation model/Model output/sensorimotor component with buffer 2019-05-30 prevalence"
-FILE_PREFIX="Category production traces [sensorimotor Minkowski-3] length 100"
+DATA_LOC="/Volumes/Data/spreading activation model/Model output/sensorimotor component with buffer 2019-06-14 activation threshold"
+FILE_PREFIX="Category production traces [sensorimotor Minkowski-3]"
 
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 0.1; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 0.01; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 0.1; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 0.01; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 0.1; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 0.01; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 1.0; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 1.0; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 150 sigma 1.0; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 0.1; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 0.01; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 0.1; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 0.01; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 0.1; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 0.01; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 1.0; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 1.0; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 198 sigma 1.0; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 250 sigma 0.1; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 250 sigma 0.01; bet 0.5; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 250 sigma 0.1; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 250 sigma 0.01; bet 0.9; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 250 sigma 0.1; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
-python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX}, max r 250 sigma 0.01; bet 0.99; bpt 0.05; attenuate Prevalence; rft 10000; bailout None" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.3; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.3; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.3; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.3; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.5; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.5; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.5; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 300.0; s 0.5; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.3; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.3; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.3; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.3; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.5; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.5; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.5; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 150 m 500.0; s 0.5; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.3; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.3; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.3; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.3; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.5; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.5; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.5; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 300.0; s 0.5; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.3; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.3; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.3; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.3; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.5; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.5; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.5; a 0.5; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 198 m 500.0; s 0.5; a 0.5; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 250 m 300.0; s 0.3; a 0.3; b 0.7; attenuate Prevalence; rft 10000; bailout 10000" &
+python ../3_3_category_production_comparison_sensorimotor.py "${DATA_LOC}/${FILE_PREFIX} r 250 m 300.0; s 0.3; a 0.3; b 0.9; attenuate Prevalence; rft 10000; bailout 10000" &

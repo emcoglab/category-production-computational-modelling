@@ -62,7 +62,7 @@ def main(input_results_dir: str):
     # We need to include all data (including idiosyncratic responses) so that we can rank properly.
     # Then we will exclude them later.
     logger.info("Loading category production data")
-    category_production = CategoryProduction(minimum_production_frequency=1)
+    category_production = CategoryProduction(minimum_production_frequency=1, use_cache=True)
     # Main dataframe holds category production data and model response data.
     main_dataframe: DataFrame = category_production.data.copy()
 

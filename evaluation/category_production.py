@@ -200,7 +200,7 @@ def save_newstats_sensorimotor(results_dir, hitrate_fit_rfop, hitrate_fit_rfop_r
                                hitrate_fit_rmr_restricted):
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
-                                          f"model_effectiveness_overall "
+                                          f"newstats model_effectiveness_overall "
                                           f"({path.basename(results_dir)}).csv")
     model_spec = GraphPropagation.load_model_spec(results_dir)
     stats = {
