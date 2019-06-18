@@ -43,5 +43,11 @@ def _tabulation_to_csv(table, csv_path):
     Saves a simple DataFrame.pivot_table to a csv, including columns names.
     Thanks to https://stackoverflow.com/a/55360229/2883198
     """
-    csv_df: DataFrame = DataFrame(columns=table.columns, index=[table.index.name]).append(table)
-    csv_df.to_csv(csv_path, index_label=table.columns.name)
+    # If there are nested indices, it just works
+    if len(table.index.names) > 1:
+        table.to_csv(csv_path)
+
+    # Otherwise we have to break off the header to give it space to label the column names
+    else:
+        csv_df: DataFrame = DataFrame(columns=table.columns, index=[table.index.name]).append(table)
+        csv_df.to_csv(csv_path, index_label=table.columns.name)
