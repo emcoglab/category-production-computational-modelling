@@ -206,7 +206,7 @@ def main(input_results_dir: str):
     save_figure(summary_table=production_proportion_per_rfop_restricted,
                 x_selector=RANK_FREQUENCY_OF_PRODUCTION,
                 fig_title="Hitrate per RFOP (only available categories)",
-                fig_name=f"hitrate per RFOP {path.basename(input_results_dir)} restricted")
+                fig_name=f"restricted hitrate per RFOP {path.basename(input_results_dir)}")
 
     save_figure(summary_table=production_proportion_per_rmr,
                 x_selector=ROUNDED_MEAN_RANK,
@@ -215,7 +215,7 @@ def main(input_results_dir: str):
     save_figure(summary_table=production_proportion_per_rmr_restricted,
                 x_selector=ROUNDED_MEAN_RANK,
                 fig_title="Hitrate per RMR (only available categories)",
-                fig_name=f"hitrate per RMR {path.basename(input_results_dir)} restricted")
+                fig_name=f"restricted hitrate per RMR {path.basename(input_results_dir)}")
 
     # endregion
 
