@@ -5,11 +5,17 @@ from os import path, mkdir
 
 from ldm.utils.maths import DistanceType
 
+
 def main():
 
     job_name = 'job_2_4'
     short_name = "j24"
     script_name = "2_4_sensorimotor_tsp"
+
+    length_factor = 100
+    buffer_size_limit = 10
+    distance_type = DistanceType.Minkowski3
+    bailout = 10_000
 
     if not path.isdir(job_name):
         mkdir(job_name)
@@ -22,15 +28,15 @@ def main():
         # 200: 60,
         250: 120,
     }
+    # These very rough ranges taken from Mueller & Krawitz (2009)
     sigmas = [
-        # This very rough range taken from Mueller & Krawitz (2009)
         0.3,
         0.5,
     ]
+    # A short distance is like 100, a long distance is like 700
     medians = [
-        # This very rough range taken from Mueller & Krawitz (2009)
-        3,
-        5,
+        300,
+        500,
     ]
     buffer_thresholds = [
         0.7,
@@ -42,10 +48,6 @@ def main():
     ]
 
     run_for_ticks = 10_000
-
-    length_factor = 100
-    buffer_size_limit = 10
-    distance_type = DistanceType.Minkowski3
 
     # ---
 
@@ -81,6 +83,7 @@ def main():
                             job_file.write(f"module add anaconda3/2018.12\n")
                             job_file.write(f"\n")
                             job_file.write(f"python3 ../{script_name}.py \\\n")
+                            job_file.write(f"           --bailout {bailout} \\\n")
                             job_file.write(f"           --distance_type {distance_type.name} \\\n")
                             job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
                             job_file.write(f"           --buffer_size_limit {buffer_size_limit} \\\n")

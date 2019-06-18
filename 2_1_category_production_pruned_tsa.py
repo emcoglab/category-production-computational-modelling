@@ -27,7 +27,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue
-from model.events import ItemFiredEvent
+from model.events import ItemActivatedEvent
 from model.linguistic_component import EdgePruningType, LinguisticComponent
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -152,9 +152,9 @@ def main(n_words: int,
 
             logger.info(f"Clock = {tick}")
             events = lc.tick()
-            activation_events = (e for e in events if isinstance(e, ItemFiredEvent))
+            firing_events = (e for e in events if isinstance(e, ItemActivatedEvent) and e.fired)
 
-            for event in activation_events:
+            for event in firing_events:
                 model_response_entries.append((
                     lc.idx2label[event.item],
                     event.item,

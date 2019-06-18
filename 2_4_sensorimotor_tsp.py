@@ -17,16 +17,16 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from typing import Dict
 from os import path, makedirs
 
+from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue, Length, ItemLabel, ItemIdx
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, ModelEvent, ItemEvent
+from model.basic_types import ActivationValue, Length
+from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
@@ -79,7 +79,8 @@ def main(distance_type_name: str,
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
 
-    cp = CategoryProduction()
+    # If we're using the prepruned version, we can risk using the cache too
+    cp = CategoryProduction(use_cache=use_prepruned)
     sc = SensorimotorComponent(
         distance_type=distance_type,
         length_factor=length_factor,
@@ -111,6 +112,8 @@ def main(distance_type_name: str,
 
     for category_label in cp.category_labels_sensorimotor:
 
+        accessible_set_path  = path.join(response_dir, f"accessible_set_{category_label}.csv")
+        buffer_floods_path   = path.join(response_dir, f"buffer_floods_{category_label}.csv")
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
 
         csv_comments = []
@@ -144,16 +147,28 @@ def main(distance_type_name: str,
         else:
             category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
             logger.info(f"Running spreading activation for category {category_label}"
-                        f" (activating individual words {', '.join(category_words)}")
+                        f" (activating individual words: {', '.join(category_words)})")
             sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
+        # Initialise list of concurrent activations which will be nan-populated if the run ends early
+        accessible_set_this_category = [nan] * run_for_ticks
+        # Buffer-floods
+        buffer_floods = []
         for tick in range(0, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
             tick_events = sc.tick()
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
+
+            accessible_set_size = len(sc.accessible_set())
+
+            accessible_set_this_category[tick] = accessible_set_size
+
+            if any(isinstance(e, BufferFloodEvent) for e in tick_events):
+                logger.warning(f"Buffer flood occurred at t={sc.clock}")
+                buffer_floods.append(sc.clock)
 
             for activation_event in activation_events:
                 model_response_entries.append((
@@ -165,10 +180,12 @@ def main(distance_type_name: str,
                 ))
 
             # Break early if we've got a probable explosion
-            if bailout is not None and len(activation_events) > bailout:
+            if bailout is not None and accessible_set_size > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(activation_events)} nodes simultaneously receiving activation.")
+                                    f"with {accessible_set_size} nodes activated.")
+                logger.warning(f"Spreading activation ended with a bailout after {tick} ticks "
+                               f"with {accessible_set_size} nodes activated.")
                 break
 
         model_responses_df = DataFrame.from_records(
@@ -183,6 +200,17 @@ def main(distance_type_name: str,
 
         # Output results
 
+        # Record accessible set size
+        with open(accessible_set_path, mode="w", encoding="utf-8") as accessible_set_file:
+            DataFrame.from_records([[category_label] + accessible_set_this_category])\
+                     .to_csv(accessible_set_file, index=False, header=False)
+
+        # Record buffer floods
+        with open(buffer_floods_path, mode="w", encoding="utf-8") as buffer_flood_file:
+            buffer_flood_file.write(f"{len(buffer_floods)} floods\n")
+            if len(buffer_floods) > 0:
+                buffer_flood_file.write(f"first at {min(buffer_floods)}\n")
+
         # Model ouput
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
             # Write comments
@@ -190,16 +218,6 @@ def main(distance_type_name: str,
                 output_file.write(comment_line_from_str(comment))
             # Write data
             model_responses_df.to_csv(output_file, index=False)
-
-
-def log_event(e: ModelEvent, event_log_file, label_dict: Dict[ItemIdx, ItemLabel] = None):
-    # See if we can label the item
-    if isinstance(e, ItemEvent) and label_dict is not None:
-        event_log_file.write(f"{e.time}:\t{e}\t\"{label_dict[e.item]}\"\n")
-
-    # Otherwise just basic log
-    else:
-        event_log_file.write(f"{e.time}:\t{e}\n")
 
 
 if __name__ == '__main__':
