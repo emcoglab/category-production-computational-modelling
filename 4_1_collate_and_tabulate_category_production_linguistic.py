@@ -44,6 +44,7 @@ def main(results_dir: str) -> None:
     ]
 
     all_data: DataFrame = collate_data(results_dir)
+    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
 
     models = all_data["Model"].unique()
 
@@ -65,13 +66,12 @@ def main(results_dir: str) -> None:
             for dv in dvs:
                 save_dir = path.join(results_dir, " tabulated", f"{model}, {wc} words")
                 makedirs(save_dir, exist_ok=True)
-                save_tabulation(data=this_wc_data, dv=dv, rows="SD factor", cols="Firing threshold", path=path.join(save_dir, f"{dv}.csv"))
+                save_tabulation(data=this_wc_data, values=dv, rows="SD factor", cols="Firing threshold", path=path.join(save_dir, f"{dv}.csv"))
 
 
 def collate_data(results_dir: str) -> DataFrame:
     results_paths = glob.iglob(path.join(results_dir, "model_effectiveness*"))
     all_data: DataFrame = concat([read_csv(p, header=0) for p in results_paths])
-    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
     return all_data
 
 

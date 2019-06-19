@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from os import path
-from typing import DefaultDict, Dict
+from typing import DefaultDict, Dict, Set
 
 from numpy import nan
 from pandas import DataFrame, read_csv
@@ -81,6 +81,25 @@ def get_model_ttfas_for_category_linguistic(category: str,
         return defaultdict(lambda: nan)
 
 
+def get_model_unique_responses_sensorimotor(category: str, results_dir: str) -> Set[str]:
+    """
+    Set of unique responses for the specified category.
+    """
+
+    # Try to load model response
+    try:
+        model_responses_path = path.join(
+            results_dir,
+            f"responses_{category}.csv")
+        with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
+            return set(row[RESPONSE]
+                       for _i, row in read_csv(model_responses_file, header=0, comment="#", index_col=False).iterrows())
+
+    # If the category wasn't found, there are no responses
+    except FileNotFoundError:
+        return set()
+
+
 def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> Dict[str, int]:
     """
     Dictionary of
@@ -88,7 +107,6 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     for the specified category.
     :param category:
     :param results_dir:
-    :return:
     """
 
     # Try to load model response
@@ -101,13 +119,9 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
 
         # We're not using the nan values here, so we just use a straight dictionary
         ttfas = dict()
-        for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
+        for row_i, row in model_responses_df[model_responses_df[ITEM_ENTERED_BUFFER] == True].sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
 
             item_label = row[RESPONSE]
-
-            # Only interested if item entered the buffer
-            if not row[ITEM_ENTERED_BUFFER]:
-                continue
 
             # We've sorted by activation time, so we only need to consider the first entry for each item
             if item_label not in ttfas:
@@ -119,7 +133,7 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
         return defaultdict(lambda: nan)
 
 
-# TODO: these two functions are baseically identical. Can they be merged into one?
+# TODO: these next two functions are baseically identical. Can they be merged into one?
 def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
                           first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted,
                           min_first_rank_freq, conscious_access_threshold):
@@ -151,16 +165,26 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
                     columns=sorted(model_spec.keys()) + sorted(stats.keys()))
 
 
-def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-                            first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir,
-                            restricted, min_first_rank_freq):
+def save_stats_sensorimotor(available_items,
+                            corr_frf_vs_ttfa,
+                            corr_meanrank_vs_ttfa,
+                            corr_prodfreq_vs_ttfa,
+                            first_rank_frequent_corr_rt_vs_ttfa,
+                            n_first_rank_frequent,
+                            results_dir,
+                            min_first_rank_freq,
+                            hitrate_fit_rfop,
+                            hitrate_fit_rfop_restricted,
+                            hitrate_fit_rmr,
+                            hitrate_fit_rmr_restricted):
 
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
-                                          f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
+                                          f"model_effectiveness_overall "
                                           f"({path.basename(results_dir)}).csv")
     model_spec = GraphPropagation.load_model_spec(results_dir)
     stats = {
+        # correlation stats
         "FRF corr (-)": corr_frf_vs_ttfa,
         "FRF N": n_first_rank_frequent,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
@@ -169,6 +193,11 @@ def save_stats_sensorimotor(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_
         "ProdFreq N": len(available_items),
         "MeanRank corr (+)": corr_meanrank_vs_ttfa,
         "Mean Rank N": len(available_items),
+        # hitrate stats
+        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
+        "Hitrate within SD of mean (RFoP; available categories only)": hitrate_fit_rfop_restricted,
+        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
+        "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
     }
     data: DataFrame = DataFrame.from_records([{
         **model_spec,
