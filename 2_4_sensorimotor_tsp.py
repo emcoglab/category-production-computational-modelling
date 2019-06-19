@@ -207,9 +207,9 @@ def main(distance_type_name: str,
 
         # Record buffer floods
         with open(buffer_floods_path, mode="w", encoding="utf-8") as buffer_flood_file:
-            buffer_flood_file.write(f"{len(buffer_floods)} floods\n")
-            if len(buffer_floods) > 0:
-                buffer_flood_file.write(f"first at {min(buffer_floods)}\n")
+            flood_str = f"{len(buffer_floods)} floods"
+            first_str = f"first at {min(buffer_floods)}" if len(buffer_floods) > 0 else ""
+            buffer_flood_file.write(f"{flood_str},{first_str}")
 
         # Model ouput
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
