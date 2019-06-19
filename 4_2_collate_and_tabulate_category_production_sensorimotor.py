@@ -33,6 +33,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main(results_dir: str) -> None:
     dvs = [
+        # correlation dvs
         "FRF corr (-)",
         "zRT corr (+; FRF≥1)",
         'ProdFreq corr (-)',
@@ -41,17 +42,22 @@ def main(results_dir: str) -> None:
         "zRT N",
         'ProdFreq N',
         'Mean Rank N',
+        # hitrate dvs
+        "Hitrate within SD of mean (RFoP)",
+        "Hitrate within SD of mean (RFoP; available categories only)",
+        "Hitrate within SD of mean (RMR)",
+        "Hitrate within SD of mean (RMR; available categories only)",
     ]
 
     all_data: DataFrame = collate_data(results_dir)
-    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
 
     # In case there is insufficient data available, there will be nans in the correlation columns.
     # For display purposes, we replace those with "-"s, to be picked up by the pivot table.
     all_data.fillna("-", inplace=True)
 
-    for dv in dvs:
+    all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
 
+    for dv in dvs:
         save_dir = path.join(results_dir, " tabulated")
         makedirs(save_dir, exist_ok=True)
         save_tabulation(data=all_data, values=dv,
