@@ -19,6 +19,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
+from glob import glob
 from math import floor
 from os import path
 from typing import Dict
@@ -60,7 +61,17 @@ sensorimotor_norms = SensorimotorNorms()
 distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
-def main(input_results_dir: str, min_first_rank_freq: int = None):
+def main(input_results_parent_dir: str, single_model: bool, min_first_rank_freq: int = None):
+    if single_model:
+        model_output_dirs = [input_results_parent_dir]
+    else:
+        model_output_dirs = glob(path.join(input_results_parent_dir, "Category production traces "))
+
+    for model_output_dir in model_output_dirs:
+        process_one_model_output(model_output_dir, min_first_rank_freq)
+
+
+def process_one_model_output(input_results_dir: str, min_first_rank_freq: int = None):
 
     # region Set defaults
     min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
@@ -412,9 +423,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
+    parser.add_argument("single_model", type=bool, action="store_true",
+                        help="If specified, `path` will be interpreted to be the dir for a single model's output; "
+                             "otherwise `path` will be interpreted to contain many models' output dirs.")
     parser.add_argument("min_frf", type=int, nargs="?", default=None, help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
-    main(args.path, args.min_frf)
+    main(args.path, args.single_model, args.min_frf)
 
     logger.info("Done!")
