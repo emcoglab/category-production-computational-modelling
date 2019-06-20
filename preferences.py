@@ -23,13 +23,14 @@ class Preferences(object):
     """
 
     data = "/Volumes/Data"
+    local_data = "/Users/caiwingfield/Data"
 
     # Paths
 
     email_connection_details_path = "/Users/caiwingfield/Box Sync/Admin dox/notify@cwcomplex.net.txt"
     target_email_address = "c.wingfield@lancaster.ac.uk"
 
-    graphs_dir = path.join(data, "graphs")
+    graphs_dir = path.join(local_data, "graphs")
 
     node_distributions_dir = path.join(data, "node_distributions/")
 
