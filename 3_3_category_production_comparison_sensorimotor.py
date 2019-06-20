@@ -29,8 +29,7 @@ from pandas import DataFrame, isna, Series
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor, \
-    save_stats_sensorimotor
+from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType, distance
 from model.utils.maths import t_confidence_interval
