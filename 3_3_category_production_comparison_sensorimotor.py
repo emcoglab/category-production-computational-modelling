@@ -68,41 +68,44 @@ def main(input_results_parent_dir: str, single_model: bool, min_first_rank_freq:
         model_output_dirs = glob(path.join(input_results_parent_dir, "Category production traces "))
 
     for model_output_dir in model_output_dirs:
-        process_one_model_output(model_output_dir, min_first_rank_freq)
+        main_data = compile_model_data(model_output_dir)
+        process_one_model_output(main_data, model_output_dir, min_first_rank_freq)
 
 
-def process_one_model_output(input_results_dir: str, min_first_rank_freq: int = None):
+def compile_model_data(input_results_dir: str) -> DataFrame:
 
-    # region Set defaults
-    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
-    # endregion
+    # Holds category production data and model response data
+    main_data: DataFrame = category_production.data.copy()
+    main_data.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
 
-    # Main dataframe holds category production data and model response data
-    main_dataframe: DataFrame = category_production.data.copy()
-    main_dataframe.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
-
-    main_dataframe = exclude_idiosyncratic_responses(main_dataframe)
-
-    # region Add predictor columns
+    main_data = exclude_idiosyncratic_responses(main_data)
 
     # Add predictor columns for model
-    main_dataframe = add_predictor_column_distance(main_dataframe)
-    main_dataframe = add_predictor_column_ttfa(main_dataframe, input_results_dir)
-    main_dataframe = add_predictor_column_model_hit(main_dataframe)
-    main_dataframe = add_predictor_column_category_available(main_dataframe)
+    main_data = add_predictor_column_distance(main_data)
+    main_data = add_predictor_column_ttfa(main_data, input_results_dir)
+    main_data = add_predictor_column_model_hit(main_data)
+    main_data = add_predictor_column_category_available(main_data)
 
-    main_dataframe = add_predictor_column_production_proportion(main_dataframe)
-    main_dataframe = add_rfop_column(main_dataframe)
-    main_dataframe = add_rmr_column(main_dataframe)
+    # Add predictor columns for participants
+    main_data = add_predictor_column_production_proportion(main_data)
+    main_data = add_rfop_column(main_data)
+    main_data = add_rmr_column(main_data)
 
-    # endregion
+    return main_data
+
+
+def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_first_rank_freq: int = None):
+
+    # Set defaults
+
+    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
 
     # region Save data files
 
-    save_item_level_data(input_results_dir, main_dataframe)
-    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_dataframe)
+    save_item_level_data(input_results_dir, main_data)
+    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data)
     save_model_performance_stats_sensorimotor(
-        main_dataframe,
+        main_data,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
         **hitrate_stats
