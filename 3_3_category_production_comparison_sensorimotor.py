@@ -29,9 +29,10 @@ from pandas import DataFrame, isna, Series
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor
+from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType, distance
+from model.graph_propagation import GraphPropagation
 from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
@@ -56,136 +57,143 @@ N_PARTICIPANTS = 20
 category_production = CategoryProduction(use_cache=True)
 sensorimotor_norms = SensorimotorNorms()
 
-
-def get_sensorimotor_distance_minkowski3(row):
-    c = row[CPColNames.CategorySensorimotor]
-    r = row[CPColNames.ResponseSensorimotor]
-
-    try:
-        category_vector = array(sensorimotor_norms.vector_for_word(c))
-    except WordNotInNormsError:
-        return nan
-
-    try:
-        response_vector = array(sensorimotor_norms.vector_for_word(r))
-    except WordNotInNormsError:
-        return nan
-
-    return distance(category_vector, response_vector, DistanceType.Minkowski3)
+distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
 def main(input_results_dir: str, min_first_rank_freq: int = None):
 
-    # Set defaults
-    if min_first_rank_freq is None:
-        min_first_rank_freq = 1
-
-    logger.info(f"Looking at output from model.")
-
-    # region Build main dataframe and save item-level data
+    # region Set defaults
+    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
+    # endregion
 
     # Main dataframe holds category production data and model response data
     main_dataframe: DataFrame = category_production.data.copy()
+    main_dataframe.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
+
+    main_dataframe = exclude_idiosyncratic_responses(main_dataframe)
+
+    # region Add predictor columns
+
+    # Add predictor columns for model
+    main_dataframe = add_predictor_column_distance(main_dataframe)
+    main_dataframe = add_predictor_column_ttfa(main_dataframe, input_results_dir)
+    main_dataframe = add_predictor_column_model_hit(main_dataframe)
+    main_dataframe = add_predictor_column_category_available(main_dataframe)
+
+    main_dataframe = add_predictor_column_production_proportion(main_dataframe)
+    main_dataframe = add_rfop_column(main_dataframe)
+    main_dataframe = add_rmr_column(main_dataframe)
 
     # endregion
 
-    # region Add new columns for model
+    # region Save data files
 
-    distance_column = f"{DistanceType.Minkowski3.name} distance"
-    main_dataframe = add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, distance_column=distance_column)
-
-    # Derived column for whether the model produced the response at all (bool)
-    main_dataframe[MODEL_HIT] = main_dataframe.apply(
-        lambda row: not isna(row[TTFA]),
-        axis=1)
-
-    # Whether the category was available to the model
-    main_dataframe[CATEGORY_AVAILABLE] = main_dataframe.apply(
-        lambda row: sensorimotor_norms.has_word(row[CPColNames.CategorySensorimotor]),
-        axis=1)
+    save_item_level_data(input_results_dir, main_dataframe)
+    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_dataframe)
+    save_model_performance_stats_sensorimotor(
+        main_dataframe,
+        results_dir=input_results_dir,
+        min_first_rank_freq=min_first_rank_freq,
+        **hitrate_stats
+    )
 
     # endregion
 
-    # region Add new columns for participants
 
-    # Production proportion is the number of times a response was given,
-    # divided by the number of participants who gave it
-    main_dataframe[PRODUCTION_PROPORTION] = main_dataframe.apply(
-        lambda row: row[CPColNames.ProductionFrequency] / N_PARTICIPANTS, axis=1)
+def save_model_performance_stats_sensorimotor(main_dataframe,
+                                              results_dir,
+                                              min_first_rank_freq,
+                                              hitrate_fit_rfop,
+                                              hitrate_fit_rfop_restricted,
+                                              hitrate_fit_rmr,
+                                              hitrate_fit_rmr_restricted):
 
-    main_dataframe[RANK_FREQUENCY_OF_PRODUCTION] = (main_dataframe
-                                                    # Within each category
-                                                    .groupby(CPColNames.CategorySensorimotor)
-                                                    # Rank the responses according to production frequency
-                                                    [CPColNames.ProductionFrequency]
-                                                    .rank(ascending=False,
-                                                          # For ties, order alphabetically (i.e. pseudorandomly (?))
-                                                          method='first'))
+    overall_stats_output_path = path.join(Preferences.results_dir,
+                                          "Category production fit",
+                                          f"model_effectiveness_overall "
+                                          f"({path.basename(results_dir)}).csv")
+    model_spec = GraphPropagation.load_model_spec(results_dir)
+    stats = {
+        **get_correlation_stats(main_dataframe, min_first_rank_freq),
+        # hitrate stats
+        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
+        "Hitrate within SD of mean (RFoP; available categories only)": hitrate_fit_rfop_restricted,
+        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
+        "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
+    }
+    data: DataFrame = DataFrame.from_records([{
+        **model_spec,
+        **stats,
+    }])
 
-    # Exclude idiosyncratic responses
-    main_dataframe = main_dataframe[main_dataframe[CPColNames.ProductionFrequency] > 1]
+    with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
+        data.to_csv(data_file, index=False,
+                    # Make sure columns are in consistent order for stacking,
+                    # and make sure the model spec columns come first.
+                    columns=sorted(model_spec.keys()) + sorted(stats.keys()))
 
-    # Production proportion per rank frequency of production
-    main_dataframe[ROUNDED_MEAN_RANK] = main_dataframe.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
 
-    # endregion
-
-    # region summary tables
-
-    production_proportion_per_rfop = get_summary_table(main_dataframe, RANK_FREQUENCY_OF_PRODUCTION)
-    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], RANK_FREQUENCY_OF_PRODUCTION)
-
-    # Production proportion per rounded mean rank
-    production_proportion_per_rmr = get_summary_table(main_dataframe, ROUNDED_MEAN_RANK)
-    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], ROUNDED_MEAN_RANK)
-
-    # Compute hitrate fits
-
-    hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop)
-    hitrate_fit_rfop_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop_restricted)
-    hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr)
-    hitrate_fit_rmr_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr_restricted)
-
-    # region Compute correlations with DVs
-
-    # Drop rows not produced by model or in norms
-    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
-
-    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
-    main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
-    main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
-
-    # frf vs ttfa
-    corr_frf_vs_ttfa = main_dataframe[CPColNames.FirstRankFrequency].corr(main_dataframe[TTFA], method='pearson')
-
-    # The Pearson's correlation over all categories between average first-response RT (for responses with
-    # first-rank frequency ≥4) and the time to the first activation (TTFA) within the model.
-    first_rank_frequent_data = main_dataframe[main_dataframe[CPColNames.FirstRankFrequency] >= min_first_rank_freq]
-    n_first_rank_frequent = first_rank_frequent_data.shape[0]
-    first_rank_frequent_corr_rt_vs_ttfa = first_rank_frequent_data[CPColNames.MeanZRT].corr(
-        first_rank_frequent_data[TTFA], method='pearson')
-
-    # Pearson's correlation between production frequency and ttfa
-    corr_prodfreq_vs_ttfa = main_dataframe[CPColNames.ProductionFrequency].corr(main_dataframe[TTFA], method='pearson')
-
-    corr_meanrank_vs_ttfa = main_dataframe[CPColNames.MeanRank].corr(main_dataframe[TTFA], method='pearson')
-
-    # endregion
-
-    # endregion
-
-    # region Save tables
-
-    # Save item-level data
-
+def save_item_level_data(input_results_dir, main_dataframe):
     per_category_stats_output_path = path.join(Preferences.results_dir,
                                                "Category production fit",
                                                f"item-level data ({path.basename(input_results_dir)}).csv")
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
 
-    # Save summary tables
 
+def get_correlation_stats(main_dataframe, min_first_rank_freq):
+    # Drop rows not produced by model or in norms
+    correlation_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
+    correlation_dataframe = correlation_dataframe[correlation_dataframe[distance_column].notnull()]
+    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
+    correlation_dataframe[TTFA] = correlation_dataframe[TTFA].astype(int)
+    correlation_dataframe[distance_column] = correlation_dataframe[distance_column].astype(float)
+    # frf vs ttfa
+    corr_frf_vs_ttfa = correlation_dataframe[CPColNames.FirstRankFrequency].corr(correlation_dataframe[TTFA],
+                                                                                 method='pearson')
+    # The Pearson's correlation over all categories between average first-response RT (for responses with
+    # first-rank frequency ≥4) and the time to the first activation (TTFA) within the model.
+    first_rank_frequent_data = correlation_dataframe[
+        correlation_dataframe[CPColNames.FirstRankFrequency] >= min_first_rank_freq]
+    n_first_rank_frequent = first_rank_frequent_data.shape[0]
+    first_rank_frequent_corr_rt_vs_ttfa = first_rank_frequent_data[CPColNames.MeanZRT].corr(
+        first_rank_frequent_data[TTFA], method='pearson')
+    # Pearson's correlation between production frequency and ttfa
+    corr_prodfreq_vs_ttfa = correlation_dataframe[CPColNames.ProductionFrequency].corr(correlation_dataframe[TTFA],
+                                                                                       method='pearson')
+    corr_meanrank_vs_ttfa = correlation_dataframe[CPColNames.MeanRank].corr(correlation_dataframe[TTFA],
+                                                                            method='pearson')
+    # Save correlation and hitrate stats
+    available_pairs = set(correlation_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
+                          .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
+                          .groups.keys())
+    correlation_stats = {
+        "available_items": available_pairs,
+        "corr_frf_vs_ttfa": corr_frf_vs_ttfa,
+        "corr_meanrank_vs_ttfa": corr_meanrank_vs_ttfa,
+        "corr_prodfreq_vs_ttfa": corr_prodfreq_vs_ttfa,
+        "first_rank_frequent_corr_rt_vs_ttfa": first_rank_frequent_corr_rt_vs_ttfa,
+        "n_first_rank_frequent": n_first_rank_frequent,
+        "min_first_rank_freq": min_first_rank_freq
+    }
+    return correlation_stats
+
+
+def save_hitrate_summary_tables(input_results_dir, main_dataframe):
+    production_proportion_per_rfop = get_summary_table(main_dataframe, RANK_FREQUENCY_OF_PRODUCTION)
+    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]],
+                                                                  RANK_FREQUENCY_OF_PRODUCTION)
+    # Production proportion per rounded mean rank
+    production_proportion_per_rmr = get_summary_table(main_dataframe, ROUNDED_MEAN_RANK)
+    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]],
+                                                                 ROUNDED_MEAN_RANK)
+
+    # Compute hitrate fits
+    hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop)
+    hitrate_fit_rfop_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop_restricted)
+    hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr)
+    hitrate_fit_rmr_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr_restricted)
+
+    # Save summary tables
     production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                     f"Production proportion per rank frequency of production"
                                                     f" ({path.basename(input_results_dir)}).csv"),
@@ -194,7 +202,6 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
                                                    f"Production proportion per rounded mean rank"
                                                    f" ({path.basename(input_results_dir)}).csv"),
                                          index=False)
-
     production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
                                                                f"Production proportion per rank frequency of production"
                                                                f" ({path.basename(input_results_dir)}) restricted.csv"),
@@ -203,31 +210,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
                                                               f"Production proportion per rounded mean rank"
                                                               f" ({path.basename(input_results_dir)}) restricted.csv"),
                                                     index=False)
-
-    # Save correlation and hitrate stats
-
-    available_pairs = set(main_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
-                          .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
-                          .groups.keys())
-    save_stats_sensorimotor(
-        available_items=available_pairs,
-        corr_frf_vs_ttfa=corr_frf_vs_ttfa,
-        corr_meanrank_vs_ttfa=corr_meanrank_vs_ttfa,
-        corr_prodfreq_vs_ttfa=corr_prodfreq_vs_ttfa,
-        first_rank_frequent_corr_rt_vs_ttfa=first_rank_frequent_corr_rt_vs_ttfa,
-        n_first_rank_frequent=n_first_rank_frequent,
-        results_dir=input_results_dir,
-        min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rfop=hitrate_fit_rfop,
-        hitrate_fit_rfop_restricted=hitrate_fit_rfop_restricted,
-        hitrate_fit_rmr=hitrate_fit_rmr,
-        hitrate_fit_rmr_restricted=hitrate_fit_rmr_restricted,
-    )
-
-    # endregion
-
     # region Graph tables
-
     save_figure(summary_table=production_proportion_per_rfop,
                 x_selector=RANK_FREQUENCY_OF_PRODUCTION,
                 fig_title="Hitrate per RFOP",
@@ -236,7 +219,6 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
                 x_selector=RANK_FREQUENCY_OF_PRODUCTION,
                 fig_title="Hitrate per RFOP (only available categories)",
                 fig_name=f"restricted hitrate per RFOP {path.basename(input_results_dir)}")
-
     save_figure(summary_table=production_proportion_per_rmr,
                 x_selector=ROUNDED_MEAN_RANK,
                 fig_title="Hitrate per RMR",
@@ -245,8 +227,22 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
                 x_selector=ROUNDED_MEAN_RANK,
                 fig_title="Hitrate per RMR (only available categories)",
                 fig_name=f"restricted hitrate per RMR {path.basename(input_results_dir)}")
+    hitrate_stats = {
+        "hitrate_fit_rfop": hitrate_fit_rfop,
+        "hitrate_fit_rfop_restricted": hitrate_fit_rfop_restricted,
+        "hitrate_fit_rmr": hitrate_fit_rmr,
+        "hitrate_fit_rmr_restricted": hitrate_fit_rmr_restricted
+    }
+    return hitrate_stats
 
-    # endregion
+
+def get_sensorimotor_distance_minkowski3(row):
+    try:
+        category_vector = array(sensorimotor_norms.vector_for_word(row[CPColNames.CategorySensorimotor]))
+        response_vector = array(sensorimotor_norms.vector_for_word(row[CPColNames.ResponseSensorimotor]))
+        return distance(category_vector, response_vector, DistanceType.Minkowski3)
+    except WordNotInNormsError:
+        return nan
 
 
 def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
@@ -312,16 +308,14 @@ def get_summary_table(main_dataframe, groupby_column):
     return df
 
 
-def add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, distance_column):
-    """Add columns for TTFA and distance, dropping appropriate rows."""
+def add_predictor_column_ttfa(main_dataframe, input_results_dir):
+    logger.info("Adding TTFA column")
 
-    # Drop precomputed distance measures
-    main_dataframe.drop(['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI'], axis=1, inplace=True)
-
-    # Get TTFAs and distances
-    model_ttfas: Dict[str, Dict[str, int]] = dict()  # category -> response -> TTFA
-    for category in category_production.category_labels_sensorimotor:
-        model_ttfas[category] = get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
+    # category -> response -> TTFA
+    ttfas: Dict[str, Dict[str, int]] = {
+        category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
+        for category in category_production.category_labels_sensorimotor
+    }
 
     def get_min_ttfa_for_multiword_responses(row) -> int:
         """
@@ -335,7 +329,7 @@ def add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, dista
         # for any response.
         try:
             # response -> TTFA
-            c_ttfas: Dict[str, int] = model_ttfas[c]
+            c_ttfas: Dict[str, int] = ttfas[c]
         except KeyError:
             return nan
 
@@ -358,9 +352,58 @@ def add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, dista
                 return nan
 
     main_dataframe[TTFA] = main_dataframe.apply(get_min_ttfa_for_multiword_responses, axis=1)
-    main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
 
     return main_dataframe
+
+
+def add_predictor_column_distance(main_dataframe):
+    logger.info("Adding distance column")
+    main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
+    return main_dataframe
+
+
+def add_predictor_column_model_hit(main_dataframe):
+    logger.info("Adding model hit column")
+    main_dataframe[MODEL_HIT] = main_dataframe.apply(lambda row: not isna(row[TTFA]), axis=1)
+    return main_dataframe
+
+
+def add_predictor_column_category_available(main_dataframe):
+    logger.info("Adding category availability column")
+    main_dataframe[CATEGORY_AVAILABLE] = main_dataframe.apply(lambda row: sensorimotor_norms.has_word(row[CPColNames.CategorySensorimotor]), axis=1)
+    return main_dataframe
+
+
+def add_predictor_column_production_proportion(main_dataframe):
+    logger.info("Adding production proportion column")
+    # Production proportion is the number of times a response was given,
+    # divided by the number of participants who gave it
+    main_dataframe[PRODUCTION_PROPORTION] = main_dataframe.apply(lambda row: row[CPColNames.ProductionFrequency] / N_PARTICIPANTS, axis=1)
+    return main_dataframe
+
+
+def add_rfop_column(main_dataframe):
+    logger.info("Adding RFoP column")
+    main_dataframe[RANK_FREQUENCY_OF_PRODUCTION] = (
+        main_dataframe
+        # Within each category
+        .groupby(CPColNames.CategorySensorimotor)
+        # Rank the responses according to production frequency
+        [CPColNames.ProductionFrequency]
+        .rank(ascending=False,
+              # For ties, order alphabetically (i.e. pseudorandomly (?))
+              method='first'))
+    return main_dataframe
+
+
+def add_rmr_column(main_dataframe):
+    logger.info("Adding RMR column")
+    main_dataframe[ROUNDED_MEAN_RANK] = main_dataframe.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
+    return main_dataframe
+
+
+def exclude_idiosyncratic_responses(main_dataframe):
+    return main_dataframe[main_dataframe[CPColNames.ProductionFrequency] > 1]
 
 
 if __name__ == '__main__':
