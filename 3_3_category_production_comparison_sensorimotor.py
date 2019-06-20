@@ -92,7 +92,8 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
 
     # region Add new columns for model
 
-    main_dataframe = add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, distance_column=f"{DistanceType.Minkowski3.name} distance")
+    distance_column = f"{DistanceType.Minkowski3.name} distance"
+    main_dataframe = add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, distance_column=distance_column)
 
     # Derived column for whether the model produced the response at all (bool)
     main_dataframe[MODEL_HIT] = main_dataframe.apply(
@@ -125,7 +126,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # Exclude idiosyncratic responses
     main_dataframe = main_dataframe[main_dataframe[CPColNames.ProductionFrequency] > 1]
 
-    # Produciton proportion per rank frequency of producton
+    # Production proportion per rank frequency of production
     main_dataframe[ROUNDED_MEAN_RANK] = main_dataframe.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
 
     # endregion
@@ -147,6 +148,14 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     hitrate_fit_rmr_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr_restricted)
 
     # region Compute correlations with DVs
+
+    # Drop rows not produced by model or in norms
+    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
+    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
+
+    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
+    main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
+    main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
 
     # frf vs ttfa
     corr_frf_vs_ttfa = main_dataframe[CPColNames.FirstRankFrequency].corr(main_dataframe[TTFA], method='pearson')
@@ -352,13 +361,6 @@ def add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, dista
     main_dataframe[TTFA] = main_dataframe.apply(get_min_ttfa_for_multiword_responses, axis=1)
     main_dataframe[distance_column] = main_dataframe.apply(get_sensorimotor_distance_minkowski3, axis=1)
 
-    # Drop rows corresponding to responses which weren't produced by the model
-    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
-
-    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
-    main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
-    main_dataframe[distance_column] = main_dataframe[distance_column].astype(float)
     return main_dataframe
 
 
