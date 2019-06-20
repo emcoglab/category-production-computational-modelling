@@ -1,6 +1,7 @@
 -r ldm/requirements.txt
 -r sensorimotor_norms/requirements.txt
 -r category_production/requirements.txt
+colorama
 cython
 matplotlib
 numpy

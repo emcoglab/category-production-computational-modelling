@@ -17,13 +17,15 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
+import asyncio
 import logging
 import sys
 from glob import glob
 from math import floor
 from os import path
-from typing import Dict
+from typing import Dict, List
 
+import colorama
 from matplotlib import pyplot
 from numpy import nan, array
 from pandas import DataFrame, isna, Series
@@ -43,7 +45,6 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
-
 RANK_FREQUENCY_OF_PRODUCTION = "RankFreqOfProduction"
 ROUNDED_MEAN_RANK = "RoundedMeanRank"
 PRODUCTION_PROPORTION = "ProductionProportion"
@@ -62,17 +63,40 @@ distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
 def main(input_results_parent_dir: str, single_model: bool, min_first_rank_freq: int = None):
+    # If only a single model, make it a list of one dir
     if single_model:
         model_output_dirs = [input_results_parent_dir]
     else:
-        model_output_dirs = glob(path.join(input_results_parent_dir, "Category production traces "))
+        model_output_dirs = glob(path.join(input_results_parent_dir, "Category production traces *"))
 
+    # Run loading and processing asynchronously
+
+    loop = asyncio.get_event_loop()
+    data_queue = asyncio.Queue()
+
+    compile_task = loop.create_task(compile_all_model_data(data_queue, model_output_dirs))
+    process_task = loop.create_task(process_all_model_data(data_queue, len(model_output_dirs), min_first_rank_freq))
+
+    loop.run_until_complete(asyncio.gather(compile_task, process_task))
+
+
+async def compile_all_model_data(queue: asyncio.Queue, model_output_dirs: List[str]):
     for model_output_dir in model_output_dirs:
         main_data = compile_model_data(model_output_dir)
+        await queue.put((model_output_dir, main_data))
+        await asyncio.sleep(0)
+
+
+async def process_all_model_data(queue: asyncio.Queue, n: int, min_first_rank_freq: int):
+    for i in range(n):
+        model_output_dir, main_data = await queue.get()
         process_one_model_output(main_data, model_output_dir, min_first_rank_freq)
+        await asyncio.sleep(0)
 
 
 def compile_model_data(input_results_dir: str) -> DataFrame:
+
+    logger.info(colorama.Fore.YELLOW + f"Compiling model data from {input_results_dir}" + colorama.Fore.RESET)
 
     # Holds category production data and model response data
     main_data: DataFrame = category_production.data.copy()
@@ -95,6 +119,8 @@ def compile_model_data(input_results_dir: str) -> DataFrame:
 
 
 def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_first_rank_freq: int = None):
+
+    logger.info(colorama.Fore.BLUE + f"Processing model data form {input_results_dir}" + colorama.Fore.RESET)
 
     # Set defaults
 
@@ -426,7 +452,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("single_model", type=bool, action="store_true",
+    parser.add_argument("--single_model", action="store_true",
                         help="If specified, `path` will be interpreted to be the dir for a single model's output; "
                              "otherwise `path` will be interpreted to contain many models' output dirs.")
     parser.add_argument("min_frf", type=int, nargs="?", default=None, help="The minimum FRF required for zRT and FRF correlations.")
