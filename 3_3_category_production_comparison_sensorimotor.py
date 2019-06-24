@@ -208,13 +208,14 @@ def get_correlation_stats(main_dataframe, min_first_rank_freq):
                           .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                           .groups.keys())
     correlation_stats = {
-        "available_items": available_pairs,
-        "corr_frf_vs_ttfa": corr_frf_vs_ttfa,
-        "corr_meanrank_vs_ttfa": corr_meanrank_vs_ttfa,
-        "corr_prodfreq_vs_ttfa": corr_prodfreq_vs_ttfa,
-        "first_rank_frequent_corr_rt_vs_ttfa": first_rank_frequent_corr_rt_vs_ttfa,
-        "n_first_rank_frequent": n_first_rank_frequent,
-        "min_first_rank_freq": min_first_rank_freq
+        "FRF corr (-)": corr_frf_vs_ttfa,
+        "FRF N": n_first_rank_frequent,
+        f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
+        "zRT N": n_first_rank_frequent,
+        "ProdFreq corr (-)": corr_prodfreq_vs_ttfa,
+        "ProdFreq N": len(available_pairs),
+        "MeanRank corr (+)": corr_meanrank_vs_ttfa,
+        "Mean Rank N": len(available_pairs),
     }
     return correlation_stats
 
