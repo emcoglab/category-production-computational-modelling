@@ -63,6 +63,11 @@ distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
 def main(input_results_parent_dir: str, single_model: bool, min_first_rank_freq: int = None):
+
+    # Set defaults
+
+    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
+
     # If only a single model, make it a list of one dir
     if single_model:
         model_output_dirs = [input_results_parent_dir]
@@ -118,13 +123,9 @@ def compile_model_data(input_results_dir: str) -> DataFrame:
     return main_data
 
 
-def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_first_rank_freq: int = None):
+def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_first_rank_freq: int):
 
     logger.info(colorama.Fore.BLUE + f"Processing model data form {input_results_dir}" + colorama.Fore.RESET)
-
-    # Set defaults
-
-    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
 
     # region Save data files
 
