@@ -16,6 +16,7 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import argparse
 import asyncio
 import logging
@@ -457,7 +458,8 @@ if __name__ == '__main__':
     parser.add_argument("--single_model", action="store_true",
                         help="If specified, `path` will be interpreted to be the dir for a single model's output; "
                              "otherwise `path` will be interpreted to contain many models' output dirs.")
-    parser.add_argument("min_frf", type=int, nargs="?", default=None, help="The minimum FRF required for zRT and FRF correlations.")
+    parser.add_argument("min_frf", type=int, nargs="?", default=None,
+                        help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
     main(args.path, args.single_model, args.min_frf)
