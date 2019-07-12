@@ -13,10 +13,10 @@ echo Job running on compute node `uname -n`
 module add anaconda3/2018.12
 
 python3 ../2_4_sensorimotor_tsp.py \
-           --buffer_capacity 10000 \
+           --accessible_set_capacity 10000 \
            --distance_type Minkowski-3 \
            --max_sphere_radius 198 \
-           --buffer_size_limit 10 \
+           --buffer_capacity 10 \
            --buffer_threshold 0.9 \
            --activation_threshold 0.5 \
            --length_factor 100 \

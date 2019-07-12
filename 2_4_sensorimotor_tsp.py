@@ -50,6 +50,7 @@ def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
          buffer_capacity: int,
+         accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
          activation_threshold: ActivationValue,
          run_for_ticks: int,
@@ -93,6 +94,7 @@ def main(distance_type_name: str,
         activation_threshold=activation_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
+        accessible_set_capacity=accessible_set_capacity,
     )
 
     SensorimotorComponent.save_model_spec({
@@ -101,11 +103,12 @@ def main(distance_type_name: str,
         "Max sphere radius": max_sphere_radius,
         "Log-normal median": median,
         "Log-normal sigma": sigma,
-        "Buffer size limit": buffer_capacity,
+        "Buffer capacity": buffer_capacity,
         "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
         "Activation threshold": activation_threshold,
+        "Accessible set capacity": accessible_set_capacity,
         "Run for ticks": run_for_ticks,
         "Bailout": bailout
     }, response_dir)
@@ -129,6 +132,8 @@ def main(distance_type_name: str,
         csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {max_sphere_radius}")
+        csv_comments.append(f"\t WMB capacity = {buffer_capacity}")
+        csv_comments.append(f"\t  AS capacity = {accessible_set_capacity}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
         if sc.graph.is_connected():
             csv_comments.append(f"\t    connected = yes")
@@ -162,7 +167,7 @@ def main(distance_type_name: str,
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
 
-            accessible_set_size = len(sc.accessible_set())
+            accessible_set_size = len(sc.accessible_set)
 
             accessible_set_this_category[tick] = accessible_set_size
 
@@ -236,6 +241,7 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
     parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
+    parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
 
     args = parser.parse_args()
@@ -244,6 +250,7 @@ if __name__ == '__main__':
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
          buffer_capacity=args.buffer_capacity,
+         accessible_set_capacity=args.accessible_set_capacity,
          activation_threshold=args.activation_threshold,
          buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,

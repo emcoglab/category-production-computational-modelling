@@ -13,7 +13,7 @@ def main():
     script_name = "2_4_sensorimotor_tsp"
 
     length_factor = 100
-    buffer_size_limit = 10
+    buffer_capacity = 10
     distance_type = DistanceType.Minkowski3
     bailout = 10_000
 
@@ -85,10 +85,10 @@ def main():
                             job_file.write(f"module add anaconda3/2018.12\n")
                             job_file.write(f"\n")
                             job_file.write(f"python3 ../{script_name}.py \\\n")
-                            job_file.write(f"           --buffer_capacity {bailout} \\\n")
+                            job_file.write(f"           --accessible_set_capacity {bailout} \\\n")
                             job_file.write(f"           --distance_type {distance_type.name} \\\n")
                             job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
-                            job_file.write(f"           --buffer_size_limit {buffer_size_limit} \\\n")
+                            job_file.write(f"           --buffer_capacity {buffer_capacity} \\\n")
                             job_file.write(f"           --buffer_threshold {buffer_threshold} \\\n")
                             job_file.write(f"           --activation_threshold {activation_threshold} \\\n")
                             job_file.write(f"           --length_factor {length_factor} \\\n")
