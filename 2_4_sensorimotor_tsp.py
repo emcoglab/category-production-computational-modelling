@@ -49,7 +49,7 @@ FULL_ACTIVATION = ActivationValue(1.0)
 def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
-         buffer_size_limit: int,
+         buffer_capacity: int,
          buffer_threshold: ActivationValue,
          activation_threshold: ActivationValue,
          run_for_ticks: int,
@@ -87,7 +87,7 @@ def main(distance_type_name: str,
         max_sphere_radius=max_sphere_radius,
         lognormal_median=median,
         lognormal_sigma=sigma,
-        buffer_size_limit=buffer_size_limit,
+        buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
         activation_threshold=activation_threshold,
@@ -101,7 +101,7 @@ def main(distance_type_name: str,
         "Max sphere radius": max_sphere_radius,
         "Log-normal median": median,
         "Log-normal sigma": sigma,
-        "Buffer size limit": buffer_size_limit,
+        "Buffer size limit": buffer_capacity,
         "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--buffer_size_limit", required=True, type=int)
+    parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
 
     args = parser.parse_args()
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     main(max_sphere_radius=args.max_sphere_radius,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
-         buffer_size_limit=args.buffer_size_limit,
+         buffer_capacity=args.buffer_capacity,
          activation_threshold=args.activation_threshold,
          buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
