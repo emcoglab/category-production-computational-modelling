@@ -22,9 +22,9 @@ def main():
 
     prune_ram = {
         # 100: 5,
-        150: 20,
+        150: 30,
         # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
-        198: 45,
+        198: 55,
         # 200: 60,
         250: 120,
     }
