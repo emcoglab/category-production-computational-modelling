@@ -33,7 +33,7 @@ from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_format = '%(asctime)s | %(levelname)s | %(module)s:l.%(lineno)d | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 # Results DataFrame column names
@@ -135,11 +135,6 @@ def main(distance_type_name: str,
         csv_comments.append(f"\t WMB capacity = {buffer_capacity}")
         csv_comments.append(f"\t  AS capacity = {accessible_set_capacity}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
-        if sc.graph.is_connected():
-            csv_comments.append(f"\t    connected = yes")
-        else:
-            csv_comments.append(f"\t    connected = no")
-            csv_comments.append(f"\t      orphans = {'yes' if sc.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
 
