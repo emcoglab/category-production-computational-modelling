@@ -52,7 +52,7 @@ def main(distance_type_name: str,
          buffer_capacity: int,
          accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
-         activation_threshold: ActivationValue,
+         accessible_set_threshold: ActivationValue,
          run_for_ticks: int,
          median: float,
          sigma: float,
@@ -71,8 +71,10 @@ def main(distance_type_name: str,
                              f"r {max_sphere_radius} "
                              f"m {median}; "
                              f"s {sigma}; "
-                             f"a {activation_threshold}; "
+                             f"a {accessible_set_threshold}; "
+                             f"ac {accessible_set_capacity}; "
                              f"b {buffer_threshold}; "
+                             f"bc {buffer_capacity}; "
                              f"attenuate {norm_attenuation_statistic.name}; "
                              f"rft {run_for_ticks}; "
                              f"bailout {bailout}")
@@ -91,7 +93,7 @@ def main(distance_type_name: str,
         buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
-        activation_threshold=activation_threshold,
+        accessible_set_threshold=accessible_set_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
         accessible_set_capacity=accessible_set_capacity,
@@ -107,7 +109,7 @@ def main(distance_type_name: str,
         "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
-        "Activation threshold": activation_threshold,
+        "Activation threshold": accessible_set_threshold,
         "Accessible set capacity": accessible_set_capacity,
         "Run for ticks": run_for_ticks,
         "Bailout": bailout
@@ -163,6 +165,7 @@ def main(distance_type_name: str,
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
 
             accessible_set_size = len(sc.accessible_set)
+            logger.info(f"\t{accessible_set_size} ({sc._memory_pressure})")
 
             accessible_set_this_category[tick] = accessible_set_size
 
@@ -226,7 +229,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-a", "--activation_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-a", "--accessible_set_threshold", required=True, type=ActivationValue)
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
@@ -246,7 +249,7 @@ if __name__ == '__main__':
          length_factor=args.length_factor,
          buffer_capacity=args.buffer_capacity,
          accessible_set_capacity=args.accessible_set_capacity,
-         activation_threshold=args.activation_threshold,
+         accessible_set_threshold=args.accessible_set_threshold,
          buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
          median=args.node_decay_median,

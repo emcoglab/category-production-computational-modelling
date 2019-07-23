@@ -58,15 +58,15 @@ def main():
     for sphere_radius, ram_amount in prune_ram.items():
         for median in medians:
             for sigma in sigmas:
-                for activation_threshold in activation_thresholds:
+                for accessible_set_threshold in activation_thresholds:
                     for buffer_threshold in buffer_thresholds:
-                        if activation_threshold > buffer_threshold:
+                        if accessible_set_threshold > buffer_threshold:
                             continue
                         name = f"{short_name}sm_" \
                             f"r{sphere_radius}_" \
                             f"m{median}_" \
                             f"s{sigma}_" \
-                            f"a{activation_threshold}_" \
+                            f"a{accessible_set_threshold}_" \
                             f"b{buffer_threshold}"
                         names.append(name)
                         with open(path.join(job_name, f"{name}.sh"), mode="w", encoding="utf-8") as job_file:
@@ -90,7 +90,7 @@ def main():
                             job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
                             job_file.write(f"           --buffer_capacity {buffer_capacity} \\\n")
                             job_file.write(f"           --buffer_threshold {buffer_threshold} \\\n")
-                            job_file.write(f"           --activation_threshold {activation_threshold} \\\n")
+                            job_file.write(f"           --accessible_set_threshold {accessible_set_threshold} \\\n")
                             job_file.write(f"           --length_factor {length_factor} \\\n")
                             job_file.write(f"           --node_decay_median {median} \\\n")
                             job_file.write(f"           --node_decay_sigma {sigma} \\\n")

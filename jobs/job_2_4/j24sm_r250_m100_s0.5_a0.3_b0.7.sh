@@ -18,7 +18,7 @@ python3 ../2_4_sensorimotor_tsp.py \
            --max_sphere_radius 250 \
            --buffer_capacity 10 \
            --buffer_threshold 0.7 \
-           --activation_threshold 0.3 \
+           --accessible_set_threshold 0.3 \
            --length_factor 100 \
            --node_decay_median 100 \
            --node_decay_sigma 0.5 \
