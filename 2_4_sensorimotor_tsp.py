@@ -165,7 +165,6 @@ def main(distance_type_name: str,
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
 
             accessible_set_size = len(sc.accessible_set)
-            logger.info(f"\t{accessible_set_size} ({sc._memory_pressure})")
 
             accessible_set_this_category[tick] = accessible_set_size
 
