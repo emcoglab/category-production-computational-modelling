@@ -15,7 +15,7 @@ def main():
     length_factor = 100
     buffer_capacity = 10
     distance_type = DistanceType.Minkowski3
-    bailout = 10_000
+    accessible_set_capacity = 3000
 
     if not path.isdir(job_name):
         mkdir(job_name)
@@ -67,6 +67,7 @@ def main():
                             f"m{median}_" \
                             f"s{sigma}_" \
                             f"a{accessible_set_threshold}_" \
+                            f"ac{accessible_set_capacity}_" \
                             f"b{buffer_threshold}"
                         names.append(name)
                         with open(path.join(job_name, f"{name}.sh"), mode="w", encoding="utf-8") as job_file:
@@ -85,7 +86,7 @@ def main():
                             job_file.write(f"module add anaconda3/2018.12\n")
                             job_file.write(f"\n")
                             job_file.write(f"python3 ../{script_name}.py \\\n")
-                            job_file.write(f"           --accessible_set_capacity {bailout} \\\n")
+                            job_file.write(f"           --accessible_set_capacity {accessible_set_capacity} \\\n")
                             job_file.write(f"           --distance_type {distance_type.name} \\\n")
                             job_file.write(f"           --max_sphere_radius {sphere_radius} \\\n")
                             job_file.write(f"           --buffer_capacity {buffer_capacity} \\\n")
