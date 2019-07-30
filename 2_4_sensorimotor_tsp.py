@@ -56,8 +56,8 @@ def main(distance_type_name: str,
          run_for_ticks: int,
          median: float,
          sigma: float,
-         use_prepruned: bool,
          bailout: int = None,
+         use_prepruned: bool = False,
          ):
 
     distance_type = DistanceType.from_name(distance_type_name)
