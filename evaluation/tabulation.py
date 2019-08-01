@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 
-
 from pandas import pivot_table, DataFrame
 
 

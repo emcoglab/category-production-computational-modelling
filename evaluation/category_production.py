@@ -8,16 +8,8 @@ from pandas import DataFrame, read_csv
 
 from model.graph_propagation import GraphPropagation
 from model.utils.exceptions import ParseError
+from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ENTERED_BUFFER, RESPONSE
 from preferences import Preferences
-
-# Results DataFrame column names
-RESPONSE = "Response"
-NODE_ID = "Node ID"
-ACTIVATION = "Activation"
-TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-ITEM_ENTERED_BUFFER = "Item entered WM buffer"
-TTFA = "TTFA"
-REACHED_CAT = "Reached conc.acc. θ"
 
 
 def interpret_path_linguistic(results_dir_path: str) -> int:
@@ -209,3 +201,6 @@ def save_stats_sensorimotor(available_items,
                     # Make sure columns are in consistent order for stacking,
                     # and make sure the model spec columns come first.
                     columns=sorted(model_spec.keys()) + sorted(stats.keys()))
+
+
+N_PARTICIPANTS = 20

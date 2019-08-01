@@ -26,7 +26,8 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, interpret_path_linguistic, get_model_ttfas_for_category_linguistic, save_stats_linguistic
+from evaluation.column_names import TTFA
+from evaluation.category_production import interpret_path_linguistic, get_model_ttfas_for_category_linguistic, save_stats_linguistic
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)

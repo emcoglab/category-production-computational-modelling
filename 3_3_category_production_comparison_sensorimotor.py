@@ -29,7 +29,10 @@ from pandas import DataFrame, isna, Series
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor
+from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor, \
+    N_PARTICIPANTS
+from evaluation.column_names import RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, PRODUCTION_PROPORTION, \
+    CATEGORY_AVAILABLE, MODEL_HIT, MODEL_HITRATE, TTFA
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType, distance
 from model.utils.maths import t_confidence_interval
@@ -40,18 +43,6 @@ from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-
-RANK_FREQUENCY_OF_PRODUCTION = "RankFreqOfProduction"
-ROUNDED_MEAN_RANK = "RoundedMeanRank"
-PRODUCTION_PROPORTION = "ProductionProportion"
-CATEGORY_AVAILABLE = "CategoryAvailable"
-MODEL_HIT = "ModelHit"
-MODEL_HITRATE = "Model hitrate"
-
-
-N_PARTICIPANTS = 20
-
 
 category_production = CategoryProduction(use_cache=True)
 sensorimotor_norms = SensorimotorNorms()
@@ -133,11 +124,13 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # region summary tables
 
     production_proportion_per_rfop = get_summary_table(main_dataframe, RANK_FREQUENCY_OF_PRODUCTION)
-    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], RANK_FREQUENCY_OF_PRODUCTION)
+    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]],
+                                                                  RANK_FREQUENCY_OF_PRODUCTION)
 
     # Production proportion per rounded mean rank
     production_proportion_per_rmr = get_summary_table(main_dataframe, ROUNDED_MEAN_RANK)
-    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], ROUNDED_MEAN_RANK)
+    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]],
+                                                                 ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
 
@@ -252,8 +245,8 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
 def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
     # When the model hitrate is within one SD of the production proportion mean
     within = Series(
-        (df["Model hitrate"] > df["ProductionProportion Mean"] - df["ProductionProportion SD"])
-        & (df["Model hitrate"] < df["ProductionProportion Mean"] + df["ProductionProportion SD"]))
+        (df[MODEL_HITRATE] > df[PRODUCTION_PROPORTION + " Mean"] - df[PRODUCTION_PROPORTION + " SD"])
+        & (df[MODEL_HITRATE] < df[PRODUCTION_PROPORTION + " Mean"] + df[PRODUCTION_PROPORTION + " SD"]))
     # The fraction of times this happens
     return within.aggregate('mean')
 
@@ -262,8 +255,10 @@ def save_figure(summary_table, x_selector, fig_title, fig_name):
     """Save a summary table as a figure."""
     # add human bounds
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
-                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[PRODUCTION_PROPORTION + ' SD'],
-                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[PRODUCTION_PROPORTION + ' SD'])
+                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[
+                            PRODUCTION_PROPORTION + ' SD'],
+                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[
+                            PRODUCTION_PROPORTION + ' SD'])
     pyplot.scatter(x=summary_table.reset_index()[x_selector],
                    y=summary_table[PRODUCTION_PROPORTION + ' Mean'])
     # add model performance
@@ -302,7 +297,8 @@ def get_summary_table(main_dataframe, groupby_column):
             .groupby(groupby_column)
             .count()[PRODUCTION_PROPORTION])
     df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
-                                                                                     row[PRODUCTION_PROPORTION + ' Count'],
+                                                                                     row[
+                                                                                         PRODUCTION_PROPORTION + ' Count'],
                                                                                      0.95), axis=1)
     # Model columns
     df[MODEL_HITRATE] = (
