@@ -25,17 +25,16 @@ from typing import Dict
 
 from matplotlib import pyplot
 from numpy import nan, array
-from pandas import DataFrame, isna, Series
+from pandas import DataFrame, isna
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor, \
-    N_PARTICIPANTS
+from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, save_stats, N_PARTICIPANTS
 from evaluation.column_names import RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, PRODUCTION_PROPORTION, \
     CATEGORY_AVAILABLE, MODEL_HIT, MODEL_HITRATE, TTFA
+from evaluation.comparison import hitrate_within_sd_of_mean_frac, get_summary_table
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType, distance
-from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
@@ -202,7 +201,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     available_pairs = set(main_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
                           .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                           .groups.keys())
-    save_stats_sensorimotor(
+    save_stats(
         available_items=available_pairs,
         corr_frf_vs_ttfa=corr_frf_vs_ttfa,
         corr_meanrank_vs_ttfa=corr_meanrank_vs_ttfa,
@@ -212,9 +211,9 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
         hitrate_fit_rfop=hitrate_fit_rfop,
-        hitrate_fit_rfop_restricted=hitrate_fit_rfop_restricted,
+        hitrate_fit_rfop_available_cats_only=hitrate_fit_rfop_restricted,
         hitrate_fit_rmr=hitrate_fit_rmr,
-        hitrate_fit_rmr_restricted=hitrate_fit_rmr_restricted,
+        hitrate_fit_rmr_available_cats_only=hitrate_fit_rmr_restricted,
     )
 
     # endregion
@@ -242,15 +241,6 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # endregion
 
 
-def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
-    # When the model hitrate is within one SD of the production proportion mean
-    within = Series(
-        (df[MODEL_HITRATE] > df[PRODUCTION_PROPORTION + " Mean"] - df[PRODUCTION_PROPORTION + " SD"])
-        & (df[MODEL_HITRATE] < df[PRODUCTION_PROPORTION + " Mean"] + df[PRODUCTION_PROPORTION + " SD"]))
-    # The fraction of times this happens
-    return within.aggregate('mean')
-
-
 def save_figure(summary_table, x_selector, fig_title, fig_name):
     """Save a summary table as a figure."""
     # add human bounds
@@ -276,36 +266,6 @@ def save_figure(summary_table, x_selector, fig_title, fig_name):
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
-
-
-def get_summary_table(main_dataframe, groupby_column):
-    """
-    Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column.
-    """
-    df = DataFrame()
-    # Participant columns
-    df[PRODUCTION_PROPORTION + ' Mean'] = (
-        main_dataframe
-            .groupby(groupby_column)
-            .mean()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' SD'] = (
-        main_dataframe
-            .groupby(groupby_column)
-            .std()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' Count'] = (
-        main_dataframe
-            .groupby(groupby_column)
-            .count()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
-                                                                                     row[
-                                                                                         PRODUCTION_PROPORTION + ' Count'],
-                                                                                     0.95), axis=1)
-    # Model columns
-    df[MODEL_HITRATE] = (
-        main_dataframe.groupby(groupby_column).mean()[MODEL_HIT])
-    # Forget rows with nans
-    df = df.dropna().reset_index()
-    return df
 
 
 def add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, distance_column):

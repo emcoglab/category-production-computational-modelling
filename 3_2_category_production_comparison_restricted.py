@@ -28,7 +28,7 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
 from evaluation.category_production import interpret_path_linguistic, get_model_ttfas_for_category_linguistic, \
-    save_stats_linguistic
+    save_stats
 from evaluation.column_names import TTFA
 from preferences import Preferences
 
@@ -99,8 +99,8 @@ def main_restricted(results_dir: str, category_production: CategoryProduction,
 
     # endregion
 
-    save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-                          first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, min_first_rank_freq, conscious_access_threshold)
+    save_stats(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
+               first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, True, min_first_rank_freq, conscious_access_threshold)
 
 
 def get_available_items_from_path(p: str, cp: CategoryProduction, conscious_access_threshold) -> Set[Tuple[str, str]]:

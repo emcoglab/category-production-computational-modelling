@@ -12,6 +12,9 @@ from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_EN
 from preferences import Preferences
 
 
+N_PARTICIPANTS = 20
+
+
 def interpret_path_linguistic(results_dir_path: str) -> int:
     """
     Gets the number of words from a path storing results.
@@ -125,10 +128,22 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
         return defaultdict(lambda: nan)
 
 
-# TODO: these next two functions are baseically identical. Can they be merged into one?
-def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_ttfa, corr_prodfreq_vs_ttfa,
-                          first_rank_frequent_corr_rt_vs_ttfa, n_first_rank_frequent, results_dir, restricted,
-                          min_first_rank_freq, conscious_access_threshold):
+def save_stats(available_items,
+               corr_frf_vs_ttfa,
+               corr_meanrank_vs_ttfa,
+               corr_prodfreq_vs_ttfa,
+               first_rank_frequent_corr_rt_vs_ttfa,
+               n_first_rank_frequent,
+               results_dir,
+               min_first_rank_freq,
+               hitrate_fit_rfop,
+               hitrate_fit_rfop_available_cats_only,
+               hitrate_fit_rmr,
+               hitrate_fit_rmr_available_cats_only,
+               # restrict to TODO
+               restricted=False,
+               conscious_access_threshold=nan,
+               ):
     overall_stats_output_path = path.join(Preferences.results_dir,
                                           "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
@@ -144,52 +159,13 @@ def save_stats_linguistic(available_items, corr_frf_vs_ttfa, corr_meanrank_vs_tt
         "ProdFreq N":                               len(available_items),
         "MeanRank corr (+)":                        corr_meanrank_vs_ttfa,
         "Mean Rank N":                              len(available_items),
-    }
-    data: DataFrame = DataFrame.from_records([{
-        **model_spec,
-        **stats,
-    }])
-
-    with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
-        data.to_csv(data_file, index=False,
-                    # Make sure columns are in consistent order for stacking,
-                    # and make sure the model spec columns come first.
-                    columns=sorted(model_spec.keys()) + sorted(stats.keys()))
-
-
-def save_stats_sensorimotor(available_items,
-                            corr_frf_vs_ttfa,
-                            corr_meanrank_vs_ttfa,
-                            corr_prodfreq_vs_ttfa,
-                            first_rank_frequent_corr_rt_vs_ttfa,
-                            n_first_rank_frequent,
-                            results_dir,
-                            min_first_rank_freq,
-                            hitrate_fit_rfop,
-                            hitrate_fit_rfop_restricted,
-                            hitrate_fit_rmr,
-                            hitrate_fit_rmr_restricted):
-
-    overall_stats_output_path = path.join(Preferences.results_dir,
-                                          "Category production fit",
-                                          f"model_effectiveness_overall "
-                                          f"({path.basename(results_dir)}).csv")
-    model_spec = GraphPropagation.load_model_spec(results_dir)
-    stats = {
-        # correlation stats
-        "FRF corr (-)": corr_frf_vs_ttfa,
-        "FRF N": n_first_rank_frequent,
-        f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
-        "zRT N": n_first_rank_frequent,
-        "ProdFreq corr (-)": corr_prodfreq_vs_ttfa,
-        "ProdFreq N": len(available_items),
-        "MeanRank corr (+)": corr_meanrank_vs_ttfa,
-        "Mean Rank N": len(available_items),
         # hitrate stats
-        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
-        "Hitrate within SD of mean (RFoP; available categories only)": hitrate_fit_rfop_restricted,
-        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
-        "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
+        "Hitrate within SD of mean (RFoP)":         hitrate_fit_rfop,
+        "Hitrate within SD of mean (RFoP;"
+        " available categories only)":              hitrate_fit_rfop_available_cats_only,
+        "Hitrate within SD of mean (RMR)":          hitrate_fit_rmr,
+        "Hitrate within SD of mean (RMR;"
+        " available categories only)":              hitrate_fit_rmr_available_cats_only,
     }
     data: DataFrame = DataFrame.from_records([{
         **model_spec,
@@ -201,6 +177,3 @@ def save_stats_sensorimotor(available_items,
                     # Make sure columns are in consistent order for stacking,
                     # and make sure the model spec columns come first.
                     columns=sorted(model_spec.keys()) + sorted(stats.keys()))
-
-
-N_PARTICIPANTS = 20
