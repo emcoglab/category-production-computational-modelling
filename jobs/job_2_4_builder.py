@@ -13,9 +13,10 @@ def main():
     script_name = "2_4_sensorimotor_tsp"
 
     length_factor = 100
-    buffer_capacity = 10
+
     distance_type = DistanceType.Minkowski3
-    accessible_set_capacity = 3000
+    buffer_capacity = 10
+    accessible_set_capacity = 3_000
 
     if not path.isdir(job_name):
         mkdir(job_name)
@@ -23,8 +24,7 @@ def main():
     prune_ram = {
         # 100: 5,
         150: 30,
-        # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
-        198: 55,
+        198: 55,  # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
         # 200: 60,
         250: 120,
     }
