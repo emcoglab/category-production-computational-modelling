@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
-from os import path
-from typing import DefaultDict, Dict, Set
+from os import path, listdir
+from typing import DefaultDict, Dict, Set, List
 
 from numpy import nan
 from pandas import DataFrame, read_csv
@@ -31,6 +31,21 @@ def interpret_path_linguistic(results_dir_path: str) -> int:
         raise ParseError(f"Could not parse number of words from {dir_name}")
 
 
+def available_categories(results_dir_path: str) -> List[str]:
+    """
+    Gets the list of available categories from a path storing results.
+    A category is available iff there is a results file for it.
+    """
+    response_files = listdir(results_dir_path)
+    category_name_re = re.compile(r"responses_(?P<category_name>[a-z ]+)(_.+)?\.csv")
+    categories = []
+    for response_file in response_files:
+        category_name_match = re.match(category_name_re, response_file)
+        if category_name_match:
+            categories.append(category_name_match.group("category_name"))
+    return categories
+
+
 def get_model_ttfas_for_category_linguistic(category: str,
                                             results_dir: str,
                                             n_words: int,
@@ -51,9 +66,7 @@ def get_model_ttfas_for_category_linguistic(category: str,
 
     # Try to load model response
     try:
-        model_responses_path = path.join(
-            results_dir,
-            f"responses_{category}_{n_words:,}.csv")
+        model_responses_path = path.join(results_dir, f"responses_{category}_{n_words:,}.csv")
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
             model_responses_df: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
