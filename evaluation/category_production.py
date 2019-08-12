@@ -141,7 +141,7 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
         return defaultdict(lambda: nan)
 
 
-def save_stats(available_items,
+def save_stats(available_pairs,
                corr_frf_vs_ttfa,
                corr_meanrank_vs_ttfa,
                corr_prodfreq_vs_ttfa,
@@ -170,9 +170,9 @@ def save_stats(available_items,
         f"zRT corr (+; FRF≥{min_first_rank_freq})": first_rank_frequent_corr_rt_vs_ttfa,
         "zRT N":                                    n_first_rank_frequent,
         "ProdFreq corr (-)":                        corr_prodfreq_vs_ttfa,
-        "ProdFreq N":                               len(available_items),
+        "ProdFreq N":                               len(available_pairs),
         "MeanRank corr (+)":                        corr_meanrank_vs_ttfa,
-        "Mean Rank N":                              len(available_items),
+        "Mean Rank N":                              len(available_pairs),
         # hitrate stats
         "Hitrate within SD of mean (RFoP)":         hitrate_fit_rfop,
         "Hitrate within SD of mean (RFoP;"

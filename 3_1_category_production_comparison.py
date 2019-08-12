@@ -179,13 +179,13 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
                                                     index=False)
 
     # Collect
-    available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]
+    available_pairs = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]
                           .groupby([CPColNames.Category, CPColNames.Response])
                           .groups.keys())
 
     save_stats(
         sensorimotor=False,
-        available_items=available_items,
+        available_pairs=available_pairs,
         conscious_access_threshold=conscious_access_threshold,
         corr_frf_vs_ttfa=corr_frf_vs_ttfa,
         corr_meanrank_vs_ttfa=corr_meanrank_vs_ttfa,

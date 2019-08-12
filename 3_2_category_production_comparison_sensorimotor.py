@@ -203,7 +203,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
                           .groups.keys())
     save_stats(
         sensorimotor=True,
-        available_items=available_pairs,
+        available_pairs=available_pairs,
         corr_frf_vs_ttfa=corr_frf_vs_ttfa,
         corr_meanrank_vs_ttfa=corr_meanrank_vs_ttfa,
         corr_prodfreq_vs_ttfa=corr_prodfreq_vs_ttfa,
