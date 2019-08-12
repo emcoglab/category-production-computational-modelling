@@ -16,6 +16,7 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import argparse
 import logging
 import sys
@@ -141,8 +142,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # region Compute correlations with DVs
 
     # Drop rows not produced by model or in norms
-    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
+    main_dataframe.dropna(inplace=True, how='any', subset=[TTFA, distance_column])
 
     # Now we can convert TTFAs to ints and distances to floats as there won't be null values
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
@@ -172,26 +172,26 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # Save item-level data
 
     per_category_stats_output_path = path.join(Preferences.results_dir,
-                                               "Category production fit",
+                                               "Category production fit sensorimotor",
                                                f"item-level data ({path.basename(input_results_dir)}).csv")
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
 
     # Save summary tables
 
-    production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                     f"Production proportion per rank frequency of production"
                                                     f" ({path.basename(input_results_dir)}).csv"),
                                           index=False)
-    production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                    f"Production proportion per rounded mean rank"
                                                    f" ({path.basename(input_results_dir)}).csv"),
                                          index=False)
 
-    production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                                f"Production proportion per rank frequency of production"
                                                                f" ({path.basename(input_results_dir)}) restricted.csv"),
                                                      index=False)
-    production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                               f"Production proportion per rounded mean rank"
                                                               f" ({path.basename(input_results_dir)}) restricted.csv"),
                                                     index=False)
@@ -202,6 +202,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
                           .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                           .groups.keys())
     save_stats(
+        sensorimotor=True,
         available_items=available_pairs,
         corr_frf_vs_ttfa=corr_frf_vs_ttfa,
         corr_meanrank_vs_ttfa=corr_meanrank_vs_ttfa,

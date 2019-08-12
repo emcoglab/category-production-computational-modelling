@@ -153,12 +153,13 @@ def save_stats(available_items,
                hitrate_fit_rfop_available_cats_only,
                hitrate_fit_rmr,
                hitrate_fit_rmr_available_cats_only,
+               sensorimotor: bool,
                # restrict to TODO
                restricted=False,
                conscious_access_threshold=nan,
                ):
     overall_stats_output_path = path.join(Preferences.results_dir,
-                                          "Category production fit",
+                                          "Category production fit sensorimotor" if sensorimotor else "Category production fit",
                                           f"model_effectiveness_overall {'(restricted) ' if restricted else ''}"
                                           f"({path.basename(results_dir)}) CAT={conscious_access_threshold}.csv")
     model_spec = GraphPropagation.load_model_spec(results_dir)

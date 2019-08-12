@@ -16,6 +16,7 @@ caiwingfield.net
 2018
 ---------------------------
 """
+
 import argparse
 import logging
 import sys
@@ -27,19 +28,17 @@ from pandas import DataFrame, isna
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.column_names import TTFA, MODEL_HIT, CATEGORY_AVAILABLE, PRODUCTION_PROPORTION, \
-    RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK
+
+from preferences import Preferences
+from evaluation.column_names import TTFA, MODEL_HIT, CATEGORY_AVAILABLE, PRODUCTION_PROPORTION, ROUNDED_MEAN_RANK, \
+    RANK_FREQUENCY_OF_PRODUCTION
 from evaluation.category_production import interpret_path_linguistic, get_model_ttfas_for_category_linguistic, \
     save_stats, N_PARTICIPANTS, available_categories
 from evaluation.comparison import hitrate_within_sd_of_mean_frac, get_summary_table
-from ldm.utils.maths import DistanceType
-from preferences import Preferences
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 category_production = CategoryProduction()
 
@@ -71,9 +70,6 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
     main_dataframe[TTFA] = main_dataframe.apply(
         lambda row: model_ttfas[row[CPColNames.Category]][row[CPColNames.Response]], axis=1)
 
-    # Drop rows corresponding to responses which weren't produced by the model
-    # main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-
     # Derived column for whether the model produced the response at all (bool)
     main_dataframe[MODEL_HIT] = main_dataframe.apply(lambda row: not isna(row[TTFA]), axis=1)
 
@@ -84,7 +80,7 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
     # Production proportion is the number of times a response was given,
     # divided by the number of participants who gave it
     main_dataframe[PRODUCTION_PROPORTION] = main_dataframe.apply(
-        lambda row: row[CPColNames.ProductionFrequency] / N_PARTICIPANTS,axis=1)
+        lambda row: row[CPColNames.ProductionFrequency] / N_PARTICIPANTS, axis=1)
 
     main_dataframe[RANK_FREQUENCY_OF_PRODUCTION] = (main_dataframe
                                                     # Within each category
@@ -124,16 +120,10 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
     # region Compute correlations with DVs
 
     # Drop rows not produced by model or in norms
-    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
+    main_dataframe.dropna(inplace=True, how='any', subset=[TTFA])
 
-    # Now we can convert TTFAs to ints as there won't be null values
+    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
-
-    # Collect
-    available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]
-                          .groupby([CPColNames.Category, CPColNames.Response])
-                          .groups.keys())
 
     # Save main dataframe
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
@@ -159,7 +149,42 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
 
     # endregion
 
+    # region Save tables
+
+    # Save item-level data
+
+    per_category_stats_output_path = path.join(Preferences.results_dir,
+                                               "Category production fit",
+                                               f"item-level data ({path.basename(input_results_dir)}).csv")
+    main_dataframe.to_csv(per_category_stats_output_path, index=False)
+
+    # Save summary tables
+
+    production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit",
+                                                    f"Production proportion per rank frequency of production"
+                                                    f" ({path.basename(input_results_dir)}).csv"),
+                                          index=False)
+    production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit",
+                                                   f"Production proportion per rounded mean rank"
+                                                   f" ({path.basename(input_results_dir)}).csv"),
+                                         index=False)
+
+    production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+                                                               f"Production proportion per rank frequency of production"
+                                                               f" ({path.basename(input_results_dir)}) restricted.csv"),
+                                                     index=False)
+    production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+                                                              f"Production proportion per rounded mean rank"
+                                                              f" ({path.basename(input_results_dir)}) restricted.csv"),
+                                                    index=False)
+
+    # Collect
+    available_items = set(main_dataframe[[CPColNames.Category, CPColNames.Response]]
+                          .groupby([CPColNames.Category, CPColNames.Response])
+                          .groups.keys())
+
     save_stats(
+        sensorimotor=False,
         available_items=available_items,
         conscious_access_threshold=conscious_access_threshold,
         corr_frf_vs_ttfa=corr_frf_vs_ttfa,
@@ -174,6 +199,8 @@ def main(input_results_dir: str, conscious_access_threshold: float, min_first_ra
         hitrate_fit_rmr=hitrate_fit_rmr,
         hitrate_fit_rmr_available_cats_only=hitrate_fit_rmr_restricted,
     )
+
+    # endregion
 
 
 if __name__ == '__main__':
