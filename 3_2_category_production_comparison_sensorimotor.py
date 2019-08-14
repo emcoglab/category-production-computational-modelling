@@ -16,6 +16,7 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import argparse
 import logging
 import sys
@@ -25,14 +26,16 @@ from typing import Dict
 
 from matplotlib import pyplot
 from numpy import nan, array
-from pandas import DataFrame, isna, Series
+from pandas import DataFrame, isna
 
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import TTFA, get_model_ttfas_for_category_sensorimotor, save_stats_sensorimotor
+from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, save_stats, N_PARTICIPANTS
+from evaluation.column_names import RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, PRODUCTION_PROPORTION, \
+    CATEGORY_AVAILABLE, MODEL_HIT, MODEL_HITRATE, TTFA
+from evaluation.comparison import hitrate_within_sd_of_mean_frac, get_summary_table
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType, distance
-from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
@@ -40,18 +43,6 @@ from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-
-RANK_FREQUENCY_OF_PRODUCTION = "RankFreqOfProduction"
-ROUNDED_MEAN_RANK = "RoundedMeanRank"
-PRODUCTION_PROPORTION = "ProductionProportion"
-CATEGORY_AVAILABLE = "CategoryAvailable"
-MODEL_HIT = "ModelHit"
-MODEL_HITRATE = "Model hitrate"
-
-
-N_PARTICIPANTS = 20
-
 
 category_production = CategoryProduction(use_cache=True)
 sensorimotor_norms = SensorimotorNorms()
@@ -133,11 +124,13 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # region summary tables
 
     production_proportion_per_rfop = get_summary_table(main_dataframe, RANK_FREQUENCY_OF_PRODUCTION)
-    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], RANK_FREQUENCY_OF_PRODUCTION)
+    production_proportion_per_rfop_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]],
+                                                                  RANK_FREQUENCY_OF_PRODUCTION)
 
     # Production proportion per rounded mean rank
     production_proportion_per_rmr = get_summary_table(main_dataframe, ROUNDED_MEAN_RANK)
-    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]], ROUNDED_MEAN_RANK)
+    production_proportion_per_rmr_restricted = get_summary_table(main_dataframe[main_dataframe[CATEGORY_AVAILABLE]],
+                                                                 ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
 
@@ -149,8 +142,7 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # region Compute correlations with DVs
 
     # Drop rows not produced by model or in norms
-    main_dataframe = main_dataframe[main_dataframe[TTFA].notnull()]
-    main_dataframe = main_dataframe[main_dataframe[distance_column].notnull()]
+    main_dataframe.dropna(inplace=True, how='any', subset=[TTFA, distance_column])
 
     # Now we can convert TTFAs to ints and distances to floats as there won't be null values
     main_dataframe[TTFA] = main_dataframe[TTFA].astype(int)
@@ -180,26 +172,26 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # Save item-level data
 
     per_category_stats_output_path = path.join(Preferences.results_dir,
-                                               "Category production fit",
+                                               "Category production fit sensorimotor",
                                                f"item-level data ({path.basename(input_results_dir)}).csv")
     main_dataframe.to_csv(per_category_stats_output_path, index=False)
 
     # Save summary tables
 
-    production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rfop.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                     f"Production proportion per rank frequency of production"
                                                     f" ({path.basename(input_results_dir)}).csv"),
                                           index=False)
-    production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rmr.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                    f"Production proportion per rounded mean rank"
                                                    f" ({path.basename(input_results_dir)}).csv"),
                                          index=False)
 
-    production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rfop_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                                f"Production proportion per rank frequency of production"
                                                                f" ({path.basename(input_results_dir)}) restricted.csv"),
                                                      index=False)
-    production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit",
+    production_proportion_per_rmr_restricted.to_csv(path.join(Preferences.results_dir, "Category production fit sensorimotor",
                                                               f"Production proportion per rounded mean rank"
                                                               f" ({path.basename(input_results_dir)}) restricted.csv"),
                                                     index=False)
@@ -209,8 +201,9 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     available_pairs = set(main_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
                           .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                           .groups.keys())
-    save_stats_sensorimotor(
-        available_items=available_pairs,
+    save_stats(
+        sensorimotor=True,
+        available_pairs=available_pairs,
         corr_frf_vs_ttfa=corr_frf_vs_ttfa,
         corr_meanrank_vs_ttfa=corr_meanrank_vs_ttfa,
         corr_prodfreq_vs_ttfa=corr_prodfreq_vs_ttfa,
@@ -219,9 +212,9 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
         hitrate_fit_rfop=hitrate_fit_rfop,
-        hitrate_fit_rfop_restricted=hitrate_fit_rfop_restricted,
+        hitrate_fit_rfop_available_cats_only=hitrate_fit_rfop_restricted,
         hitrate_fit_rmr=hitrate_fit_rmr,
-        hitrate_fit_rmr_restricted=hitrate_fit_rmr_restricted,
+        hitrate_fit_rmr_available_cats_only=hitrate_fit_rmr_restricted,
     )
 
     # endregion
@@ -249,21 +242,14 @@ def main(input_results_dir: str, min_first_rank_freq: int = None):
     # endregion
 
 
-def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
-    # When the model hitrate is within one SD of the production proportion mean
-    within = Series(
-        (df["Model hitrate"] > df["ProductionProportion Mean"] - df["ProductionProportion SD"])
-        & (df["Model hitrate"] < df["ProductionProportion Mean"] + df["ProductionProportion SD"]))
-    # The fraction of times this happens
-    return within.aggregate('mean')
-
-
 def save_figure(summary_table, x_selector, fig_title, fig_name):
     """Save a summary table as a figure."""
     # add human bounds
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
-                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[PRODUCTION_PROPORTION + ' SD'],
-                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[PRODUCTION_PROPORTION + ' SD'])
+                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[
+                            PRODUCTION_PROPORTION + ' SD'],
+                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[
+                            PRODUCTION_PROPORTION + ' SD'])
     pyplot.scatter(x=summary_table.reset_index()[x_selector],
                    y=summary_table[PRODUCTION_PROPORTION + ' Mean'])
     # add model performance
@@ -281,35 +267,6 @@ def save_figure(summary_table, x_selector, fig_title, fig_name):
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
-
-
-def get_summary_table(main_dataframe, groupby_column):
-    """
-    Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column.
-    """
-    df = DataFrame()
-    # Participant columns
-    df[PRODUCTION_PROPORTION + ' Mean'] = (
-        main_dataframe
-            .groupby(groupby_column)
-            .mean()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' SD'] = (
-        main_dataframe
-            .groupby(groupby_column)
-            .std()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' Count'] = (
-        main_dataframe
-            .groupby(groupby_column)
-            .count()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
-                                                                                     row[PRODUCTION_PROPORTION + ' Count'],
-                                                                                     0.95), axis=1)
-    # Model columns
-    df[MODEL_HITRATE] = (
-        main_dataframe.groupby(groupby_column).mean()[MODEL_HIT])
-    # Forget rows with nans
-    df = df.dropna().reset_index()
-    return df
 
 
 def add_predictor_columns_ttfa_distance(main_dataframe, input_results_dir, distance_column):
