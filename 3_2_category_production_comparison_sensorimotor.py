@@ -28,17 +28,18 @@ from matplotlib import pyplot
 from numpy import nan, array
 from pandas import DataFrame, isna
 
-from category_production.category_production import CategoryProduction
-from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, save_stats, N_PARTICIPANTS
-from evaluation.column_names import RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, PRODUCTION_PROPORTION, \
-    CATEGORY_AVAILABLE, MODEL_HIT, MODEL_HITRATE, TTFA
-from evaluation.comparison import hitrate_within_sd_of_mean_frac, get_summary_table
-from ldm.corpus.tokenising import modified_word_tokenize
-from ldm.utils.maths import DistanceType, distance
-from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from category_production.category_production import CategoryProduction
+from category_production.category_production import ColNames as CPColNames
+from ldm.corpus.tokenising import modified_word_tokenize
+from ldm.utils.maths import DistanceType, distance
+
+from preferences import Preferences
+from evaluation.category_production import get_model_ttfas_for_category_sensorimotor, save_stats, N_PARTICIPANTS
+from evaluation.comparison import hitrate_within_sd_of_mean_frac, get_summary_table
+from evaluation.column_names import RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, PRODUCTION_PROPORTION, \
+    CATEGORY_AVAILABLE, MODEL_HIT, MODEL_HITRATE, TTFA
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

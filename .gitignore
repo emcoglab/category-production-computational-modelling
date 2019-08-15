@@ -24,3 +24,5 @@ jobs/logs/
 jobs/*.o*
 jobs/*.e*
 
+# Config overrides
+config*.yaml
