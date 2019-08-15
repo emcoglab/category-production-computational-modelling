@@ -33,7 +33,7 @@ from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_format = '%(asctime)s | %(levelname)s | %(module)s:l.%(lineno)d | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 # Results DataFrame column names
@@ -49,14 +49,15 @@ FULL_ACTIVATION = ActivationValue(1.0)
 def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
-         buffer_size_limit: int,
+         buffer_capacity: int,
+         accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
-         activation_threshold: ActivationValue,
+         accessible_set_threshold: ActivationValue,
          run_for_ticks: int,
          median: float,
          sigma: float,
-         use_prepruned: bool,
          bailout: int = None,
+         use_prepruned: bool = False,
          ):
 
     distance_type = DistanceType.from_name(distance_type_name)
@@ -70,8 +71,10 @@ def main(distance_type_name: str,
                              f"r {max_sphere_radius} "
                              f"m {median}; "
                              f"s {sigma}; "
-                             f"a {activation_threshold}; "
+                             f"a {accessible_set_threshold}; "
+                             f"ac {accessible_set_capacity}; "
                              f"b {buffer_threshold}; "
+                             f"bc {buffer_capacity}; "
                              f"attenuate {norm_attenuation_statistic.name}; "
                              f"rft {run_for_ticks}; "
                              f"bailout {bailout}")
@@ -87,12 +90,13 @@ def main(distance_type_name: str,
         max_sphere_radius=max_sphere_radius,
         lognormal_median=median,
         lognormal_sigma=sigma,
-        buffer_size_limit=buffer_size_limit,
+        buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
-        activation_threshold=activation_threshold,
+        accessible_set_threshold=accessible_set_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
+        accessible_set_capacity=accessible_set_capacity,
     )
 
     SensorimotorComponent.save_model_spec({
@@ -101,11 +105,12 @@ def main(distance_type_name: str,
         "Max sphere radius": max_sphere_radius,
         "Log-normal median": median,
         "Log-normal sigma": sigma,
-        "Buffer size limit": buffer_size_limit,
+        "Buffer capacity": buffer_capacity,
         "Buffer threshold": buffer_threshold,
         "Norm attenuation statistic": norm_attenuation_statistic.name,
         "Activation cap": activation_cap,
-        "Activation threshold": activation_threshold,
+        "Activation threshold": accessible_set_threshold,
+        "Accessible set capacity": accessible_set_capacity,
         "Run for ticks": run_for_ticks,
         "Bailout": bailout
     }, response_dir)
@@ -129,12 +134,9 @@ def main(distance_type_name: str,
         csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {max_sphere_radius}")
+        csv_comments.append(f"\t WMB capacity = {buffer_capacity}")
+        csv_comments.append(f"\t  AS capacity = {accessible_set_capacity}")
         csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
-        if sc.graph.is_connected():
-            csv_comments.append(f"\t    connected = yes")
-        else:
-            csv_comments.append(f"\t    connected = no")
-            csv_comments.append(f"\t      orphans = {'yes' if sc.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
 
@@ -162,7 +164,7 @@ def main(distance_type_name: str,
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
 
-            accessible_set_size = len(sc.accessible_set())
+            accessible_set_size = len(sc.accessible_set)
 
             accessible_set_this_category[tick] = accessible_set_size
 
@@ -226,7 +228,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-a", "--activation_threshold", required=True, type=ActivationValue)
+    parser.add_argument("-a", "--accessible_set_threshold", required=True, type=ActivationValue)
     parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
@@ -235,7 +237,8 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--buffer_size_limit", required=True, type=int)
+    parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
+    parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
 
     args = parser.parse_args()
@@ -243,8 +246,9 @@ if __name__ == '__main__':
     main(max_sphere_radius=args.max_sphere_radius,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
-         buffer_size_limit=args.buffer_size_limit,
-         activation_threshold=args.activation_threshold,
+         buffer_capacity=args.buffer_capacity,
+         accessible_set_capacity=args.accessible_set_capacity,
+         accessible_set_threshold=args.accessible_set_threshold,
          buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
          median=args.node_decay_median,
