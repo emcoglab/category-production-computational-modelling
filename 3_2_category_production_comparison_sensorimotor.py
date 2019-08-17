@@ -29,6 +29,7 @@ from pandas import DataFrame
 from ldm.utils.maths import DistanceType, distance
 from category_production.category_production import ColNames as CPColNames
 from preferences import Preferences
+from sensorimotor_norms.config.config import Config as SMConfig; SMConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "sm_config.yaml"))
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
@@ -101,7 +102,8 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
         main_data,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        **hitrate_stats
+        **hitrate_stats,
+        sensorimotor=True,
     )
 
 
@@ -132,7 +134,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("single_model", type=bool, action="store_true",
+    parser.add_argument("--single-model", action="store_true",
                         help="If specified, `path` will be interpreted to be the dir for a single model's output; "
                              "otherwise `path` will be interpreted to contain many models' output dirs.")
     parser.add_argument("min_frf", type=int, nargs="?", default=None,

@@ -104,20 +104,21 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     Dictionary of
         response -> time to first activation
     for the specified category.
+
+    DefaultDict gives nans where response not found
+
     :param category:
     :param results_dir:
+    :return:
     """
 
     # Try to load model response
     try:
-        model_responses_path = path.join(
-            results_dir,
-            f"responses_{category}.csv")
+        model_responses_path = path.join(results_dir, f"responses_{category}.csv")
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
             model_responses_df: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
-        # We're not using the nan values here, so we just use a straight dictionary
-        ttfas = dict()
+        ttfas = defaultdict(lambda: nan)
         for row_i, row in model_responses_df[model_responses_df[ITEM_ENTERED_BUFFER] == True].sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
 
             item_label = row[RESPONSE]

@@ -43,19 +43,19 @@ def main(input_results_dir: str, single_model: bool, conscious_access_threshold:
     # Set defaults
     min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
 
-    n_words = get_n_words_from_path_linguistic(input_results_dir)
-
     if single_model:
         model_output_dirs = [input_results_dir]
     else:
         model_output_dirs = glob(path.join(input_results_dir, "Category production traces "))
 
     for model_output_dir in model_output_dirs:
-        main_data = compile_model_data(model_output_dir, n_words, conscious_access_threshold)
+        main_data = compile_model_data(model_output_dir, conscious_access_threshold)
         process_one_model_output(main_data, model_output_dir, conscious_access_threshold, min_first_rank_freq)
 
 
-def compile_model_data(input_results_dir: str, n_words, conscious_access_threshold) -> DataFrame:
+def compile_model_data(input_results_dir: str, conscious_access_threshold) -> DataFrame:
+
+    n_words = get_n_words_from_path_linguistic(input_results_dir)
 
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
@@ -96,7 +96,8 @@ def process_one_model_output(main_data: DataFrame,
         main_data,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        **hitrate_stats
+        **hitrate_stats,
+        sensorimotor=False,
     )
 
 
@@ -113,9 +114,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
     parser.add_argument("cat", type=float, help="The conscious-access threshold.")
-    parser.add_argument("min_frf", type=int, nargs="?", default=None, help="The minimum FRF required for zRT and FRF correlations.")
+    parser.add_argument("min_frf", type=int, nargs="?", default=None,
+                        help="The minimum FRF required for zRT and FRF correlations.")
+    parser.add_argument("--single-model", action="store_true",
+                        help="If specified, `path` will be interpreted to be the dir for a single model's output; "
+                             "otherwise `path` will be interpreted to contain many models' output dirs.")
     args = parser.parse_args()
 
-    main(args.path, args.cat, args.min_frf)
+    main(args.path, args.single_model, args.cat, args.min_frf)
 
     logger.info("Done!")
