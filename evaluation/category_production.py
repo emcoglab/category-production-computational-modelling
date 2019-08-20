@@ -391,8 +391,8 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, sensorimot
                                                                             method='pearson')
     # Save correlation and hitrate stats
     if sensorimotor:
-        available_pairs = set(correlation_dataframe[[CPColNames.Category, CPColNames.Response]]
-                              .groupby([CPColNames.Category, CPColNames.Response])
+        available_pairs = set(correlation_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
+                              .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                               .groups.keys())
     else:
         available_pairs = set(correlation_dataframe[[CPColNames.Category, CPColNames.Response]]
