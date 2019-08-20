@@ -89,10 +89,12 @@ def process_one_model_output(main_data: DataFrame,
                              min_first_rank_freq: int):
     save_item_level_data(main_data, path.join(Preferences.results_dir,
                                               "Category production fit",
-                                              f"item-level data ({path.basename(input_results_dir)}) "
-                                              f"CAT={conscious_access_threshold}.csv"))
+                                              f"item-level data"
+                                              f" ({path.basename(input_results_dir)})"
+                                              f" CAT={conscious_access_threshold}.csv"))
 
-    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data, sensorimotor=False)
+    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data, sensorimotor=False,
+                                                conscious_access_threshold=conscious_access_threshold)
 
     drop_missing_data(main_data, distance_column=None)
 
@@ -102,6 +104,7 @@ def process_one_model_output(main_data: DataFrame,
         min_first_rank_freq=min_first_rank_freq,
         **hitrate_stats,
         sensorimotor=False,
+        conscious_access_threshold=conscious_access_threshold,
     )
 
 

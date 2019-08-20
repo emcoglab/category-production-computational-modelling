@@ -94,7 +94,8 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
                                               f"Category production fit sensorimotor",
                                               f"item-level data ({path.basename(input_results_dir)}).csv"))
 
-    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data, sensorimotor=True)
+    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data,
+                                                sensorimotor=True, conscious_access_threshold=None)
 
     drop_missing_data(main_data, distance_column)
 
@@ -104,6 +105,7 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
         min_first_rank_freq=min_first_rank_freq,
         **hitrate_stats,
         sensorimotor=True,
+        conscious_access_threshold=None,
     )
 
 
