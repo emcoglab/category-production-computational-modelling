@@ -29,7 +29,6 @@ from pandas import DataFrame
 from ldm.utils.maths import DistanceType, distance
 from category_production.category_production import ColNames as CPColNames
 from preferences import Preferences
-from sensorimotor_norms.config.config import Config as SMConfig; SMConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "sm_config.yaml"))
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
