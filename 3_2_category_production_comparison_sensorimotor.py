@@ -36,8 +36,8 @@ from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from evaluation.category_production import exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_predictor_column_ttfa, \
     CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
-    save_model_performance_stats
-from evaluation.column_names import CATEGORY_AVAILABLE, TTFA
+    save_model_performance_stats, drop_missing_data
+from evaluation.column_names import CATEGORY_AVAILABLE
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -48,7 +48,9 @@ sensorimotor_norms = SensorimotorNorms()
 distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
-def main(input_results_dir: str, single_model: bool, min_first_rank_freq: int = None):
+def main(input_results_dir: str,
+         single_model: bool,
+         min_first_rank_freq: int = None):
 
     # Set defaults
     min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
@@ -85,11 +87,6 @@ def compile_model_data(input_results_dir: str) -> DataFrame:
     add_rfop_column(main_data)
     add_rmr_column(main_data)
 
-    main_data.dropna(inplace=True, how='any', subset=[TTFA, distance_column])
-    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
-    main_data[TTFA] = main_data[TTFA].astype(int)
-    main_data[distance_column] = main_data[distance_column].astype(float)
-
     return main_data
 
 
@@ -98,6 +95,9 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
                                               f"Category production fit sensorimotor",
                                               f"item-level data ({path.basename(input_results_dir)}).csv"))
     hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data, sensorimotor=True)
+
+    drop_missing_data(main_data, distance_column)
+
     save_model_performance_stats(
         main_data,
         results_dir=input_results_dir,

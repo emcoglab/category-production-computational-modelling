@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from math import floor
 from os import path, listdir
-from typing import DefaultDict, Dict, Set, List
+from typing import DefaultDict, Dict, Set, List, Optional
 
 from matplotlib import pyplot
 from numpy import nan
@@ -409,3 +409,22 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, sensorimot
         "MeanRank corr (+)": corr_meanrank_vs_ttfa,
         "Mean Rank N": len(available_pairs),
     }
+
+
+def drop_missing_data(main_data: DataFrame, distance_column: Optional[str]):
+    """
+    Mutates `main_data`.
+
+    Set `distance_column` to None to skip it.
+    :param main_data:
+    :param distance_column:
+    :return:
+    """
+    if distance_column is not None:
+        main_data.dropna(inplace=True, how='any', subset=[TTFA, distance_column])
+    else:
+        main_data.dropna(inplace=True, how='any', subset=[TTFA])
+    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
+    main_data[TTFA] = main_data[TTFA].astype(int)
+    if distance_column is not None:
+        main_data[distance_column] = main_data[distance_column].astype(float)

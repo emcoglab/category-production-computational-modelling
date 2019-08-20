@@ -29,8 +29,9 @@ from category_production.category_production import ColNames as CPColNames
 from evaluation.category_production import get_n_words_from_path_linguistic, get_model_ttfas_for_category_linguistic, \
     available_categories, exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, CATEGORY_PRODUCTION, \
-    add_predictor_column_ttfa, save_item_level_data, save_hitrate_summary_tables, save_model_performance_stats
-from evaluation.column_names import TTFA, CATEGORY_AVAILABLE
+    add_predictor_column_ttfa, save_item_level_data, save_hitrate_summary_tables, save_model_performance_stats, \
+    drop_missing_data
+from evaluation.column_names import CATEGORY_AVAILABLE
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,10 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(input_results_dir: str, single_model: bool, conscious_access_threshold: float, min_first_rank_freq: int = None):
+def main(input_results_dir: str,
+         single_model: bool,
+         conscious_access_threshold: float,
+         min_first_rank_freq: int = None):
 
     # Set defaults
     min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
@@ -76,10 +80,6 @@ def compile_model_data(input_results_dir: str, conscious_access_threshold) -> Da
     add_rfop_column(main_data)
     add_rmr_column(main_data)
 
-    main_data.dropna(inplace=True, how='any', subset=[TTFA])
-    # Now we can convert TTFAs to ints as there won't be null values
-    main_data[TTFA] = main_data[TTFA].astype(int)
-
     return main_data
 
 
@@ -91,7 +91,11 @@ def process_one_model_output(main_data: DataFrame,
                                               "Category production fit",
                                               f"item-level data ({path.basename(input_results_dir)}) "
                                               f"CAT={conscious_access_threshold}.csv"))
+
     hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data, sensorimotor=False)
+
+    drop_missing_data(main_data, distance_column=None)
+
     save_model_performance_stats(
         main_data,
         results_dir=input_results_dir,

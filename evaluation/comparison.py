@@ -54,7 +54,7 @@ def get_summary_table(main_dataframe, groupby_column):
                                                                                      0.95), axis=1)
     # Model columns
     df[MODEL_HITRATE] = (
-        main_dataframe.groupby(groupby_column).mean()[MODEL_HIT])
+        main_dataframe[[groupby_column, MODEL_HIT]].astype(float).groupby(groupby_column).mean()[MODEL_HIT])
     # Forget rows with nans
     df = df.dropna().reset_index()
     return df
