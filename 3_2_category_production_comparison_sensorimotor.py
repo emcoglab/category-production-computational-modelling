@@ -94,6 +94,7 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
     save_item_level_data(main_data, path.join(Preferences.results_dir,
                                               f"Category production fit sensorimotor",
                                               f"item-level data ({path.basename(input_results_dir)}).csv"))
+
     hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data, sensorimotor=True)
 
     drop_missing_data(main_data, distance_column)

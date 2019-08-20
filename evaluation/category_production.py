@@ -361,16 +361,16 @@ def save_model_performance_stats(main_dataframe,
         "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
         "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
     }
-    data: DataFrame = DataFrame.from_records([{
+    model_performance_data: DataFrame = DataFrame.from_records([{
         **model_spec,
         **stats,
     }])
 
-    with open(overall_stats_output_path, mode="w", encoding="utf-8") as data_file:
-        data.to_csv(data_file, index=False,
-                    # Make sure columns are in consistent order for stacking,
-                    # and make sure the model spec columns come first.
-                    columns=sorted(model_spec.keys()) + sorted(stats.keys()))
+    model_performance_data.to_csv(overall_stats_output_path,
+                                  # Make sure columns are in consistent order for stacking,
+                                  # and make sure the model spec columns come first.
+                                  columns=sorted(model_spec.keys()) + sorted(stats.keys()),
+                                  index=False)
 
 
 def get_correlation_stats(correlation_dataframe, min_first_rank_freq, sensorimotor: bool):
