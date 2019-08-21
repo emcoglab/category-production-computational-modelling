@@ -15,7 +15,7 @@ from ldm.corpus.tokenising import modified_word_tokenize
 from model.graph_propagation import GraphPropagation
 from model.utils.exceptions import ParseError
 from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ENTERED_BUFFER, RESPONSE, MODEL_HIT, \
-    TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CATEGORY_AVAILABLE
+    TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CATEGORY_AVAILABLE, CAT
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -369,15 +369,18 @@ def save_model_performance_stats(main_dataframe,
         "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
         "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
     }
-    model_performance_data: DataFrame = DataFrame.from_records([{
+    df_dict: Dict = {
         **model_spec,
         **stats,
-    }])
+    }
+    if conscious_access_threshold is not None:
+        df_dict[CAT] = conscious_access_threshold
+    model_performance_data: DataFrame = DataFrame.from_records([df_dict])
 
     model_performance_data.to_csv(overall_stats_output_path,
                                   # Make sure columns are in consistent order for stacking,
                                   # and make sure the model spec columns come first.
-                                  columns=sorted(model_spec.keys()) + sorted(stats.keys()),
+                                  columns=sorted(model_spec.keys()) + [CAT] + sorted(stats.keys()),
                                   index=False)
 
 

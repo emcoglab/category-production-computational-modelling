@@ -32,3 +32,5 @@ REACHED_CAT = "Reached conc.acc. θ"
 
 RESPONSE = "Response"
 ACTIVATION = "Activation"
+
+CAT = "CAT"

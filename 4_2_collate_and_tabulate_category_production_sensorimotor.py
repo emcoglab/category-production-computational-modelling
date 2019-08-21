@@ -31,24 +31,25 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
+dvs = [
+    # correlation dvs
+    "FRF corr (-)",
+    "zRT corr (+; FRF≥1)",
+    'ProdFreq corr (-)',
+    'MeanRank corr (+)',
+    "FRF N",
+    "zRT N",
+    'ProdFreq N',
+    'Mean Rank N',
+    # hitrate dvs
+    "Hitrate within SD of mean (RFoP)",
+    "Hitrate within SD of mean (RFoP; available categories only)",
+    "Hitrate within SD of mean (RMR)",
+    "Hitrate within SD of mean (RMR; available categories only)",
+]
+
 
 def main(results_dir: str) -> None:
-    dvs = [
-        # correlation dvs
-        "FRF corr (-)",
-        "zRT corr (+; FRF≥1)",
-        'ProdFreq corr (-)',
-        'MeanRank corr (+)',
-        "FRF N",
-        "zRT N",
-        'ProdFreq N',
-        'Mean Rank N',
-        # hitrate dvs
-        "Hitrate within SD of mean (RFoP)",
-        "Hitrate within SD of mean (RFoP; available categories only)",
-        "Hitrate within SD of mean (RMR)",
-        "Hitrate within SD of mean (RMR; available categories only)",
-    ]
 
     all_data: DataFrame = collate_data(results_dir)
 

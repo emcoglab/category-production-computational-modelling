@@ -16,6 +16,7 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import argparse
 import glob
 import logging
@@ -30,26 +31,27 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
+dvs = [
+    "FRF corr (-)",
+    "zRT corr (+; FRF≥1)",
+    'ProdFreq corr (-)',
+    'MeanRank corr (+)',
+    "FRF N",
+    "zRT N",
+    'ProdFreq N',
+    'Mean Rank N',
+]
+
 
 def main(results_dir: str) -> None:
-    dvs = [
-        "FRF corr (-)",
-        "zRT corr (+; FRF≥1)",
-        'ProdFreq corr (-)',
-        'MeanRank corr (+)',
-        "FRF N",
-        "zRT N",
-        'ProdFreq N',
-        'Mean Rank N',
-    ]
 
     all_data: DataFrame = collate_data(results_dir)
     all_data.to_csv(path.join(results_dir, "all.csv"), index=False)
 
-    models = all_data["Model"].unique()
+    models = all_data["Model name"].unique()
 
     for model in models:
-        this_model_data = all_data[all_data["Model"].str.startswith(model)].copy()
+        this_model_data = all_data[all_data["Model name"].str.startswith(model)].copy()
 
         # In case there is insufficient data available, there will be nans in the correlation columns.
         # For display purposes, we replace those with "-"s, to be picked up by the pivot table.
