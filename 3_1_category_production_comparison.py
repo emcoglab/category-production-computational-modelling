@@ -50,7 +50,7 @@ def main(input_results_dir: str,
     if single_model:
         model_output_dirs = [input_results_dir]
     else:
-        model_output_dirs = glob(path.join(input_results_dir, "Category production traces "))
+        model_output_dirs = glob(path.join(input_results_dir, "Category production traces *"))
 
     for model_output_dir in model_output_dirs:
         main_data = compile_model_data(model_output_dir, conscious_access_threshold)
