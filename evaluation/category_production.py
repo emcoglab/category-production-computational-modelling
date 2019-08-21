@@ -78,21 +78,17 @@ def get_model_ttfas_for_category_linguistic(category: str,
     try:
         model_responses_path = path.join(results_dir, f"responses_{category}_{n_words:,}.csv")
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses_df: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
+            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
-        ttfas = defaultdict(lambda: nan)
-        for row_i, row in model_responses_df.sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
+        consciously_active_data = model_responses[model_responses[ACTIVATION] >= conscious_access_threshold]\
+            .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-            # Only consider items whose activation exceeded the CAT
-            if row[ACTIVATION] < conscious_access_threshold:
-                continue
+        ttfas = consciously_active_data\
+            .groupby(RESPONSE)\
+            .first()[[TICK_ON_WHICH_ACTIVATED]]\
+            .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-            item_label = row[RESPONSE]
-
-            # We've sorted by activation time, so we only need to consider the first entry for each item
-            if item_label not in ttfas.keys():
-                ttfas[item_label] = row[TICK_ON_WHICH_ACTIVATED]
-        return ttfas
+        return defaultdict(lambda: nan, ttfas)
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
@@ -116,17 +112,17 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     try:
         model_responses_path = path.join(results_dir, f"responses_{category}.csv")
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses_df: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
+            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
-        ttfas = defaultdict(lambda: nan)
-        for row_i, row in model_responses_df[model_responses_df[ITEM_ENTERED_BUFFER] == True].sort_values(by=TICK_ON_WHICH_ACTIVATED).iterrows():
+        in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True]\
+            .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-            item_label = row[RESPONSE]
+        ttfas: Dict = in_buffer_data\
+            .groupby(RESPONSE)\
+            .first()[[TICK_ON_WHICH_ACTIVATED]]\
+            .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-            # We've sorted by activation time, so we only need to consider the first entry for each item
-            if item_label not in ttfas:
-                ttfas[item_label] = row[TICK_ON_WHICH_ACTIVATED]
-        return ttfas
+        return defaultdict(lambda: nan, ttfas)
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:

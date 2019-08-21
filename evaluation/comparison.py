@@ -48,13 +48,12 @@ def get_summary_table(main_dataframe, groupby_column):
         main_dataframe
             .groupby(groupby_column)
             .count()[PRODUCTION_PROPORTION])
-    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
-                                                                                     row[
-                                                                                         PRODUCTION_PROPORTION + ' Count'],
-                                                                                     0.95), axis=1)
+    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(
+        lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'], row[PRODUCTION_PROPORTION + ' Count'],
+                                          0.95),
+        axis=1)
     # Model columns
-    df[MODEL_HITRATE] = (
-        main_dataframe[[groupby_column, MODEL_HIT]].astype(float).groupby(groupby_column).mean()[MODEL_HIT])
+    df[MODEL_HITRATE] = main_dataframe[[groupby_column, MODEL_HIT]].astype(float).groupby(groupby_column).mean()[MODEL_HIT]
     # Forget rows with nans
     df = df.dropna().reset_index()
     return df
