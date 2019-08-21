@@ -53,6 +53,7 @@ def main(input_results_dir: str,
         model_output_dirs = glob(path.join(input_results_dir, "Category production traces *"))
 
     for model_output_dir in model_output_dirs:
+        logger.info(path.basename(model_output_dir))
         main_data = compile_model_data(model_output_dir, conscious_access_threshold)
         process_one_model_output(main_data, model_output_dir, conscious_access_threshold, min_first_rank_freq)
 
