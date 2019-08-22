@@ -13,6 +13,7 @@ from category_production.category_production import CategoryProduction, ColNames
 from evaluation.comparison import get_summary_table, hitrate_within_sd_of_mean_frac
 from ldm.corpus.tokenising import modified_word_tokenize
 from model.graph_propagation import GraphPropagation
+from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ENTERED_BUFFER, RESPONSE, MODEL_HIT, \
     TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CATEGORY_AVAILABLE, CAT
@@ -38,7 +39,23 @@ def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
         n_words = int(words_match.group("n_words").replace(",", ""))
         return n_words
     else:
-        raise ParseError(f"Could not parse number of words from {dir_name}")
+        raise ParseError(f"Could not parse number of words from {dir_name}.")
+
+
+def get_firing_threshold_from_path_linguistic(results_dir_path: str) -> ActivationValue:
+    """
+    Gets the firing threshold from a path storing the results.
+    :param results_dir_path:
+    :return: firing_threshold: ActivationValue
+    """
+    dir_name = path.basename(results_dir_path)
+    ft_match = re.match(re.compile(r"Category production traces \([0-9,]+ words; "
+                                   r"firing (?P<firing_threshold>[0-9.]+);"), dir_name)
+    if ft_match:
+        ft = ActivationValue(ft_match.group("firing_threshold"))
+        return ft
+    else:
+        raise ParseError(f"Could not parse firing threshold from {dir_name}.")
 
 
 def available_categories(results_dir_path: str) -> List[str]:
@@ -267,12 +284,13 @@ def save_figure(summary_table, x_selector, fig_title, fig_name, sensorimotor: bo
 
 def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, sensorimotor: bool,
                                 conscious_access_threshold: Optional[float]):
-    production_proportion_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
-    production_proportion_per_rfop_restricted = get_summary_table(
-        main_data[main_data[CATEGORY_AVAILABLE]],
-        RANK_FREQUENCY_OF_PRODUCTION)
+    production_proportion_per_rfop = get_summary_table(main_data,
+                                                       RANK_FREQUENCY_OF_PRODUCTION)
+    production_proportion_per_rfop_restricted = get_summary_table(main_data[main_data[CATEGORY_AVAILABLE]],
+                                                                  RANK_FREQUENCY_OF_PRODUCTION)
     # Production proportion per rounded mean rank
-    production_proportion_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
+    production_proportion_per_rmr = get_summary_table(main_data,
+                                                      ROUNDED_MEAN_RANK)
     production_proportion_per_rmr_restricted = get_summary_table(main_data[main_data[CATEGORY_AVAILABLE]],
                                                                  ROUNDED_MEAN_RANK)
 

@@ -22,6 +22,7 @@ import logging
 import sys
 from glob import glob
 from os import path
+from typing import Optional
 
 from pandas import DataFrame
 
@@ -30,7 +31,7 @@ from evaluation.category_production import get_n_words_from_path_linguistic, get
     available_categories, exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, CATEGORY_PRODUCTION, \
     add_predictor_column_ttfa, save_item_level_data, save_hitrate_summary_tables, save_model_performance_stats, \
-    drop_missing_data
+    drop_missing_data, get_firing_threshold_from_path_linguistic
 from evaluation.column_names import CATEGORY_AVAILABLE
 from preferences import Preferences
 
@@ -41,11 +42,8 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main(input_results_dir: str,
          single_model: bool,
-         conscious_access_threshold: float,
-         min_first_rank_freq: int = None):
-
-    # Set defaults
-    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
+         min_first_rank_freq: int,
+         conscious_access_threshold: Optional[float] = None):
 
     if single_model:
         model_output_dirs = [input_results_dir]
@@ -54,8 +52,14 @@ def main(input_results_dir: str,
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
-        main_data = compile_model_data(model_output_dir, conscious_access_threshold)
-        process_one_model_output(main_data, model_output_dir, conscious_access_threshold, min_first_rank_freq)
+        if conscious_access_threshold is None:
+            # If no CAT provided, use the FT
+            this_conscious_access_threshold = get_firing_threshold_from_path_linguistic(model_output_dir)
+            logger.info(f"No CAT provided, using FT instead ({this_conscious_access_threshold})")
+        else:
+            this_conscious_access_threshold = conscious_access_threshold
+        main_data = compile_model_data(model_output_dir, this_conscious_access_threshold)
+        process_one_model_output(main_data, model_output_dir, this_conscious_access_threshold, min_first_rank_freq)
 
 
 def compile_model_data(input_results_dir: str, conscious_access_threshold) -> DataFrame:
@@ -121,14 +125,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("cat", type=float, help="The conscious-access threshold.")
-    parser.add_argument("min_frf", type=int, nargs="?", default=None,
-                        help="The minimum FRF required for zRT and FRF correlations.")
     parser.add_argument("--single-model", action="store_true",
                         help="If specified, `path` will be interpreted to be the dir for a single model's output; "
                              "otherwise `path` will be interpreted to contain many models' output dirs.")
+    parser.add_argument("cat", type=float, nargs="?", default=None,
+                        help="The conscious-access threshold."
+                             " Omit to use CAT = firing threshold.")
+    parser.add_argument("min_frf", type=int, nargs="?", default=1,
+                        help="The minimum FRF required for zRT and FRF correlations."
+                             " Omit to use 1.")
     args = parser.parse_args()
 
-    main(args.path, args.single_model, args.cat, args.min_frf)
+    main(args.path, args.single_model, args.min_frf, args.cat)
 
     logger.info("Done!")
