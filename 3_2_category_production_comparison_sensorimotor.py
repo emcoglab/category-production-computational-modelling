@@ -28,10 +28,10 @@ from pandas import DataFrame
 
 from ldm.utils.maths import DistanceType, distance
 from category_production.category_production import ColNames as CPColNames
-from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
+from preferences import Preferences
 from evaluation.category_production import exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_predictor_column_ttfa, \
     CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
