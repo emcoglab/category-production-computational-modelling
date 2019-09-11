@@ -19,8 +19,6 @@ RANK_FREQUENCY_OF_PRODUCTION = "RankFreqOfProduction"
 ROUNDED_MEAN_RANK = "RoundedMeanRank"
 PRODUCTION_PROPORTION = "ProductionProportion"
 
-CATEGORY_AVAILABLE = "CategoryAvailable"
-
 MODEL_HIT = "ModelHit"
 MODEL_HITRATE = "Model hitrate"
 

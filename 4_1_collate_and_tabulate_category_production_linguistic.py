@@ -42,9 +42,7 @@ dvs = [
     'Mean Rank N',
     # hitrate dvs
     "Hitrate within SD of mean (RFoP)",
-    "Hitrate within SD of mean (RFoP; available categories only)",
     "Hitrate within SD of mean (RMR)",
-    "Hitrate within SD of mean (RMR; available categories only)",
 ]
 
 

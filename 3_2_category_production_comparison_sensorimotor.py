@@ -36,7 +36,6 @@ from evaluation.category_production import exclude_idiosyncratic_responses, add_
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_predictor_column_ttfa, \
     CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
     save_model_performance_stats, drop_missing_data
-from evaluation.column_names import CATEGORY_AVAILABLE
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -81,7 +80,6 @@ def compile_model_data(input_results_dir: str) -> DataFrame:
                                for category in CATEGORY_PRODUCTION.category_labels_sensorimotor},
                               sensorimotor=True)
     add_predictor_column_model_hit(main_data)
-    add_predictor_column_category_available_in_norms(main_data)
 
     add_predictor_column_production_proportion(main_data)
     add_rfop_column(main_data)
@@ -114,12 +112,6 @@ def add_predictor_column_sensorimotor_distance(main_data):
     """Mutates `main_data`."""
     logger.info("Adding distance column")
     main_data[distance_column] = main_data.apply(get_sensorimotor_distance_minkowski3, axis=1)
-
-
-def add_predictor_column_category_available_in_norms(main_data):
-    """Mutates `main_data`."""
-    logger.info("Adding category availability column")
-    main_data[CATEGORY_AVAILABLE] = main_data.apply(lambda row: sensorimotor_norms.has_word(row[CPColNames.CategorySensorimotor]), axis=1)
 
 
 def get_sensorimotor_distance_minkowski3(row):

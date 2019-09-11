@@ -286,28 +286,20 @@ def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, se
                                 conscious_access_threshold: Optional[float]):
     production_proportion_per_rfop = get_summary_table(main_data,
                                                        RANK_FREQUENCY_OF_PRODUCTION)
-    production_proportion_per_rfop_restricted = get_summary_table(main_data[main_data[CATEGORY_AVAILABLE]],
-                                                                  RANK_FREQUENCY_OF_PRODUCTION)
     # Production proportion per rounded mean rank
     production_proportion_per_rmr = get_summary_table(main_data,
                                                       ROUNDED_MEAN_RANK)
-    production_proportion_per_rmr_restricted = get_summary_table(main_data[main_data[CATEGORY_AVAILABLE]],
-                                                                 ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
     hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop)
-    hitrate_fit_rfop_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop_restricted)
     hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr)
-    hitrate_fit_rmr_restricted = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr_restricted)
 
     # Save summary tables
     base_dir = path.join(Preferences.results_dir, f"Category production fit{' sensorimotor' if sensorimotor else ''}")
     if conscious_access_threshold is not None:
         file_suffix = f"({path.basename(input_results_dir)}) CAT={conscious_access_threshold}"
-        file_suffix_restricted = f"({path.basename(input_results_dir)}) CAT={conscious_access_threshold} restricted"
     else:
         file_suffix = f"({path.basename(input_results_dir)})"
-        file_suffix_restricted = f"({path.basename(input_results_dir)}) restricted"
 
     production_proportion_per_rfop.to_csv(path.join(base_dir,
                                                     f"Production proportion per rank frequency of production {file_suffix}.csv"),
@@ -315,12 +307,6 @@ def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, se
     production_proportion_per_rmr.to_csv(path.join(base_dir,
                                                    f"Production proportion per rounded mean rank {file_suffix}.csv"),
                                          index=False)
-    production_proportion_per_rfop_restricted.to_csv(path.join(base_dir,
-                                                               f"Production proportion per rank frequency of production {file_suffix_restricted}.csv"),
-                                                     index=False)
-    production_proportion_per_rmr_restricted.to_csv(path.join(base_dir,
-                                                              f"Production proportion per rounded mean rank {file_suffix_restricted}.csv"),
-                                                    index=False)
 
     # region Graph tables
 
@@ -329,29 +315,17 @@ def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, se
                 fig_title="Hitrate per RFOP",
                 fig_name=f"hitrate per RFOP {file_suffix}",
                 sensorimotor=sensorimotor)
-    save_figure(summary_table=production_proportion_per_rfop_restricted,
-                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                fig_title="Hitrate per RFOP (only available categories)",
-                fig_name=f"restricted hitrate per RFOP {file_suffix}",
-                sensorimotor=sensorimotor)
     save_figure(summary_table=production_proportion_per_rmr,
                 x_selector=ROUNDED_MEAN_RANK,
                 fig_title="Hitrate per RMR",
                 fig_name=f"hitrate per RMR {file_suffix}",
-                sensorimotor=sensorimotor)
-    save_figure(summary_table=production_proportion_per_rmr_restricted,
-                x_selector=ROUNDED_MEAN_RANK,
-                fig_title="Hitrate per RMR (only available categories)",
-                fig_name=f"restricted hitrate per RMR {file_suffix}",
                 sensorimotor=sensorimotor)
 
     # endregion
 
     hitrate_stats = {
         "hitrate_fit_rfop": hitrate_fit_rfop,
-        "hitrate_fit_rfop_restricted": hitrate_fit_rfop_restricted,
         "hitrate_fit_rmr": hitrate_fit_rmr,
-        "hitrate_fit_rmr_restricted": hitrate_fit_rmr_restricted
     }
 
     return hitrate_stats
@@ -361,9 +335,7 @@ def save_model_performance_stats(main_dataframe,
                                  results_dir,
                                  min_first_rank_freq,
                                  hitrate_fit_rfop,
-                                 hitrate_fit_rfop_restricted,
                                  hitrate_fit_rmr,
-                                 hitrate_fit_rmr_restricted,
                                  sensorimotor: bool,
                                  conscious_access_threshold: Optional[float]):
 
@@ -383,9 +355,7 @@ def save_model_performance_stats(main_dataframe,
         **get_correlation_stats(main_dataframe, min_first_rank_freq, sensorimotor=sensorimotor),
         # hitrate stats
         "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
-        "Hitrate within SD of mean (RFoP; available categories only)": hitrate_fit_rfop_restricted,
         "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
-        "Hitrate within SD of mean (RMR; available categories only)": hitrate_fit_rmr_restricted,
     }
     df_dict: Dict = {
         **model_spec,

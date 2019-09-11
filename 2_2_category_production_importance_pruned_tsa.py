@@ -24,6 +24,7 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
+from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue
@@ -43,6 +44,8 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+
+FULL_ACTIVATION = ActivationValue(1.0)
 
 
 def main(n_words: int,
@@ -106,10 +109,6 @@ def main(n_words: int,
 
     for category_label in cp.category_labels:
 
-        # Skip the check if the category won't be in the network
-        if category_label not in filtered_words:
-            continue
-
         if not path.isdir(response_dir):
             logger.warning(f"{response_dir} directory does not exist; making it.")
             makedirs(response_dir)
@@ -140,7 +139,19 @@ def main(n_words: int,
 
         # Do the spreading activation
 
-        lc.activate_item_with_label(category_label, 1)
+        # Do the spreading activation
+
+        # If the category has a single norm, activate it
+        if category_label in filtered_words:
+            logger.info(f"Running spreading activation for category {category_label}")
+            lc.activate_item_with_label(category_label, FULL_ACTIVATION)
+
+        # If the category has no single norm, activate all constituent words
+        else:
+            category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
+            logger.info(f"Running spreading activation for category {category_label}"
+                        f" (activating individual words: {', '.join(category_words)})")
+            lc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
         for tick in range(0, run_for_ticks):

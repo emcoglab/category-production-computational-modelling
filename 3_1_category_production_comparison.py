@@ -26,14 +26,11 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from category_production.category_production import ColNames as CPColNames
 from evaluation.category_production import get_n_words_from_path_linguistic, get_model_ttfas_for_category_linguistic, \
-    available_categories, exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
-    add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, CATEGORY_PRODUCTION, \
-    add_predictor_column_ttfa, save_item_level_data, save_hitrate_summary_tables, save_model_performance_stats, \
-    drop_missing_data, get_firing_threshold_from_path_linguistic
-from evaluation.column_names import CATEGORY_AVAILABLE
-
+    exclude_idiosyncratic_responses, add_predictor_column_model_hit, add_predictor_column_production_proportion, \
+    add_rfop_column, add_rmr_column, CATEGORY_PRODUCTION, add_predictor_column_ttfa, save_item_level_data, \
+    save_hitrate_summary_tables, save_model_performance_stats, drop_missing_data, \
+    get_firing_threshold_from_path_linguistic
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -80,7 +77,6 @@ def compile_model_data(input_results_dir: str, conscious_access_threshold) -> Da
                                for category in CATEGORY_PRODUCTION.category_labels},
                               sensorimotor=False)
     add_predictor_column_model_hit(main_data)
-    add_predictor_column_category_available_to_model(main_data, input_results_dir)
 
     add_predictor_column_production_proportion(main_data)
     add_rfop_column(main_data)
@@ -112,12 +108,6 @@ def process_one_model_output(main_data: DataFrame,
         sensorimotor=False,
         conscious_access_threshold=conscious_access_threshold,
     )
-
-
-def add_predictor_column_category_available_to_model(main_data, input_results_dir):
-    """Mutates `main_data`."""
-    logger.info("Adding category availability column")
-    main_data[CATEGORY_AVAILABLE] = main_data.apply(lambda row: row[CPColNames.Category] in available_categories(input_results_dir), axis=1)
 
 
 if __name__ == '__main__':
