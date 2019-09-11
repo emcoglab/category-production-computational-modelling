@@ -16,7 +16,7 @@ from model.graph_propagation import GraphPropagation
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ENTERED_BUFFER, RESPONSE, MODEL_HIT, \
-    TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CATEGORY_AVAILABLE, CAT
+    TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CAT
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -284,11 +284,15 @@ def save_figure(summary_table, x_selector, fig_title, fig_name, sensorimotor: bo
 
 def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, sensorimotor: bool,
                                 conscious_access_threshold: Optional[float]):
-    production_proportion_per_rfop = get_summary_table(main_data,
-                                                       RANK_FREQUENCY_OF_PRODUCTION)
-    # Production proportion per rounded mean rank
-    production_proportion_per_rmr = get_summary_table(main_data,
-                                                      ROUNDED_MEAN_RANK)
+
+    production_proportion_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
+    # For FROP we will trucate the table at mean + 2SD (over categories) items
+    n_items_mean = main_data[["Category", "Response"]].groupby("Category").count()["Response"].mean()
+    n_items_sd   = main_data[["Category", "Response"]].groupby("Category").count()["Response"].std()
+    production_proportion_per_rfop = production_proportion_per_rfop[
+        production_proportion_per_rfop[RANK_FREQUENCY_OF_PRODUCTION] < n_items_mean + (2 * n_items_sd)]
+
+    production_proportion_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
     hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(production_proportion_per_rfop)
