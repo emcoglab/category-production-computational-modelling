@@ -345,8 +345,14 @@ def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFram
 
     production_proportion_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
     # For FROP we will truncate the table at mean + 2SD (over categories) items
-    n_items_mean = main_data[["Category", "Response"]].groupby("Category").count()["Response"].mean()
-    n_items_sd   = main_data[["Category", "Response"]].groupby("Category").count()["Response"].std()
+    if model_type == ModelType.linguistic:
+        n_items_mean = main_data[[CPColNames.Category, CPColNames.Response]].groupby(CPColNames.Category).count()[CPColNames.Response].mean()
+        n_items_sd   = main_data[[CPColNames.Category, CPColNames.Response]].groupby(CPColNames.Category).count()[CPColNames.Response].std()
+    elif model_type == ModelType.sensorimotor:
+        n_items_mean = main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]].groupby(CPColNames.CategorySensorimotor).count()[CPColNames.ResponseSensorimotor].mean()
+        n_items_sd   = main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]].groupby(CPColNames.CategorySensorimotor).count()[CPColNames.ResponseSensorimotor].std()
+    else:
+        raise NotImplementedError()
     production_proportion_per_rfop = production_proportion_per_rfop[
         production_proportion_per_rfop[RANK_FREQUENCY_OF_PRODUCTION] < n_items_mean + (2 * n_items_sd)]
 
