@@ -35,7 +35,7 @@ from preferences import Preferences
 from evaluation.category_production import exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_predictor_column_ttfa, \
     CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
-    save_model_performance_stats, drop_missing_data
+    save_model_performance_stats, drop_missing_data, ModelType
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -78,11 +78,11 @@ def compile_model_data(input_results_dir: str) -> DataFrame:
     add_predictor_column_ttfa(main_data,
                               {category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
                                for category in CATEGORY_PRODUCTION.category_labels_sensorimotor},
-                              sensorimotor=True)
+                              model_type=ModelType.sensorimotor)
     add_predictor_column_model_hit(main_data)
 
     add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data)
+    add_rfop_column(main_data, model_type=ModelType.sensorimotor)
     add_rmr_column(main_data)
 
     return main_data
@@ -93,8 +93,8 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
                                               f"Category production fit sensorimotor",
                                               f"item-level data ({path.basename(input_results_dir)}).csv"))
 
-    hitrate_stats = save_hitrate_summary_tables(input_results_dir, main_data,
-                                                sensorimotor=True, conscious_access_threshold=None)
+    hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data,
+                                                ModelType.sensorimotor, conscious_access_threshold=None)
 
     drop_missing_data(main_data, distance_column)
 
@@ -103,7 +103,7 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
         **hitrate_stats,
-        sensorimotor=True,
+        model_type=ModelType.sensorimotor,
         conscious_access_threshold=None,
     )
 

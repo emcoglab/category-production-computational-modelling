@@ -1,6 +1,7 @@
 import re
 import logging
 from collections import defaultdict
+from enum import Enum, auto
 from math import floor
 from os import path, listdir
 from typing import DefaultDict, Dict, Set, List, Optional
@@ -24,6 +25,16 @@ logger = logging.getLogger(__name__)
 N_PARTICIPANTS = 20
 
 CATEGORY_PRODUCTION = CategoryProduction(use_cache=True)
+
+
+class ModelType(Enum):
+    """Represents the type of model being used in the comparison."""
+    sensorimotor = auto()
+    linguistic = auto()
+    # Combining sensorimotor and linguistic in a naïve way; i.e. set union of activated items
+    naïve_combined = auto()
+    # Full tandem model
+    tandem = auto()
 
 
 def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
@@ -183,13 +194,22 @@ def add_predictor_column_production_proportion(main_data):
     main_data[PRODUCTION_PROPORTION] = main_data.apply(lambda row: row[CPColNames.ProductionFrequency] / N_PARTICIPANTS, axis=1)
 
 
-def add_rfop_column(main_data):
+def add_rfop_column(main_data, model_type: ModelType):
     """Mutates `main_data`."""
     logger.info("Adding RFoP column")
+    if model_type == ModelType.linguistic:
+        specific_category_column = CPColNames.Category
+    elif model_type == ModelType.sensorimotor:
+        specific_category_column = CPColNames.CategorySensorimotor
+    elif model_type == ModelType.naïve_combined:
+        # We could use either here
+        specific_category_column = CPColNames.Category
+    else:
+        raise NotImplementedError()
     main_data[RANK_FREQUENCY_OF_PRODUCTION] = (
         main_data
         # Within each category
-        .groupby(CPColNames.CategorySensorimotor)
+        .groupby(specific_category_column)
         # Rank the responses according to production frequency
         [CPColNames.ProductionFrequency]
         .rank(ascending=False,
@@ -203,7 +223,7 @@ def add_rmr_column(main_data):
     main_data[ROUNDED_MEAN_RANK] = main_data.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
 
 
-def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], sensorimotor: bool):
+def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
     """Mutates `main_data`."""
     logger.info("Adding TTFA column")
 
@@ -213,12 +233,14 @@ def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], senso
         multiple norms terms.
         """
 
-        if sensorimotor:
+        if model_type == ModelType.sensorimotor:
             c = row[CPColNames.CategorySensorimotor]
             r = row[CPColNames.ResponseSensorimotor]
-        else:
+        elif model_type == ModelType.linguistic:
             c = row[CPColNames.Category]
             r = row[CPColNames.Response]
+        else:
+            raise NotImplementedError()
 
         # If the category is not found in the dictionary, it was not accessed by the model so no TTFA will be present
         # for any response.
@@ -253,7 +275,7 @@ def save_item_level_data(main_data: DataFrame, save_path):
     main_data.to_csv(save_path, index=False)
 
 
-def save_figure(summary_table, x_selector, fig_title, fig_name, sensorimotor: bool):
+def save_figure(summary_table, x_selector, fig_title, fig_name, model_type: ModelType):
     """Save a summary table as a figure."""
     # add human bounds
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
@@ -273,20 +295,33 @@ def save_figure(summary_table, x_selector, fig_title, fig_name, sensorimotor: bo
     pyplot.xlabel(x_selector)
     pyplot.ylabel("Production proportion / hitrate")
 
-    pyplot.savefig(
-        path.join(Preferences.figures_dir,
-                  f"hitrates{' sensorimotor' if sensorimotor else ''}",
-                  f"{fig_name}.png"))
+    if model_type == ModelType.sensorimotor:
+        pyplot.savefig(
+            path.join(Preferences.figures_dir,
+                      "hitrates sensorimotor",
+                      f"{fig_name}.png"))
+    elif model_type == ModelType.linguistic:
+        pyplot.savefig(
+            path.join(Preferences.figures_dir,
+                      "hitrates",
+                      f"{fig_name}.png"))
+    elif model_type == ModelType.naïve_combined:
+        pyplot.savefig(
+            path.join(Preferences.figures_dir,
+                      "hitrates naïve combined",
+                      f"{fig_name}.png"))
+    else:
+        raise NotImplementedError()
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
 
 
-def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, sensorimotor: bool,
+def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFrame, model_type: ModelType,
                                 conscious_access_threshold: Optional[float]):
 
     production_proportion_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
-    # For FROP we will trucate the table at mean + 2SD (over categories) items
+    # For FROP we will truncate the table at mean + 2SD (over categories) items
     n_items_mean = main_data[["Category", "Response"]].groupby("Category").count()["Response"].mean()
     n_items_sd   = main_data[["Category", "Response"]].groupby("Category").count()["Response"].std()
     production_proportion_per_rfop = production_proportion_per_rfop[
@@ -299,11 +334,19 @@ def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, se
     hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(production_proportion_per_rmr)
 
     # Save summary tables
-    base_dir = path.join(Preferences.results_dir, f"Category production fit{' sensorimotor' if sensorimotor else ''}")
-    if conscious_access_threshold is not None:
-        file_suffix = f"({path.basename(input_results_dir)}) CAT={conscious_access_threshold}"
+    if model_type == ModelType.sensorimotor:
+        base_dir = path.join(Preferences.results_dir, f"Category production fit sensorimotor")
+    elif model_type == ModelType.linguistic:
+        base_dir = path.join(Preferences.results_dir, f"Category production fit")
+    elif model_type == ModelType.naïve_combined:
+        base_dir = path.join(Preferences.results_dir, f"Category production fit naïve combined")
     else:
-        file_suffix = f"({path.basename(input_results_dir)})"
+        raise NotImplementedError()
+
+    if conscious_access_threshold is not None:
+        file_suffix = f"({model_results_basename}) CAT={conscious_access_threshold}"
+    else:
+        file_suffix = f"({model_results_basename})"
 
     production_proportion_per_rfop.to_csv(path.join(base_dir,
                                                     f"Production proportion per rank frequency of production {file_suffix}.csv"),
@@ -318,12 +361,12 @@ def save_hitrate_summary_tables(input_results_dir: str, main_data: DataFrame, se
                 x_selector=RANK_FREQUENCY_OF_PRODUCTION,
                 fig_title="Hitrate per RFOP",
                 fig_name=f"hitrate per RFOP {file_suffix}",
-                sensorimotor=sensorimotor)
+                model_type=model_type)
     save_figure(summary_table=production_proportion_per_rmr,
                 x_selector=ROUNDED_MEAN_RANK,
                 fig_title="Hitrate per RMR",
                 fig_name=f"hitrate per RMR {file_suffix}",
-                sensorimotor=sensorimotor)
+                model_type=model_type)
 
     # endregion
 
@@ -340,23 +383,28 @@ def save_model_performance_stats(main_dataframe,
                                  min_first_rank_freq,
                                  hitrate_fit_rfop,
                                  hitrate_fit_rmr,
-                                 sensorimotor: bool,
+                                 model_type: ModelType,
                                  conscious_access_threshold: Optional[float]):
 
+    # Build output dir
     if conscious_access_threshold is not None:
-        overall_stats_output_path = path.join(Preferences.results_dir,
-                                              f"Category production fit{' sensorimotor' if sensorimotor else ''}",
-                                              f"model_effectiveness_overall"
-                                              f" ({path.basename(results_dir)})"
-                                              f" CAT={conscious_access_threshold}.csv")
+        filename_suffix = f" CAT={conscious_access_threshold}"
     else:
-        overall_stats_output_path = path.join(Preferences.results_dir,
-                                              f"Category production fit{' sensorimotor' if sensorimotor else ''}",
-                                              f"model_effectiveness_overall"
-                                              f" ({path.basename(results_dir)}).csv")
+        filename_suffix = ""
+    if model_type == ModelType.sensorimotor:
+        specific_output_dir = "Category production fit sensorimotor"
+    elif model_type == ModelType.linguistic:
+        specific_output_dir = "Category production fit"
+    else:
+        raise NotImplementedError()
+    overall_stats_output_path = path.join(
+        Preferences.results_dir,
+        specific_output_dir,
+        f"model_effectiveness_overall ({path.basename(results_dir)}){filename_suffix}.csv")
+
     model_spec = GraphPropagation.load_model_spec(results_dir)
     stats = {
-        **get_correlation_stats(main_dataframe, min_first_rank_freq, sensorimotor=sensorimotor),
+        **get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type),
         # hitrate stats
         "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
         "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
@@ -376,7 +424,7 @@ def save_model_performance_stats(main_dataframe,
                                   index=False)
 
 
-def get_correlation_stats(correlation_dataframe, min_first_rank_freq, sensorimotor: bool):
+def get_correlation_stats(correlation_dataframe, min_first_rank_freq, model_type: ModelType):
     # frf vs ttfa
     corr_frf_vs_ttfa = correlation_dataframe[CPColNames.FirstRankFrequency].corr(correlation_dataframe[TTFA],
                                                                                  method='pearson')
@@ -393,14 +441,16 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, sensorimot
     corr_meanrank_vs_ttfa = correlation_dataframe[CPColNames.MeanRank].corr(correlation_dataframe[TTFA],
                                                                             method='pearson')
     # Save correlation and hitrate stats
-    if sensorimotor:
+    if model_type == ModelType.sensorimotor:
         available_pairs = set(correlation_dataframe[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
                               .groupby([CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor])
                               .groups.keys())
-    else:
+    elif model_type == ModelType.linguistic:
         available_pairs = set(correlation_dataframe[[CPColNames.Category, CPColNames.Response]]
                               .groupby([CPColNames.Category, CPColNames.Response])
                               .groups.keys())
+    else:
+        raise NotImplementedError()
 
     return {
         "FRF corr (-)": corr_frf_vs_ttfa,
