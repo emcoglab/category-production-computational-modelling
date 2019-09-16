@@ -8,16 +8,16 @@ from typing import DefaultDict, Dict, Set, List, Optional
 
 from matplotlib import pyplot
 from numpy import nan
-from pandas import DataFrame, read_csv, isna
+from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
-from evaluation.comparison import get_summary_table, hitrate_within_sd_of_mean_frac
 from ldm.corpus.tokenising import modified_word_tokenize
 from model.graph_propagation import GraphPropagation
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ENTERED_BUFFER, RESPONSE, MODEL_HIT, \
     TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CAT
+from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -35,6 +35,12 @@ class ModelType(Enum):
     naïve_combined = auto()
     # Full tandem model
     tandem = auto()
+
+
+class ParticipantSummaryType(Enum):
+    """Represents a way to summarise participant data."""
+    mean_and_sd       = auto()
+    individual_traces = auto()
 
 
 def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
@@ -275,43 +281,60 @@ def save_item_level_data(main_data: DataFrame, save_path):
     main_data.to_csv(save_path, index=False)
 
 
-def save_figure(summary_table, x_selector, fig_title, fig_name, model_type: ModelType):
+def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
+                                model_type: ModelType, summaries_participants_by: ParticipantSummaryType):
     """Save a summary table as a figure."""
-    # add human bounds
-    pyplot.fill_between(x=summary_table.reset_index()[x_selector],
-                        y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[
-                            PRODUCTION_PROPORTION + ' SD'],
-                        y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[
-                            PRODUCTION_PROPORTION + ' SD'])
-    pyplot.scatter(x=summary_table.reset_index()[x_selector],
-                   y=summary_table[PRODUCTION_PROPORTION + ' Mean'])
+
+    # add participant bounds
+    if summaries_participants_by == ParticipantSummaryType.mean_and_sd:
+        pyplot.fill_between(x=summary_table.reset_index()[x_selector],
+                            y1=summary_table[PRODUCTION_PROPORTION + ' Mean'] - summary_table[
+                                PRODUCTION_PROPORTION + ' SD'],
+                            y2=summary_table[PRODUCTION_PROPORTION + ' Mean'] + summary_table[
+                                PRODUCTION_PROPORTION + ' SD'])
+        pyplot.scatter(x=summary_table.reset_index()[x_selector],
+                       y=summary_table[PRODUCTION_PROPORTION + ' Mean'])
+        pyplot.ylabel("Production proportion / hitrate")
+    elif summaries_participants_by == ParticipantSummaryType.individual_traces:
+        for participant in CATEGORY_PRODUCTION.participants:
+            pyplot.plot(summary_table.reset_index()[x_selector],
+                        summary_table[f"Participant {participant} hitrate"],
+                        linewidth=0.4, linestyle="-", color="b", alpha=0.4)
+            pyplot.ylabel("hitrate")
+    else:
+        raise NotImplementedError()
+
     # add model performance
     pyplot.scatter(x=summary_table.reset_index()[x_selector],
-                   y=summary_table[MODEL_HITRATE])
+                   y=summary_table[MODEL_HITRATE],
+                   marker="o", color="g")
 
     pyplot.ylim((0, None))
 
     pyplot.title(fig_title)
     pyplot.xlabel(x_selector)
-    pyplot.ylabel("Production proportion / hitrate")
 
     if model_type == ModelType.sensorimotor:
-        pyplot.savefig(
-            path.join(Preferences.figures_dir,
-                      "hitrates sensorimotor",
-                      f"{fig_name}.png"))
+        figures_dir = "hitrates sensorimotor"
     elif model_type == ModelType.linguistic:
-        pyplot.savefig(
-            path.join(Preferences.figures_dir,
-                      "hitrates",
-                      f"{fig_name}.png"))
+        figures_dir = "hitrates"
     elif model_type == ModelType.naïve_combined:
-        pyplot.savefig(
-            path.join(Preferences.figures_dir,
-                      "hitrates naïve combined",
-                      f"{fig_name}.png"))
+        figures_dir = "hitrates naïve combined"
     else:
         raise NotImplementedError()
+
+    if summaries_participants_by == ParticipantSummaryType.mean_and_sd:
+        filename = f"{fig_name} sd.png"
+    elif summaries_participants_by == ParticipantSummaryType.individual_traces:
+        filename = f"{fig_name} traces.png"
+    else:
+        raise NotImplementedError()
+
+    pyplot.savefig(
+        path.join(Preferences.figures_dir,
+                  figures_dir,
+                  filename))
+
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
@@ -357,16 +380,27 @@ def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFram
 
     # region Graph tables
 
-    save_figure(summary_table=production_proportion_per_rfop,
-                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                fig_title="Hitrate per RFOP",
-                fig_name=f"hitrate per RFOP {file_suffix}",
-                model_type=model_type)
-    save_figure(summary_table=production_proportion_per_rmr,
-                x_selector=ROUNDED_MEAN_RANK,
-                fig_title="Hitrate per RMR",
-                fig_name=f"hitrate per RMR {file_suffix}",
-                model_type=model_type)
+    # rfop sd region
+    save_hitrate_summary_figure(summary_table=production_proportion_per_rfop,
+                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
+                                fig_title="Hitrate per RFOP",
+                                fig_name=f"hitrate per RFOP {file_suffix}",
+                                model_type=model_type,
+                                summaries_participants_by=ParticipantSummaryType.mean_and_sd)
+    # rfop traces
+    save_hitrate_summary_figure(summary_table=production_proportion_per_rfop,
+                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
+                                fig_title="Hitrate per RFOP",
+                                fig_name=f"hitrate per RFOP {file_suffix}",
+                                model_type=model_type,
+                                summaries_participants_by=ParticipantSummaryType.individual_traces)
+    # rmr sd region
+    save_hitrate_summary_figure(summary_table=production_proportion_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summaries_participants_by=ParticipantSummaryType.mean_and_sd)
 
     # endregion
 
@@ -481,3 +515,50 @@ def drop_missing_data(main_data: DataFrame, distance_column: Optional[str]):
     main_data[TTFA] = main_data[TTFA].astype(int)
     if distance_column is not None:
         main_data[distance_column] = main_data[distance_column].astype(float)
+
+
+def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
+    # When the model hitrate is within one SD of the production proportion mean
+    within = Series(
+        (df[MODEL_HITRATE] > df[PRODUCTION_PROPORTION + " Mean"] - df[PRODUCTION_PROPORTION + " SD"])
+        & (df[MODEL_HITRATE] < df[PRODUCTION_PROPORTION + " Mean"] + df[PRODUCTION_PROPORTION + " SD"]))
+    # The fraction of times this happens
+    return within.aggregate('mean')
+
+
+def get_summary_table(main_dataframe, groupby_column):
+    """
+    Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column.
+    """
+    df = DataFrame()
+
+    # Individual participant columns
+    for participant in CATEGORY_PRODUCTION.participants:
+        df[f"Participant {participant} hitrate"] = main_dataframe[main_dataframe[f"Participant {participant} saw category"] == True][[groupby_column, f"Participant {participant} response hit"]].astype(float).groupby(groupby_column).mean()[f"Participant {participant} response hit"]
+
+    # Participant summary columns
+    df[PRODUCTION_PROPORTION + ' Mean'] = (
+        main_dataframe
+            .groupby(groupby_column)
+            .mean()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' SD'] = (
+        main_dataframe
+            .groupby(groupby_column)
+            .std()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' Count'] = (
+        main_dataframe
+            .groupby(groupby_column)
+            .count()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(
+        lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
+                                          row[PRODUCTION_PROPORTION + ' Count'],
+                                          0.95),
+        axis=1)
+
+    # Model columns
+    df[MODEL_HITRATE] = main_dataframe[[groupby_column, MODEL_HIT]].astype(float).groupby(groupby_column).mean()[MODEL_HIT]
+
+    # Forget rows with nans
+    df = df.dropna().reset_index()
+
+    return df
