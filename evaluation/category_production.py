@@ -8,16 +8,16 @@ from typing import DefaultDict, Dict, Set, List, Optional
 
 from matplotlib import pyplot
 from numpy import nan
-from pandas import DataFrame, read_csv, isna
+from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
-from evaluation.comparison import get_summary_table, hitrate_within_sd_of_mean_frac
 from ldm.corpus.tokenising import modified_word_tokenize
 from model.graph_propagation import GraphPropagation
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ENTERED_BUFFER, RESPONSE, MODEL_HIT, \
     TTFA, PRODUCTION_PROPORTION, RANK_FREQUENCY_OF_PRODUCTION, ROUNDED_MEAN_RANK, MODEL_HITRATE, CAT
+from model.utils.maths import t_confidence_interval
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -481,3 +481,46 @@ def drop_missing_data(main_data: DataFrame, distance_column: Optional[str]):
     main_data[TTFA] = main_data[TTFA].astype(int)
     if distance_column is not None:
         main_data[distance_column] = main_data[distance_column].astype(float)
+
+
+def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
+    # When the model hitrate is within one SD of the production proportion mean
+    within = Series(
+        (df[MODEL_HITRATE] > df[PRODUCTION_PROPORTION + " Mean"] - df[PRODUCTION_PROPORTION + " SD"])
+        & (df[MODEL_HITRATE] < df[PRODUCTION_PROPORTION + " Mean"] + df[PRODUCTION_PROPORTION + " SD"]))
+    # The fraction of times this happens
+    return within.aggregate('mean')
+
+
+def get_summary_table(main_dataframe, groupby_column):
+    """
+    Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column.
+    """
+    df = DataFrame()
+
+    # Participant summary columns
+    df[PRODUCTION_PROPORTION + ' Mean'] = (
+        main_dataframe
+            .groupby(groupby_column)
+            .mean()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' SD'] = (
+        main_dataframe
+            .groupby(groupby_column)
+            .std()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' Count'] = (
+        main_dataframe
+            .groupby(groupby_column)
+            .count()[PRODUCTION_PROPORTION])
+    df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(
+        lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
+                                          row[PRODUCTION_PROPORTION + ' Count'],
+                                          0.95),
+        axis=1)
+
+    # Model columns
+    df[MODEL_HITRATE] = main_dataframe[[groupby_column, MODEL_HIT]].astype(float).groupby(groupby_column).mean()[MODEL_HIT]
+
+    # Forget rows with nans
+    df = df.dropna().reset_index()
+
+    return df
