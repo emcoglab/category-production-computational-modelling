@@ -534,7 +534,12 @@ def get_summary_table(main_dataframe, groupby_column):
 
     # Individual participant columns
     for participant in CATEGORY_PRODUCTION.participants:
-        df[f"Participant {participant} hitrate"] = main_dataframe[main_dataframe[f"Participant {participant} saw category"] == True][[groupby_column, f"Participant {participant} response hit"]].astype(float).groupby(groupby_column).mean()[f"Participant {participant} response hit"]
+        df[f"Participant {participant} hitrate"] = (
+            main_dataframe
+            [main_dataframe[f"Participant {participant} saw category"] == True]
+            [[groupby_column, f"Participant {participant} response hit"]].astype(float)
+            .groupby(groupby_column)
+            .mean()[f"Participant {participant} response hit"])
 
     # Participant summary columns
     df[PRODUCTION_PROPORTION + ' Mean'] = (
@@ -552,11 +557,13 @@ def get_summary_table(main_dataframe, groupby_column):
     df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(
         lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
                                           row[PRODUCTION_PROPORTION + ' Count'],
-                                          0.95),
-        axis=1)
+                                          0.95), axis=1)
 
     # Model columns
-    df[MODEL_HITRATE] = main_dataframe[[groupby_column, MODEL_HIT]].astype(float).groupby(groupby_column).mean()[MODEL_HIT]
+    df[MODEL_HITRATE] = (
+        main_dataframe[[groupby_column, MODEL_HIT]].astype(float)
+        .groupby(groupby_column)
+        .mean()[MODEL_HIT])
 
     # Forget rows with nans
     df = df.dropna().reset_index()
