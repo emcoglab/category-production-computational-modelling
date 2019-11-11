@@ -32,6 +32,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 dvs = [
+    # correlation dvs
     "FRF corr (-)",
     "zRT corr (+; FRF≥1)",
     'ProdFreq corr (-)',
