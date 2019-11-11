@@ -3,6 +3,7 @@
 -r category_production/requirements.txt
 colorama
 cython
+gitpython
 matplotlib
 numpy
 pandas
