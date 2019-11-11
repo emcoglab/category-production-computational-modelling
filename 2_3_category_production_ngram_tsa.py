@@ -17,7 +17,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from os import path, mkdir
+from os import path, mkdir, makedirs
 
 from pandas import DataFrame
 
@@ -26,6 +26,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
+from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
 from model.linguistic_component import LinguisticComponent
@@ -62,17 +63,20 @@ def main(n_words: int,
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
-    # Output file path
     response_dir = path.join(Preferences.output_dir,
-                             f"Category production traces ({n_words:,} words; "
-                             f"firing {firing_threshold}; "
-                             f"sd_factor {edge_decay_sd_factor}; "
-                             f"length {length_factor}; "
-                             f"model [{distributional_model.name}])")
-
+                             "Category production",
+                             f"Linguistic {VERSION}",
+                             f"{distributional_model.name}",
+                             f"{n_words:,} words, length {length_factor}",
+                             f"firing-θ {firing_threshold};"
+                                f" n-decay-f {node_decay_factor};"
+                                f" e-decay-sd {edge_decay_sd_factor};"
+                                f" imp-prune-θ {impulse_pruning_threshold};"
+                                f" run-for {run_for_ticks};"
+                                f" bail {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
-        mkdir(response_dir)
+        makedirs(response_dir)
 
     cp = CategoryProduction()
     lc = LinguisticComponent(

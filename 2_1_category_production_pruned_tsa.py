@@ -27,6 +27,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
+from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
 from model.linguistic_component import EdgePruningType, LinguisticComponent
@@ -73,17 +74,21 @@ def main(n_words: int,
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
 
-    # Output file path
-    if prune_percent is not None:
-        response_dir = path.join(Preferences.output_dir,
-                                 f"Category production traces [{distributional_model.name} {distance_type.name}]",
-                                 f"{n_words:,} words, length {length_factor}, longest {prune_percent}% edges removed"
-                                 f"ft {firing_threshold}; df {node_decay_factor}; sdf {edge_decay_sd_factor}; pt {impulse_pruning_threshold}; rft {run_for_ticks}; bailout {bailout}")
-    else:
-        response_dir = path.join(Preferences.output_dir,
-                                 f"Category production traces [{distributional_model.name} {distance_type.name}]",
-                                 f"{n_words:,} words, length {length_factor}, no edges removed"
-                                 f"ft {firing_threshold}; df {node_decay_factor}; sdf {edge_decay_sd_factor}; pt {impulse_pruning_threshold}; rft {run_for_ticks}; bailout {bailout}")
+    pruning_suffix = f", longest {prune_percent}% edges removed" if prune_percent is not None else ""
+    response_dir = path.join(Preferences.output_dir,
+                             "Category production",
+                             f"Linguistic {VERSION}",
+                             f"{distributional_model.name} {distance_type.name}",
+                             f"{n_words:,} words, length {length_factor}{pruning_suffix}",
+                             f"firing-θ {firing_threshold};"
+                                f" n-decay-f {node_decay_factor};"
+                                f" e-decay-sd {edge_decay_sd_factor};"
+                                f" imp-prune-θ {impulse_pruning_threshold};"
+                                f" run-for {run_for_ticks};"
+                                f" bail {bailout}")
+    if not path.isdir(response_dir):
+        logger.warning(f"{response_dir} directory does not exist; making it.")
+        makedirs(response_dir)
 
     cp = CategoryProduction()
     lc = LinguisticComponent(
@@ -113,9 +118,6 @@ def main(n_words: int,
 
     for category_label in cp.category_labels:
 
-        if not path.isdir(response_dir):
-            logger.warning(f"{response_dir} directory does not exist; making it.")
-            makedirs(response_dir)
         model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
 
         csv_comments = []

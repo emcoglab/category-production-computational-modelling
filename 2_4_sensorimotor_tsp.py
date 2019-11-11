@@ -25,6 +25,7 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
+from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
@@ -65,19 +66,19 @@ def main(distance_type_name: str,
     # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
-    # Output file path
     response_dir = path.join(Preferences.output_dir,
-                             f"Category production traces [sensorimotor {distance_type.name}] "
-                             f"r {max_sphere_radius} "
-                             f"m {median}; "
-                             f"s {sigma}; "
-                             f"a {accessible_set_threshold}; "
-                             f"ac {accessible_set_capacity}; "
-                             f"b {buffer_threshold}; "
-                             f"bc {buffer_capacity}; "
-                             f"attenuate {norm_attenuation_statistic.name}; "
-                             f"rft {run_for_ticks}; "
-                             f"bailout {bailout}")
+                             "Category production",
+                             f"Sensorimotor {VERSION}",
+                             f"{distance_type.name} length {length_factor} attenuate {norm_attenuation_statistic.name}",
+                             f"max-r {max_sphere_radius};"
+                                f" e-decay-median {median};"
+                                f" e-decay-sigma {sigma};"
+                                f" as-θ {accessible_set_threshold};"
+                                f" as-cap {accessible_set_capacity:,};"
+                                f" buff-θ {buffer_threshold};"
+                                f" buff-cap {buffer_capacity};"
+                                f" run-for {run_for_ticks};"
+                                f" bail {bailout}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
