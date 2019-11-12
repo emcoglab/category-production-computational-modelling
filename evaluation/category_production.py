@@ -1,3 +1,21 @@
+"""
+===========================
+Evaluating cognitive models against Category Production data.
+===========================
+
+Dr. Cai Wingfield
+---------------------------
+Embodied Cognition Lab
+Department of Psychology
+University of Lancaster
+c.wingfield@lancaster.ac.uk
+caiwingfield.net
+---------------------------
+2019
+---------------------------
+"""
+
+
 import re
 import logging
 from collections import defaultdict
@@ -607,16 +625,16 @@ def get_summary_table(main_dataframe, groupby_column):
     # Participant summary columns
     df[PRODUCTION_PROPORTION + ' Mean'] = (
         main_dataframe
-            .groupby(groupby_column)
-            .mean()[PRODUCTION_PROPORTION])
+        .groupby(groupby_column)
+        .mean()[PRODUCTION_PROPORTION])
     df[PRODUCTION_PROPORTION + ' SD'] = (
         main_dataframe
-            .groupby(groupby_column)
-            .std()[PRODUCTION_PROPORTION])
+        .groupby(groupby_column)
+        .std()[PRODUCTION_PROPORTION])
     df[PRODUCTION_PROPORTION + ' Count'] = (
         main_dataframe
-            .groupby(groupby_column)
-            .count()[PRODUCTION_PROPORTION])
+        .groupby(groupby_column)
+        .count()[PRODUCTION_PROPORTION])
     df[PRODUCTION_PROPORTION + ' CI95'] = df.apply(
         lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
                                           row[PRODUCTION_PROPORTION + ' Count'],

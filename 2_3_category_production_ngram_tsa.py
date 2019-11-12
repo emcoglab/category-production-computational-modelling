@@ -89,17 +89,10 @@ def main(n_words: int,
         firing_threshold=firing_threshold,
     )
 
-    LinguisticComponent.save_model_spec({
-        "Words": n_words,
-        "Model name": distributional_model.name,
-        "Length factor": length_factor,
-        "Impulse pruning threshold": impulse_pruning_threshold,
-        "SD factor": edge_decay_sd_factor,
-        "Node decay": node_decay_factor,
-        "Firing threshold": firing_threshold,
+    lc.save_model_spec(response_dir, {
         "Run for ticks": run_for_ticks,
         "Bailout": bailout
-    }, response_dir)
+    })
 
     filtered_words = set(freq_dist.most_common_tokens(n_words))
 

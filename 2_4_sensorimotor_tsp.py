@@ -100,21 +100,10 @@ def main(distance_type_name: str,
         accessible_set_capacity=accessible_set_capacity,
     )
 
-    SensorimotorComponent.save_model_spec({
-        "Distance type": distance_type.name,
-        "Length factor": length_factor,
-        "Max sphere radius": max_sphere_radius,
-        "Log-normal median": median,
-        "Log-normal sigma": sigma,
-        "Buffer capacity": buffer_capacity,
-        "Buffer threshold": buffer_threshold,
-        "Norm attenuation statistic": norm_attenuation_statistic.name,
-        "Activation cap": activation_cap,
-        "Activation threshold": accessible_set_threshold,
-        "Accessible set capacity": accessible_set_capacity,
+    sc.save_model_spec(response_dir, {
         "Run for ticks": run_for_ticks,
         "Bailout": bailout
-    }, response_dir)
+    })
 
     for category_label in cp.category_labels_sensorimotor:
 

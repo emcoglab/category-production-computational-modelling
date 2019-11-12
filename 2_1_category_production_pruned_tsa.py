@@ -104,17 +104,10 @@ def main(n_words: int,
         edge_pruning_type=EdgePruningType.Percent,
     )
 
-    LinguisticComponent.save_model_spec({
-        "Words": n_words,
-        "Model name": distributional_model.name,
-        "Length factor": length_factor,
-        "Impulse pruning threshold": impulse_pruning_threshold,
-        "SD factor": edge_decay_sd_factor,
-        "Node decay": node_decay_factor,
-        "Firing threshold": firing_threshold,
+    lc.save_model_spec(response_dir, {
         "Run for ticks": run_for_ticks,
         "Bailout": bailout
-    }, response_dir)
+    })
 
     for category_label in cp.category_labels:
 
