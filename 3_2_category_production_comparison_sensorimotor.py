@@ -20,7 +20,6 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from glob import glob
 from os import path
 
 from numpy import nan, array
@@ -35,7 +34,7 @@ from preferences import Preferences
 from evaluation.category_production import exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
     add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_predictor_column_ttfa, \
     CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
-    save_model_performance_stats, drop_missing_data, ModelType
+    save_model_performance_stats, drop_missing_data, ModelType, find_output_dirs
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -56,7 +55,7 @@ def main(input_results_dir: str,
     if single_model:
         model_output_dirs = [input_results_dir]
     else:
-        model_output_dirs = glob(path.join(input_results_dir, "Category production traces *"))
+        model_output_dirs = find_output_dirs(root_dir=input_results_dir)
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))

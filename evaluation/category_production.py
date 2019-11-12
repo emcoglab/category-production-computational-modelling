@@ -20,6 +20,7 @@ import re
 import logging
 from collections import defaultdict
 from enum import Enum, auto
+from glob import glob
 from math import floor
 from os import path, listdir
 from typing import DefaultDict, Dict, Set, List, Optional
@@ -655,3 +656,13 @@ def get_summary_table(main_dataframe, groupby_column):
     df = df.dropna().reset_index()
 
     return df
+
+
+def find_output_dirs(root_dir: str):
+    """Finds all model-output dirs within a specified root directory."""
+    # Find ` model_spec.yaml` files. Then each lives alongside the model output, so we return the containing dirs
+    return [
+        path.dirname(model_spec_location)
+        for model_spec_location in glob(
+            path.join(root_dir, "Category production", "**", " model_spec.yaml"), recursive=True)
+    ]

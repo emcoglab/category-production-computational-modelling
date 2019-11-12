@@ -20,7 +20,6 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from glob import glob
 from os import path
 from typing import Optional
 
@@ -30,7 +29,7 @@ from evaluation.category_production import get_n_words_from_path_linguistic, get
     exclude_idiosyncratic_responses, add_predictor_column_model_hit, add_predictor_column_production_proportion, \
     add_rfop_column, add_rmr_column, CATEGORY_PRODUCTION, add_predictor_column_ttfa, save_item_level_data, \
     save_hitrate_summary_tables, save_model_performance_stats, drop_missing_data, \
-    get_firing_threshold_from_path_linguistic, ModelType
+    get_firing_threshold_from_path_linguistic, ModelType, find_output_dirs
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -46,7 +45,7 @@ def main(input_results_dir: str,
     if single_model:
         model_output_dirs = [input_results_dir]
     else:
-        model_output_dirs = glob(path.join(input_results_dir, "Category production traces *"))
+        model_output_dirs = find_output_dirs(root_dir=input_results_dir)
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
