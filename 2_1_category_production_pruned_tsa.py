@@ -78,8 +78,8 @@ def main(n_words: int,
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
                              f"Linguistic {VERSION}",
-                             f"{distributional_model.name} {distance_type.name}",
-                             f"{n_words:,} words, length {length_factor}{pruning_suffix}",
+                             f"{distributional_model.name} {distance_type.name}"
+                                f" {n_words:,} words, length {length_factor}{pruning_suffix}",
                              f"firing-θ {firing_threshold};"
                                 f" n-decay-f {node_decay_factor};"
                                 f" e-decay-sd {edge_decay_sd_factor};"

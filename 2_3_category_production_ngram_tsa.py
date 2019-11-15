@@ -17,7 +17,7 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from os import path, mkdir, makedirs
+from os import path, makedirs
 
 from pandas import DataFrame
 
@@ -66,8 +66,8 @@ def main(n_words: int,
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
                              f"Linguistic {VERSION}",
-                             f"{distributional_model.name}",
-                             f"{n_words:,} words, length {length_factor}",
+                             f"{distributional_model.name}"
+                                f" {n_words:,} words, length {length_factor}",
                              f"firing-θ {firing_threshold};"
                                 f" n-decay-f {node_decay_factor};"
                                 f" e-decay-sd {edge_decay_sd_factor};"
