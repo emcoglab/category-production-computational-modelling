@@ -107,5 +107,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(length_factor=args.length_factor,
-         distance_type=args.distance_type)
+         distance_type=DistanceType.from_name(args.distance_type))
     logger.info("Done!")

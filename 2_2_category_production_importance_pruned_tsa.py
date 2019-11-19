@@ -137,8 +137,6 @@ def main(n_words: int,
 
         # Do the spreading activation
 
-        # Do the spreading activation
-
         # If the category has a single norm, activate it
         if category_label in filtered_words:
             logger.info(f"Running spreading activation for category {category_label}")
