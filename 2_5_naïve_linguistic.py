@@ -56,13 +56,20 @@ def main(n_words: int,
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
+    filtered_words = set(freq_dist.most_common_tokens(n_words))
+
     if distributional_model.model_type.metatype == DistributionalSemanticModel.MetaType.ngram:
         assert isinstance(distributional_model, NgramModel)
-        lnm = LinguisticNgramNaïveModel(length_factor, n_words, distributional_model)
+        lnm = LinguisticNgramNaïveModel(length_factor=length_factor,
+                                        distributional_model=distributional_model,
+                                        n_words=n_words)
         model_dirname = f"{distributional_model.name} {n_words:,} words, length {length_factor}"
     else:
         assert isinstance(distributional_model, VectorSemanticModel)
-        lnm = LinguisticVectorNaïveModel(distance_type, length_factor, n_words, distributional_model)
+        lnm = LinguisticVectorNaïveModel(distance_type=distance_type,
+                                         length_factor=length_factor,
+                                         distributional_model=distributional_model,
+                                         n_words=n_words)
         model_dirname = f"{distributional_model.name} {distance_type.name} {n_words:,} words, length {length_factor}"
 
     response_dir = path.join(Preferences.output_dir,
@@ -75,8 +82,6 @@ def main(n_words: int,
         makedirs(response_dir)
 
     cp = CategoryProduction()
-
-    filtered_words = set(freq_dist.most_common_tokens(n_words))
 
     # Record model details
     csv_comments = [
