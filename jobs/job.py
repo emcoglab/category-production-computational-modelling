@@ -15,7 +15,7 @@ caiwingfield.net
 ---------------------------
 """
 import subprocess
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
@@ -23,13 +23,38 @@ from ldm.utils.maths import DistanceType
 
 
 @dataclass
-class Spec(metaclass=ABCMeta):
+class Spec(ABC):
     length_factor: int
 
     @abstractmethod
     @property
     def shorthand(self) -> str:
-        raise NotImplementedError
+        raise NotImplementedError()
+
+
+@dataclass
+class NaïveSpec(Spec, ABC):
+    n_words: int
+
+
+@dataclass
+class NaïveLinguisticSpec(NaïveSpec):
+    model_name: str
+    model_radius: int
+    corpus_name: str
+    distance_type: Optional[DistanceType] = None
+
+    @property
+    def shorthand(self) -> str:
+        if self.distance_type is None:
+            return f"{self.model_name}_" \
+                   f"r{self.model_radius}" \
+                   f"{self.n_words}"
+        else:
+            return f"{self.model_name}_" \
+                   f"r{self.model_radius}" \
+                   f"{self.distance_type.name}_" \
+                   f"{self.n_words}"
 
 
 @dataclass
@@ -76,7 +101,7 @@ class LinguisticSASpec(Spec):
                f"pr{self.pruning}"
 
 
-class Job(metaclass=ABCMeta):
+class Job(ABC):
     _python_location = "/Users/cai/Applications/miniconda3/bin/python"
     _queue = "serial"
 
@@ -103,7 +128,7 @@ class Job(metaclass=ABCMeta):
         subprocess.run(self.qsub_command)
 
 
-class SAJob(Job, metaclass=ABCMeta):
+class SAJob(ABC):
     def __init__(self,
                  script_number: str,
                  script_name: str,
@@ -118,13 +143,13 @@ class SAJob(Job, metaclass=ABCMeta):
         self.bailout: int = bailout
 
 
-class SensorimotorSAJob(SAJob, metaclass=ABCMeta):
+class SensorimotorSAJob(SAJob, ABC):
     def __init__(self, *args, **kwargs):
         self.spec: SensorimotorSASpec
         super().__init__(*args, **kwargs)
 
 
-class LinguisticSAJob(SAJob, metaclass=ABCMeta):
+class LinguisticSAJob(SAJob, ABC):
     def __init__(self, *args, **kwargs):
         self.spec: LinguisticSASpec
         super().__init__(*args, **kwargs)
