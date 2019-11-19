@@ -34,11 +34,12 @@ class Spec(ABC):
 
 @dataclass
 class NaïveSpec(Spec, ABC):
-    n_words: int
+    pass
 
 
 @dataclass
 class NaïveLinguisticSpec(NaïveSpec):
+    n_words: int
     model_name: str
     model_radius: int
     corpus_name: str
@@ -55,6 +56,15 @@ class NaïveLinguisticSpec(NaïveSpec):
                    f"r{self.model_radius}" \
                    f"{self.distance_type.name}_" \
                    f"{self.n_words}"
+
+
+@dataclass
+class NaïveSensorimotorSpec(NaïveSpec):
+    distance_type: DistanceType
+
+    @property
+    def shorthand(self) -> str:
+        return f"{self.distance_type.name}"
 
 
 @dataclass
@@ -128,7 +138,7 @@ class Job(ABC):
         subprocess.run(self.qsub_command)
 
 
-class SAJob(ABC):
+class SAJob(Job, ABC):
     def __init__(self,
                  script_number: str,
                  script_name: str,
