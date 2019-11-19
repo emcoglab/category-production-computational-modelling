@@ -1,3 +1,4 @@
+#!/Users/cai/Applications/miniconda3/bin/python
 """
 ===========================
 Compute pruning thresholds for graphs of different sizes.

@@ -1,3 +1,4 @@
+#!/Users/cai/Applications/miniconda3/bin/python
 """
 ===========================
 Spreading activation on ngram graphs.
