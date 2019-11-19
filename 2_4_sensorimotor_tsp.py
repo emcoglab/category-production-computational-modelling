@@ -1,3 +1,4 @@
+#!/Users/cai/Applications/miniconda3/bin/python
 """
 ===========================
 Model responses to Briony's category production categories using the sensorimotor model.

@@ -1,3 +1,4 @@
+#!/Users/cai/Applications/miniconda3/bin/python
 """
 ===========================
 Save graphs built from sensorimotor norms.
