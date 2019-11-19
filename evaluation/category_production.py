@@ -80,8 +80,8 @@ def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
     :param results_dir_path:
     :return: n_words: int
     """
-    dir_name = path.basename(results_dir_path)
-    words_match = re.match(re.compile(r"[^0-9,]*(?P<n_words>[0-9,]+) words;"), dir_name)
+    dir_name = path.basename(path.dirname(results_dir_path))
+    words_match = re.match(re.compile(r".* (?P<n_words>[0-9,]+) words,.*"), dir_name)
     if words_match:
         # remove the comma and parse as int
         n_words = int(words_match.group("n_words").replace(",", ""))
@@ -97,8 +97,7 @@ def get_firing_threshold_from_path_linguistic(results_dir_path: str) -> Activati
     :return: firing_threshold: ActivationValue
     """
     dir_name = path.basename(results_dir_path)
-    ft_match = re.match(re.compile(r"Category production traces \([0-9,]+ words; "
-                                   r"firing (?P<firing_threshold>[0-9.]+);"), dir_name)
+    ft_match = re.match(re.compile(r"firing-θ (?P<firing_threshold>[0-9.]+);"), dir_name)
     if ft_match:
         ft = ActivationValue(ft_match.group("firing_threshold"))
         return ft
@@ -429,7 +428,7 @@ def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFram
     if model_type == ModelType.sensorimotor:
         base_dir = path.join(Preferences.results_dir, f"Category production fit sensorimotor")
     elif model_type == ModelType.linguistic:
-        base_dir = path.join(Preferences.results_dir, f"Category production fit")
+        base_dir = path.join(Preferences.results_dir, f"Category production fit linguistic")
     elif model_type == ModelType.naïve_combined:
         base_dir = path.join(Preferences.results_dir, f"Category production fit naïve combined")
     else:
@@ -503,7 +502,7 @@ def save_model_performance_stats(main_dataframe,
     if model_type == ModelType.sensorimotor:
         specific_output_dir = "Category production fit sensorimotor"
     elif model_type == ModelType.linguistic:
-        specific_output_dir = "Category production fit"
+        specific_output_dir = "Category production fit linguistic"
     else:
         raise NotImplementedError()
     overall_stats_output_path = path.join(
@@ -664,5 +663,5 @@ def find_output_dirs(root_dir: str):
     return [
         path.dirname(model_spec_location)
         for model_spec_location in glob(
-            path.join(root_dir, "Category production", "**", " model_spec.yaml"), recursive=True)
+            path.join(root_dir, "**", " model_spec.yaml"), recursive=True)
     ]

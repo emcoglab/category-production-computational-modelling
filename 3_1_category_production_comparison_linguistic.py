@@ -22,6 +22,7 @@ import argparse
 import logging
 import sys
 from os import path
+from pathlib import Path
 from typing import Optional
 
 from pandas import DataFrame
@@ -89,10 +90,11 @@ def process_one_model_output(main_data: DataFrame,
                              input_results_dir: str,
                              conscious_access_threshold: float,
                              min_first_rank_freq: int):
+    input_results_dir = Path(input_results_dir)
     save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              "Category production fit",
+                                              "Category production fit linguistic",
                                               f"item-level data"
-                                              f" ({path.basename(input_results_dir)})"
+                                              f" ({input_results_dir.parent.name} {input_results_dir.name})"
                                               f" CAT={conscious_access_threshold}.csv"))
 
     hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data, ModelType.linguistic,
