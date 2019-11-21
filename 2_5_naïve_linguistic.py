@@ -31,7 +31,7 @@ from ldm.model.ngram import NgramModel
 from ldm.utils.maths import DistanceType
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
-from model.naïve import LinguisticNgramNaïveModel, LinguisticVectorNaïveModel
+from model.naïve_linguistic import LinguisticVectorNaïveModel, LinguisticNgramNaïveModel
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)

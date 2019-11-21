@@ -25,7 +25,7 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.naïve import SensorimotorNaïveModel
+from model.naïve_sensorimotor import SensorimotorNaïveModelComponent
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
 from preferences import Preferences
@@ -41,16 +41,13 @@ RESPONSE = "Response"
 HIT = "Hit"
 
 
-def main(distance_type: Optional[DistanceType],
-         length_factor: int):
+def main(distance_type: Optional[DistanceType]):
 
-    snm = SensorimotorNaïveModel(distance_type=distance_type,
-                                 length_factor=length_factor)
+    snm = SensorimotorNaïveModelComponent(distance_type=distance_type)
 
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve sensorimotor {VERSION}",
-                             f"length {length_factor}")
+                             f"Naïve sensorimotor {VERSION}")
 
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -63,18 +60,17 @@ def main(distance_type: Optional[DistanceType],
         f"Naïve linguistic model:",
         f"\t        model = sensorimotor",
         f"\tdistance type = {distance_type.name}",
-        f"\tlength factor = {length_factor}",
     ]
 
-    model_responses_path = path.join(response_dir, f"hits.csv")
+    model_responses_path = path.join(response_dir, f"hits_{distance_type.name}.csv")
     hits = []
-    for category in cp.category_labels:
-        logger.info(f"Checking hits for category \"{category}\"")
+    for i, category in enumerate(cp.category_labels_sensorimotor, start=1):
+        logger.info(f"Checking hits for category \"{category}\" ({i}/{len(cp.category_labels_sensorimotor)})")
         if category in snm.words:
             category_words = [category]
         else:
             category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
-        for response in cp.responses_for_category(category):
+        for response in cp.responses_for_category(category, use_sensorimotor=True):
             try:
                 # Hit if hit for any category word
                 hit = any(snm.is_hit(c, response) for c in category_words)
@@ -101,11 +97,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument('-d', "--distance_type", type=str, default=None)
 
     args = parser.parse_args()
 
-    main(length_factor=args.length_factor,
-         distance_type=DistanceType.from_name(args.distance_type))
+    main(distance_type=DistanceType.from_name(args.distance_type))
     logger.info("Done!")
