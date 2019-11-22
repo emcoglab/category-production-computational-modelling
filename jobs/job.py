@@ -24,10 +24,9 @@ from ldm.utils.maths import DistanceType
 
 @dataclass
 class Spec(ABC):
-    length_factor: int
 
-    @abstractmethod
     @property
+    @abstractmethod
     def shorthand(self) -> str:
         raise NotImplementedError()
 
@@ -68,7 +67,12 @@ class NaïveSensorimotorSpec(NaïveSpec):
 
 
 @dataclass
-class SensorimotorSASpec(Spec):
+class SASpec(Spec, ABC):
+    length_factor: int
+
+
+@dataclass
+class SensorimotorSASpec(SASpec):
     max_radius: int
     sigma: float
     median: int
@@ -90,7 +94,7 @@ class SensorimotorSASpec(Spec):
 
 
 @dataclass
-class LinguisticSASpec(Spec):
+class LinguisticSASpec(SASpec):
     graph_size: int
     firing_threshold: float
     model_name: str
@@ -123,19 +127,27 @@ class Job(ABC):
         self._number: str = script_number
         self.short_name: str = "j" + script_number.replace("_", "")
         self.script_name: str = "../" + script_name
+        self.module_name: str = Job._without_py(script_name)
         self.spec = spec
 
     @property
     def name(self) -> str:
         return f"{self.short_name}{self.spec.shorthand}"
 
-    @abstractmethod
     @property
+    @abstractmethod
     def qsub_command(self) -> str:
         raise NotImplementedError()
 
     def submit(self):
         subprocess.run(self.qsub_command)
+
+    @classmethod
+    def _without_py(cls, script_name: str) -> str:
+        if script_name.endswith(".py"):
+            return script_name[:-3]
+        else:
+            return script_name
 
 
 class SAJob(Job, ABC):

@@ -49,8 +49,7 @@ def main(n_words: int,
          corpus_name: str,
          model_name: str,
          radius: int,
-         distance_type: Optional[DistanceType],
-         length_factor: int):
+         distance_type: Optional[DistanceType]):
 
     corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -60,17 +59,15 @@ def main(n_words: int,
 
     if distributional_model.model_type.metatype == DistributionalSemanticModel.MetaType.ngram:
         assert isinstance(distributional_model, NgramModel)
-        lnm = LinguisticNgramNaïveModel(length_factor=length_factor,
-                                        distributional_model=distributional_model,
+        lnm = LinguisticNgramNaïveModel(distributional_model=distributional_model,
                                         n_words=n_words)
-        model_dirname = f"{distributional_model.name} {n_words:,} words, length {length_factor}"
+        model_dirname = f"{distributional_model.name} {n_words:,} words"
     else:
         assert isinstance(distributional_model, VectorSemanticModel)
         lnm = LinguisticVectorNaïveModel(distance_type=distance_type,
-                                         length_factor=length_factor,
                                          distributional_model=distributional_model,
                                          n_words=n_words)
-        model_dirname = f"{distributional_model.name} {distance_type.name} {n_words:,} words, length {length_factor}"
+        model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name}"
 
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
@@ -80,22 +77,19 @@ def main(n_words: int,
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
+    model_responses_path = path.join(response_dir, f"hits.csv")
 
     cp = CategoryProduction()
 
     # Record model details
     csv_comments = [
         f"Naïve linguistic model:",
-        f"\t        model = {distributional_model.name}"
+        f"\t        model = {distributional_model.name}",
+        f"\t        words = {n_words:_}",
     ]
     if distance_type is not None:
         csv_comments.append(f"\tdistance type = {distance_type.name}")
-    csv_comments.extend([
-        f"\t        words = {n_words:_}",
-        f"\tlength factor = {length_factor}",
-    ])
 
-    model_responses_path = path.join(response_dir, f"hits_{n_words:,}.csv")
     hits = []
     for category in cp.category_labels:
         logger.info(f"Checking hits for category \"{category}\"")
@@ -135,7 +129,6 @@ if __name__ == '__main__':
     parser.add_argument("-c", "--corpus_name", required=True, type=str)
     parser.add_argument("-m", "--model_name", required=True, type=str)
     parser.add_argument("-r", "--radius", required=True, type=int)
-    parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument('-d', "--distance_type", type=str, default=None)
 
     args = parser.parse_args()
@@ -144,6 +137,5 @@ if __name__ == '__main__':
          corpus_name=args.corpus_name,
          model_name=args.model_name,
          radius=args.radius,
-         length_factor=args.length_factor,
          distance_type=args.distance_type)
     logger.info("Done!")

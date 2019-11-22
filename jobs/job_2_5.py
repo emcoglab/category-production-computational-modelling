@@ -1,3 +1,5 @@
+from functools import partial
+
 from jobs.job import Job, NaïveLinguisticSpec
 
 
@@ -17,6 +19,13 @@ class Job_2_5(Job):
             script_number="2_5",
             script_name="2_5_naïve_linguistic.py",
             spec=spec)
+        assert isinstance(self.spec, NaïveLinguisticSpec)
+        self.main = partial(__import__(self.module_name).main,
+                            n_words=self.spec.n_words,
+                            corpus_name=self.spec.corpus_name,
+                            model_name=self.spec.model_name,
+                            radius=self.spec.model_radius,
+                            distance_type=self.spec.distance_type)
 
     @property
     def qsub_command(self) -> str:
