@@ -1,11 +1,12 @@
+import logging
 from dataclasses import dataclass
 
-from jobs.job import Job, Spec
+from jobs.job import Job, SASpec
 from ldm.utils.maths import DistanceType
 
 
 @dataclass
-class Spec_1_6(Spec):
+class Spec_1_6(SASpec):
     distance_type: DistanceType
     pruning_length: int
 
@@ -61,3 +62,17 @@ class Job_1_6(Job):
         cmd += f" --distance_type {self.spec.distance_type.name}"
         cmd += f" --pruning_length {self.spec.pruning_length}"
         return cmd
+
+
+logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_dateformat = "%Y-%m-%d %H:%M:%S"
+
+
+if __name__ == '__main__':
+    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
+    for pruning_length in range(20, 261, 20):
+        Job_1_6(Spec_1_6(pruning_length=pruning_length,
+                         distance_type=DistanceType.Minkowski3,
+                         length_factor=100)
+                ).submit()
