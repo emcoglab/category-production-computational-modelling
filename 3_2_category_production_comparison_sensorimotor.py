@@ -22,6 +22,7 @@ import argparse
 import logging
 import sys
 from os import path
+from pathlib import Path
 
 from numpy import nan, array
 from pandas import DataFrame
@@ -89,9 +90,11 @@ def compile_model_data(input_results_dir: str) -> DataFrame:
 
 
 def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_first_rank_freq: int):
+    input_results_path = Path(input_results_dir)
+    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
     save_item_level_data(main_data, path.join(Preferences.results_dir,
                                               f"Category production fit sensorimotor",
-                                              f"item-level data ({path.basename(input_results_dir)}).csv"))
+                                              f"item-level data ({model_identifier}).csv"))
 
     hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data,
                                                 ModelType.sensorimotor, conscious_access_threshold=None)
@@ -100,6 +103,7 @@ def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_f
 
     save_model_performance_stats(
         main_data,
+        model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
         **hitrate_stats,

@@ -104,7 +104,7 @@ def compile_model_data(input_results_dir_sensorimotor, input_results_dir_linguis
     main_data[MODEL_HIT] = main_data[f"{MODEL_HIT} sensorimotor"] | main_data[f"{MODEL_HIT} linguistic"]
 
     add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=ModelType.naïve_combined)
+    add_rfop_column(main_data, model_type=ModelType.combined_set_union)
     add_rmr_column(main_data)
 
     return main_data
@@ -124,7 +124,7 @@ def process_one_model_output(main_data: DataFrame,
         # f"{path.basename(input_results_dir_sensorimotor)}; {path.basename(input_results_dir_linguistic)}",
         "combined test",
         main_data,
-        ModelType.naïve_combined, conscious_access_threshold=None)
+        ModelType.combined_set_union, conscious_access_threshold=None)
 
 
 def add_predictor_column_sensorimotor_distance(main_data):

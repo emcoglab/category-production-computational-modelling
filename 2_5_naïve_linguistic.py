@@ -22,8 +22,9 @@ from typing import Optional
 
 from pandas import DataFrame
 
-from category_production.category_production import CategoryProduction
+from category_production.category_production import CategoryProduction, ColNames as CPColNames
 from cli.lookups import get_corpus_from_name, get_model_from_params
+from evaluation.column_names import MODEL_HIT
 from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel, VectorSemanticModel
@@ -37,12 +38,6 @@ from preferences import Preferences
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-
-# Results DataFrame column names
-CATEGORY = "Category"
-RESPONSE = "Response"
-HIT = "Hit"
 
 
 def main(n_words: int,
@@ -108,7 +103,7 @@ def main(n_words: int,
                 category, response, hit
             ))
 
-    hits_df = DataFrame(hits, columns=[CATEGORY, RESPONSE, HIT])
+    hits_df = DataFrame(hits, columns=[CPColNames.Category, CPColNames.Response, MODEL_HIT])
 
     with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
         # Write comments

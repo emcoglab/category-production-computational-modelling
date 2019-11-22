@@ -56,10 +56,12 @@ assert (TOTAL_CATEGORIES == len(CATEGORY_PRODUCTION.category_labels))
 
 class ModelType(Enum):
     """Represents the type of model being used in the comparison."""
+    naïve_sensorimotor = auto()
+    naïve_linguistic = auto()
     sensorimotor = auto()
     linguistic = auto()
     # Combining sensorimotor and linguistic in a naïve way; i.e. set union of activated items
-    naïve_combined = auto()
+    combined_set_union = auto()
     # Full tandem model
     tandem = auto()
 
@@ -237,7 +239,7 @@ def add_rfop_column(main_data, model_type: ModelType):
         specific_category_column = CPColNames.Category
     elif model_type == ModelType.sensorimotor:
         specific_category_column = CPColNames.CategorySensorimotor
-    elif model_type == ModelType.naïve_combined:
+    elif model_type == ModelType.combined_set_union:
         # We could use either here
         specific_category_column = CPColNames.Category
     else:
@@ -361,9 +363,13 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
     if model_type == ModelType.sensorimotor:
         figures_dir = "hitrates sensorimotor"
     elif model_type == ModelType.linguistic:
-        figures_dir = "hitrates"
-    elif model_type == ModelType.naïve_combined:
-        figures_dir = "hitrates naïve combined"
+        figures_dir = "hitrates linguistic"
+    elif model_type == ModelType.combined_set_union:
+        figures_dir = "hitrates combined set union"
+    elif model_type == ModelType.naïve_linguistic:
+        figures_dir = "hitrates naïve linguistic"
+    elif model_type == ModelType.naïve_sensorimotor:
+        figures_dir = "hitrates naïve sensorimotor"
     else:
         raise NotImplementedError()
 
@@ -386,12 +392,12 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
     pyplot.close()
 
 
-def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFrame, model_type: ModelType,
+def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFrame, model_type: ModelType,
                                 conscious_access_threshold: Optional[float]):
 
     hitrates_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
     # For FROP we will truncate the table at mean + 2SD (over categories) items
-    if model_type == ModelType.linguistic:
+    if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
         n_items_mean = (
             main_data[[CPColNames.Category, CPColNames.Response]]
             .groupby(CPColNames.Category)
@@ -402,7 +408,7 @@ def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFram
             .groupby(CPColNames.Category)
             .count()[CPColNames.Response]
             .std())
-    elif model_type == ModelType.sensorimotor:
+    elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
         n_items_mean = (
             main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
             .groupby(CPColNames.CategorySensorimotor)
@@ -426,18 +432,22 @@ def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFram
 
     # Save summary tables
     if model_type == ModelType.sensorimotor:
-        base_dir = path.join(Preferences.results_dir, f"Category production fit sensorimotor")
+        base_dir = path.join(Preferences.results_dir, "Category production fit sensorimotor")
     elif model_type == ModelType.linguistic:
         base_dir = path.join(Preferences.results_dir, f"Category production fit linguistic")
-    elif model_type == ModelType.naïve_combined:
-        base_dir = path.join(Preferences.results_dir, f"Category production fit naïve combined")
+    elif model_type == ModelType.combined_set_union:
+        base_dir = path.join(Preferences.results_dir, "Category production fit combined set union")
+    elif model_type == ModelType.naïve_sensorimotor:
+        base_dir = path.join(Preferences.results_dir, "Category production fit naïve sensorimotor")
+    elif model_type == ModelType.naïve_linguistic:
+        base_dir = path.join(Preferences.results_dir, "Category production fit naïve linguistic")
     else:
         raise NotImplementedError()
 
     if conscious_access_threshold is not None:
-        file_suffix = f"({model_results_basename}) CAT={conscious_access_threshold}"
+        file_suffix = f"({model_identifier_string}) CAT={conscious_access_threshold}"
     else:
-        file_suffix = f"({model_results_basename})"
+        file_suffix = f"({model_identifier_string})"
 
     hitrates_per_rfop.to_csv(path.join(base_dir,
                                        f"Production proportion per rank frequency of production {file_suffix}.csv"),
@@ -488,6 +498,7 @@ def save_hitrate_summary_tables(model_results_basename: str, main_data: DataFram
 
 def save_model_performance_stats(main_dataframe,
                                  results_dir,
+                                 model_identifier: str,
                                  min_first_rank_freq,
                                  hitrate_fit_rfop,
                                  hitrate_fit_rmr,
@@ -508,7 +519,7 @@ def save_model_performance_stats(main_dataframe,
     overall_stats_output_path = path.join(
         Preferences.results_dir,
         specific_output_dir,
-        f"model_effectiveness_overall ({path.basename(results_dir)}){filename_suffix}.csv")
+        f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
 
     model_spec = GraphPropagation.load_model_spec(results_dir)
     stats = {
@@ -529,6 +540,34 @@ def save_model_performance_stats(main_dataframe,
                                   # Make sure columns are in consistent order for stacking,
                                   # and make sure the model spec columns come first.
                                   columns=sorted(model_spec.keys()) + [CAT] + sorted(stats.keys()),
+                                  index=False)
+
+
+def save_naïve_model_performance_stats(results_dir,
+                                       hitrate_fit_rfop,
+                                       hitrate_fit_rmr,
+                                       model_type: ModelType):
+
+    if model_type == ModelType.naïve_sensorimotor:
+        specific_output_dir = "Category production fit naïve sensorimotor"
+    elif model_type == ModelType.naïve_linguistic:
+        specific_output_dir = "Category production fit naïve linguistic"
+    else:
+        raise NotImplementedError()
+    overall_stats_output_path = path.join(
+        Preferences.results_dir,
+        specific_output_dir,
+        f"model_effectiveness_overall ({path.basename(results_dir)}).csv")
+
+    stats = {
+        # hitrate stats
+        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
+        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
+    }
+    model_performance_data: DataFrame = DataFrame.from_records([stats])
+
+    model_performance_data.to_csv(overall_stats_output_path,
+                                  columns=sorted(stats.keys()),
                                   index=False)
 
 
