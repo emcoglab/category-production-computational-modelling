@@ -22,106 +22,52 @@ import argparse
 import logging
 import sys
 from os import path
-from pathlib import Path
 from typing import Optional
 
-from pandas import DataFrame
-
+from ldm.utils.logging import date_format, log_message
 from evaluation.category_production import get_n_words_from_path_linguistic, get_model_ttfas_for_category_linguistic, \
-    exclude_idiosyncratic_responses, add_predictor_column_model_hit, add_predictor_column_production_proportion, \
-    add_rfop_column, add_rmr_column, CATEGORY_PRODUCTION, add_predictor_column_ttfa, save_item_level_data, \
-    save_hitrate_summary_tables, save_model_performance_stats, drop_missing_data, \
-    get_firing_threshold_from_path_linguistic, ModelType, find_output_dirs
-from preferences import Preferences
+    add_model_predictor_columns, CATEGORY_PRODUCTION, get_firing_threshold_from_path_linguistic, ModelType, \
+    find_output_dirs, prepare_category_production_data, process_one_model_output
 
 logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(input_results_dir: str,
          min_first_rank_freq: int,
-         conscious_access_threshold: Optional[float] = None):
+         conscious_access_threshold: Optional[float] = None,
+         ):
 
     model_output_dirs = find_output_dirs(root_dir=input_results_dir)
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
+        main_data = prepare_category_production_data(ModelType.linguistic)
+
         if conscious_access_threshold is None:
-            # If no CAT provided, use the FT
-            this_conscious_access_threshold = get_firing_threshold_from_path_linguistic(model_output_dir)
-            logger.info(f"No CAT provided, using FT instead ({this_conscious_access_threshold})")
-        else:
-            this_conscious_access_threshold = conscious_access_threshold
-        main_data = compile_model_data(model_output_dir, this_conscious_access_threshold)
-        process_one_model_output(main_data, model_output_dir, this_conscious_access_threshold, min_first_rank_freq)
+            ft = get_firing_threshold_from_path_linguistic(model_output_dir)
+            logger.info(f"No CAT provided, using FT instead ({ft})")
+            conscious_access_threshold = ft
 
+        add_model_predictor_columns(main_data, model_type=ModelType.linguistic,
+                                    ttfas={
+                                        category: get_model_ttfas_for_category_linguistic(category, input_results_dir, get_n_words_from_path_linguistic(input_results_dir), conscious_access_threshold)
+                                        for category in CATEGORY_PRODUCTION.category_labels})
 
-def compile_model_data(input_results_dir: str, conscious_access_threshold) -> DataFrame:
-
-    n_words = get_n_words_from_path_linguistic(input_results_dir)
-
-    # Main dataframe holds category production data and model response data
-    main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
-
-    main_data.rename(columns={col_name: f"Precomputed {col_name}"
-                              for col_name in ['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI']},
-                     inplace=True)
-    main_data = exclude_idiosyncratic_responses(main_data)
-
-    add_predictor_column_ttfa(main_data,
-                              {category: get_model_ttfas_for_category_linguistic(category, input_results_dir, n_words, conscious_access_threshold)
-                               for category in CATEGORY_PRODUCTION.category_labels},
-                              model_type=ModelType.linguistic)
-    add_predictor_column_model_hit(main_data)
-
-    add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=ModelType.linguistic)
-    add_rmr_column(main_data)
-
-    return main_data
-
-
-def process_one_model_output(main_data: DataFrame,
-                             input_results_dir: str,
-                             conscious_access_threshold: float,
-                             min_first_rank_freq: int):
-    input_results_path = Path(input_results_dir)
-    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              "Category production fit linguistic",
-                                              f"item-level data"
-                                              f" ({model_identifier})"
-                                              f" CAT={conscious_access_threshold}.csv"))
-
-    hitrate_stats = save_hitrate_summary_tables(model_identifier, main_data, ModelType.linguistic,
-                                                conscious_access_threshold=conscious_access_threshold)
-
-    drop_missing_data(main_data, distance_column=None)
-
-    save_model_performance_stats(
-        main_data,
-        model_identifier=model_identifier,
-        results_dir=input_results_dir,
-        min_first_rank_freq=min_first_rank_freq,
-        **hitrate_stats,
-        model_type=ModelType.linguistic,
-        conscious_access_threshold=conscious_access_threshold,
-    )
+        process_one_model_output(main_data, ModelType.linguistic, model_output_dir, min_first_rank_freq, conscious_access_threshold)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("cat", type=float, nargs="?", default=None,
-                        help="The conscious-access threshold."
-                             " Omit to use CAT = firing threshold.")
     parser.add_argument("min_frf", type=int, nargs="?", default=1,
                         help="The minimum FRF required for zRT and FRF correlations."
                              " Omit to use 1.")
+    parser.add_argument("cat", type=float, nargs="?", default=None,
+                        help="The conscious-access threshold."
+                             " Omit to use CAT = firing threshold.")
     args = parser.parse_args()
 
     main(args.path, args.min_frf, args.cat)

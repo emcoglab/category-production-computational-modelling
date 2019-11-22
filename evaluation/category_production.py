@@ -23,6 +23,7 @@ from enum import Enum, auto
 from glob import glob
 from math import floor
 from os import path, listdir
+from pathlib import Path
 from typing import DefaultDict, Dict, Set, List, Optional
 
 from matplotlib import pyplot
@@ -218,12 +219,6 @@ def exclude_idiosyncratic_responses(main_data) -> DataFrame:
     return main_data[main_data[CPColNames.ProductionFrequency] > 1]
 
 
-def add_predictor_column_model_hit(main_data):
-    """Mutates `main_data`."""
-    logger.info("Adding model hit column")
-    main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[TTFA]), axis=1)
-
-
 def add_predictor_column_production_proportion(main_data):
     """Mutates `main_data`."""
     logger.info("Adding production proportion column")
@@ -261,7 +256,7 @@ def add_rmr_column(main_data):
     main_data[ROUNDED_MEAN_RANK] = main_data.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
 
 
-def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
+def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
     """Mutates `main_data`."""
     logger.info("Adding TTFA column")
 
@@ -307,6 +302,9 @@ def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], model
                 return nan
 
     main_data[TTFA] = main_data.apply(get_min_ttfa_for_multiword_responses, axis=1)
+
+    logger.info("Adding model hit column")
+    main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[TTFA]), axis=1)
 
 
 def save_item_level_data(main_data: DataFrame, save_path):
@@ -488,22 +486,50 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
 
     # endregion
 
-    hitrate_stats = {
-        "hitrate_fit_rfop": hitrate_fit_rfop,
-        "hitrate_fit_rmr": hitrate_fit_rmr,
-    }
+    return hitrate_fit_rfop, hitrate_fit_rmr
 
-    return hitrate_stats
+
+def process_one_model_output(main_data: DataFrame,
+                             model_type: ModelType,
+                             input_results_dir: str,
+                             min_first_rank_freq: Optional[int],
+                             conscious_access_threshold: Optional[float],
+                             ):
+    assert model_type in [ModelType.linguistic, ModelType.sensorimotor]
+    input_results_path = Path(input_results_dir)
+    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
+    output_dir = f"Category production fit {model_type.name}"
+    save_item_level_data(main_data, path.join(Preferences.results_dir,
+                                              output_dir,
+                                              f"item-level data ({model_identifier})"
+                                              + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
+                                              ".csv"))
+
+    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, conscious_access_threshold=conscious_access_threshold)
+
+    drop_missing_data(main_data, {TTFA: int})
+
+    save_model_performance_stats(
+        main_data,
+        model_identifier=model_identifier,
+        results_dir=input_results_dir,
+        min_first_rank_freq=min_first_rank_freq,
+        hitrate_fit_rfop=hitrate_fit_rfop,
+        hitrate_fit_rmr=hitrate_fit_rmr,
+        model_type=model_type,
+        conscious_access_threshold=conscious_access_threshold,
+    )
 
 
 def save_model_performance_stats(main_dataframe,
                                  results_dir,
                                  model_identifier: str,
-                                 min_first_rank_freq,
+                                 min_first_rank_freq: Optional[int],
                                  hitrate_fit_rfop,
                                  hitrate_fit_rmr,
                                  model_type: ModelType,
-                                 conscious_access_threshold: Optional[float]):
+                                 conscious_access_threshold: Optional[float],
+                                 ):
 
     # Build output dir
     if conscious_access_threshold is not None:
@@ -514,41 +540,7 @@ def save_model_performance_stats(main_dataframe,
         specific_output_dir = "Category production fit sensorimotor"
     elif model_type == ModelType.linguistic:
         specific_output_dir = "Category production fit linguistic"
-    else:
-        raise NotImplementedError()
-    overall_stats_output_path = path.join(
-        Preferences.results_dir,
-        specific_output_dir,
-        f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
-
-    model_spec = GraphPropagation.load_model_spec(results_dir)
-    stats = {
-        **get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type),
-        # hitrate stats
-        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
-        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
-    }
-    df_dict: Dict = {
-        **model_spec,
-        **stats,
-    }
-    if conscious_access_threshold is not None:
-        df_dict[CAT] = conscious_access_threshold
-    model_performance_data: DataFrame = DataFrame.from_records([df_dict])
-
-    model_performance_data.to_csv(overall_stats_output_path,
-                                  # Make sure columns are in consistent order for stacking,
-                                  # and make sure the model spec columns come first.
-                                  columns=sorted(model_spec.keys()) + [CAT] + sorted(stats.keys()),
-                                  index=False)
-
-
-def save_naïve_model_performance_stats(results_dir,
-                                       hitrate_fit_rfop,
-                                       hitrate_fit_rmr,
-                                       model_type: ModelType):
-
-    if model_type == ModelType.naïve_sensorimotor:
+    elif model_type == ModelType.naïve_sensorimotor:
         specific_output_dir = "Category production fit naïve sensorimotor"
     elif model_type == ModelType.naïve_linguistic:
         specific_output_dir = "Category production fit naïve linguistic"
@@ -557,17 +549,28 @@ def save_naïve_model_performance_stats(results_dir,
     overall_stats_output_path = path.join(
         Preferences.results_dir,
         specific_output_dir,
-        f"model_effectiveness_overall ({path.basename(results_dir)}).csv")
+        f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
 
-    stats = {
-        # hitrate stats
+    df_dict = dict()
+
+    if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
+        # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
+        df_dict.update(GraphPropagation.load_model_spec(results_dir))
+        df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
+
+    df_dict.update({
         "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
         "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
-    }
-    model_performance_data: DataFrame = DataFrame.from_records([stats])
+    })
 
+    if conscious_access_threshold is not None:
+        df_dict[CAT] = conscious_access_threshold
+
+    model_performance_data: DataFrame = DataFrame.from_records([df_dict])
     model_performance_data.to_csv(overall_stats_output_path,
-                                  columns=sorted(stats.keys()),
+                                  # As of Python 3.6, dictionary keys are ordered by insertion,
+                                  # so we should automatically get a consistent order for stacking,
+                                  columns=list(df_dict.keys()) + [CAT],
                                   index=False)
 
 
@@ -611,23 +614,20 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, model_type
     }
 
 
-def drop_missing_data(main_data: DataFrame, distance_column: Optional[str]):
+def drop_missing_data(main_data: DataFrame, type_dict: Dict):
     """
     Mutates `main_data`.
 
     Set `distance_column` to None to skip it.
     :param main_data:
-    :param distance_column:
+    :param type_dict:
+        column_name -> column_datatype
     :return:
     """
-    if distance_column is not None:
-        main_data.dropna(inplace=True, how='any', subset=[TTFA, distance_column])
-    else:
-        main_data.dropna(inplace=True, how='any', subset=[TTFA])
-    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
-    main_data[TTFA] = main_data[TTFA].astype(int)
-    if distance_column is not None:
-        main_data[distance_column] = main_data[distance_column].astype(float)
+    main_data.dropna(inplace=True, how='any', subset=list(type_dict.keys()))
+    # Now we can convert columns to appropriate types as there won't be null values
+    for c, t in type_dict.items():
+        main_data[c] = main_data[c].astype(t)
 
 
 def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
@@ -704,3 +704,20 @@ def find_output_dirs(root_dir: str):
         for model_spec_location in glob(
             path.join(root_dir, "**", " model_spec.yaml"), recursive=True)
     ]
+
+
+def prepare_category_production_data(model_type: ModelType) -> DataFrame:
+    # Main dataframe holds category production data and model response data
+    main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
+
+    # Some distances have been precomputed, so we label them as such
+    main_data.rename(columns={col_name: f"Precomputed {col_name}"
+                              for col_name in ['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI']},
+                     inplace=True)
+    main_data = exclude_idiosyncratic_responses(main_data)
+
+    add_predictor_column_production_proportion(main_data)
+    add_rfop_column(main_data, model_type=model_type)
+    add_rmr_column(main_data)
+
+    return main_data

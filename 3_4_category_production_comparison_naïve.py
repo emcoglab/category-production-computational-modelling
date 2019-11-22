@@ -17,82 +17,38 @@ caiwingfield.net
 2018
 ---------------------------
 """
-
 import argparse
 import logging
 import sys
 from os import path
-from pathlib import Path
 
 from pandas import DataFrame, read_csv
 
+from ldm.utils.logging import date_format, log_message
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import ModelType, CATEGORY_PRODUCTION, add_rfop_column, add_rmr_column, \
-    exclude_idiosyncratic_responses, add_predictor_column_production_proportion, save_item_level_data, \
-    save_hitrate_summary_tables, save_naïve_model_performance_stats
-from preferences import Preferences
+from evaluation.category_production import ModelType, prepare_category_production_data, process_one_model_output
 
 logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(input_results_dir: str, model_type: ModelType):
     logger.info(path.basename(input_results_dir))
-
-    main_data = compile_model_data(input_results_dir, model_type)
-    process_one_model_output(main_data, input_results_dir, model_type)
-
-
-def compile_model_data(input_results_dir, model_type: ModelType) -> DataFrame:
-
     assert model_type in [ModelType.naïve_linguistic, ModelType.naïve_sensorimotor]
 
-    # Main dataframe holds category production data and model response data
-    main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
+    main_data = prepare_category_production_data(model_type)
 
-    main_data.rename(columns={col_name: f"Precomputed {col_name}"
-                              for col_name in ['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI']},
-                     inplace=True)
-    main_data = exclude_idiosyncratic_responses(main_data)
+    # Add model hit column
+    main_data = main_data.merge(get_naïve_model_hits(input_results_dir), on=[CPColNames.Category, CPColNames.Response], how="left")
 
-    add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=model_type)
-    add_rmr_column(main_data)
-
-    # Add predictor column naïve model hit:
-    model_hits: DataFrame = get_naïve_model_hits(input_results_dir)
-    main_data = main_data.merge(model_hits, on=[CPColNames.Category, CPColNames.Response], how="left")
-
-    return main_data
+    process_one_model_output(main_data, model_type, input_results_dir, min_first_rank_freq=None, conscious_access_threshold=None)
 
 
 def get_naïve_model_hits(input_results_dir) -> DataFrame:
     return read_csv(path.join(input_results_dir, "hits.csv"), header=0, comment="#", index_col=False)
 
 
-def process_one_model_output(main_data: DataFrame,
-                             input_results_dir: str,
-                             model_type: ModelType):
-    input_results_path = Path(input_results_dir)
-    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              "Category production fit naïve " + ("linguistic" if model_type == ModelType.naïve_linguistic else "sensorimotor"),
-                                              f"item-level data"
-                                              f" ({model_identifier}).csv"))
-
-    hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data,
-                                                model_type, None)
-
-    save_naïve_model_performance_stats(
-        results_dir=input_results_dir,
-        **hitrate_stats,
-        model_type=model_type,
-    )
-
-
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
