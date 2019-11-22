@@ -122,7 +122,7 @@ def main(distance_type_name: str,
         sc.reset()
 
         # Record topology
-        csv_comments.append(f"Running sensorimotor spreading activation using parameters:")
+        csv_comments.append(f"Running sensorimotor spreading activation (v{VERSION}) using parameters:")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {max_sphere_radius}")
         csv_comments.append(f"\t WMB capacity = {buffer_capacity}")

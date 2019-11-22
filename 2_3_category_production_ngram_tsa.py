@@ -117,7 +117,7 @@ def main(n_words: int,
         lc.reset()
 
         # Record topology
-        csv_comments.append(f"Running spreading activation using parameters:")
+        csv_comments.append(f"Running spreading activation (v{VERSION}) using parameters:")
         csv_comments.append(f"\t        model = {distributional_model.name}")
         csv_comments.append(f"\t        words = {n_words:_}")
         csv_comments.append(f"\tlength factor = {length_factor}")

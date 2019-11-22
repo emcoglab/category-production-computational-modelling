@@ -121,7 +121,7 @@ def main(n_words: int,
 
         logger.info(f"Running spreading activation for category {category_label}")
 
-        csv_comments.append(f"Running spreading activation using parameters:")
+        csv_comments.append(f"Running spreading activation (v{VERSION}) using parameters:")
         csv_comments.append(f"\t      words = {n_words:_}")
         csv_comments.append(f"\tgranularity = {length_factor:_}")
         if prune_importance is not None:
