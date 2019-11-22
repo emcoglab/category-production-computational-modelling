@@ -507,7 +507,7 @@ def process_one_model_output(main_data: DataFrame,
 
     hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, conscious_access_threshold=conscious_access_threshold)
 
-    drop_missing_data(main_data, {TTFA: int})
+    drop_missing_data_to_add_types(main_data, {TTFA: int})
 
     save_model_performance_stats(
         main_data,
@@ -614,7 +614,7 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, model_type
     }
 
 
-def drop_missing_data(main_data: DataFrame, type_dict: Dict):
+def drop_missing_data_to_add_types(main_data: DataFrame, type_dict: Dict):
     """
     Mutates `main_data`.
 
