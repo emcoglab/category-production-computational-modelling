@@ -55,7 +55,7 @@ def compile_model_data(input_results_dir) -> DataFrame:
     main_data = exclude_idiosyncratic_responses(main_data)
 
     add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=ModelType.naïve_linguistic)
+    add_rfop_column(main_data, model_type=ModelType.naïve_sensorimotor)
     add_rmr_column(main_data)
 
     # Add predictor column naïve model hit:
@@ -74,17 +74,17 @@ def process_one_model_output(main_data: DataFrame,
     input_results_path = Path(input_results_dir)
     model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
     save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              "Category production fit naïve linguistic",
+                                              "Category production fit naïve sensorimotor",
                                               f"item-level data"
                                               f" ({model_identifier}).csv"))
 
     hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data,
-                                                ModelType.naïve_linguistic, None)
+                                                ModelType.naïve_sensorimotor, None)
 
     save_naïve_model_performance_stats(
         results_dir=input_results_dir,
         **hitrate_stats,
-        model_type=ModelType.naïve_linguistic,
+        model_type=ModelType.naïve_sensorimotor,
     )
 
 
