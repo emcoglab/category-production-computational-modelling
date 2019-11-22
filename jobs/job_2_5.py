@@ -20,6 +20,7 @@ class Job_2_5(Job):
             script_name="2_5_naïve_linguistic.py",
             spec=spec)
         assert isinstance(self.spec, NaïveLinguisticSpec)
+        # For running locally
         self.main = partial(__import__(self.module_name).main,
                             n_words=self.spec.n_words,
                             corpus_name=self.spec.corpus_name,
