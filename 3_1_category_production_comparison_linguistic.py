@@ -90,20 +90,22 @@ def process_one_model_output(main_data: DataFrame,
                              input_results_dir: str,
                              conscious_access_threshold: float,
                              min_first_rank_freq: int):
-    input_results_dir = Path(input_results_dir)
+    input_results_path = Path(input_results_dir)
+    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
     save_item_level_data(main_data, path.join(Preferences.results_dir,
                                               "Category production fit linguistic",
                                               f"item-level data"
-                                              f" ({input_results_dir.parent.name} {input_results_dir.name})"
+                                              f" ({model_identifier})"
                                               f" CAT={conscious_access_threshold}.csv"))
 
-    hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data, ModelType.linguistic,
+    hitrate_stats = save_hitrate_summary_tables(model_identifier, main_data, ModelType.linguistic,
                                                 conscious_access_threshold=conscious_access_threshold)
 
     drop_missing_data(main_data, distance_column=None)
 
     save_model_performance_stats(
         main_data,
+        model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
         **hitrate_stats,

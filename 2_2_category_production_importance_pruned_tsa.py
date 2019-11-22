@@ -31,7 +31,8 @@ from ldm.utils.maths import DistanceType
 from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
-from model.linguistic_component import EdgePruningType, LinguisticComponent
+from model.linguistic_component import LinguisticComponent
+from model.graph import EdgePruningType
 from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
@@ -133,8 +134,6 @@ def main(n_words: int,
         else:
             csv_comments.append(f"\t    connected = no")
             csv_comments.append(f"\t      orphans = {'yes' if lc.graph.has_orphaned_nodes() else 'no'}")
-
-        # Do the spreading activation
 
         # Do the spreading activation
 

@@ -15,7 +15,7 @@ caiwingfield.net
 ---------------------------
 """
 import subprocess
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
@@ -23,17 +23,56 @@ from ldm.utils.maths import DistanceType
 
 
 @dataclass
-class Spec(metaclass=ABCMeta):
-    length_factor: int
+class Spec(ABC):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def shorthand(self) -> str:
-        raise NotImplementedError
+        raise NotImplementedError()
 
 
 @dataclass
-class SensorimotorSASpec(Spec):
+class NaïveSpec(Spec, ABC):
+    pass
+
+
+@dataclass
+class NaïveLinguisticSpec(NaïveSpec):
+    n_words: int
+    model_name: str
+    model_radius: int
+    corpus_name: str
+    distance_type: Optional[DistanceType] = None
+
+    @property
+    def shorthand(self) -> str:
+        if self.distance_type is None:
+            return f"{self.model_name}_" \
+                   f"r{self.model_radius}" \
+                   f"{self.n_words}"
+        else:
+            return f"{self.model_name}_" \
+                   f"r{self.model_radius}" \
+                   f"{self.distance_type.name}_" \
+                   f"{self.n_words}"
+
+
+@dataclass
+class NaïveSensorimotorSpec(NaïveSpec):
+    distance_type: DistanceType
+
+    @property
+    def shorthand(self) -> str:
+        return f"{self.distance_type.name}"
+
+
+@dataclass
+class SASpec(Spec, ABC):
+    length_factor: int
+
+
+@dataclass
+class SensorimotorSASpec(SASpec):
     max_radius: int
     sigma: float
     median: int
@@ -55,7 +94,7 @@ class SensorimotorSASpec(Spec):
 
 
 @dataclass
-class LinguisticSASpec(Spec):
+class LinguisticSASpec(SASpec):
     graph_size: int
     firing_threshold: float
     model_name: str
@@ -76,7 +115,7 @@ class LinguisticSASpec(Spec):
                f"pr{self.pruning}"
 
 
-class Job(metaclass=ABCMeta):
+class Job(ABC):
     _python_location = "/Users/cai/Applications/miniconda3/bin/python"
     _queue = "serial"
 
@@ -88,22 +127,30 @@ class Job(metaclass=ABCMeta):
         self._number: str = script_number
         self.short_name: str = "j" + script_number.replace("_", "")
         self.script_name: str = "../" + script_name
+        self.module_name: str = Job._without_py(script_name)
         self.spec = spec
 
     @property
     def name(self) -> str:
         return f"{self.short_name}{self.spec.shorthand}"
 
-    @abstractmethod
     @property
+    @abstractmethod
     def qsub_command(self) -> str:
         raise NotImplementedError()
 
     def submit(self):
         subprocess.run(self.qsub_command)
 
+    @classmethod
+    def _without_py(cls, script_name: str) -> str:
+        if script_name.endswith(".py"):
+            return script_name[:-3]
+        else:
+            return script_name
 
-class SAJob(Job, metaclass=ABCMeta):
+
+class SAJob(Job, ABC):
     def __init__(self,
                  script_number: str,
                  script_name: str,
@@ -118,13 +165,13 @@ class SAJob(Job, metaclass=ABCMeta):
         self.bailout: int = bailout
 
 
-class SensorimotorSAJob(SAJob, metaclass=ABCMeta):
+class SensorimotorSAJob(SAJob, ABC):
     def __init__(self, *args, **kwargs):
         self.spec: SensorimotorSASpec
         super().__init__(*args, **kwargs)
 
 
-class LinguisticSAJob(SAJob, metaclass=ABCMeta):
+class LinguisticSAJob(SAJob, ABC):
     def __init__(self, *args, **kwargs):
         self.spec: LinguisticSASpec
         super().__init__(*args, **kwargs)
