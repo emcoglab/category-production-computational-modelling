@@ -48,16 +48,12 @@ distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
 def main(input_results_dir: str,
-         single_model: bool,
          min_first_rank_freq: int = None):
 
     # Set defaults
     min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
 
-    if single_model:
-        model_output_dirs = [input_results_dir]
-    else:
-        model_output_dirs = find_output_dirs(root_dir=input_results_dir)
+    model_output_dirs = find_output_dirs(root_dir=input_results_dir)
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
@@ -133,13 +129,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("--single-model", action="store_true",
-                        help="If specified, `path` will be interpreted to be the dir for a single model's output; "
-                             "otherwise `path` will be interpreted to contain many models' output dirs.")
     parser.add_argument("min_frf", type=int, nargs="?", default=None,
                         help="The minimum FRF required for zRT and FRF correlations.")
     args = parser.parse_args()
 
-    main(args.path, args.single_model, args.min_frf)
+    main(args.path, args.min_frf)
 
     logger.info("Done!")

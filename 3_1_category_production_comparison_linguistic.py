@@ -40,14 +40,10 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(input_results_dir: str,
-         single_model: bool,
          min_first_rank_freq: int,
          conscious_access_threshold: Optional[float] = None):
 
-    if single_model:
-        model_output_dirs = [input_results_dir]
-    else:
-        model_output_dirs = find_output_dirs(root_dir=input_results_dir)
+    model_output_dirs = find_output_dirs(root_dir=input_results_dir)
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
@@ -120,9 +116,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("--single-model", action="store_true",
-                        help="If specified, `path` will be interpreted to be the dir for a single model's output; "
-                             "otherwise `path` will be interpreted to contain many models' output dirs.")
     parser.add_argument("cat", type=float, nargs="?", default=None,
                         help="The conscious-access threshold."
                              " Omit to use CAT = firing threshold.")
@@ -131,6 +124,6 @@ if __name__ == '__main__':
                              " Omit to use 1.")
     args = parser.parse_args()
 
-    main(args.path, args.single_model, args.min_frf, args.cat)
+    main(args.path, args.min_frf, args.cat)
 
     logger.info("Done!")
