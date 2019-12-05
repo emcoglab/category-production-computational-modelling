@@ -43,7 +43,7 @@ def main(input_results_dir: str,
 
         add_model_predictor_columns(main_data, model_type=ModelType.sensorimotor,
                                     ttfas={
-                                        category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
+                                        category: get_model_ttfas_for_category_sensorimotor(category, model_output_dir)
                                         for category in CATEGORY_PRODUCTION.category_labels_sensorimotor})
 
         process_one_model_output(main_data, ModelType.sensorimotor, model_output_dir, min_first_rank_freq, None)
