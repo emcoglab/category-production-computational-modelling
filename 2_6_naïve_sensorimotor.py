@@ -66,7 +66,7 @@ def main(distance_type: Optional[DistanceType]):
             category_words = [category]
         else:
             category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
-        for response in cp.responses_for_category(category, use_sensorimotor=True):
+        for response in cp.responses_for_category(category, use_sensorimotor=True, force_unique=True):
             try:
                 # Hit if hit for any category word
                 hit = any(snm.is_hit(c, response) for c in category_words)
