@@ -39,10 +39,11 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def main(distance_type: Optional[DistanceType]):
 
     snm = SensorimotorNaïveModelComponent(distance_type=distance_type)
-
+    model_dirname = distance_type.name
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve sensorimotor {VERSION}")
+                             f"Naïve sensorimotor {VERSION}",
+                             model_dirname)
 
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -57,7 +58,7 @@ def main(distance_type: Optional[DistanceType]):
         f"\tdistance type = {distance_type.name}",
     ]
 
-    model_responses_path = path.join(response_dir, f"hits_{distance_type.name}.csv")
+    model_responses_path = path.join(response_dir, "hits.csv")
     hits = []
     for i, category in enumerate(cp.category_labels_sensorimotor, start=1):
         logger.info(f"Checking hits for category \"{category}\" ({i}/{len(cp.category_labels_sensorimotor)})")
@@ -76,7 +77,7 @@ def main(distance_type: Optional[DistanceType]):
                 category, response, hit
             ))
 
-    hits_df = DataFrame(hits, columns=[CPColNames.Category, CPColNames.Response, MODEL_HIT])
+    hits_df = DataFrame(hits, columns=[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor, MODEL_HIT])
 
     with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
         # Write comments

@@ -26,7 +26,7 @@ from pandas import DataFrame, read_csv
 
 from ldm.utils.logging import date_format, log_message
 from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import ModelType, prepare_category_production_data, process_one_model_output
+from evaluation.category_production import ModelType, prepare_category_production_data, process_one_model_output_naïve
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,16 @@ def main(input_results_dir: str, model_type: ModelType):
     main_data = prepare_category_production_data(model_type)
 
     # Add model hit column
-    main_data = main_data.merge(get_naïve_model_hits(input_results_dir), on=[CPColNames.Category, CPColNames.Response], how="left")
+    model_hits: DataFrame = get_naïve_model_hits(input_results_dir)
+    main_data = main_data.merge(model_hits,
+                                # Category/Response column names depend on model type
+                                # We need to join on the right ones so it matches up compared to
+                                on=([CPColNames.Category, CPColNames.Response]
+                                    if model_type == ModelType.naïve_linguistic
+                                    else [CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]),
+                                how="left")
 
-    process_one_model_output(main_data, model_type, input_results_dir, min_first_rank_freq=None, conscious_access_threshold=None)
+    process_one_model_output_naïve(main_data, model_type, input_results_dir, min_first_rank_freq=None)
 
 
 def get_naïve_model_hits(input_results_dir) -> DataFrame:

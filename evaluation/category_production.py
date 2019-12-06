@@ -66,6 +66,10 @@ class ModelType(Enum):
     # Full tandem model
     tandem = auto()
 
+    @property
+    def name(self) -> str:
+        return super(ModelType, self).name.replace("_", " ")
+
 
 class ParticipantSummaryType(Enum):
     """Represents a way to summarise participant data."""
@@ -234,9 +238,9 @@ def add_predictor_column_production_proportion(main_data):
 def add_rfop_column(main_data, model_type: ModelType):
     """Mutates `main_data`."""
     logger.info("Adding RFoP column")
-    if model_type == ModelType.linguistic:
+    if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
         specific_category_column = CPColNames.Category
-    elif model_type == ModelType.sensorimotor:
+    elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
         specific_category_column = CPColNames.CategorySensorimotor
     elif model_type == ModelType.combined_set_union:
         # We could use either here
@@ -527,6 +531,34 @@ def process_one_model_output(main_data: DataFrame,
     )
 
 
+def process_one_model_output_naïve(main_data: DataFrame,
+                                   model_type: ModelType,
+                                   input_results_dir: str,
+                                   min_first_rank_freq: Optional[int],
+                                   ):
+    assert model_type in [ModelType.naïve_linguistic, ModelType.naïve_sensorimotor]
+    input_results_path = Path(input_results_dir)
+    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
+    output_dir = f"Category production fit {model_type.name}"
+    save_item_level_data(main_data, path.join(Preferences.results_dir,
+                                              output_dir,
+                                              f"item-level data ({model_identifier}).csv"))
+
+    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type,
+                                                                    None)
+
+    save_model_performance_stats(
+        main_data,
+        model_identifier=model_identifier,
+        results_dir=input_results_dir,
+        min_first_rank_freq=min_first_rank_freq,
+        hitrate_fit_rfop=hitrate_fit_rfop,
+        hitrate_fit_rmr=hitrate_fit_rmr,
+        model_type=model_type,
+        conscious_access_threshold=None,
+    )
+
+
 def save_model_performance_stats(main_dataframe,
                                  results_dir,
                                  model_identifier: str,
@@ -690,12 +722,14 @@ def get_summary_table(main_dataframe, groupby_column):
     df[MODEL_HITRATE_PRODUCIBLE] = (
         main_dataframe[[groupby_column, MODEL_HIT]].astype(float)
         .groupby(groupby_column)
-        .mean()[MODEL_HIT])
+        .mean()[MODEL_HIT]
+    )
     df[MODEL_HITRATE_ALL] = (
         main_dataframe[[groupby_column, MODEL_HIT]].astype(float)
         .groupby(groupby_column)
         .sum()[MODEL_HIT]
-        / TOTAL_CATEGORIES)
+        / TOTAL_CATEGORIES
+    )
 
     # Forget rows with nans
     df = df.dropna().reset_index()
