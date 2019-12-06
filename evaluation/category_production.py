@@ -179,14 +179,18 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     try:
         model_responses_path = path.join(results_dir, f"responses_{category}.csv")
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
+            # TODO: should have unified csv i/o code to ensure datatypes are kept consistent
+            #  this doesn't actually affect the results, but it would make text files smaller and cleaner to skip the
+            #  ".00000"s on fields which should be ints, etc.
+            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False,
+                                                  dtype={ITEM_ENTERED_BUFFER: bool, TICK_ON_WHICH_ACTIVATED: int})
 
-        in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True]\
+        in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-        ttfas: Dict = in_buffer_data\
-            .groupby(RESPONSE)\
-            .first()[[TICK_ON_WHICH_ACTIVATED]]\
+        ttfas: Dict = in_buffer_data \
+            .groupby(RESPONSE) \
+            .first()[[TICK_ON_WHICH_ACTIVATED]] \
             .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
         return defaultdict(lambda: nan, ttfas)
@@ -258,6 +262,7 @@ def add_rmr_column(main_data):
 
 def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
     """Mutates `main_data`."""
+    # TODO: this function's signature is a bit of a mess... the ttfas dict should probably be built in here
     logger.info("Adding TTFA column")
 
     def get_min_ttfa_for_multiword_responses(row) -> int:
@@ -505,7 +510,8 @@ def process_one_model_output(main_data: DataFrame,
                                               + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
                                               ".csv"))
 
-    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, conscious_access_threshold=conscious_access_threshold)
+    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type,
+                                                                    conscious_access_threshold)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -616,13 +622,14 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, model_type
 
 def drop_missing_data_to_add_types(main_data: DataFrame, type_dict: Dict):
     """
-    Mutates `main_data`.
+    Drops rows of `main_data` with missing data in columns given by the keys of `type_dict`, so that the datatypes from
+    values of `type_dict` can be successfully applied.
 
-    Set `distance_column` to None to skip it.
     :param main_data:
     :param type_dict:
         column_name -> column_datatype
     :return:
+    :side effects: Mutates `main_data`.
     """
     main_data.dropna(inplace=True, how='any', subset=list(type_dict.keys()))
     # Now we can convert columns to appropriate types as there won't be null values
@@ -712,7 +719,11 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
 
     # Some distances have been precomputed, so we label them as such
     main_data.rename(columns={col_name: f"Precomputed {col_name}"
-                              for col_name in ['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI']},
+                              for col_name in [
+                                  'Sensorimotor.distance.cosine.additive',
+                                  'Sensorimotor.distance.Minkowski.3.additive',
+                                  'Linguistic.PPMI',
+                              ]},
                      inplace=True)
     main_data = exclude_idiosyncratic_responses(main_data)
 

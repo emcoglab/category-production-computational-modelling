@@ -40,11 +40,11 @@ def main(input_results_dir: str,
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
         main_data = prepare_category_production_data(ModelType.sensorimotor)
-
-        add_model_predictor_columns(main_data, model_type=ModelType.sensorimotor,
-                                    ttfas={
-                                        category: get_model_ttfas_for_category_sensorimotor(category, model_output_dir)
-                                        for category in CATEGORY_PRODUCTION.category_labels_sensorimotor})
+        ttfas = {
+            category: get_model_ttfas_for_category_sensorimotor(category, model_output_dir)
+            for category in CATEGORY_PRODUCTION.category_labels_sensorimotor
+        }
+        add_model_predictor_columns(main_data, ttfas=ttfas, model_type=ModelType.sensorimotor)
 
         process_one_model_output(main_data, ModelType.sensorimotor, model_output_dir, min_first_rank_freq, None)
 
