@@ -53,7 +53,7 @@ def main(distance_type: Optional[DistanceType]):
 
     # Record model details
     csv_comments = [
-        f"Naïve linguistic model:",
+        f"Naïve sensorimotor model:",
         f"\t        model = sensorimotor",
         f"\tdistance type = {distance_type.name}",
     ]

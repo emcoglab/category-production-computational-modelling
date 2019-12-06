@@ -544,8 +544,7 @@ def process_one_model_output_naïve(main_data: DataFrame,
                                               output_dir,
                                               f"item-level data ({model_identifier}).csv"))
 
-    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type,
-                                                                    None)
+    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, None)
 
     save_model_performance_stats(
         main_data,
