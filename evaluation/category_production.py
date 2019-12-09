@@ -492,6 +492,18 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 fig_name=f"hitrate per RMR {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
+    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR (producible)",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
+    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR (all)",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.individual_hitrates_all)
 
     # endregion
 
