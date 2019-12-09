@@ -235,27 +235,34 @@ def add_predictor_column_production_proportion(main_data):
     main_data[PRODUCTION_PROPORTION] = main_data.apply(lambda row: row[CPColNames.ProductionFrequency] / PARTICIPANTS_PER_CATEGORY, axis=1)
 
 
-def add_rfop_column(main_data, model_type: ModelType):
-    """Mutates `main_data`."""
-    logger.info("Adding RFoP column")
+def category_response_col_names_for_model_type(model_type):
     if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
-        specific_category_column = CPColNames.Category
+        c, r = CPColNames.Category, CPColNames.Response
     elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
-        specific_category_column = CPColNames.CategorySensorimotor
+        c, r = CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor
     elif model_type == ModelType.combined_set_union:
         # We could use either here
-        specific_category_column = CPColNames.Category
+        c, r = CPColNames.Category, CPColNames.Response
     else:
         raise NotImplementedError()
-    main_data[RANK_FREQUENCY_OF_PRODUCTION] = (
+    return c, r
+
+
+def add_rpf_column(main_data: DataFrame, model_type: ModelType):
+    """Mutates `main_data`."""
+    logger.info("Adding RPF column")
+    specific_category_column, _ = category_response_col_names_for_model_type(model_type)
+    main_data[RANKED_PRODUCTION_FREQUENCY] = (
         main_data
         # Within each category
         .groupby(specific_category_column)
         # Rank the responses according to production frequency
         [CPColNames.ProductionFrequency]
+        # Descending, so largest production frequency is lowest rank
         .rank(ascending=False,
               # For ties, order alphabetically (i.e. pseudorandomly (?))
-              method='first'))
+              method='first')
+    )
 
 
 def add_rmr_column(main_data):
@@ -275,14 +282,8 @@ def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], mod
         multiple norms terms.
         """
 
-        if model_type == ModelType.sensorimotor:
-            c = row[CPColNames.CategorySensorimotor]
-            r = row[CPColNames.ResponseSensorimotor]
-        elif model_type == ModelType.linguistic:
-            c = row[CPColNames.Category]
-            r = row[CPColNames.Response]
-        else:
-            raise NotImplementedError()
+        category_column, response_column = category_response_col_names_for_model_type(model_type)
+        c, r = row[category_column], row[response_column]
 
         # If the category is not found in the dictionary, it was not accessed by the model so no TTFA will be present
         # for any response.
@@ -402,39 +403,26 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
 def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFrame, model_type: ModelType,
                                 conscious_access_threshold: Optional[float]):
 
-    hitrates_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
-    # For FROP we will truncate the table at mean + 2SD (over categories) items
-    if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
-        n_items_mean = (
-            main_data[[CPColNames.Category, CPColNames.Response]]
-            .groupby(CPColNames.Category)
-            .count()[CPColNames.Response]
-            .mean())
-        n_items_sd = (
-            main_data[[CPColNames.Category, CPColNames.Response]]
-            .groupby(CPColNames.Category)
-            .count()[CPColNames.Response]
-            .std())
-    elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
-        n_items_mean = (
-            main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
-            .groupby(CPColNames.CategorySensorimotor)
-            .count()[CPColNames.ResponseSensorimotor]
-            .mean())
-        n_items_sd = (
-            main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
-            .groupby(CPColNames.CategorySensorimotor)
-            .count()[CPColNames.ResponseSensorimotor]
-            .std())
-    else:
-        raise NotImplementedError()
-    hitrates_per_rfop = hitrates_per_rfop[
-        hitrates_per_rfop[RANK_FREQUENCY_OF_PRODUCTION] < n_items_mean + (2 * n_items_sd)]
+    hitrates_per_rpf = get_summary_table(main_data, RANKED_PRODUCTION_FREQUENCY)
+    category_column, response_column = category_response_col_names_for_model_type(model_type)
+    # For RPF we will truncate the table at mean + 2SD (over categories) items
+    n_items_mean = (
+        main_data[[category_column, response_column]]
+        .groupby(category_column)
+        .count()[response_column]
+        .mean())
+    n_items_sd = (
+        main_data[[category_column, response_column]]
+        .groupby(category_column)
+        .count()[response_column]
+        .std())
+    hitrates_per_rpf = hitrates_per_rpf[
+        hitrates_per_rpf[RANKED_PRODUCTION_FREQUENCY] < n_items_mean + (2 * n_items_sd)]
 
     hitrates_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
-    hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(hitrates_per_rfop)
+    hitrate_fit_rpf = hitrate_within_sd_of_mean_frac(hitrates_per_rpf)
     hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(hitrates_per_rmr)
 
     # Save summary tables
@@ -456,7 +444,7 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
     else:
         file_suffix = f"({model_identifier_string})"
 
-    hitrates_per_rfop.to_csv(path.join(base_dir,
+    hitrates_per_rpf.to_csv(path.join(base_dir,
                                        f"Production proportion per rank frequency of production {file_suffix}.csv"),
                              index=False)
     hitrates_per_rmr.to_csv(path.join(base_dir,
@@ -465,24 +453,24 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
 
     # region Graph tables
 
-    # rfop sd region
-    save_hitrate_summary_figure(summary_table=hitrates_per_rfop,
-                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                                fig_title="Hitrate per RFOP",
-                                fig_name=f"hitrate per RFOP {file_suffix}",
+    # rpf sd region
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF",
+                                fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
-    # rfop traces
-    save_hitrate_summary_figure(summary_table=hitrates_per_rfop,
-                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                                fig_title="Hitrate per RFOP (producible)",
-                                fig_name=f"hitrate per RFOP {file_suffix}",
+    # rpf traces
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF (producible)",
+                                fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
-    save_hitrate_summary_figure(summary_table=hitrates_per_rfop,
-                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                                fig_title="Hitrate per RFOP (all)",
-                                fig_name=f"hitrate per RFOP {file_suffix}",
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF (all)",
+                                fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.individual_hitrates_all)
     # rmr sd region
@@ -507,7 +495,7 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
 
     # endregion
 
-    return hitrate_fit_rfop, hitrate_fit_rmr
+    return hitrate_fit_rpf, hitrate_fit_rmr
 
 
 def process_one_model_output(main_data: DataFrame,
@@ -526,7 +514,7 @@ def process_one_model_output(main_data: DataFrame,
                                               + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
                                               ".csv"))
 
-    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type,
+    hitrate_fit_rpf, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type,
                                                                     conscious_access_threshold)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
@@ -536,7 +524,7 @@ def process_one_model_output(main_data: DataFrame,
         model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rfop=hitrate_fit_rfop,
+        hitrate_fit_rpf=hitrate_fit_rpf,
         hitrate_fit_rmr=hitrate_fit_rmr,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
@@ -556,14 +544,14 @@ def process_one_model_output_naïve(main_data: DataFrame,
                                               output_dir,
                                               f"item-level data ({model_identifier}).csv"))
 
-    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, None)
+    hitrate_fit_rpf, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, None)
 
     save_model_performance_stats(
         main_data,
         model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rfop=hitrate_fit_rfop,
+        hitrate_fit_rpf=hitrate_fit_rpf,
         hitrate_fit_rmr=hitrate_fit_rmr,
         model_type=model_type,
         conscious_access_threshold=None,
@@ -574,7 +562,7 @@ def save_model_performance_stats(main_dataframe,
                                  results_dir,
                                  model_identifier: str,
                                  min_first_rank_freq: Optional[int],
-                                 hitrate_fit_rfop,
+                                 hitrate_fit_rpf,
                                  hitrate_fit_rmr,
                                  model_type: ModelType,
                                  conscious_access_threshold: Optional[float],
@@ -608,7 +596,7 @@ def save_model_performance_stats(main_dataframe,
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
 
     df_dict.update({
-        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
+        "Hitrate within SD of mean (RPF)": hitrate_fit_rpf,
         "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
     })
 
@@ -617,7 +605,7 @@ def save_model_performance_stats(main_dataframe,
 
     model_performance_data: DataFrame = DataFrame.from_records([df_dict])
     model_performance_data.to_csv(overall_stats_output_path,
-                                  # As of Python 3.6, dictionary keys are ordered by insertion,
+                                  # As of Python 3.7, dictionary keys are ordered by insertion,
                                   # so we should automatically get a consistent order for stacking,
                                   columns=list(df_dict.keys()) + [CAT],
                                   index=False)
@@ -773,7 +761,7 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     main_data = exclude_idiosyncratic_responses(main_data)
 
     add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=model_type)
+    add_rpf_column(main_data, model_type)
     add_rmr_column(main_data)
 
     return main_data

@@ -43,7 +43,7 @@ dvs = [
     'ProdFreq N',
     'Mean Rank N',
     # hitrate dvs
-    "Hitrate within SD of mean (RFoP)",
+    "Hitrate within SD of mean (RPF)",
     "Hitrate within SD of mean (RMR)",
 ]
 

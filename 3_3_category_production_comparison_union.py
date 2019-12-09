@@ -29,7 +29,7 @@ from pandas import DataFrame
 
 from category_production.category_production import ColNames as CPColNames
 from evaluation.category_production import exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
-    add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_model_predictor_columns, \
+    add_predictor_column_production_proportion, add_rpf_column, add_rmr_column, add_model_predictor_columns, \
     CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
     get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, \
     get_firing_threshold_from_path_linguistic, ModelType
@@ -104,7 +104,7 @@ def compile_model_data(input_results_dir_sensorimotor, input_results_dir_linguis
     main_data[MODEL_HIT] = main_data[f"{MODEL_HIT} sensorimotor"] | main_data[f"{MODEL_HIT} linguistic"]
 
     add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=ModelType.combined_set_union)
+    add_rpf_column(main_data, model_type=ModelType.combined_set_union)
     add_rmr_column(main_data)
 
     return main_data
@@ -120,7 +120,7 @@ def process_one_model_output(main_data: DataFrame,
                                               f"item-level data (combined test).csv"
                                               ))
 
-    hitrate_fit_rfop, hitrate_fit_rmr = save_hitrate_summary_tables(
+    hitrate_fit_rpf, hitrate_fit_rmr = save_hitrate_summary_tables(
         # f"{path.basename(input_results_dir_sensorimotor)}; {path.basename(input_results_dir_linguistic)}",
         "combined test",
         main_data,
