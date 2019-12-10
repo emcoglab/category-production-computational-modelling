@@ -619,6 +619,8 @@ def save_model_performance_stats(main_dataframe,
         specific_output_dir = "Category production fit naïve sensorimotor"
     elif model_type == ModelType.naïve_linguistic:
         specific_output_dir = "Category production fit naïve linguistic"
+    elif model_type == ModelType.combined_set_union:
+        specific_output_dir = "Category production fit combined set union"
     else:
         raise NotImplementedError()
     overall_stats_output_path = path.join(
