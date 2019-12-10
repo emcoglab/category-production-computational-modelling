@@ -436,8 +436,11 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
     hitrates_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
-    hitrate_fit_rpf = hitrate_within_sd_of_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(hitrates_per_rmr)
+    # TODO: these names are whack
+    hitrate_fit_rpf_pp = hitrate_within_sd_of_pp_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_pp = hitrate_within_sd_of_pp_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     # Save summary tables
     if model_type == ModelType.sensorimotor:
@@ -522,7 +525,7 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
 
     # endregion
 
-    return hitrate_fit_rpf, hitrate_fit_rmr
+    return hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr
 
 
 def process_one_model_output(main_data: DataFrame,
@@ -541,8 +544,9 @@ def process_one_model_output(main_data: DataFrame,
                                               + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
                                               ".csv"))
 
-    hitrate_fit_rpf, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type,
-                                                                    conscious_access_threshold)
+    # TODO: these values are inappropriate to return from this function
+    hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(
+        model_identifier, main_data, model_type, conscious_access_threshold)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -551,8 +555,10 @@ def process_one_model_output(main_data: DataFrame,
         model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rpf=hitrate_fit_rpf,
-        hitrate_fit_rmr=hitrate_fit_rmr,
+        hitrate_fit_rpf_pp=hitrate_fit_rpf_pp,
+        hitrate_fit_rmr_pp=hitrate_fit_rmr_pp,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
     )
@@ -571,15 +577,18 @@ def process_one_model_output_naïve(main_data: DataFrame,
                                               output_dir,
                                               f"item-level data ({model_identifier}).csv"))
 
-    hitrate_fit_rpf, hitrate_fit_rmr = save_hitrate_summary_tables(model_identifier, main_data, model_type, None)
+    hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(
+        model_identifier, main_data, model_type, None)
 
     save_model_performance_stats(
         main_data,
         model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rpf=hitrate_fit_rpf,
-        hitrate_fit_rmr=hitrate_fit_rmr,
+        hitrate_fit_rpf_pp=hitrate_fit_rpf_pp,
+        hitrate_fit_rmr_pp=hitrate_fit_rmr_pp,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
         model_type=model_type,
         conscious_access_threshold=None,
     )
@@ -589,8 +598,10 @@ def save_model_performance_stats(main_dataframe,
                                  results_dir,
                                  model_identifier: str,
                                  min_first_rank_freq: Optional[int],
-                                 hitrate_fit_rpf,
-                                 hitrate_fit_rmr,
+                                 hitrate_fit_rpf_pp,
+                                 hitrate_fit_rmr_pp,
+                                 hitrate_fit_rpf_hr,
+                                 hitrate_fit_rmr_hr,
                                  model_type: ModelType,
                                  conscious_access_threshold: Optional[float],
                                  ):
@@ -623,8 +634,10 @@ def save_model_performance_stats(main_dataframe,
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
 
     df_dict.update({
-        "Hitrate within SD of mean (RPF)": hitrate_fit_rpf,
-        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
+        "Hitrate within SD of PP mean (RPF)": hitrate_fit_rpf_pp,
+        "Hitrate within SD of PP mean (RMR)": hitrate_fit_rmr_pp,
+        "Hitrate within SD of HR mean (RPF)": hitrate_fit_rpf_hr,
+        "Hitrate within SD of HR mean (RMR)": hitrate_fit_rmr_hr,
     })
 
     if conscious_access_threshold is not None:
@@ -695,11 +708,20 @@ def drop_missing_data_to_add_types(main_data: DataFrame, type_dict: Dict):
         main_data[c] = main_data[c].astype(t)
 
 
-def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
+def hitrate_within_sd_of_pp_mean_frac(df: DataFrame) -> DataFrame:
     # When the model hitrate is within one SD of the production proportion mean
     within = Series(
         (df[MODEL_HITRATE_ALL] > df[PRODUCTION_PROPORTION + " Mean"] - df[PRODUCTION_PROPORTION + " SD"])
         & (df[MODEL_HITRATE_ALL] < df[PRODUCTION_PROPORTION + " Mean"] + df[PRODUCTION_PROPORTION + " SD"]))
+    # The fraction of times this happens
+    return within.aggregate('mean')
+
+
+def hitrate_within_sd_of_hitrate_mean_frac(df: DataFrame) -> DataFrame:
+    # When the model hitrate is within one SD of the hitrate mean
+    within = Series(
+        (df[MODEL_HITRATE_ALL] > df["Hitrate Mean"] - df["Hitrate SD"])
+        & (df[MODEL_HITRATE_ALL] < df["Hitrate Mean"] + df["Hitrate SD"]))
     # The fraction of times this happens
     return within.aggregate('mean')
 
