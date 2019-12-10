@@ -46,16 +46,18 @@ def main(input_results_dir: str,
         if conscious_access_threshold is None:
             ft = get_firing_threshold_from_path_linguistic(model_output_dir)
             logger.info(f"No CAT provided, using FT instead ({ft})")
-            conscious_access_threshold = ft
+            this_conscious_access_threshold = ft
+        else:
+            this_conscious_access_threshold = conscious_access_threshold
 
         n_words = get_n_words_from_path_linguistic(model_output_dir)
 
         add_model_predictor_columns(main_data, model_type=ModelType.linguistic,
                                     ttfas={
-                                        category: get_model_ttfas_for_category_linguistic(category, model_output_dir, n_words, conscious_access_threshold)
+                                        category: get_model_ttfas_for_category_linguistic(category, model_output_dir, n_words, this_conscious_access_threshold)
                                         for category in CATEGORY_PRODUCTION.category_labels})
 
-        process_one_model_output(main_data, ModelType.linguistic, model_output_dir, min_first_rank_freq, conscious_access_threshold)
+        process_one_model_output(main_data, ModelType.linguistic, model_output_dir, min_first_rank_freq, this_conscious_access_threshold)
 
 
 if __name__ == '__main__':
