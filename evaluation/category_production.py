@@ -79,6 +79,8 @@ class ParticipantSummaryType(Enum):
     individual_hitrates_producible = auto()
     # Individual hitrates of participants (all responses)
     individual_hitrates_all        = auto()
+    # mean and sd of hitrates over categories
+    hitrates_mean_sd               = auto()
 
 
 def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
@@ -347,12 +349,22 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
                         summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
                         linewidth=0.4, linestyle="-", color="b", alpha=0.4)
             pyplot.ylabel("hitrate")
+    elif summarise_participants_by == ParticipantSummaryType.hitrates_mean_sd:
+        pyplot.fill_between(x=summary_table.reset_index()[x_selector],
+                            y1=summary_table['Hitrate Mean'] - summary_table[
+                                'Hitrate SD'],
+                            y2=summary_table['Hitrate Mean'] + summary_table[
+                                'Hitrate SD'])
+        pyplot.scatter(x=summary_table.reset_index()[x_selector],
+                       y=summary_table['Hitrate Mean'])
+        pyplot.ylabel("hitrate")
     else:
         raise NotImplementedError()
 
     # add model performance
     if summarise_participants_by in {ParticipantSummaryType.production_proportion_mean_sd,
-                                     ParticipantSummaryType.individual_hitrates_all}:
+                                     ParticipantSummaryType.individual_hitrates_all,
+                                     ParticipantSummaryType.hitrates_mean_sd}:
         pyplot.scatter(x=summary_table.reset_index()[x_selector],
                        y=summary_table[MODEL_HITRATE_ALL],
                        marker="o", color="g")
@@ -382,11 +394,13 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
         raise NotImplementedError()
 
     if summarise_participants_by == ParticipantSummaryType.production_proportion_mean_sd:
-        filename = f"{fig_name} sd.png"
+        filename = f"{fig_name} pp-sd.png"
     elif summarise_participants_by == ParticipantSummaryType.individual_hitrates_producible:
         filename = f"{fig_name} traces (producible).png"
     elif summarise_participants_by == ParticipantSummaryType.individual_hitrates_all:
         filename = f"{fig_name} traces (all).png"
+    elif summarise_participants_by == ParticipantSummaryType.hitrates_mean_sd:
+        filename = f"{fig_name} hitrate-sd.png"
     else:
         raise NotImplementedError()
 
@@ -460,6 +474,12 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF",
+                                fig_name=f"hitrate per RPF {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.hitrates_mean_sd)
     # rpf traces
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
                                 x_selector=RANKED_PRODUCTION_FREQUENCY,
@@ -480,6 +500,13 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 fig_name=f"hitrate per RMR {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
+    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.hitrates_mean_sd)
+    # rmr traces
     save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
                                 x_selector=ROUNDED_MEAN_RANK,
                                 fig_title="Hitrate per RMR (producible)",
@@ -699,7 +726,7 @@ def get_summary_table(main_dataframe, groupby_column):
             .sum()[PARTICIPANT_RESPONSE_HIT_f.format(participant)]
             / CATEGORIES_PER_PARTICIPANT)
 
-    # Participant summary columns
+    # Participant summary columns: production proportion
     df[PRODUCTION_PROPORTION + ' Mean'] = (
         main_dataframe
         .groupby(groupby_column)
@@ -716,6 +743,10 @@ def get_summary_table(main_dataframe, groupby_column):
         lambda row: t_confidence_interval(row[PRODUCTION_PROPORTION + ' SD'],
                                           row[PRODUCTION_PROPORTION + ' Count'],
                                           0.95), axis=1)
+
+    # Participant summary columns: hitrate
+    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CATEGORY_PRODUCTION.participants]].mean(axis=1)
+    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CATEGORY_PRODUCTION.participants]].std(axis=1)
 
     # Model columns
     df[MODEL_HITRATE_PRODUCIBLE] = (
