@@ -79,8 +79,8 @@ class SensorimotorSASpec(SASpec):
     buffer_threshold: float
     accessible_set_threshold: float
     distance_type: DistanceType
-    buffer_capacity: int
-    accessible_set_capacity: int
+    buffer_capacity: Optional[int]
+    accessible_set_capacity: Optional[int]
 
     @property
     def shorthand(self) -> str:
@@ -89,7 +89,7 @@ class SensorimotorSASpec(SASpec):
                f"m{self.median}_" \
                f"s{self.sigma}_" \
                f"a{self.accessible_set_threshold}_" \
-               f"ac{self.accessible_set_capacity}_" \
+               f"ac{self.accessible_set_capacity if self.accessible_set_capacity is not None else '-'}_" \
                f"b{self.buffer_threshold}"
 
 
@@ -103,8 +103,8 @@ class LinguisticSASpec(SASpec):
     edge_decay_sd: float
     impulse_pruning_threshold: float
     node_decay_factor: float
-    pruning: int
-    distance_type: Optional[DistanceType]
+    pruning: Optional[int]
+    distance_type: Optional[DistanceType] = None
 
     @property
     def shorthand(self):
@@ -155,14 +155,14 @@ class SAJob(Job, ABC):
                  script_number: str,
                  script_name: str,
                  spec: Spec,
-                 run_for_ticks: int,
-                 bailout: int = None):
+                 run_for_ticks: Optional[int] = None,
+                 bailout: Optional[int] = None):
         super().__init__(
             script_number=script_number,
             script_name=script_name,
             spec=spec)
-        self.run_for_ticks: int = run_for_ticks
-        self.bailout: int = bailout
+        self.run_for_ticks: Optional[int] = run_for_ticks
+        self.bailout: Optional[int] = bailout
 
 
 class SensorimotorSAJob(SAJob, ABC):

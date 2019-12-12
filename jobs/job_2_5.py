@@ -18,7 +18,7 @@ class Job_2_5(Job):
     def __init__(self, spec: NaïveLinguisticSpec):
         super().__init__(
             script_number="2_5",
-            script_name="2_5_naïve_linguistic.py",
+            script_name="2_5_linguistic_distance_only.py",
             spec=spec)
         assert isinstance(self.spec, NaïveLinguisticSpec)
         # For running locally

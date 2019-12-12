@@ -32,7 +32,7 @@ from ldm.model.ngram import NgramModel
 from ldm.utils.maths import DistanceType
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
-from model.naïve_linguistic import LinguisticVectorNaïveModel, LinguisticNgramNaïveModel
+from model.naïve_linguistic import LinguisticVectorDistanceOnlyModel, LinguisticNgramDistanceOnlyModel
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -54,14 +54,14 @@ def main(n_words: int,
 
     if distributional_model.model_type.metatype == DistributionalSemanticModel.MetaType.ngram:
         assert isinstance(distributional_model, NgramModel)
-        lnm = LinguisticNgramNaïveModel(distributional_model=distributional_model,
-                                        n_words=n_words)
+        lm = LinguisticNgramDistanceOnlyModel(distributional_model=distributional_model,
+                                              n_words=n_words)
         model_dirname = f"{distributional_model.name} {n_words:,} words"
     else:
         assert isinstance(distributional_model, VectorSemanticModel)
-        lnm = LinguisticVectorNaïveModel(distance_type=distance_type,
-                                         distributional_model=distributional_model,
-                                         n_words=n_words)
+        lm = LinguisticVectorDistanceOnlyModel(distance_type=distance_type,
+                                               distributional_model=distributional_model,
+                                               n_words=n_words)
         model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name}"
 
     response_dir = path.join(Preferences.output_dir,
@@ -95,7 +95,7 @@ def main(n_words: int,
         for response in cp.responses_for_category(category):
             try:
                 # Hit if hit for any category word
-                hit = any(lnm.is_hit(c, response) for c in category_words)
+                hit = any(lm.is_hit(c, response) for c in category_words)
             except LookupError as er:
                 logger.warning(er)
                 hit = False

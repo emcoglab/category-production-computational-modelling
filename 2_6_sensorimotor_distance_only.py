@@ -26,7 +26,7 @@ from category_production.category_production import CategoryProduction, ColNames
 from evaluation.column_names import MODEL_HIT
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.naïve_sensorimotor import SensorimotorNaïveModelComponent
+from model.naïve_sensorimotor import SensorimotorDistanceOnlyModelComponent
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
 from preferences import Preferences
@@ -38,7 +38,7 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 def main(distance_type: Optional[DistanceType]):
 
-    snm = SensorimotorNaïveModelComponent(distance_type=distance_type)
+    sm = SensorimotorDistanceOnlyModelComponent(distance_type=distance_type)
     model_dirname = distance_type.name
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
@@ -62,14 +62,14 @@ def main(distance_type: Optional[DistanceType]):
     hits = []
     for i, category in enumerate(cp.category_labels_sensorimotor, start=1):
         logger.info(f"Checking hits for category \"{category}\" ({i}/{len(cp.category_labels_sensorimotor)})")
-        if category in snm.words:
+        if category in sm.words:
             category_words = [category]
         else:
             category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
         for response in cp.responses_for_category(category, use_sensorimotor=True, force_unique=True):
             try:
                 # Hit if hit for any category word
-                hit = any(snm.is_hit(c, response) for c in category_words)
+                hit = any(sm.is_hit(c, response) for c in category_words)
             except LookupError as er:
                 logger.warning(er)
                 hit = False
