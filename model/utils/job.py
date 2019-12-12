@@ -81,8 +81,7 @@ class LinguisticSASpec(SASpec):
 
 
 class Job(ABC):
-    _python_location = "/Users/cai/Applications/miniconda3/bin/python"
-    _queue = "serial"
+    _shim = "model/utils/shim.sh"
 
     def __init__(self,
                  script_number: str,
@@ -91,7 +90,7 @@ class Job(ABC):
                  ):
         self._number: str = script_number
         self.short_name: str = "j" + script_number.replace("_", "")
-        self.script_name: str = "../" + script_name
+        self.script_name: str = script_name  # "../" + script_name
         self.module_name: str = Job._without_py(script_name)
         self.spec = spec
 
@@ -105,7 +104,8 @@ class Job(ABC):
         raise NotImplementedError()
 
     def submit(self):
-        subprocess.run(self.qsub_command)
+        print(self.qsub_command)
+        subprocess.run(self.qsub_command, shell=True)
 
     @classmethod
     def _without_py(cls, script_name: str) -> str:

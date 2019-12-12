@@ -1,6 +1,6 @@
 import logging
 
-from jobs.job import SensorimotorSAJob, SensorimotorSASpec
+from model.utils.job import SensorimotorSAJob, SensorimotorSASpec
 from ldm.utils.maths import DistanceType
 
 
@@ -25,13 +25,10 @@ class Job_2_8(SensorimotorSAJob):
     def qsub_command(self) -> str:
         cmd = f"qsub"
         # qsub args
-        cmd += f" -S {self._python_location}"
-        cmd += f" -q {self._queue}"
         cmd += f" -N {self.name}"
-        cmd += f" -m e -M c.wingfield@lancaster.ac.uk"
         cmd += f" -l h_vmem={self.RAM[self.spec.max_radius]}G"
         # script
-        cmd += f" {self.script_name}"
+        cmd += f" {self._shim} {self.script_name}"
         # script args
         cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
         cmd += f" --max_sphere_radius {self.spec.max_radius}"

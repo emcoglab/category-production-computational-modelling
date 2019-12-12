@@ -1,4 +1,4 @@
-from jobs.job import LinguisticSAJob, LinguisticSASpec
+from model.utils.job import LinguisticSAJob, LinguisticSASpec
 
 
 class Job_2_1(LinguisticSAJob):
@@ -28,13 +28,10 @@ class Job_2_1(LinguisticSAJob):
     def qsub_command(self) -> str:
         cmd = f"qsub"
         # qsub args
-        cmd += f" -S {self._python_location}"
-        cmd += f" -q {self._queue}"
         cmd += f" -N {self.name}"
-        cmd += f" -m e -M c.wingfield@lancaster.ac.uk"
-        cmd += f" -l h_vmem={self.RAM[self.spec.max_radius][self.spec.pruning]}G"
+        cmd += f" -l h_vmem={self.RAM[self.spec.graph_size][self.spec.pruning]}G"
         # script
-        cmd += f" {self.script_name}"
+        cmd += f" {self._shim} {self.script_name}"
         # script args
         cmd += f" --prune_percent {self.spec.pruning}"
         cmd += f" --bailout {self.bailout}"

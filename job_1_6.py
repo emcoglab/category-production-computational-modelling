@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from jobs.job import Job, SASpec
+from model.utils.job import Job, SASpec
 from ldm.utils.maths import DistanceType
 
 
@@ -50,13 +50,10 @@ class Job_1_6(Job):
     def qsub_command(self) -> str:
         cmd = f"qsub"
         # qsub args
-        cmd += f" -S {self._python_location}"
-        cmd += f" -q {self._queue}"
         cmd += f" -N {self.name}"
-        cmd += f" -m e -M c.wingfield@lancaster.ac.uk"
         cmd += f" -l h_vmem={self.RAM[self.spec.pruning_length]}G"
         # script
-        cmd += f" {self.script_name}"
+        cmd += f" {self._shim} {self.script_name}"
         # script args
         cmd += f" --length_factor {self.spec.length_factor}"
         cmd += f" --distance_type {self.spec.distance_type.name}"
