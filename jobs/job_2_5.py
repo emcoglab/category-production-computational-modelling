@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 
 from jobs.job import Job, NaïveLinguisticSpec
@@ -20,6 +21,7 @@ class Job_2_5(Job):
             script_name="2_5_naïve_linguistic.py",
             spec=spec)
         assert isinstance(self.spec, NaïveLinguisticSpec)
+        # For running locally
         self.main = partial(__import__(self.module_name).main,
                             n_words=self.spec.n_words,
                             corpus_name=self.spec.corpus_name,
@@ -45,3 +47,23 @@ class Job_2_5(Job):
         cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
         cmd += f" --length_factor {self.spec.length_factor}"
         return cmd
+
+
+logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_dateformat = "%Y-%m-%d %H:%M:%S"
+
+if __name__ == '__main__':
+    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
+    n_words = 40_000
+    model_radius = 5
+    corpus_name = "bbc"
+
+    specs = [
+        NaïveLinguisticSpec(n_words=n_words, model_name="pmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(n_words=n_words, model_name="ppmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(n_words=n_words, model_name="log_ngram", model_radius=model_radius, corpus_name=corpus_name),
+    ]
+
+    for job in [Job_2_5(spec) for spec in specs]:
+        job.main()

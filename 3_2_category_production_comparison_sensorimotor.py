@@ -22,124 +22,44 @@ import argparse
 import logging
 import sys
 from os import path
-from pathlib import Path
 
-from numpy import nan, array
-from pandas import DataFrame
-
-from ldm.utils.maths import DistanceType, distance
-from category_production.category_production import ColNames as CPColNames
-from sensorimotor_norms.exceptions import WordNotInNormsError
-from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
-
-from preferences import Preferences
-from evaluation.category_production import exclude_idiosyncratic_responses, add_predictor_column_model_hit, \
-    add_predictor_column_production_proportion, add_rfop_column, add_rmr_column, add_predictor_column_ttfa, \
-    CATEGORY_PRODUCTION, get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
-    save_model_performance_stats, drop_missing_data, ModelType, find_output_dirs
+from ldm.utils.logging import date_format, log_message
+from evaluation.category_production import add_model_predictor_columns, CATEGORY_PRODUCTION, \
+    get_model_ttfas_for_category_sensorimotor, ModelType, find_output_dirs, prepare_category_production_data, \
+    process_one_model_output
 
 logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
-
-sensorimotor_norms = SensorimotorNorms()
-
-distance_column = f"{DistanceType.Minkowski3.name} distance"
 
 
 def main(input_results_dir: str,
-         single_model: bool,
-         min_first_rank_freq: int = None):
+         min_first_rank_freq: int,
+         ):
 
-    # Set defaults
-    min_first_rank_freq = 1 if min_first_rank_freq is None else min_first_rank_freq
-
-    if single_model:
-        model_output_dirs = [input_results_dir]
-    else:
-        model_output_dirs = find_output_dirs(root_dir=input_results_dir)
+    model_output_dirs = find_output_dirs(root_dir=input_results_dir)
 
     for model_output_dir in model_output_dirs:
         logger.info(path.basename(model_output_dir))
-        main_data = compile_model_data(model_output_dir)
-        process_one_model_output(main_data, model_output_dir, min_first_rank_freq)
+        main_data = prepare_category_production_data(ModelType.sensorimotor)
+        ttfas = {
+            category: get_model_ttfas_for_category_sensorimotor(category, model_output_dir)
+            for category in CATEGORY_PRODUCTION.category_labels_sensorimotor
+        }
+        add_model_predictor_columns(main_data, ttfas=ttfas, model_type=ModelType.sensorimotor)
 
-
-def compile_model_data(input_results_dir: str) -> DataFrame:
-
-    # Main dataframe holds category production data and model response data
-    main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
-
-    main_data.rename(columns={col_name: f"Precomputed {col_name}"
-                              for col_name in ['Sensorimotor.distance.cosine.additive', 'Linguistic.PPMI']},
-                     inplace=True)
-    main_data = exclude_idiosyncratic_responses(main_data)
-
-    add_predictor_column_sensorimotor_distance(main_data)
-    add_predictor_column_ttfa(main_data,
-                              {category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir)
-                               for category in CATEGORY_PRODUCTION.category_labels_sensorimotor},
-                              model_type=ModelType.sensorimotor)
-    add_predictor_column_model_hit(main_data)
-
-    add_predictor_column_production_proportion(main_data)
-    add_rfop_column(main_data, model_type=ModelType.sensorimotor)
-    add_rmr_column(main_data)
-
-    return main_data
-
-
-def process_one_model_output(main_data: DataFrame, input_results_dir: str, min_first_rank_freq: int):
-    input_results_path = Path(input_results_dir)
-    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              f"Category production fit sensorimotor",
-                                              f"item-level data ({model_identifier}).csv"))
-
-    hitrate_stats = save_hitrate_summary_tables(path.basename(input_results_dir), main_data,
-                                                ModelType.sensorimotor, conscious_access_threshold=None)
-
-    drop_missing_data(main_data, distance_column)
-
-    save_model_performance_stats(
-        main_data,
-        model_identifier=model_identifier,
-        results_dir=input_results_dir,
-        min_first_rank_freq=min_first_rank_freq,
-        **hitrate_stats,
-        model_type=ModelType.sensorimotor,
-        conscious_access_threshold=None,
-    )
-
-
-def add_predictor_column_sensorimotor_distance(main_data):
-    """Mutates `main_data`."""
-    logger.info("Adding distance column")
-    main_data[distance_column] = main_data.apply(get_sensorimotor_distance_minkowski3, axis=1)
-
-
-def get_sensorimotor_distance_minkowski3(row):
-    try:
-        category_vector = array(sensorimotor_norms.vector_for_word(row[CPColNames.CategorySensorimotor]))
-        response_vector = array(sensorimotor_norms.vector_for_word(row[CPColNames.ResponseSensorimotor]))
-        return distance(category_vector, response_vector, DistanceType.Minkowski3)
-    except WordNotInNormsError:
-        return nan
+        process_one_model_output(main_data, ModelType.sensorimotor, model_output_dir, min_first_rank_freq, None)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("--single-model", action="store_true",
-                        help="If specified, `path` will be interpreted to be the dir for a single model's output; "
-                             "otherwise `path` will be interpreted to contain many models' output dirs.")
-    parser.add_argument("min_frf", type=int, nargs="?", default=None,
-                        help="The minimum FRF required for zRT and FRF correlations.")
+    parser.add_argument("min_frf", type=int, nargs="?", default=1,
+                        help="The minimum FRF required for zRT and FRF correlations."
+                             " Omit to use 1.")
     args = parser.parse_args()
 
-    main(args.path, args.single_model, args.min_frf)
+    main(args.path, args.min_frf)
 
     logger.info("Done!")

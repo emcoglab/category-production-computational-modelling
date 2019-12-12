@@ -39,10 +39,11 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def main(distance_type: Optional[DistanceType]):
 
     snm = SensorimotorNaïveModelComponent(distance_type=distance_type)
-
+    model_dirname = distance_type.name
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve sensorimotor {VERSION}")
+                             f"Naïve sensorimotor {VERSION}",
+                             model_dirname)
 
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -52,12 +53,12 @@ def main(distance_type: Optional[DistanceType]):
 
     # Record model details
     csv_comments = [
-        f"Naïve linguistic model:",
+        f"Naïve sensorimotor model:",
         f"\t        model = sensorimotor",
         f"\tdistance type = {distance_type.name}",
     ]
 
-    model_responses_path = path.join(response_dir, f"hits_{distance_type.name}.csv")
+    model_responses_path = path.join(response_dir, "hits.csv")
     hits = []
     for i, category in enumerate(cp.category_labels_sensorimotor, start=1):
         logger.info(f"Checking hits for category \"{category}\" ({i}/{len(cp.category_labels_sensorimotor)})")
@@ -65,7 +66,7 @@ def main(distance_type: Optional[DistanceType]):
             category_words = [category]
         else:
             category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
-        for response in cp.responses_for_category(category, use_sensorimotor=True):
+        for response in cp.responses_for_category(category, use_sensorimotor=True, force_unique=True):
             try:
                 # Hit if hit for any category word
                 hit = any(snm.is_hit(c, response) for c in category_words)
@@ -76,7 +77,7 @@ def main(distance_type: Optional[DistanceType]):
                 category, response, hit
             ))
 
-    hits_df = DataFrame(hits, columns=[CPColNames.Category, CPColNames.Response, MODEL_HIT])
+    hits_df = DataFrame(hits, columns=[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor, MODEL_HIT])
 
     with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
         # Write comments

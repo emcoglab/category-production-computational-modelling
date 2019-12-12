@@ -23,6 +23,7 @@ from enum import Enum, auto
 from glob import glob
 from math import floor
 from os import path, listdir
+from pathlib import Path
 from typing import DefaultDict, Dict, Set, List, Optional
 
 from matplotlib import pyplot
@@ -65,6 +66,10 @@ class ModelType(Enum):
     # Full tandem model
     tandem = auto()
 
+    @property
+    def name(self) -> str:
+        return super(ModelType, self).name.replace("_", " ")
+
 
 class ParticipantSummaryType(Enum):
     """Represents a way to summarise participant data."""
@@ -74,6 +79,8 @@ class ParticipantSummaryType(Enum):
     individual_hitrates_producible = auto()
     # Individual hitrates of participants (all responses)
     individual_hitrates_all        = auto()
+    # mean and sd of hitrates over categories
+    hitrates_mean_sd               = auto()
 
 
 def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
@@ -178,14 +185,18 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     try:
         model_responses_path = path.join(results_dir, f"responses_{category}.csv")
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
+            # TODO: should have unified csv i/o code to ensure datatypes are kept consistent
+            #  this doesn't actually affect the results, but it would make text files smaller and cleaner to skip the
+            #  ".00000"s on fields which should be ints, etc.
+            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False,
+                                                  dtype={ITEM_ENTERED_BUFFER: bool, TICK_ON_WHICH_ACTIVATED: int})
 
-        in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True]\
+        in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-        ttfas: Dict = in_buffer_data\
-            .groupby(RESPONSE)\
-            .first()[[TICK_ON_WHICH_ACTIVATED]]\
+        ttfas: Dict = in_buffer_data \
+            .groupby(RESPONSE) \
+            .first()[[TICK_ON_WHICH_ACTIVATED]] \
             .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
         return defaultdict(lambda: nan, ttfas)
@@ -218,12 +229,6 @@ def exclude_idiosyncratic_responses(main_data) -> DataFrame:
     return main_data[main_data[CPColNames.ProductionFrequency] > 1]
 
 
-def add_predictor_column_model_hit(main_data):
-    """Mutates `main_data`."""
-    logger.info("Adding model hit column")
-    main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[TTFA]), axis=1)
-
-
 def add_predictor_column_production_proportion(main_data):
     """Mutates `main_data`."""
     logger.info("Adding production proportion column")
@@ -232,27 +237,34 @@ def add_predictor_column_production_proportion(main_data):
     main_data[PRODUCTION_PROPORTION] = main_data.apply(lambda row: row[CPColNames.ProductionFrequency] / PARTICIPANTS_PER_CATEGORY, axis=1)
 
 
-def add_rfop_column(main_data, model_type: ModelType):
-    """Mutates `main_data`."""
-    logger.info("Adding RFoP column")
-    if model_type == ModelType.linguistic:
-        specific_category_column = CPColNames.Category
-    elif model_type == ModelType.sensorimotor:
-        specific_category_column = CPColNames.CategorySensorimotor
+def category_response_col_names_for_model_type(model_type):
+    if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
+        c, r = CPColNames.Category, CPColNames.Response
+    elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
+        c, r = CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor
     elif model_type == ModelType.combined_set_union:
         # We could use either here
-        specific_category_column = CPColNames.Category
+        c, r = CPColNames.Category, CPColNames.Response
     else:
         raise NotImplementedError()
-    main_data[RANK_FREQUENCY_OF_PRODUCTION] = (
+    return c, r
+
+
+def add_rpf_column(main_data: DataFrame, model_type: ModelType):
+    """Mutates `main_data`."""
+    logger.info("Adding RPF column")
+    specific_category_column, _ = category_response_col_names_for_model_type(model_type)
+    main_data[RANKED_PRODUCTION_FREQUENCY] = (
         main_data
         # Within each category
         .groupby(specific_category_column)
         # Rank the responses according to production frequency
         [CPColNames.ProductionFrequency]
+        # Descending, so largest production frequency is lowest rank
         .rank(ascending=False,
               # For ties, order alphabetically (i.e. pseudorandomly (?))
-              method='first'))
+              method='first')
+    )
 
 
 def add_rmr_column(main_data):
@@ -261,8 +273,9 @@ def add_rmr_column(main_data):
     main_data[ROUNDED_MEAN_RANK] = main_data.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
 
 
-def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
+def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
     """Mutates `main_data`."""
+    # TODO: this function's signature is a bit of a mess... the ttfas dict should probably be built in here
     logger.info("Adding TTFA column")
 
     def get_min_ttfa_for_multiword_responses(row) -> int:
@@ -271,14 +284,8 @@ def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], model
         multiple norms terms.
         """
 
-        if model_type == ModelType.sensorimotor:
-            c = row[CPColNames.CategorySensorimotor]
-            r = row[CPColNames.ResponseSensorimotor]
-        elif model_type == ModelType.linguistic:
-            c = row[CPColNames.Category]
-            r = row[CPColNames.Response]
-        else:
-            raise NotImplementedError()
+        category_column, response_column = category_response_col_names_for_model_type(model_type)
+        c, r = row[category_column], row[response_column]
 
         # If the category is not found in the dictionary, it was not accessed by the model so no TTFA will be present
         # for any response.
@@ -307,6 +314,9 @@ def add_predictor_column_ttfa(main_data, ttfas: Dict[str, Dict[str, int]], model
                 return nan
 
     main_data[TTFA] = main_data.apply(get_min_ttfa_for_multiword_responses, axis=1)
+
+    logger.info("Adding model hit column")
+    main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[TTFA]), axis=1)
 
 
 def save_item_level_data(main_data: DataFrame, save_path):
@@ -339,12 +349,22 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
                         summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
                         linewidth=0.4, linestyle="-", color="b", alpha=0.4)
             pyplot.ylabel("hitrate")
+    elif summarise_participants_by == ParticipantSummaryType.hitrates_mean_sd:
+        pyplot.fill_between(x=summary_table.reset_index()[x_selector],
+                            y1=summary_table['Hitrate Mean'] - summary_table[
+                                'Hitrate SD'],
+                            y2=summary_table['Hitrate Mean'] + summary_table[
+                                'Hitrate SD'])
+        pyplot.scatter(x=summary_table.reset_index()[x_selector],
+                       y=summary_table['Hitrate Mean'])
+        pyplot.ylabel("hitrate")
     else:
         raise NotImplementedError()
 
     # add model performance
     if summarise_participants_by in {ParticipantSummaryType.production_proportion_mean_sd,
-                                     ParticipantSummaryType.individual_hitrates_all}:
+                                     ParticipantSummaryType.individual_hitrates_all,
+                                     ParticipantSummaryType.hitrates_mean_sd}:
         pyplot.scatter(x=summary_table.reset_index()[x_selector],
                        y=summary_table[MODEL_HITRATE_ALL],
                        marker="o", color="g")
@@ -374,11 +394,13 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
         raise NotImplementedError()
 
     if summarise_participants_by == ParticipantSummaryType.production_proportion_mean_sd:
-        filename = f"{fig_name} sd.png"
+        filename = f"{fig_name} pp-sd.png"
     elif summarise_participants_by == ParticipantSummaryType.individual_hitrates_producible:
         filename = f"{fig_name} traces (producible).png"
     elif summarise_participants_by == ParticipantSummaryType.individual_hitrates_all:
         filename = f"{fig_name} traces (all).png"
+    elif summarise_participants_by == ParticipantSummaryType.hitrates_mean_sd:
+        filename = f"{fig_name} hitrate-sd.png"
     else:
         raise NotImplementedError()
 
@@ -395,40 +417,30 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
 def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFrame, model_type: ModelType,
                                 conscious_access_threshold: Optional[float]):
 
-    hitrates_per_rfop = get_summary_table(main_data, RANK_FREQUENCY_OF_PRODUCTION)
-    # For FROP we will truncate the table at mean + 2SD (over categories) items
-    if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
-        n_items_mean = (
-            main_data[[CPColNames.Category, CPColNames.Response]]
-            .groupby(CPColNames.Category)
-            .count()[CPColNames.Response]
-            .mean())
-        n_items_sd = (
-            main_data[[CPColNames.Category, CPColNames.Response]]
-            .groupby(CPColNames.Category)
-            .count()[CPColNames.Response]
-            .std())
-    elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
-        n_items_mean = (
-            main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
-            .groupby(CPColNames.CategorySensorimotor)
-            .count()[CPColNames.ResponseSensorimotor]
-            .mean())
-        n_items_sd = (
-            main_data[[CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor]]
-            .groupby(CPColNames.CategorySensorimotor)
-            .count()[CPColNames.ResponseSensorimotor]
-            .std())
-    else:
-        raise NotImplementedError()
-    hitrates_per_rfop = hitrates_per_rfop[
-        hitrates_per_rfop[RANK_FREQUENCY_OF_PRODUCTION] < n_items_mean + (2 * n_items_sd)]
+    hitrates_per_rpf = get_summary_table(main_data, RANKED_PRODUCTION_FREQUENCY)
+    category_column, response_column = category_response_col_names_for_model_type(model_type)
+    # For RPF we will truncate the table at mean + 2SD (over categories) items
+    n_items_mean = (
+        main_data[[category_column, response_column]]
+        .groupby(category_column)
+        .count()[response_column]
+        .mean())
+    n_items_sd = (
+        main_data[[category_column, response_column]]
+        .groupby(category_column)
+        .count()[response_column]
+        .std())
+    hitrates_per_rpf = hitrates_per_rpf[
+        hitrates_per_rpf[RANKED_PRODUCTION_FREQUENCY] < n_items_mean + (2 * n_items_sd)]
 
     hitrates_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
 
     # Compute hitrate fits
-    hitrate_fit_rfop = hitrate_within_sd_of_mean_frac(hitrates_per_rfop)
-    hitrate_fit_rmr = hitrate_within_sd_of_mean_frac(hitrates_per_rmr)
+    # TODO: these names are whack
+    hitrate_fit_rpf_pp = hitrate_within_sd_of_pp_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_pp = hitrate_within_sd_of_pp_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     # Save summary tables
     if model_type == ModelType.sensorimotor:
@@ -449,7 +461,7 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
     else:
         file_suffix = f"({model_identifier_string})"
 
-    hitrates_per_rfop.to_csv(path.join(base_dir,
+    hitrates_per_rpf.to_csv(path.join(base_dir,
                                        f"Production proportion per rank frequency of production {file_suffix}.csv"),
                              index=False)
     hitrates_per_rmr.to_csv(path.join(base_dir,
@@ -458,24 +470,30 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
 
     # region Graph tables
 
-    # rfop sd region
-    save_hitrate_summary_figure(summary_table=hitrates_per_rfop,
-                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                                fig_title="Hitrate per RFOP",
-                                fig_name=f"hitrate per RFOP {file_suffix}",
+    # rpf sd region
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF",
+                                fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
-    # rfop traces
-    save_hitrate_summary_figure(summary_table=hitrates_per_rfop,
-                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                                fig_title="Hitrate per RFOP (producible)",
-                                fig_name=f"hitrate per RFOP {file_suffix}",
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF",
+                                fig_name=f"hitrate per RPF {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.hitrates_mean_sd)
+    # rpf traces
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF (producible)",
+                                fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
-    save_hitrate_summary_figure(summary_table=hitrates_per_rfop,
-                                x_selector=RANK_FREQUENCY_OF_PRODUCTION,
-                                fig_title="Hitrate per RFOP (all)",
-                                fig_name=f"hitrate per RFOP {file_suffix}",
+    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+                                x_selector=RANKED_PRODUCTION_FREQUENCY,
+                                fig_title="Hitrate per RPF (all)",
+                                fig_name=f"hitrate per RPF {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.individual_hitrates_all)
     # rmr sd region
@@ -485,25 +503,108 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 fig_name=f"hitrate per RMR {file_suffix}",
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
+    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.hitrates_mean_sd)
+    # rmr traces
+    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR (producible)",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
+    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+                                x_selector=ROUNDED_MEAN_RANK,
+                                fig_title="Hitrate per RMR (all)",
+                                fig_name=f"hitrate per RMR {file_suffix}",
+                                model_type=model_type,
+                                summarise_participants_by=ParticipantSummaryType.individual_hitrates_all)
 
     # endregion
 
-    hitrate_stats = {
-        "hitrate_fit_rfop": hitrate_fit_rfop,
-        "hitrate_fit_rmr": hitrate_fit_rmr,
-    }
+    return hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr
 
-    return hitrate_stats
+
+def process_one_model_output(main_data: DataFrame,
+                             model_type: ModelType,
+                             input_results_dir: str,
+                             min_first_rank_freq: Optional[int],
+                             conscious_access_threshold: Optional[float],
+                             ):
+    assert model_type in [ModelType.linguistic, ModelType.sensorimotor]
+    input_results_path = Path(input_results_dir)
+    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
+    output_dir = f"Category production fit {model_type.name}"
+    save_item_level_data(main_data, path.join(Preferences.results_dir,
+                                              output_dir,
+                                              f"item-level data ({model_identifier})"
+                                              + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
+                                              ".csv"))
+
+    # TODO: these values are inappropriate to return from this function
+    hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(
+        model_identifier, main_data, model_type, conscious_access_threshold)
+
+    drop_missing_data_to_add_types(main_data, {TTFA: int})
+
+    save_model_performance_stats(
+        main_data,
+        model_identifier=model_identifier,
+        results_dir=input_results_dir,
+        min_first_rank_freq=min_first_rank_freq,
+        hitrate_fit_rpf_pp=hitrate_fit_rpf_pp,
+        hitrate_fit_rmr_pp=hitrate_fit_rmr_pp,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
+        model_type=model_type,
+        conscious_access_threshold=conscious_access_threshold,
+    )
+
+
+def process_one_model_output_naïve(main_data: DataFrame,
+                                   model_type: ModelType,
+                                   input_results_dir: str,
+                                   min_first_rank_freq: Optional[int],
+                                   ):
+    assert model_type in [ModelType.naïve_linguistic, ModelType.naïve_sensorimotor]
+    input_results_path = Path(input_results_dir)
+    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
+    output_dir = f"Category production fit {model_type.name}"
+    save_item_level_data(main_data, path.join(Preferences.results_dir,
+                                              output_dir,
+                                              f"item-level data ({model_identifier}).csv"))
+
+    hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(
+        model_identifier, main_data, model_type, None)
+
+    save_model_performance_stats(
+        main_data,
+        model_identifier=model_identifier,
+        results_dir=input_results_dir,
+        min_first_rank_freq=min_first_rank_freq,
+        hitrate_fit_rpf_pp=hitrate_fit_rpf_pp,
+        hitrate_fit_rmr_pp=hitrate_fit_rmr_pp,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
+        model_type=model_type,
+        conscious_access_threshold=None,
+    )
 
 
 def save_model_performance_stats(main_dataframe,
                                  results_dir,
                                  model_identifier: str,
-                                 min_first_rank_freq,
-                                 hitrate_fit_rfop,
-                                 hitrate_fit_rmr,
+                                 min_first_rank_freq: Optional[int],
+                                 hitrate_fit_rpf_pp,
+                                 hitrate_fit_rmr_pp,
+                                 hitrate_fit_rpf_hr,
+                                 hitrate_fit_rmr_hr,
                                  model_type: ModelType,
-                                 conscious_access_threshold: Optional[float]):
+                                 conscious_access_threshold: Optional[float],
+                                 ):
 
     # Build output dir
     if conscious_access_threshold is not None:
@@ -514,6 +615,12 @@ def save_model_performance_stats(main_dataframe,
         specific_output_dir = "Category production fit sensorimotor"
     elif model_type == ModelType.linguistic:
         specific_output_dir = "Category production fit linguistic"
+    elif model_type == ModelType.naïve_sensorimotor:
+        specific_output_dir = "Category production fit naïve sensorimotor"
+    elif model_type == ModelType.naïve_linguistic:
+        specific_output_dir = "Category production fit naïve linguistic"
+    elif model_type == ModelType.combined_set_union:
+        specific_output_dir = "Category production fit combined set union"
     else:
         raise NotImplementedError()
     overall_stats_output_path = path.join(
@@ -521,53 +628,28 @@ def save_model_performance_stats(main_dataframe,
         specific_output_dir,
         f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
 
-    model_spec = GraphPropagation.load_model_spec(results_dir)
-    stats = {
-        **get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type),
-        # hitrate stats
-        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
-        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
-    }
-    df_dict: Dict = {
-        **model_spec,
-        **stats,
-    }
+    df_dict = dict()
+
+    if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
+        # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
+        df_dict.update(GraphPropagation.load_model_spec(results_dir))
+        df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
+
+    df_dict.update({
+        "Hitrate within SD of PP mean (RPF)": hitrate_fit_rpf_pp,
+        "Hitrate within SD of PP mean (RMR)": hitrate_fit_rmr_pp,
+        "Hitrate within SD of HR mean (RPF)": hitrate_fit_rpf_hr,
+        "Hitrate within SD of HR mean (RMR)": hitrate_fit_rmr_hr,
+    })
+
     if conscious_access_threshold is not None:
         df_dict[CAT] = conscious_access_threshold
+
     model_performance_data: DataFrame = DataFrame.from_records([df_dict])
-
     model_performance_data.to_csv(overall_stats_output_path,
-                                  # Make sure columns are in consistent order for stacking,
-                                  # and make sure the model spec columns come first.
-                                  columns=sorted(model_spec.keys()) + [CAT] + sorted(stats.keys()),
-                                  index=False)
-
-
-def save_naïve_model_performance_stats(results_dir,
-                                       hitrate_fit_rfop,
-                                       hitrate_fit_rmr,
-                                       model_type: ModelType):
-
-    if model_type == ModelType.naïve_sensorimotor:
-        specific_output_dir = "Category production fit naïve sensorimotor"
-    elif model_type == ModelType.naïve_linguistic:
-        specific_output_dir = "Category production fit naïve linguistic"
-    else:
-        raise NotImplementedError()
-    overall_stats_output_path = path.join(
-        Preferences.results_dir,
-        specific_output_dir,
-        f"model_effectiveness_overall ({path.basename(results_dir)}).csv")
-
-    stats = {
-        # hitrate stats
-        "Hitrate within SD of mean (RFoP)": hitrate_fit_rfop,
-        "Hitrate within SD of mean (RMR)": hitrate_fit_rmr,
-    }
-    model_performance_data: DataFrame = DataFrame.from_records([stats])
-
-    model_performance_data.to_csv(overall_stats_output_path,
-                                  columns=sorted(stats.keys()),
+                                  # As of Python 3.7, dictionary keys are ordered by insertion,
+                                  # so we should automatically get a consistent order for stacking,
+                                  columns=list(df_dict.keys()) + [CAT],
                                   index=False)
 
 
@@ -611,30 +693,37 @@ def get_correlation_stats(correlation_dataframe, min_first_rank_freq, model_type
     }
 
 
-def drop_missing_data(main_data: DataFrame, distance_column: Optional[str]):
+def drop_missing_data_to_add_types(main_data: DataFrame, type_dict: Dict):
     """
-    Mutates `main_data`.
+    Drops rows of `main_data` with missing data in columns given by the keys of `type_dict`, so that the datatypes from
+    values of `type_dict` can be successfully applied.
 
-    Set `distance_column` to None to skip it.
     :param main_data:
-    :param distance_column:
+    :param type_dict:
+        column_name -> column_datatype
     :return:
+    :side effects: Mutates `main_data`.
     """
-    if distance_column is not None:
-        main_data.dropna(inplace=True, how='any', subset=[TTFA, distance_column])
-    else:
-        main_data.dropna(inplace=True, how='any', subset=[TTFA])
-    # Now we can convert TTFAs to ints and distances to floats as there won't be null values
-    main_data[TTFA] = main_data[TTFA].astype(int)
-    if distance_column is not None:
-        main_data[distance_column] = main_data[distance_column].astype(float)
+    main_data.dropna(inplace=True, how='any', subset=list(type_dict.keys()))
+    # Now we can convert columns to appropriate types as there won't be null values
+    for c, t in type_dict.items():
+        main_data[c] = main_data[c].astype(t)
 
 
-def hitrate_within_sd_of_mean_frac(df: DataFrame) -> DataFrame:
+def hitrate_within_sd_of_pp_mean_frac(df: DataFrame) -> DataFrame:
     # When the model hitrate is within one SD of the production proportion mean
     within = Series(
         (df[MODEL_HITRATE_ALL] > df[PRODUCTION_PROPORTION + " Mean"] - df[PRODUCTION_PROPORTION + " SD"])
         & (df[MODEL_HITRATE_ALL] < df[PRODUCTION_PROPORTION + " Mean"] + df[PRODUCTION_PROPORTION + " SD"]))
+    # The fraction of times this happens
+    return within.aggregate('mean')
+
+
+def hitrate_within_sd_of_hitrate_mean_frac(df: DataFrame) -> DataFrame:
+    # When the model hitrate is within one SD of the hitrate mean
+    within = Series(
+        (df[MODEL_HITRATE_ALL] > df["Hitrate Mean"] - df["Hitrate SD"])
+        & (df[MODEL_HITRATE_ALL] < df["Hitrate Mean"] + df["Hitrate SD"]))
     # The fraction of times this happens
     return within.aggregate('mean')
 
@@ -661,7 +750,7 @@ def get_summary_table(main_dataframe, groupby_column):
             .sum()[PARTICIPANT_RESPONSE_HIT_f.format(participant)]
             / CATEGORIES_PER_PARTICIPANT)
 
-    # Participant summary columns
+    # Participant summary columns: production proportion
     df[PRODUCTION_PROPORTION + ' Mean'] = (
         main_dataframe
         .groupby(groupby_column)
@@ -679,16 +768,22 @@ def get_summary_table(main_dataframe, groupby_column):
                                           row[PRODUCTION_PROPORTION + ' Count'],
                                           0.95), axis=1)
 
+    # Participant summary columns: hitrate
+    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CATEGORY_PRODUCTION.participants]].mean(axis=1)
+    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CATEGORY_PRODUCTION.participants]].std(axis=1)
+
     # Model columns
     df[MODEL_HITRATE_PRODUCIBLE] = (
         main_dataframe[[groupby_column, MODEL_HIT]].astype(float)
         .groupby(groupby_column)
-        .mean()[MODEL_HIT])
+        .mean()[MODEL_HIT]
+    )
     df[MODEL_HITRATE_ALL] = (
         main_dataframe[[groupby_column, MODEL_HIT]].astype(float)
         .groupby(groupby_column)
         .sum()[MODEL_HIT]
-        / TOTAL_CATEGORIES)
+        / TOTAL_CATEGORIES
+    )
 
     # Forget rows with nans
     df = df.dropna().reset_index()
@@ -704,3 +799,24 @@ def find_output_dirs(root_dir: str):
         for model_spec_location in glob(
             path.join(root_dir, "**", " model_spec.yaml"), recursive=True)
     ]
+
+
+def prepare_category_production_data(model_type: ModelType) -> DataFrame:
+    # Main dataframe holds category production data and model response data
+    main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
+
+    # Some distances have been precomputed, so we label them as such
+    main_data.rename(columns={col_name: f"Precomputed {col_name}"
+                              for col_name in [
+                                  'Sensorimotor.distance.cosine.additive',
+                                  'Sensorimotor.distance.Minkowski.3.additive',
+                                  'Linguistic.PPMI',
+                              ]},
+                     inplace=True)
+    main_data = exclude_idiosyncratic_responses(main_data)
+
+    add_predictor_column_production_proportion(main_data)
+    add_rpf_column(main_data, model_type)
+    add_rmr_column(main_data)
+
+    return main_data
