@@ -98,7 +98,6 @@ def main(distance_type_name: str,
 
     for category_label in cp.category_labels_sensorimotor:
 
-        accessible_set_path  = path.join(response_dir, f"accessible_set_{category_label}.csv")
         model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
 
         csv_comments = []

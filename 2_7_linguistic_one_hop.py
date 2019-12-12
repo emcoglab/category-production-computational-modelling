@@ -65,7 +65,7 @@ def main(n_words: int,
 
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Linguistic {VERSION}",
+                             f"Linguistic one-hop {VERSION}",
                              f"{distributional_model.name}"
                                 f" {n_words:,} words, length {length_factor}",
                              f"firing-θ {firing_threshold};"

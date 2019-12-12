@@ -58,18 +58,18 @@ def main(quantile: float,
         lm = LinguisticNgramDistanceOnlyModel(quantile=quantile,
                                               distributional_model=distributional_model,
                                               n_words=n_words)
-        model_dirname = f"{distributional_model.name} {n_words:,} words"
+        model_dirname = f"{distributional_model.name} {n_words:,} words quantile {lm.quantile}"
     else:
         assert isinstance(distributional_model, VectorSemanticModel)
         lm = LinguisticVectorDistanceOnlyModel(quantile=quantile,
                                                distance_type=distance_type,
                                                distributional_model=distributional_model,
                                                n_words=n_words)
-        model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name}"
+        model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name} "
 
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve linguistic {VERSION}",
+                             f"Linguistic distance-only {VERSION}",
                              model_dirname)
 
     if not path.isdir(response_dir):

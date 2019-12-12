@@ -61,9 +61,9 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        NaïveLinguisticSpec(quantile=0.5, n_words=n_words, model_name="pmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
-        NaïveLinguisticSpec(quantile=0.5, n_words=n_words, model_name="ppmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
-        NaïveLinguisticSpec(quantile=0.5, n_words=n_words, model_name="log_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(quantile=0.1, n_words=n_words, model_name="pmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(quantile=0.1, n_words=n_words, model_name="ppmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(quantile=0.1, n_words=n_words, model_name="log_ngram", model_radius=model_radius, corpus_name=corpus_name),
     ]
 
     for job in [Job_2_5(spec) for spec in specs]:

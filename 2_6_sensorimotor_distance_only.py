@@ -39,10 +39,10 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 def main(quantile: float, distance_type: Optional[DistanceType]):
 
     sm = SensorimotorDistanceOnlyModelComponent(quantile=quantile, distance_type=distance_type)
-    model_dirname = distance_type.name
+    model_dirname = f"{distance_type.name} quantile {sm.quantile}"
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve sensorimotor {VERSION}",
+                             f"Sensorimotor distance-only {VERSION}",
                              model_dirname)
 
     if not path.isdir(response_dir):
