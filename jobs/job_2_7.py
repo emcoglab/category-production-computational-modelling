@@ -3,7 +3,7 @@ import logging
 from jobs.job import LinguisticSAJob, LinguisticSASpec
 
 
-class Job_2_3(LinguisticSAJob):
+class Job_2_7(LinguisticSAJob):
 
     # graph_size -> RAM/G
     RAM = {
@@ -14,13 +14,11 @@ class Job_2_3(LinguisticSAJob):
         40_000: 15,
     }
 
-    def __init__(self, spec: LinguisticSASpec, run_for_ticks: int, bailout: int = None):
+    def __init__(self, spec: LinguisticSASpec):
         super().__init__(
-            script_number="2_3",
-            script_name="2_3_category_production_ngram_tsa.py",
-            spec=spec,
-            run_for_ticks=run_for_ticks,
-            bailout=bailout)
+            script_number="2_7",
+            script_name="2_7_linguistic_one_hop.py",
+            spec=spec)
 
     @property
     def qsub_command(self) -> str:
@@ -34,7 +32,6 @@ class Job_2_3(LinguisticSAJob):
         # script
         cmd += f" {self.script_name}"
         # script args
-        cmd += f" --bailout {self.bailout}"
         cmd += f" --corpus_name {self.spec.corpus_name}"
         cmd += f" --firing_threshold {self.spec.firing_threshold}"
         cmd += f" --impulse_pruning_threshold {self.spec.impulse_pruning_threshold}"
@@ -43,7 +40,6 @@ class Job_2_3(LinguisticSAJob):
         cmd += f" --node_decay_factor {self.spec.node_decay_factor}"
         cmd += f" --radius {self.spec.model_radius}"
         cmd += f" --edge_decay_sd_factor {self.spec.edge_decay_sd}"
-        cmd += f" --run_for_ticks {self.run_for_ticks}"
         cmd += f" --words {int(self.spec.graph_size)}"
         return cmd
 
@@ -56,7 +52,6 @@ if __name__ == '__main__':
 
     graph_size = 40_000
     length_factor = 100
-    bailout = graph_size / 2
     impulse_pruning_threshold = 0.05
     node_decay_factor = 0.99
     model_radius = 5
@@ -74,5 +69,5 @@ if __name__ == '__main__':
         LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=length_factor, firing_threshold=0.5, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
     ]
 
-    for job in [Job_2_3(spec, run_for_ticks=10_000) for spec in specs]:
+    for job in [Job_2_7(spec) for spec in specs]:
         job.submit()

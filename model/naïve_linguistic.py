@@ -15,10 +15,10 @@ caiwingfield.net
 ---------------------------
 """
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, List
 from logging import getLogger
 
-from numpy import array, percentile
+from numpy import array, percentile, Infinity
 from scipy.sparse import issparse
 from scipy.spatial import distance_matrix as minkowski_distance_matrix
 from scipy.spatial.distance import cdist as distance_matrix
@@ -29,9 +29,10 @@ from ldm.model.ngram import NgramModel
 from ldm.utils.exceptions import WordNotFoundError
 from ldm.utils.lists import chunks
 from ldm.utils.maths import DistanceType
-from model.basic_types import ItemLabel
-from model.linguistic_component import load_labels_from_corpus
-from model.naïve import NaïveModelComponent
+from model.basic_types import ItemLabel, ActivationValue, ItemIdx
+from model.graph import EdgePruningType
+from model.linguistic_component import load_labels_from_corpus, LinguisticComponent
+from model.naïve import DistanceOnlyModelComponent
 from model.utils.maths import distance_from_similarity
 
 logger = getLogger(__name__)
@@ -40,37 +41,81 @@ logger = getLogger(__name__)
 SPARSE_BATCH_SIZE = 1_000
 
 
-class LinguisticNaïveModelComponent(NaïveModelComponent, ABC):
+class LinguisticOneHopComponent(LinguisticComponent):
+    """A LinguisticComponent which allows only hops from the initial nodes."""
+    def __init__(self, n_words: int, distributional_model: DistributionalSemanticModel, length_factor: int,
+                 node_decay_factor: float, edge_decay_sd_factor: float, impulse_pruning_threshold: ActivationValue,
+                 firing_threshold: ActivationValue, activation_cap: ActivationValue = Infinity,
+                 distance_type: DistanceType = None, edge_pruning=None, edge_pruning_type: EdgePruningType = None):
+        super().__init__(n_words, distributional_model, length_factor, node_decay_factor, edge_decay_sd_factor,
+                         impulse_pruning_threshold, firing_threshold, activation_cap, distance_type, edge_pruning,
+                         edge_pruning_type)
 
-    def __init__(self, n_words: int, distributional_model: DistributionalSemanticModel):
+        # region Resettable
+
+        # Prevent additional impulses being created
+        self._block_new_impulses: bool = False
+
+        # endregion
+
+    def reset(self):
+        super().reset()
+        self._block_new_impulses = False
+
+    def schedule_activation_of_item_with_idx(self, idx: ItemIdx, activation: ActivationValue, arrival_time: int):
+        if self._block_new_impulses:
+            return
+        else:
+            super().schedule_activation_of_item_with_idx(idx, activation, arrival_time)
+
+    def scheduled_activation_count(self) -> int:
+        return sum([1
+                    for tick, schedule_activation in self._scheduled_activations.items()
+                    for idx, activation in schedule_activation.items()
+                    if activation > 0])
+
+    def activate_item_with_idx(self, idx: ItemIdx, activation: ActivationValue):
+        super().activate_item_with_idx(idx, activation)
+        self._block_new_impulses = True
+
+    def activate_items_with_idxs(self, idxs: List[ItemIdx], activation: ActivationValue):
+        for idx in idxs:
+            super().activate_item_with_idx(idx, activation)
+        self._block_new_impulses = True
+
+
+class LinguisticDistanceOnlyModelComponent(DistanceOnlyModelComponent, ABC):
+
+    def __init__(self, quantile: float, n_words: int, distributional_model: DistributionalSemanticModel):
         self._distributional_model: DistributionalSemanticModel = distributional_model
 
-        # cache for median distances
-        self.__median_distances: Dict[ItemLabel, float] = dict()
+        # cache for quantile distances
+        self.__quantile_distances: Dict[ItemLabel, float] = dict()
 
         super().__init__(
+            quantile=quantile,
             words=FreqDist.load(distributional_model.corpus_meta.freq_dist_path).most_common_tokens(n_words),
             idx2label=load_labels_from_corpus(distributional_model.corpus_meta, n_words))
 
-    def median_distance_from(self, word: ItemLabel) -> float:
+    def quantile_distance_from(self, word: ItemLabel) -> float:
         """:raises WordNotFoundError"""
         if word not in self.words:
             raise WordNotFoundError(word)
-        if word not in self.__median_distances:
-            self.__median_distances[word] = self._compute_median_distance_from(word)
-        return self.__median_distances[word]
+        if word not in self.__quantile_distances:
+            self.__quantile_distances[word] = self._compute_quantile_distance_from(word)
+        return self.__quantile_distances[word]
 
     @abstractmethod
-    def _compute_median_distance_from(self, word: ItemLabel) -> float:
+    def _compute_quantile_distance_from(self, word: ItemLabel) -> float:
         raise NotImplementedError()
 
 
-class LinguisticVectorNaïveModel(LinguisticNaïveModelComponent):
+class LinguisticVectorDistanceOnlyModel(LinguisticDistanceOnlyModelComponent):
 
-    def __init__(self, n_words: int, distributional_model: VectorSemanticModel,
+    def __init__(self, quantile: float, n_words: int, distributional_model: VectorSemanticModel,
                  distance_type: DistanceType):
         self.distance_type: DistanceType = distance_type
-        super().__init__(distributional_model=distributional_model, n_words=n_words)
+        super().__init__(quantile=quantile, distributional_model=distributional_model, n_words=n_words)
 
     def distance_between(self, word_1, word_2) -> float:
         """:raises WordNotFoundError"""
@@ -83,7 +128,7 @@ class LinguisticVectorNaïveModel(LinguisticNaïveModelComponent):
         assert isinstance(self._distributional_model, VectorSemanticModel)
         return self._distributional_model.distance_between(word_1, word_2, self.distance_type)
 
-    def _compute_median_distance_from(self, word: ItemLabel) -> float:
+    def _compute_quantile_distance_from(self, word: ItemLabel) -> float:
         """:raises WordNotFoundError"""
         if word not in self.words:
             raise WordNotFoundError(word)
@@ -128,13 +173,13 @@ class LinguisticVectorNaïveModel(LinguisticNaïveModelComponent):
             else:
                 raise NotImplementedError()
 
-        return percentile(distances, 50)
+        return percentile(distances, self.quantile * 100)
 
 
-class LinguisticNgramNaïveModel(LinguisticNaïveModelComponent):
+class LinguisticNgramDistanceOnlyModel(LinguisticDistanceOnlyModelComponent):
 
-    def __init__(self, n_words: int, distributional_model: NgramModel):
-        super().__init__(distributional_model=distributional_model, n_words=n_words)
+    def __init__(self, quantile: float, n_words: int, distributional_model: NgramModel):
+        super().__init__(quantile=quantile, distributional_model=distributional_model, n_words=n_words)
         logger.info("Finding minimum and maximum values")
         # Set the max value for later turning associations into distances.
         # We will rarely need the whole model in memory, so we load it once for computing the max, then unload it.
@@ -160,7 +205,7 @@ class LinguisticNgramNaïveModel(LinguisticNaïveModelComponent):
             self._distributional_model.association_between(word_1, word_2),
             self._max_value, self._min_value)
 
-    def _compute_median_distance_from(self, word: ItemLabel) -> float:
+    def _compute_quantile_distance_from(self, word: ItemLabel) -> float:
         """:raises WordNotFoundError"""
         if word not in self.words:
             raise WordNotFoundError(word)
@@ -168,4 +213,4 @@ class LinguisticNgramNaïveModel(LinguisticNaïveModelComponent):
         similarities: array = self._distributional_model.underlying_count_model.vector_for_word(word)
         distances: array = distance_from_similarity(similarities,
                                                     min_similarity=self._min_value, max_similarity=self._max_value)
-        return percentile(distances, 50)
+        return percentile(distances, self.quantile * 100)

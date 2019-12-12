@@ -1,6 +1,6 @@
 """
 ===========================
-Model responses to Briony's category production categories using a naïve linguistic model.
+Model responses to Briony's category production categories using a linguistic distance-only model.
 ===========================
 
 Dr. Cai Wingfield
@@ -32,7 +32,7 @@ from ldm.model.ngram import NgramModel
 from ldm.utils.maths import DistanceType
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
-from model.naïve_linguistic import LinguisticVectorNaïveModel, LinguisticNgramNaïveModel
+from model.naïve_linguistic import LinguisticVectorDistanceOnlyModel, LinguisticNgramDistanceOnlyModel
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,8 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int,
+def main(quantile: float,
+         n_words: int,
          corpus_name: str,
          model_name: str,
          radius: int,
@@ -54,19 +55,21 @@ def main(n_words: int,
 
     if distributional_model.model_type.metatype == DistributionalSemanticModel.MetaType.ngram:
         assert isinstance(distributional_model, NgramModel)
-        lnm = LinguisticNgramNaïveModel(distributional_model=distributional_model,
-                                        n_words=n_words)
-        model_dirname = f"{distributional_model.name} {n_words:,} words"
+        lm = LinguisticNgramDistanceOnlyModel(quantile=quantile,
+                                              distributional_model=distributional_model,
+                                              n_words=n_words)
+        model_dirname = f"{distributional_model.name} {n_words:,} words quantile {lm.quantile}"
     else:
         assert isinstance(distributional_model, VectorSemanticModel)
-        lnm = LinguisticVectorNaïveModel(distance_type=distance_type,
-                                         distributional_model=distributional_model,
-                                         n_words=n_words)
-        model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name}"
+        lm = LinguisticVectorDistanceOnlyModel(quantile=quantile,
+                                               distance_type=distance_type,
+                                               distributional_model=distributional_model,
+                                               n_words=n_words)
+        model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name} "
 
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve linguistic {VERSION}",
+                             f"Linguistic distance-only {VERSION}",
                              model_dirname)
 
     if not path.isdir(response_dir):
@@ -78,7 +81,7 @@ def main(n_words: int,
 
     # Record model details
     csv_comments = [
-        f"Naïve linguistic model:",
+        f"Linguistic distance-only model:",
         f"\t        model = {distributional_model.name}",
         f"\t        words = {n_words:_}",
     ]
@@ -95,7 +98,7 @@ def main(n_words: int,
         for response in cp.responses_for_category(category):
             try:
                 # Hit if hit for any category word
-                hit = any(lnm.is_hit(c, response) for c in category_words)
+                hit = any(lm.is_hit(c, response) for c in category_words)
             except LookupError as er:
                 logger.warning(er)
                 hit = False
@@ -119,6 +122,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
+    parser.add_argument("-q", "--quantile", type=float, required=True)
     parser.add_argument("-w", "--words", type=int, required=True,
                         help="The number of words to use from the corpus. (Top n words.)")
     parser.add_argument("-c", "--corpus_name", required=True, type=str)
@@ -128,7 +132,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(n_words=args.words,
+    main(quantile=args.quantile,
+         n_words=args.words,
          corpus_name=args.corpus_name,
          model_name=args.model_name,
          radius=args.radius,

@@ -1,6 +1,6 @@
 """
 ===========================
-Model responses to Briony's category production categories using a naïve sensorimotor model.
+Model responses to Briony's category production categories using a sensorimotor distance-only model.
 ===========================
 
 Dr. Cai Wingfield
@@ -26,7 +26,7 @@ from category_production.category_production import CategoryProduction, ColNames
 from evaluation.column_names import MODEL_HIT
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
-from model.naïve_sensorimotor import SensorimotorNaïveModelComponent
+from model.naïve_sensorimotor import SensorimotorDistanceOnlyModelComponent
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
 from preferences import Preferences
@@ -36,13 +36,13 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(distance_type: Optional[DistanceType]):
+def main(quantile: float, distance_type: Optional[DistanceType]):
 
-    snm = SensorimotorNaïveModelComponent(distance_type=distance_type)
-    model_dirname = distance_type.name
+    sm = SensorimotorDistanceOnlyModelComponent(quantile=quantile, distance_type=distance_type)
+    model_dirname = f"{distance_type.name} quantile {sm.quantile}"
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
-                             f"Naïve sensorimotor {VERSION}",
+                             f"Sensorimotor distance-only {VERSION}",
                              model_dirname)
 
     if not path.isdir(response_dir):
@@ -53,7 +53,7 @@ def main(distance_type: Optional[DistanceType]):
 
     # Record model details
     csv_comments = [
-        f"Naïve sensorimotor model:",
+        f"Sensorimotor distance-only model:",
         f"\t        model = sensorimotor",
         f"\tdistance type = {distance_type.name}",
     ]
@@ -62,14 +62,14 @@ def main(distance_type: Optional[DistanceType]):
     hits = []
     for i, category in enumerate(cp.category_labels_sensorimotor, start=1):
         logger.info(f"Checking hits for category \"{category}\" ({i}/{len(cp.category_labels_sensorimotor)})")
-        if category in snm.words:
+        if category in sm.words:
             category_words = [category]
         else:
             category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
         for response in cp.responses_for_category(category, use_sensorimotor=True, force_unique=True):
             try:
                 # Hit if hit for any category word
-                hit = any(snm.is_hit(c, response) for c in category_words)
+                hit = any(sm.is_hit(c, response) for c in category_words)
             except LookupError as er:
                 logger.warning(er)
                 hit = False
@@ -93,9 +93,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
+    parser.add_argument("-q", "--quantile", type=float, required=True)
     parser.add_argument('-d', "--distance_type", type=str, default=None)
 
     args = parser.parse_args()
 
-    main(distance_type=DistanceType.from_name(args.distance_type))
+    main(quantile=args.quantile, distance_type=DistanceType.from_name(args.distance_type))
     logger.info("Done!")

@@ -32,41 +32,6 @@ class Spec(ABC):
 
 
 @dataclass
-class NaïveSpec(Spec, ABC):
-    pass
-
-
-@dataclass
-class NaïveLinguisticSpec(NaïveSpec):
-    n_words: int
-    model_name: str
-    model_radius: int
-    corpus_name: str
-    distance_type: Optional[DistanceType] = None
-
-    @property
-    def shorthand(self) -> str:
-        if self.distance_type is None:
-            return f"{self.model_name}_" \
-                   f"r{self.model_radius}" \
-                   f"{self.n_words}"
-        else:
-            return f"{self.model_name}_" \
-                   f"r{self.model_radius}" \
-                   f"{self.distance_type.name}_" \
-                   f"{self.n_words}"
-
-
-@dataclass
-class NaïveSensorimotorSpec(NaïveSpec):
-    distance_type: DistanceType
-
-    @property
-    def shorthand(self) -> str:
-        return f"{self.distance_type.name}"
-
-
-@dataclass
 class SASpec(Spec, ABC):
     length_factor: int
 
@@ -79,8 +44,8 @@ class SensorimotorSASpec(SASpec):
     buffer_threshold: float
     accessible_set_threshold: float
     distance_type: DistanceType
-    buffer_capacity: int
-    accessible_set_capacity: int
+    buffer_capacity: Optional[int]
+    accessible_set_capacity: Optional[int]
 
     @property
     def shorthand(self) -> str:
@@ -89,7 +54,7 @@ class SensorimotorSASpec(SASpec):
                f"m{self.median}_" \
                f"s{self.sigma}_" \
                f"a{self.accessible_set_threshold}_" \
-               f"ac{self.accessible_set_capacity}_" \
+               f"ac{self.accessible_set_capacity if self.accessible_set_capacity is not None else '-'}_" \
                f"b{self.buffer_threshold}"
 
 
@@ -103,8 +68,8 @@ class LinguisticSASpec(SASpec):
     edge_decay_sd: float
     impulse_pruning_threshold: float
     node_decay_factor: float
-    pruning: int
-    distance_type: Optional[DistanceType]
+    pruning: Optional[int]
+    distance_type: Optional[DistanceType] = None
 
     @property
     def shorthand(self):
@@ -155,14 +120,14 @@ class SAJob(Job, ABC):
                  script_number: str,
                  script_name: str,
                  spec: Spec,
-                 run_for_ticks: int,
-                 bailout: int = None):
+                 run_for_ticks: Optional[int] = None,
+                 bailout: Optional[int] = None):
         super().__init__(
             script_number=script_number,
             script_name=script_name,
             spec=spec)
-        self.run_for_ticks: int = run_for_ticks
-        self.bailout: int = bailout
+        self.run_for_ticks: Optional[int] = run_for_ticks
+        self.bailout: Optional[int] = bailout
 
 
 class SensorimotorSAJob(SAJob, ABC):
