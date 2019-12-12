@@ -42,7 +42,7 @@ from preferences import Preferences
 logger = logging.getLogger(__name__)
 
 
-CATEGORY_PRODUCTION = CategoryProduction(use_cache=True)
+CATEGORY_PRODUCTION = CategoryProduction()
 
 # Each participant saw 39 categories
 CATEGORIES_PER_PARTICIPANT = 39

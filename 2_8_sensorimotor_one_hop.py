@@ -78,7 +78,7 @@ def main(distance_type_name: str,
         makedirs(response_dir)
 
     # If we're using the prepruned version, we can risk using the cache too
-    cp = CategoryProduction(use_cache=use_prepruned)
+    cp = CategoryProduction()
     sc = SensorimotorOneHopComponent(
         distance_type=distance_type,
         length_factor=length_factor,
