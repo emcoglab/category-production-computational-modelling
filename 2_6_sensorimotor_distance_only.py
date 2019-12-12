@@ -1,6 +1,6 @@
 """
 ===========================
-Model responses to Briony's category production categories using a naïve sensorimotor model.
+Model responses to Briony's category production categories using a sensorimotor distance-only model.
 ===========================
 
 Dr. Cai Wingfield
@@ -53,7 +53,7 @@ def main(quantile: float, distance_type: Optional[DistanceType]):
 
     # Record model details
     csv_comments = [
-        f"Naïve sensorimotor model:",
+        f"Sensorimotor distance-only model:",
         f"\t        model = sensorimotor",
         f"\tdistance type = {distance_type.name}",
     ]

@@ -57,18 +57,23 @@ assert (TOTAL_CATEGORIES == len(CATEGORY_PRODUCTION.category_labels))
 
 class ModelType(Enum):
     """Represents the type of model being used in the comparison."""
-    naïve_sensorimotor = auto()
-    naïve_linguistic = auto()
+    sensorimotor_distance_only = auto()
+    linguistic_distance_only = auto()
     sensorimotor = auto()
     linguistic = auto()
-    # Combining sensorimotor and linguistic in a naïve way; i.e. set union of activated items
+    # Combining sensorimotor and linguistic in a simple way; i.e. set union of activated items
     combined_set_union = auto()
     # Full tandem model
     tandem = auto()
 
     @property
     def name(self) -> str:
-        return super(ModelType, self).name.replace("_", " ")
+        if self == ModelType.sensorimotor_distance_only:
+            return "sensorimotor distance-only"
+        elif self == ModelType.linguistic_distance_only:
+            return "linguistic distance-only"
+        else:
+            return super(ModelType, self).name.replace("_", " ")
 
 
 class ParticipantSummaryType(Enum):
@@ -238,9 +243,9 @@ def add_predictor_column_production_proportion(main_data):
 
 
 def category_response_col_names_for_model_type(model_type):
-    if model_type in [ModelType.linguistic, ModelType.naïve_linguistic]:
+    if model_type in [ModelType.linguistic, ModelType.linguistic_distance_only]:
         c, r = CPColNames.Category, CPColNames.Response
-    elif model_type in [ModelType.sensorimotor, ModelType.naïve_sensorimotor]:
+    elif model_type in [ModelType.sensorimotor, ModelType.sensorimotor_distance_only]:
         c, r = CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor
     elif model_type == ModelType.combined_set_union:
         # We could use either here
@@ -386,10 +391,10 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
         figures_dir = "hitrates linguistic"
     elif model_type == ModelType.combined_set_union:
         figures_dir = "hitrates combined set union"
-    elif model_type == ModelType.naïve_linguistic:
-        figures_dir = "hitrates naïve linguistic"
-    elif model_type == ModelType.naïve_sensorimotor:
-        figures_dir = "hitrates naïve sensorimotor"
+    elif model_type == ModelType.linguistic_distance_only:
+        figures_dir = "hitrates linguistic distance-only"
+    elif model_type == ModelType.sensorimotor_distance_only:
+        figures_dir = "hitrates sensorimotor distance-only"
     else:
         raise NotImplementedError()
 
@@ -449,10 +454,10 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
         base_dir = path.join(Preferences.results_dir, f"Category production fit linguistic")
     elif model_type == ModelType.combined_set_union:
         base_dir = path.join(Preferences.results_dir, "Category production fit combined set union")
-    elif model_type == ModelType.naïve_sensorimotor:
-        base_dir = path.join(Preferences.results_dir, "Category production fit naïve sensorimotor")
-    elif model_type == ModelType.naïve_linguistic:
-        base_dir = path.join(Preferences.results_dir, "Category production fit naïve linguistic")
+    elif model_type == ModelType.sensorimotor_distance_only:
+        base_dir = path.join(Preferences.results_dir, "Category production fit sensorimotor distance-only")
+    elif model_type == ModelType.linguistic_distance_only:
+        base_dir = path.join(Preferences.results_dir, "Category production fit linguistic distance-only")
     else:
         raise NotImplementedError()
 
@@ -564,12 +569,12 @@ def process_one_model_output(main_data: DataFrame,
     )
 
 
-def process_one_model_output_naïve(main_data: DataFrame,
-                                   model_type: ModelType,
-                                   input_results_dir: str,
-                                   min_first_rank_freq: Optional[int],
-                                   ):
-    assert model_type in [ModelType.naïve_linguistic, ModelType.naïve_sensorimotor]
+def process_one_model_output_distance_only(main_data: DataFrame,
+                                           model_type: ModelType,
+                                           input_results_dir: str,
+                                           min_first_rank_freq: Optional[int],
+                                           ):
+    assert model_type in [ModelType.linguistic_distance_only, ModelType.sensorimotor_distance_only]
     input_results_path = Path(input_results_dir)
     model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
     output_dir = f"Category production fit {model_type.name}"
@@ -615,10 +620,10 @@ def save_model_performance_stats(main_dataframe,
         specific_output_dir = "Category production fit sensorimotor"
     elif model_type == ModelType.linguistic:
         specific_output_dir = "Category production fit linguistic"
-    elif model_type == ModelType.naïve_sensorimotor:
-        specific_output_dir = "Category production fit naïve sensorimotor"
-    elif model_type == ModelType.naïve_linguistic:
-        specific_output_dir = "Category production fit naïve linguistic"
+    elif model_type == ModelType.sensorimotor_distance_only:
+        specific_output_dir = "Category production fit sensorimotor distance-only"
+    elif model_type == ModelType.linguistic_distance_only:
+        specific_output_dir = "Category production fit linguistic distance-only"
     elif model_type == ModelType.combined_set_union:
         specific_output_dir = "Category production fit combined set union"
     else:

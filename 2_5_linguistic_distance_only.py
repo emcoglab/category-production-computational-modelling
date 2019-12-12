@@ -1,6 +1,6 @@
 """
 ===========================
-Model responses to Briony's category production categories using a naïve linguistic model.
+Model responses to Briony's category production categories using a linguistic distance-only model.
 ===========================
 
 Dr. Cai Wingfield
@@ -81,7 +81,7 @@ def main(quantile: float,
 
     # Record model details
     csv_comments = [
-        f"Naïve linguistic model:",
+        f"Linguistic distance-only model:",
         f"\t        model = {distributional_model.name}",
         f"\t        words = {n_words:_}",
     ]
