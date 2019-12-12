@@ -38,6 +38,7 @@ class NaïveSpec(Spec, ABC):
 
 @dataclass
 class NaïveLinguisticSpec(NaïveSpec):
+    quantile: float
     n_words: int
     model_name: str
     model_radius: int
@@ -47,11 +48,13 @@ class NaïveLinguisticSpec(NaïveSpec):
     @property
     def shorthand(self) -> str:
         if self.distance_type is None:
-            return f"{self.model_name}_" \
+            return f"q{self.quantile}_" \
+                   f"{self.model_name}_" \
                    f"r{self.model_radius}" \
                    f"{self.n_words}"
         else:
-            return f"{self.model_name}_" \
+            return f"q{self.quantile}_" \
+                   f"{self.model_name}_" \
                    f"r{self.model_radius}" \
                    f"{self.distance_type.name}_" \
                    f"{self.n_words}"

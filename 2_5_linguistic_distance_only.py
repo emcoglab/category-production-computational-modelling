@@ -40,7 +40,8 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(n_words: int,
+def main(quantile: float,
+         n_words: int,
          corpus_name: str,
          model_name: str,
          radius: int,
@@ -54,12 +55,14 @@ def main(n_words: int,
 
     if distributional_model.model_type.metatype == DistributionalSemanticModel.MetaType.ngram:
         assert isinstance(distributional_model, NgramModel)
-        lm = LinguisticNgramDistanceOnlyModel(distributional_model=distributional_model,
+        lm = LinguisticNgramDistanceOnlyModel(quantile=quantile,
+                                              distributional_model=distributional_model,
                                               n_words=n_words)
         model_dirname = f"{distributional_model.name} {n_words:,} words"
     else:
         assert isinstance(distributional_model, VectorSemanticModel)
-        lm = LinguisticVectorDistanceOnlyModel(distance_type=distance_type,
+        lm = LinguisticVectorDistanceOnlyModel(quantile=quantile,
+                                               distance_type=distance_type,
                                                distributional_model=distributional_model,
                                                n_words=n_words)
         model_dirname = f"{distributional_model.name} {n_words:,} words {distance_type.name}"
@@ -119,6 +122,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
+    parser.add_argument("-q", "--quantile", type=float, required=True)
     parser.add_argument("-w", "--words", type=int, required=True,
                         help="The number of words to use from the corpus. (Top n words.)")
     parser.add_argument("-c", "--corpus_name", required=True, type=str)
@@ -128,7 +132,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(n_words=args.words,
+    main(quantile=args.quantile,
+         n_words=args.words,
          corpus_name=args.corpus_name,
          model_name=args.model_name,
          radius=args.radius,

@@ -31,6 +31,7 @@ class Job_2_5(Job):
 
     @property
     def qsub_command(self) -> str:
+        assert isinstance(self.spec, NaïveLinguisticSpec)
         cmd = f"qsub"
         # qsub args
         cmd += f" -S {self._python_location}"
@@ -41,11 +42,11 @@ class Job_2_5(Job):
         # script
         cmd += f" {self.script_name}"
         # script args
+        cmd += f" --quantile {self.spec.quantile}"
         cmd += f" --corpus_name {self.spec.corpus_name}"
         cmd += f" --model_name {self.spec.model_name}"
         cmd += f" --radius {self.spec.model_radius}"
         cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
-        cmd += f" --length_factor {self.spec.length_factor}"
         return cmd
 
 
@@ -60,9 +61,9 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        NaïveLinguisticSpec(n_words=n_words, model_name="pmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
-        NaïveLinguisticSpec(n_words=n_words, model_name="ppmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
-        NaïveLinguisticSpec(n_words=n_words, model_name="log_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(quantile=0.5, n_words=n_words, model_name="pmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(quantile=0.5, n_words=n_words, model_name="ppmi_ngram", model_radius=model_radius, corpus_name=corpus_name),
+        NaïveLinguisticSpec(quantile=0.5, n_words=n_words, model_name="log_ngram", model_radius=model_radius, corpus_name=corpus_name),
     ]
 
     for job in [Job_2_5(spec) for spec in specs]:

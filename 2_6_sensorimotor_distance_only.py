@@ -36,9 +36,9 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-def main(distance_type: Optional[DistanceType]):
+def main(quantile: float, distance_type: Optional[DistanceType]):
 
-    sm = SensorimotorDistanceOnlyModelComponent(distance_type=distance_type)
+    sm = SensorimotorDistanceOnlyModelComponent(quantile=quantile, distance_type=distance_type)
     model_dirname = distance_type.name
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
@@ -93,9 +93,10 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
+    parser.add_argument("-q", "--quantile", type=float, required=True)
     parser.add_argument('-d', "--distance_type", type=str, default=None)
 
     args = parser.parse_args()
 
-    main(distance_type=DistanceType.from_name(args.distance_type))
+    main(quantile=args.quantile, distance_type=DistanceType.from_name(args.distance_type))
     logger.info("Done!")
