@@ -32,44 +32,6 @@ class Spec(ABC):
 
 
 @dataclass
-class NaïveSpec(Spec, ABC):
-    pass
-
-
-@dataclass
-class NaïveLinguisticSpec(NaïveSpec):
-    quantile: float
-    n_words: int
-    model_name: str
-    model_radius: int
-    corpus_name: str
-    distance_type: Optional[DistanceType] = None
-
-    @property
-    def shorthand(self) -> str:
-        if self.distance_type is None:
-            return f"q{self.quantile}_" \
-                   f"{self.model_name}_" \
-                   f"r{self.model_radius}" \
-                   f"{self.n_words}"
-        else:
-            return f"q{self.quantile}_" \
-                   f"{self.model_name}_" \
-                   f"r{self.model_radius}" \
-                   f"{self.distance_type.name}_" \
-                   f"{self.n_words}"
-
-
-@dataclass
-class NaïveSensorimotorSpec(NaïveSpec):
-    distance_type: DistanceType
-
-    @property
-    def shorthand(self) -> str:
-        return f"{self.distance_type.name}"
-
-
-@dataclass
 class SASpec(Spec, ABC):
     length_factor: int
 
