@@ -52,7 +52,6 @@ if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
 
     graph_size = 40_000
-    length_factor = 100
     bailout = graph_size / 2
     impulse_pruning_threshold = 0.05
     node_decay_factor = 0.99
@@ -60,15 +59,15 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=length_factor, firing_threshold=0.7, edge_decay_sd=35, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=length_factor, firing_threshold=0.6, edge_decay_sd=25, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=length_factor, firing_threshold=0.7, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=length_factor, firing_threshold=0.6, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=length_factor, firing_threshold=0.7, edge_decay_sd=35, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=length_factor, firing_threshold=0.5, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=length_factor, firing_threshold=0.7, edge_decay_sd=20, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=length_factor, firing_threshold=0.5, edge_decay_sd=20, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=length_factor, firing_threshold=0.5, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=10, firing_threshold=0.7, edge_decay_sd=35, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=10, firing_threshold=0.6, edge_decay_sd=25, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=10, firing_threshold=0.7, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram", length_factor=10, firing_threshold=0.6, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.7, edge_decay_sd=35, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.5, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.7, edge_decay_sd=20, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.5, edge_decay_sd=20, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
+        LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.5, edge_decay_sd=30, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
     ]
 
     for job in [Job_2_3(spec, run_for_ticks=10_000) for spec in specs]:
