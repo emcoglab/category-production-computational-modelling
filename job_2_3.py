@@ -23,13 +23,8 @@ class Job_2_3(LinguisticSAJob):
             bailout=bailout)
 
     @property
-    def qsub_command(self) -> str:
-        cmd = f"qsub"
-        # qsub args
-        cmd += f" -N {self.name}"
-        cmd += f" -l h_vmem={self.RAM[self.spec.graph_size]}G"
-        # script
-        cmd += f" {self._shim} {self.script_name}"
+    def command(self) -> str:
+        cmd = self.script_name
         # script args
         cmd += f" --bailout {self.bailout}"
         cmd += f" --corpus_name {self.spec.corpus_name}"
@@ -43,6 +38,11 @@ class Job_2_3(LinguisticSAJob):
         cmd += f" --run_for_ticks {self.run_for_ticks}"
         cmd += f" --words {int(self.spec.graph_size)}"
         return cmd
+
+    @property
+    def _ram_requirement_g(self):
+        assert isinstance(self.spec, LinguisticSASpec)
+        return self.RAM[self.spec.graph_size]
 
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

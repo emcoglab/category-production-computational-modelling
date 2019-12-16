@@ -22,13 +22,8 @@ class Job_2_8(SensorimotorSAJob):
             spec=spec)
 
     @property
-    def qsub_command(self) -> str:
-        cmd = f"qsub"
-        # qsub args
-        cmd += f" -N {self.name}"
-        cmd += f" -l h_vmem={self.RAM[self.spec.max_radius]}G"
-        # script
-        cmd += f" {self._shim} {self.script_name}"
+    def command(self) -> str:
+        cmd = self.script_name
         # script args
         cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
         cmd += f" --max_sphere_radius {self.spec.max_radius}"
@@ -38,6 +33,11 @@ class Job_2_8(SensorimotorSAJob):
         cmd += f" --node_decay_median {self.spec.median}"
         cmd += f" --node_decay_sigma {self.spec.sigma}"
         return cmd
+
+    @property
+    def _ram_requirement_g(self):
+        assert isinstance(self.spec, SensorimotorSASpec)
+        return self.RAM[self.spec.max_radius]
 
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

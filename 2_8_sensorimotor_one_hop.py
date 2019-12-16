@@ -148,8 +148,8 @@ def main(distance_type_name: str,
 
             # Break when there are no impulses remaining on-route
             if sc.scheduled_activation_count() == 0:
-                csv_comments.append(f"No further schedule activations after {tick} ticks")
-                logger.info(f"No further schedule activations after {tick} ticks")
+                csv_comments.append(f"No further scheduled activations after {tick} ticks")
+                logger.info(f"No further scheduled activations after {tick} ticks")
                 break
 
         model_responses_df = DataFrame.from_records(

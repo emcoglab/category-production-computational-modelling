@@ -21,13 +21,8 @@ class Job_2_7(LinguisticSAJob):
             spec=spec)
 
     @property
-    def qsub_command(self) -> str:
-        cmd = f"qsub"
-        # qsub args
-        cmd += f" -N {self.name}"
-        cmd += f" -l h_vmem={self.RAM[self.spec.graph_size]}G"
-        # script
-        cmd += f" {self._shim} {self.script_name}"
+    def command(self) -> str:
+        cmd = self.script_name
         # script args
         cmd += f" --corpus_name {self.spec.corpus_name}"
         cmd += f" --firing_threshold {self.spec.firing_threshold}"
@@ -39,6 +34,11 @@ class Job_2_7(LinguisticSAJob):
         cmd += f" --edge_decay_sd_factor {self.spec.edge_decay_sd}"
         cmd += f" --words {int(self.spec.graph_size)}"
         return cmd
+
+    @property
+    def _ram_requirement_g(self):
+        assert isinstance(self.spec, LinguisticSASpec)
+        return self.RAM[self.spec.graph_size]
 
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

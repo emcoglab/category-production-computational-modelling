@@ -48,17 +48,17 @@ class Job_1_6(Job):
 
     @property
     def qsub_command(self) -> str:
-        cmd = f"qsub"
-        # qsub args
-        cmd += f" -N {self.name}"
-        cmd += f" -l h_vmem={self.RAM[self.spec.pruning_length]}G"
-        # script
-        cmd += f" {self._shim} {self.script_name}"
+        cmd = self.script_name
         # script args
         cmd += f" --length_factor {self.spec.length_factor}"
         cmd += f" --distance_type {self.spec.distance_type.name}"
         cmd += f" --pruning_length {self.spec.pruning_length}"
         return cmd
+
+    @property
+    def _ram_requirement_g(self):
+        assert isinstance(self.spec, Spec_1_6)
+        return self.RAM[self.spec.pruning_length]
 
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

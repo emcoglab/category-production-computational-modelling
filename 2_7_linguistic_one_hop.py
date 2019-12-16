@@ -155,7 +155,7 @@ def main(n_words: int,
             # Break when there are no impulses remaining on-route
             if lc.scheduled_activation_count() == 0:
                 csv_comments.append(f"No further schedule activations after {tick} ticks")
-                logger.info(f"No further schedule activations after {tick} ticks")
+                logger.info(f"No further scheduled activations after {tick} ticks")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[
