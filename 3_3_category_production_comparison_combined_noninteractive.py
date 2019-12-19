@@ -27,23 +27,25 @@ from typing import Optional
 from numpy import nan, array
 from pandas import DataFrame
 
-from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import add_model_predictor_columns, CATEGORY_PRODUCTION, \
-    get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
-    get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, save_hitrate_graphs, \
-    get_firing_threshold_from_path_linguistic, ModelType, prepare_category_production_data, \
-    drop_missing_data_to_add_types, save_model_performance_stats, hitrate_within_sd_of_hitrate_mean_frac
-from evaluation.column_names import TTFA, MODEL_HIT
+from category_production.category_production import ColNames as CPColNames, CategoryProduction
 from ldm.utils.maths import DistanceType, distance
-from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+
+from evaluation.column_names import TTFA, MODEL_HIT
+from evaluation.category_production import add_model_predictor_columns, ModelType, save_item_level_data, \
+    get_model_ttfas_for_category_sensorimotor, save_hitrate_summary_tables, save_model_performance_stats, \
+    get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, save_hitrate_graphs, \
+    get_firing_threshold_from_path_linguistic, prepare_category_production_data, drop_missing_data_to_add_types, \
+    hitrate_within_sd_of_hitrate_mean_frac
+from preferences import Preferences
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 SN = SensorimotorNorms()
+CP = CategoryProduction()
 
 distance_column = f"{DistanceType.Minkowski3.name} distance"
 
@@ -83,7 +85,7 @@ def compile_model_data(input_results_dir_linguistic: str, input_results_dir_sens
     add_model_predictor_columns(main_data, model_type=ModelType.linguistic,
                                 ttfas={
                                     category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir_sensorimotor)
-                                    for category in CATEGORY_PRODUCTION.category_labels_sensorimotor})
+                                    for category in CP.category_labels_sensorimotor})
     main_data.rename(columns={
         TTFA: f"{TTFA} linguistic",
         MODEL_HIT: f"{MODEL_HIT} linguistic"
@@ -93,7 +95,7 @@ def compile_model_data(input_results_dir_linguistic: str, input_results_dir_sens
     add_model_predictor_columns(main_data, model_type=ModelType.sensorimotor,
                                 ttfas={
                                     category: get_model_ttfas_for_category_linguistic(category, input_results_dir_linguistic, n_words, conscious_access_threshold)
-                                    for category in CATEGORY_PRODUCTION.category_labels})
+                                    for category in CP.category_labels})
     main_data.rename(columns={
         TTFA: f"{TTFA} sensorimotor",
         MODEL_HIT: f"{MODEL_HIT} sensorimotor"

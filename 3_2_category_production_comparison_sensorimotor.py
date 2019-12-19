@@ -24,11 +24,13 @@ import sys
 from os import path
 
 from ldm.utils.logging import date_format, log_message
-from evaluation.category_production import add_model_predictor_columns, CATEGORY_PRODUCTION, \
-    get_model_ttfas_for_category_sensorimotor, ModelType, find_output_dirs, prepare_category_production_data, \
-    process_one_model_output
+from category_production.category_production import CategoryProduction
+
+from evaluation.category_production import add_model_predictor_columns, get_model_ttfas_for_category_sensorimotor, \
+    ModelType, find_output_dirs, prepare_category_production_data, process_one_model_output
 
 logger = logging.getLogger(__name__)
+CP = CategoryProduction()
 
 
 def main(input_results_dir: str,
@@ -50,7 +52,7 @@ def main(input_results_dir: str,
         main_data = prepare_category_production_data(model_type)
         ttfas = {
             category: get_model_ttfas_for_category_sensorimotor(category, model_output_dir)
-            for category in CATEGORY_PRODUCTION.category_labels_sensorimotor
+            for category in CP.category_labels_sensorimotor
         }
         add_model_predictor_columns(main_data, ttfas=ttfas, model_type=model_type)
 

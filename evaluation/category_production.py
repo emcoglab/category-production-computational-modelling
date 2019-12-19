@@ -41,7 +41,7 @@ from preferences import Preferences
 logger = logging.getLogger(__name__)
 
 
-CATEGORY_PRODUCTION = CategoryProduction()
+_CP = CategoryProduction()
 
 # Each participant saw 39 categories
 CATEGORIES_PER_PARTICIPANT = 39
@@ -51,7 +51,7 @@ PARTICIPANTS_PER_CATEGORY = 20
 PARTICIPANT_SETS = 3
 TOTAL_PARTICIPANTS = PARTICIPANTS_PER_CATEGORY * PARTICIPANT_SETS
 TOTAL_CATEGORIES = CATEGORIES_PER_PARTICIPANT * PARTICIPANT_SETS
-assert (TOTAL_CATEGORIES == len(CATEGORY_PRODUCTION.category_labels))
+assert (TOTAL_CATEGORIES == len(_CP.category_labels))
 
 
 class ModelType(Enum):
@@ -318,7 +318,7 @@ def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], mod
         else:
             r_ttfas = [c_ttfas[w]
                        for w in modified_word_tokenize(r)
-                       if (w not in CATEGORY_PRODUCTION.ignored_words)
+                       if (w not in _CP.ignored_words)
                        and (w in c_ttfas)]
 
             # The multi-word response is said to be activated the first time any one of its constituent words are
@@ -344,7 +344,7 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
 
     # add participant bounds
     if summarise_participants_by == ParticipantSummaryType.individual_hitrates:
-        for participant in CATEGORY_PRODUCTION.participants:
+        for participant in _CP.participants:
             pyplot.plot(summary_table.reset_index()[x_selector],
                         summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
                         linewidth=0.4, linestyle="-", color="b", alpha=0.4)
@@ -641,13 +641,11 @@ def hitrate_within_sd_of_hitrate_mean_frac(df: DataFrame) -> DataFrame:
 
 
 def get_summary_table(main_dataframe, groupby_column):
-    """
-    Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column.
-    """
+    """Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column."""
     df = DataFrame()
 
     # Individual participant columns
-    for participant in CATEGORY_PRODUCTION.participants:
+    for participant in _CP.participants:
         df[PARTICIPANT_HITRATE_All_f.format(participant)] = (
             main_dataframe
             [main_dataframe[PARTICIPANT_SAW_CATEGORY_f.format(participant)] == True]
@@ -657,8 +655,8 @@ def get_summary_table(main_dataframe, groupby_column):
             / CATEGORIES_PER_PARTICIPANT)
 
     # Participant summary columns: hitrate
-    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CATEGORY_PRODUCTION.participants]].mean(axis=1)
-    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CATEGORY_PRODUCTION.participants]].std(axis=1)
+    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in _CP.participants]].mean(axis=1)
+    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in _CP.participants]].std(axis=1)
 
     # Model columns
     df[MODEL_HITRATE] = (
@@ -686,7 +684,7 @@ def find_output_dirs(root_dir: str):
 
 def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     # Main dataframe holds category production data and model response data
-    main_data: DataFrame = CATEGORY_PRODUCTION.data.copy()
+    main_data: DataFrame = _CP.data.copy()
 
     # Some distances have been precomputed, so we label them as such
     main_data.rename(columns={col_name: f"Precomputed {col_name}"
