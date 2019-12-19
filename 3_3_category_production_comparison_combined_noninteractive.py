@@ -1,4 +1,3 @@
-#!/Users/cai/Applications/miniconda3/bin/python
 """
 ===========================
 Compare model to Briony's category production actual responses.
@@ -44,7 +43,7 @@ logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
-sensorimotor_norms = SensorimotorNorms()
+SN = SensorimotorNorms()
 
 distance_column = f"{DistanceType.Minkowski3.name} distance"
 
@@ -127,8 +126,7 @@ def process_one_model_output(main_data: DataFrame,
                                               + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
                                               ".csv"))
 
-    hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(
-        model_identifier, main_data, model_type, conscious_access_threshold)
+    hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(model_identifier, main_data, model_type, conscious_access_threshold)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -137,8 +135,6 @@ def process_one_model_output(main_data: DataFrame,
         model_identifier=model_identifier,
         results_dir=None,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rpf_pp=hitrate_fit_rpf_pp,
-        hitrate_fit_rmr_pp=hitrate_fit_rmr_pp,
         hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
         hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
         model_type=model_type,
@@ -154,8 +150,8 @@ def add_predictor_column_sensorimotor_distance(main_data):
 
 def get_sensorimotor_distance_minkowski3(row):
     try:
-        category_vector = array(sensorimotor_norms.vector_for_word(row[CPColNames.CategorySensorimotor]))
-        response_vector = array(sensorimotor_norms.vector_for_word(row[CPColNames.ResponseSensorimotor]))
+        category_vector = array(SN.vector_for_word(row[CPColNames.CategorySensorimotor]))
+        response_vector = array(SN.vector_for_word(row[CPColNames.ResponseSensorimotor]))
         return distance(category_vector, response_vector, DistanceType.Minkowski3)
     except WordNotInNormsError:
         return nan
