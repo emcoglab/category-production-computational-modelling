@@ -388,8 +388,7 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
     pyplot.close()
 
 
-def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFrame, model_type: ModelType,
-                                conscious_access_threshold: Optional[float]):
+def save_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType, file_suffix: str):
 
     hitrates_per_rpf = get_summary_table(main_data, RANKED_PRODUCTION_FREQUENCY)
     category_column, response_column = category_response_col_names_for_model_type(model_type)
@@ -409,18 +408,8 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
 
     hitrates_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
 
-    # Compute hitrate fits
-    # TODO: these names are whack
-    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
-
     # Save summary tables
     base_dir = path.join(Preferences.results_dir, model_type.model_output_dirname)
-
-    if conscious_access_threshold is not None:
-        file_suffix = f"({model_identifier_string}) CAT={conscious_access_threshold}"
-    else:
-        file_suffix = f"({model_identifier_string})"
 
     hitrates_per_rpf.to_csv(path.join(base_dir,
                                       f"Production proportion per rank frequency of production {file_suffix}.csv"),
@@ -429,7 +418,10 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                       f"Production proportion per rounded mean rank {file_suffix}.csv"),
                             index=False)
 
-    # region Graph tables
+    return hitrates_per_rpf, hitrates_per_rmr
+
+
+def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix):
 
     # rpf sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
@@ -460,10 +452,6 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.individual_hitrates)
 
-    # endregion
-
-    return hitrate_fit_rpf_hr, hitrate_fit_rmr_hr
-
 
 def process_one_model_output(main_data: DataFrame,
                              model_type: ModelType,
@@ -480,8 +468,17 @@ def process_one_model_output(main_data: DataFrame,
                                               + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
                                               ".csv"))
 
-    # TODO: these values are inappropriate to return from this function
-    hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(model_identifier, main_data, model_type, conscious_access_threshold)
+    if conscious_access_threshold is not None:
+        file_suffix = f"({model_identifier}) CAT={conscious_access_threshold}"
+    else:
+        file_suffix = f"({model_identifier})"
+
+    hitrates_per_rpf, hitrates_per_rmr = save_hitrate_summary_tables(main_data, model_type, file_suffix)
+
+    # Compute hitrate fits
+    # TODO: these names are whack
+    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -495,6 +492,8 @@ def process_one_model_output(main_data: DataFrame,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
     )
+
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
 
 
 def process_one_model_output_distance_only(main_data: DataFrame,
@@ -510,7 +509,13 @@ def process_one_model_output_distance_only(main_data: DataFrame,
                                               output_dir,
                                               f"item-level data ({model_identifier}).csv"))
 
-    hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(model_identifier, main_data, model_type, None)
+    file_suffix = f"({model_identifier})"
+
+    hitrates_per_rpf, hitrates_per_rmr = save_hitrate_summary_tables(main_data, model_type, file_suffix)
+
+    # Compute hitrate fits
+    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     save_model_performance_stats(
         main_data,
@@ -522,6 +527,8 @@ def process_one_model_output_distance_only(main_data: DataFrame,
         model_type=model_type,
         conscious_access_threshold=None,
     )
+
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
 
 
 def save_model_performance_stats(main_dataframe,
