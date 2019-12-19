@@ -33,7 +33,8 @@ from evaluation.category_production import add_model_predictor_columns, CATEGORY
     get_model_ttfas_for_category_sensorimotor, save_item_level_data, save_hitrate_summary_tables, \
     get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, \
     get_firing_threshold_from_path_linguistic, ModelType, prepare_category_production_data, \
-    drop_missing_data_to_add_types, save_model_performance_stats
+    drop_missing_data_to_add_types, save_model_performance_stats, hitrate_within_sd_of_pp_mean_frac, \
+    hitrate_within_sd_of_hitrate_mean_frac, save_hitrate_graphs
 from evaluation.column_names import TTFA, MODEL_HIT
 from ldm.utils.maths import DistanceType, distance
 from preferences import Preferences
@@ -127,8 +128,18 @@ def process_one_model_output(main_data: DataFrame,
                                               + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
                                               ".csv"))
 
-    hitrate_fit_rpf_pp, hitrate_fit_rmr_pp, hitrate_fit_rpf_hr, hitrate_fit_rmr_hr = save_hitrate_summary_tables(
-        model_identifier, main_data, model_type, conscious_access_threshold)
+    if conscious_access_threshold is not None:
+        file_suffix = f"({model_identifier}) CAT={conscious_access_threshold}"
+    else:
+        file_suffix = f"({model_identifier})"
+
+    hitrates_per_rpf, hitrates_per_rmr = save_hitrate_summary_tables(main_data, model_type, file_suffix)
+
+    # Compute hitrate fits
+    hitrate_fit_rpf_pp = hitrate_within_sd_of_pp_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_pp = hitrate_within_sd_of_pp_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -144,6 +155,8 @@ def process_one_model_output(main_data: DataFrame,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
     )
+
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
 
 
 def add_predictor_column_sensorimotor_distance(main_data):
