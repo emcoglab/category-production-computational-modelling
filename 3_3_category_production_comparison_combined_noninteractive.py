@@ -21,7 +21,6 @@ import argparse
 import logging
 import sys
 from os import path
-from pathlib import Path
 from typing import Optional
 
 from numpy import nan, array
@@ -33,7 +32,7 @@ from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 from evaluation.column_names import TTFA, MODEL_HIT
-from evaluation.category_production import add_model_predictor_columns, ModelType, save_item_level_data, \
+from evaluation.category_production import add_ttfa_column, ModelType, save_item_level_data, \
     get_model_ttfas_for_category_sensorimotor, save_hitrate_summary_tables, save_model_performance_stats, \
     get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, save_hitrate_graphs, \
     get_firing_threshold_from_path_linguistic, prepare_category_production_data, drop_missing_data_to_add_types, \
@@ -54,6 +53,10 @@ def main(input_results_dir_sensorimotor: str,
          input_results_dir_linguistic: str,
          linguistic_cat: Optional[int] = None):
 
+    logger.info(path.basename(f"{input_results_dir_sensorimotor}, {input_results_dir_linguistic}"))
+
+    # region Process args
+
     if linguistic_cat is None:
         ft = get_firing_threshold_from_path_linguistic(input_results_dir_linguistic)
         logger.info(f"No CAT provided, using FT instead ({ft})")
@@ -61,73 +64,58 @@ def main(input_results_dir_sensorimotor: str,
     else:
         this_linguistic_cat = linguistic_cat
 
-    logger.info(path.basename(f"{input_results_dir_sensorimotor}, {input_results_dir_linguistic}"))
+    # endregion -------------------
 
-    main_data = compile_model_data(input_results_dir_linguistic, input_results_dir_sensorimotor, this_linguistic_cat)
-
-    process_one_model_output(main_data,
-                             ModelType.combined_set_union,
-                             input_results_dir_linguistic,
-                             input_results_dir_sensorimotor,
-                             None,  # TODO: min-frf
-                             linguistic_cat
-                             )
-
-
-def compile_model_data(input_results_dir_linguistic: str, input_results_dir_sensorimotor: str, conscious_access_threshold) -> DataFrame:
+    # region Compile individual model component data
 
     n_words = get_n_words_from_path_linguistic(input_results_dir_linguistic)
 
     # Main dataframe holds category production data and model response data
-    main_data = prepare_category_production_data(ModelType.combined_set_union)
+    main_data: DataFrame = prepare_category_production_data(ModelType.combined_set_union)
 
-    # Linguistic TTFA and model hit
-    add_model_predictor_columns(main_data, model_type=ModelType.linguistic,
-                                ttfas={
-                                    category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir_sensorimotor)
-                                    for category in CP.category_labels_sensorimotor})
-    main_data.rename(columns={
-        TTFA: f"{TTFA} linguistic",
-    }, inplace=True)
+    # Linguistic TTFAs
+    linguistic_ttfas = {
+        category: get_model_ttfas_for_category_linguistic(category, input_results_dir_linguistic, n_words, this_linguistic_cat)
+        for category in CP.category_labels_sensorimotor
+    }
+    add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
+    main_data.rename(columns={TTFA: f"{TTFA} linguistic"}, inplace=True)
 
-    # Sensorimotor TTFA and model hit
-    add_model_predictor_columns(main_data, model_type=ModelType.sensorimotor,
-                                ttfas={
-                                    category: get_model_ttfas_for_category_linguistic(category, input_results_dir_linguistic, n_words, conscious_access_threshold)
-                                    for category in CP.category_labels})
-    main_data.rename(columns={
-        TTFA: f"{TTFA} sensorimotor",
-    }, inplace=True)
+    # Sensorimotor TTFAs
+    sensorimotor_ttfas = {
+        category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir_sensorimotor)
+        for category in CP.category_labels
+    }
+    add_ttfa_column(main_data, model_type=ModelType.sensorimotor, ttfas=sensorimotor_ttfas)
+    main_data.rename(columns={TTFA: f"{TTFA} sensorimotor"}, inplace=True)
 
-    # Combined model columns
+    # endregion -------------------
+
+    # region Combined model columns
+
     main_data[TTFA] = main_data[[f"{TTFA} linguistic", f"{TTFA} sensorimotor"]].min(axis=1)
-    main_data[MODEL_HIT] = main_data[f"{MODEL_HIT} sensorimotor"] | main_data[f"{MODEL_HIT} linguistic"]
 
-    return main_data
+    # endregion -------------------
 
+    # region Process model output
 
-def process_one_model_output(main_data: DataFrame,
-                             model_type: ModelType,
-                             input_results_dir_linguistic: str,
-                             input_results_dir_sensorimotor: str,
-                             min_first_rank_freq: Optional[int],
-                             conscious_access_threshold: Optional[float],
-                             ):
-    assert model_type == ModelType.combined_set_union
-    input_results_dir_linguistic, input_results_dir_sensorimotor = Path(input_results_dir_linguistic), Path(input_results_dir_sensorimotor)
+    model_type = ModelType.combined_noninteractive
+    # TODO: this makes a "name too long" error
+    # input_results_dir_linguistic, input_results_dir_sensorimotor = Path(input_results_dir_linguistic), Path(
+    #     input_results_dir_sensorimotor)
     # model_identifier = f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name} — " \
     #                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}"
-    # TODO: this makes a "name too long" error
     model_identifier = "combined test"
     output_dir = f"Category production fit {model_type.name}"
     save_item_level_data(main_data, path.join(Preferences.results_dir,
                                               output_dir,
                                               f"item-level data ({model_identifier})"
-                                              + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
+                                              + (
+                                                  f" CAT={this_linguistic_cat}" if this_linguistic_cat is not None else "") +
                                               ".csv"))
 
-    if conscious_access_threshold is not None:
-        file_suffix = f"({model_identifier}) CAT={conscious_access_threshold}"
+    if this_linguistic_cat is not None:
+        file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
     else:
         file_suffix = f"({model_identifier})"
 
@@ -143,14 +131,18 @@ def process_one_model_output(main_data: DataFrame,
         main_data,
         model_identifier=model_identifier,
         results_dir=None,
-        min_first_rank_freq=min_first_rank_freq,
+        # TODO: min-frf
+        min_first_rank_freq=None,
         hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
         hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
         model_type=model_type,
-        conscious_access_threshold=conscious_access_threshold,
+        conscious_access_threshold=this_linguistic_cat,
     )
 
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
+
+    # endregion -------------------
+
 
 
 def add_predictor_column_sensorimotor_distance(main_data):
