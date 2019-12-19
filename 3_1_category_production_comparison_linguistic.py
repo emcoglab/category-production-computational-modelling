@@ -28,8 +28,8 @@ from ldm.utils.logging import date_format, log_message
 from category_production.category_production import CategoryProduction
 
 from evaluation.category_production import get_n_words_from_path_linguistic, get_model_ttfas_for_category_linguistic, \
-    add_model_predictor_columns, get_firing_threshold_from_path_linguistic, ModelType, find_output_dirs, \
-    prepare_category_production_data, process_one_model_output
+    add_ttfa_column, get_firing_threshold_from_path_linguistic, ModelType, find_output_dirs, \
+    prepare_category_production_data, process_one_model_output, add_model_hit_column
 
 logger = logging.getLogger(__name__)
 
@@ -58,18 +58,20 @@ def main(input_results_dir: str,
         if conscious_access_threshold is None:
             ft = get_firing_threshold_from_path_linguistic(model_output_dir)
             logger.info(f"No CAT provided, using FT instead ({ft})")
-            this_conscious_access_threshold = ft
+            this_cat = ft
         else:
-            this_conscious_access_threshold = conscious_access_threshold
+            this_cat = conscious_access_threshold
 
         n_words = get_n_words_from_path_linguistic(model_output_dir)
 
-        add_model_predictor_columns(main_data, model_type=model_type,
-                                    ttfas={
-                                        category: get_model_ttfas_for_category_linguistic(category, model_output_dir, n_words, this_conscious_access_threshold)
-                                        for category in CP.category_labels})
+        ttfas = {
+            category: get_model_ttfas_for_category_linguistic(category, model_output_dir, n_words, this_cat)
+            for category in CP.category_labels
+        }
+        add_ttfa_column(main_data, model_type=model_type, ttfas=ttfas)
+        add_model_hit_column(main_data)
 
-        process_one_model_output(main_data, model_type, model_output_dir, min_first_rank_freq, this_conscious_access_threshold)
+        process_one_model_output(main_data, model_type, model_output_dir, min_first_rank_freq, this_cat)
 
 
 if __name__ == '__main__':

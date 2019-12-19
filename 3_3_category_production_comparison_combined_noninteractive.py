@@ -88,7 +88,6 @@ def compile_model_data(input_results_dir_linguistic: str, input_results_dir_sens
                                     for category in CP.category_labels_sensorimotor})
     main_data.rename(columns={
         TTFA: f"{TTFA} linguistic",
-        MODEL_HIT: f"{MODEL_HIT} linguistic"
     }, inplace=True)
 
     # Sensorimotor TTFA and model hit
@@ -98,7 +97,6 @@ def compile_model_data(input_results_dir_linguistic: str, input_results_dir_sens
                                     for category in CP.category_labels})
     main_data.rename(columns={
         TTFA: f"{TTFA} sensorimotor",
-        MODEL_HIT: f"{MODEL_HIT} sensorimotor"
     }, inplace=True)
 
     # Combined model columns

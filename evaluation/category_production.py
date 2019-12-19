@@ -288,7 +288,7 @@ def add_rmr_column(main_data):
     main_data[ROUNDED_MEAN_RANK] = main_data.apply(lambda row: floor(row[CPColNames.MeanRank]), axis=1)
 
 
-def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
+def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: ModelType):
     """Mutates `main_data`."""
     # TODO: this function's signature is a bit of a mess... the ttfas dict should probably be built in here
     logger.info("Adding TTFA column")
@@ -330,6 +330,9 @@ def add_model_predictor_columns(main_data, ttfas: Dict[str, Dict[str, int]], mod
 
     main_data[TTFA] = main_data.apply(get_min_ttfa_for_multiword_responses, axis=1)
 
+
+def add_model_hit_column(main_data):
+    """Mutates `main_data`."""
     logger.info("Adding model hit column")
     main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[TTFA]), axis=1)
 
