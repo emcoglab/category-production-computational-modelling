@@ -493,12 +493,12 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
     # region Graph tables
 
     # rpf sd region
-    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
-                                x_selector=RANKED_PRODUCTION_FREQUENCY,
-                                fig_title="Hitrate per RPF",
-                                fig_name=f"hitrate per RPF {file_suffix}",
-                                model_type=model_type,
-                                summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
+    # save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+    #                             x_selector=RANKED_PRODUCTION_FREQUENCY,
+    #                             fig_title="Hitrate per RPF",
+    #                             fig_name=f"hitrate per RPF {file_suffix}",
+    #                             model_type=model_type,
+    #                             summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
                                 x_selector=RANKED_PRODUCTION_FREQUENCY,
                                 fig_title="Hitrate per RPF",
@@ -506,12 +506,12 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.hitrates_mean_sd)
     # rpf traces
-    save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
-                                x_selector=RANKED_PRODUCTION_FREQUENCY,
-                                fig_title="Hitrate per RPF (producible)",
-                                fig_name=f"hitrate per RPF {file_suffix}",
-                                model_type=model_type,
-                                summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
+    # save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
+    #                             x_selector=RANKED_PRODUCTION_FREQUENCY,
+    #                             fig_title="Hitrate per RPF (producible)",
+    #                             fig_name=f"hitrate per RPF {file_suffix}",
+    #                             model_type=model_type,
+    #                             summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
                                 x_selector=RANKED_PRODUCTION_FREQUENCY,
                                 fig_title="Hitrate per RPF (all)",
@@ -519,12 +519,12 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.individual_hitrates_all)
     # rmr sd region
-    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
-                                x_selector=ROUNDED_MEAN_RANK,
-                                fig_title="Hitrate per RMR",
-                                fig_name=f"hitrate per RMR {file_suffix}",
-                                model_type=model_type,
-                                summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
+    # save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+    #                             x_selector=ROUNDED_MEAN_RANK,
+    #                             fig_title="Hitrate per RMR",
+    #                             fig_name=f"hitrate per RMR {file_suffix}",
+    #                             model_type=model_type,
+    #                             summarise_participants_by=ParticipantSummaryType.production_proportion_mean_sd)
     save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
                                 x_selector=ROUNDED_MEAN_RANK,
                                 fig_title="Hitrate per RMR",
@@ -532,12 +532,12 @@ def save_hitrate_summary_tables(model_identifier_string: str, main_data: DataFra
                                 model_type=model_type,
                                 summarise_participants_by=ParticipantSummaryType.hitrates_mean_sd)
     # rmr traces
-    save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
-                                x_selector=ROUNDED_MEAN_RANK,
-                                fig_title="Hitrate per RMR (producible)",
-                                fig_name=f"hitrate per RMR {file_suffix}",
-                                model_type=model_type,
-                                summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
+    # save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
+    #                             x_selector=ROUNDED_MEAN_RANK,
+    #                             fig_title="Hitrate per RMR (producible)",
+    #                             fig_name=f"hitrate per RMR {file_suffix}",
+    #                             model_type=model_type,
+    #                             summarise_participants_by=ParticipantSummaryType.individual_hitrates_producible)
     save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
                                 x_selector=ROUNDED_MEAN_RANK,
                                 fig_title="Hitrate per RMR (all)",
