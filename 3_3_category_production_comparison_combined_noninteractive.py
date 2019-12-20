@@ -31,12 +31,11 @@ from ldm.utils.maths import DistanceType, distance
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
-from evaluation.column_names import TTFA, MODEL_HIT
-from evaluation.category_production import add_ttfa_column, ModelType, save_item_level_data, \
+from evaluation.column_names import TTFA
+from evaluation.category_production import add_ttfa_column, ModelType, save_item_level_data, save_hitrate_graphs, \
     get_model_ttfas_for_category_sensorimotor, save_hitrate_summary_tables, save_model_performance_stats, \
-    get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, save_hitrate_graphs, \
-    get_firing_threshold_from_path_linguistic, prepare_category_production_data, drop_missing_data_to_add_types, \
-    hitrate_within_sd_of_hitrate_mean_frac
+    get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, hitrate_within_sd_of_hitrate_mean_frac, \
+    get_firing_threshold_from_path_linguistic, prepare_category_production_data, drop_missing_data_to_add_types
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -45,6 +44,13 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 SN = SensorimotorNorms()
 CP = CategoryProduction()
+
+N_MEMBERS = 3
+
+TTFA_LINGUISTIC          = f"{TTFA} linguistic"
+TTFA_SENSORIMOTOR        = f"{TTFA} sensorimotor"
+TTFA_SENSORIMOTOR_SCALED = f"{TTFA} sensorimotor scaled"
+TTFA_COMBINED            = f"{TTFA} combined"
 
 distance_column = f"{DistanceType.Minkowski3.name} distance"
 
@@ -71,7 +77,7 @@ def main(input_results_dir_sensorimotor: str,
     n_words = get_n_words_from_path_linguistic(input_results_dir_linguistic)
 
     # Main dataframe holds category production data and model response data
-    main_data: DataFrame = prepare_category_production_data(ModelType.combined_set_union)
+    main_data: DataFrame = prepare_category_production_data(ModelType.combined_noninteractive)
 
     # Linguistic TTFAs
     linguistic_ttfas = {
@@ -79,7 +85,7 @@ def main(input_results_dir_sensorimotor: str,
         for category in CP.category_labels_sensorimotor
     }
     add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
-    main_data.rename(columns={TTFA: f"{TTFA} linguistic"}, inplace=True)
+    main_data.rename(columns={TTFA: TTFA_LINGUISTIC}, inplace=True)
 
     # Sensorimotor TTFAs
     sensorimotor_ttfas = {
@@ -87,13 +93,44 @@ def main(input_results_dir_sensorimotor: str,
         for category in CP.category_labels
     }
     add_ttfa_column(main_data, model_type=ModelType.sensorimotor, ttfas=sensorimotor_ttfas)
-    main_data.rename(columns={TTFA: f"{TTFA} sensorimotor"}, inplace=True)
+    main_data.rename(columns={TTFA: TTFA_SENSORIMOTOR}, inplace=True)
+
+    # endregion -------------------
+
+    # region Find mean TTFA required for first 3 members
+
+    mean_ttfa_linguistic = (
+        main_data
+            .dropna(subset=[TTFA_LINGUISTIC])
+            .sort_values(by=TTFA_LINGUISTIC, ascending=True)
+            .groupby(CPColNames.Category, sort=False)
+            .head(N_MEMBERS)
+            .groupby(CPColNames.Category, sort=False)
+            .max()
+        [TTFA_LINGUISTIC]
+        .mean()
+    )
+    mean_ttfa_sensorimotor = (
+        main_data
+            .dropna(subset=[TTFA_SENSORIMOTOR])
+            .sort_values(by=TTFA_SENSORIMOTOR, ascending=True)
+            .groupby(CPColNames.CategorySensorimotor, sort=False)
+            .head(N_MEMBERS)
+            .groupby(CPColNames.CategorySensorimotor, sort=False)
+            .max()
+        [TTFA_SENSORIMOTOR]
+        .mean()
+    )
+
+    ratio = mean_ttfa_sensorimotor / mean_ttfa_linguistic
+
+    main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] / ratio
 
     # endregion -------------------
 
     # region Combined model columns
 
-    main_data[TTFA] = main_data[[f"{TTFA} linguistic", f"{TTFA} sensorimotor"]].min(axis=1)
+    main_data[TTFA_COMBINED] = main_data[[TTFA_LINGUISTIC, TTFA_SENSORIMOTOR_SCALED]].min(axis=1)
 
     # endregion -------------------
 
@@ -142,7 +179,6 @@ def main(input_results_dir_sensorimotor: str,
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
 
     # endregion -------------------
-
 
 
 def add_predictor_column_sensorimotor_distance(main_data):
