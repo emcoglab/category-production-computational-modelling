@@ -33,7 +33,7 @@ from evaluation.category_production import add_ttfa_column, ModelType, save_hitr
     get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
     get_n_words_from_path_linguistic, hitrate_within_sd_of_hitrate_mean_frac, \
     get_firing_threshold_from_path_linguistic, prepare_category_production_data
-from evaluation.column_names import TTFA
+from evaluation.column_names import TTFA, MODEL_HIT
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -151,34 +151,63 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Find TTFA cut-off for best fit with participant data
 
-    max_ttfa = ceil(max(main_data[TTFA_LINGUISTIC].max(), main_data[TTFA_SENSORIMOTOR_SCALED].max()))
+    max_ttfa = int(ceil(max(main_data[TTFA_LINGUISTIC].max(), main_data[TTFA_SENSORIMOTOR_SCALED].max())))
 
-    optimum_ttfa_cutoff = -Inf
+    optimum_ttfa_cutoff_rmr = -Inf
     optimum_hitrate_fit_rmr = -Inf
+    optimum_ttfa_cutoff_rpf = -Inf
+    optimum_hitrate_fit_rpf = -Inf
+    cut_data: DataFrame = main_data.copy()
     for ttfa_cutoff in range(max_ttfa):
-        hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data[main_data[TTFA_COMBINED] < ttfa_cutoff], MODEL_TYPE)
+        # Model gets a hit if its TTFA is less than the cutoff
+        cut_data[MODEL_HIT] = cut_data[TTFA_COMBINED] < ttfa_cutoff
+        cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+        hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
         hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
         hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
         if hitrate_fit_rmr > optimum_hitrate_fit_rmr:
             optimum_hitrate_fit_rmr = hitrate_fit_rmr
-            optimum_ttfa_cutoff = ttfa_cutoff
+            optimum_ttfa_cutoff_rmr = ttfa_cutoff
+        if hitrate_fit_rpf > optimum_hitrate_fit_rpf:
+            optimum_hitrate_fit_rpf = hitrate_fit_rpf
+            optimum_ttfa_cutoff_rpf = ttfa_cutoff
 
     # Save optimal graphs
-    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data[main_data[TTFA_COMBINED] < optimum_ttfa_cutoff], MODEL_TYPE)
-    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" optimal ({optimum_ttfa_cutoff})")
+    cut_data[MODEL_HIT] = cut_data[TTFA_COMBINED] < optimum_ttfa_cutoff_rmr
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal ({optimum_ttfa_cutoff_rmr})")
+
+    cut_data[MODEL_HIT] = cut_data[TTFA_COMBINED] < optimum_ttfa_cutoff_rpf
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal ({optimum_ttfa_cutoff_rpf})")
 
     # endregion -------------------
 
     # region Apply cutoff to individual components
 
-    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(
-        main_data[main_data[TTFA_LINGUISTIC] < optimum_ttfa_cutoff], MODEL_TYPE)
-    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" optimal linguistic ({optimum_ttfa_cutoff})")
+    # TODO: refactor all this repeated code
+    cut_data[MODEL_HIT] = cut_data[TTFA_LINGUISTIC] < optimum_ttfa_cutoff_rmr
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal linguistic ({optimum_ttfa_cutoff_rmr})")
 
-    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(
-        main_data[main_data[TTFA_SENSORIMOTOR_SCALED] < optimum_ttfa_cutoff], MODEL_TYPE)
-    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" optimal sensorimotor ({optimum_ttfa_cutoff})")
+    cut_data[MODEL_HIT] = cut_data[TTFA_SENSORIMOTOR_SCALED] < optimum_ttfa_cutoff_rmr
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal sensorimotor ({optimum_ttfa_cutoff_rmr})")
+
+    cut_data[MODEL_HIT] = cut_data[TTFA_LINGUISTIC] < optimum_ttfa_cutoff_rpf
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal linguistic ({optimum_ttfa_cutoff_rpf})")
+
+    cut_data[MODEL_HIT] = cut_data[TTFA_SENSORIMOTOR_SCALED] < optimum_ttfa_cutoff_rpf
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal sensorimotor ({optimum_ttfa_cutoff_rpf})")
 
     # endregion -------------------
 

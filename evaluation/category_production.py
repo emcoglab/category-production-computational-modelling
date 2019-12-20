@@ -331,10 +331,10 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
     main_data[TTFA] = main_data.apply(get_min_ttfa_for_multiword_responses, axis=1)
 
 
-def add_model_hit_column(main_data):
+def add_model_hit_column(main_data, ttfa_column: str = TTFA):
     """Mutates `main_data`."""
     logger.info("Adding model hit column")
-    main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[TTFA]), axis=1)
+    main_data[MODEL_HIT] = main_data.apply(lambda row: not isna(row[ttfa_column]), axis=1)
 
 
 def save_item_level_data(main_data: DataFrame, save_path):
@@ -646,7 +646,7 @@ def hitrate_within_sd_of_hitrate_mean_frac(df: DataFrame) -> DataFrame:
 
 
 def get_summary_table(main_dataframe, groupby_column):
-    """Summarise main dataframe by aggregating production proportion by the stated `groupby_column` column."""
+    """Summarise main dataframe by aggregating hitrate proportion by the stated `groupby_column` column."""
     df = DataFrame()
 
     # Individual participant columns
