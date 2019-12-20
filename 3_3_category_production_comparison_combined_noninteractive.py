@@ -170,9 +170,15 @@ def main(input_results_dir_sensorimotor: str,
 
     # endregion -------------------
 
-    # region Process model output
+    # region Apply cutoff to individual components
 
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(
+        main_data[main_data[TTFA_LINGUISTIC] < optimum_ttfa_cutoff], MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" optimal linguistic ({optimum_ttfa_cutoff})")
 
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(
+        main_data[main_data[TTFA_SENSORIMOTOR_SCALED] < optimum_ttfa_cutoff], MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" optimal sensorimotor ({optimum_ttfa_cutoff})")
 
     # endregion -------------------
 
