@@ -391,7 +391,7 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
     pyplot.close()
 
 
-def save_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType, file_suffix: str):
+def get_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType):
 
     hitrates_per_rpf = get_summary_table(main_data, RANKED_PRODUCTION_FREQUENCY)
     category_column, response_column = category_response_col_names_for_model_type(model_type)
@@ -411,17 +411,18 @@ def save_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType, fil
 
     hitrates_per_rmr = get_summary_table(main_data, ROUNDED_MEAN_RANK)
 
+    return hitrates_per_rpf, hitrates_per_rmr
+
+
+def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix):
     # Save summary tables
     base_dir = path.join(Preferences.results_dir, model_type.model_output_dirname)
-
     hitrates_per_rpf.to_csv(path.join(base_dir,
                                       f"Production proportion per rank frequency of production {file_suffix}.csv"),
                             index=False)
     hitrates_per_rmr.to_csv(path.join(base_dir,
                                       f"Production proportion per rounded mean rank {file_suffix}.csv"),
                             index=False)
-
-    return hitrates_per_rpf, hitrates_per_rmr
 
 
 def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix):
@@ -476,7 +477,8 @@ def process_one_model_output(main_data: DataFrame,
     else:
         file_suffix = f"({model_identifier})"
 
-    hitrates_per_rpf, hitrates_per_rmr = save_hitrate_summary_tables(main_data, model_type, file_suffix)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
+    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
 
     # Compute hitrate fits
     # TODO: these names are whack
@@ -514,7 +516,7 @@ def process_one_model_output_distance_only(main_data: DataFrame,
 
     file_suffix = f"({model_identifier})"
 
-    hitrates_per_rpf, hitrates_per_rmr = save_hitrate_summary_tables(main_data, model_type, file_suffix)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
 
     # Compute hitrate fits
     hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)

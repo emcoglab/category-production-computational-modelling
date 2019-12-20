@@ -33,9 +33,10 @@ from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 from evaluation.column_names import TTFA
 from evaluation.category_production import add_ttfa_column, ModelType, save_item_level_data, save_hitrate_graphs, \
-    get_model_ttfas_for_category_sensorimotor, save_hitrate_summary_tables, save_model_performance_stats, \
+    get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, save_model_performance_stats, \
     get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, hitrate_within_sd_of_hitrate_mean_frac, \
-    get_firing_threshold_from_path_linguistic, prepare_category_production_data, drop_missing_data_to_add_types
+    get_firing_threshold_from_path_linguistic, prepare_category_production_data, drop_missing_data_to_add_types, \
+    save_hitrate_summary_tables
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,8 @@ TTFA_COMBINED            = f"{TTFA} combined"
 
 distance_column = f"{DistanceType.Minkowski3.name} distance"
 
+model_type = ModelType.combined_noninteractive
+
 
 def main(input_results_dir_sensorimotor: str,
          input_results_dir_linguistic: str,
@@ -69,6 +72,19 @@ def main(input_results_dir_sensorimotor: str,
         this_linguistic_cat = ft
     else:
         this_linguistic_cat = linguistic_cat
+
+    # TODO: this makes a "name too long" error
+    # input_results_dir_linguistic, input_results_dir_sensorimotor = Path(input_results_dir_linguistic), Path(
+    #     input_results_dir_sensorimotor)
+    # model_identifier = f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name} — " \
+    #                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}"
+    model_identifier = "combined test"
+    output_dir = f"Category production fit {model_type.name}"
+
+    if this_linguistic_cat is not None:
+        file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
+    else:
+        file_suffix = f"({model_identifier})"
 
     # endregion -------------------
 
@@ -122,8 +138,11 @@ def main(input_results_dir_sensorimotor: str,
         .mean()
     )
 
-    ratio = mean_ttfa_sensorimotor / mean_ttfa_linguistic
+    # endregion -------------------
 
+    # region Scale sensorimotor TTFAs to achieve 1:1 ratio
+
+    ratio = mean_ttfa_sensorimotor / mean_ttfa_linguistic
     main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] / ratio
 
     # endregion -------------------
@@ -134,33 +153,21 @@ def main(input_results_dir_sensorimotor: str,
 
     # endregion -------------------
 
-    # region Process model output
+    # region Find TTFA cut-off for best fit with participant data
 
-    model_type = ModelType.combined_noninteractive
-    # TODO: this makes a "name too long" error
-    # input_results_dir_linguistic, input_results_dir_sensorimotor = Path(input_results_dir_linguistic), Path(
-    #     input_results_dir_sensorimotor)
-    # model_identifier = f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name} — " \
-    #                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}"
-    model_identifier = "combined test"
-    output_dir = f"Category production fit {model_type.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              output_dir,
-                                              f"item-level data ({model_identifier})"
-                                              + (
-                                                  f" CAT={this_linguistic_cat}" if this_linguistic_cat is not None else "") +
-                                              ".csv"))
-
-    if this_linguistic_cat is not None:
-        file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
-    else:
-        file_suffix = f"({model_identifier})"
-
-    hitrates_per_rpf, hitrates_per_rmr = save_hitrate_summary_tables(main_data, model_type, file_suffix)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
+    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
 
     # Compute hitrate fits
     hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
     hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+
+
+    # endregion -------------------
+
+    # region Process model output
+
+    save_item_level_data(main_data, path.join(Preferences.results_dir, output_dir, f"item-level data {file_suffix}.csv"))
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
