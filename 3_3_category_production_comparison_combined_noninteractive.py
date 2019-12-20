@@ -157,10 +157,9 @@ def main(input_results_dir_sensorimotor: str,
 
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
     save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
-    # Compute hitrate fits
-    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
 
     # endregion -------------------
@@ -177,8 +176,8 @@ def main(input_results_dir_sensorimotor: str,
         results_dir=None,
         # TODO: min-frf
         min_first_rank_freq=None,
-        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
-        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr,
         model_type=model_type,
         conscious_access_threshold=this_linguistic_cat,
     )

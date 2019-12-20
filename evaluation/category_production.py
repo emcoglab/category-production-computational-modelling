@@ -482,8 +482,8 @@ def process_one_model_output(main_data: DataFrame,
 
     # Compute hitrate fits
     # TODO: these names are whack
-    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -492,8 +492,8 @@ def process_one_model_output(main_data: DataFrame,
         model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
-        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
     )
@@ -519,16 +519,16 @@ def process_one_model_output_distance_only(main_data: DataFrame,
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
 
     # Compute hitrate fits
-    hitrate_fit_rpf_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr_hr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
     save_model_performance_stats(
         main_data,
         model_identifier=model_identifier,
         results_dir=input_results_dir,
         min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rpf_hr=hitrate_fit_rpf_hr,
-        hitrate_fit_rmr_hr=hitrate_fit_rmr_hr,
+        hitrate_fit_rpf_hr=hitrate_fit_rpf,
+        hitrate_fit_rmr_hr=hitrate_fit_rmr,
         model_type=model_type,
         conscious_access_threshold=None,
     )
