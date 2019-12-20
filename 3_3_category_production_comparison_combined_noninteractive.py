@@ -23,7 +23,7 @@ import sys
 from os import path
 from typing import Optional
 
-from numpy import Inf
+from numpy import Inf, ceil
 from pandas import DataFrame
 
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
@@ -151,12 +151,22 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Find TTFA cut-off for best fit with participant data
 
-    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
-    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
-    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    max_ttfa = ceil(max(main_data[TTFA_LINGUISTIC].max(), main_data[TTFA_SENSORIMOTOR_SCALED].max()))
 
+    optimum_ttfa_cutoff = -Inf
+    optimum_hitrate_fit_rmr = -Inf
+    for ttfa_cutoff in range(max_ttfa):
+        hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data[main_data[TTFA_COMBINED] < ttfa_cutoff], MODEL_TYPE)
+        hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+        hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
 
+        if hitrate_fit_rmr > optimum_hitrate_fit_rmr:
+            optimum_hitrate_fit_rmr = hitrate_fit_rmr
+            optimum_ttfa_cutoff = ttfa_cutoff
+
+    # Save optimal graphs
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data[main_data[TTFA_COMBINED] < optimum_ttfa_cutoff], MODEL_TYPE)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" optimal ({optimum_ttfa_cutoff})")
 
     # endregion -------------------
 
