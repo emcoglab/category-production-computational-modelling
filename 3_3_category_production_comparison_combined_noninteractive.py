@@ -86,15 +86,14 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Compile individual model component data
 
-    n_words = get_n_words_from_path_linguistic(input_results_dir_linguistic)
-
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = prepare_category_production_data(ModelType.combined_noninteractive)
 
     # Linguistic TTFAs
+    n_words = get_n_words_from_path_linguistic(input_results_dir_linguistic)
     linguistic_ttfas = {
         category: get_model_ttfas_for_category_linguistic(category, input_results_dir_linguistic, n_words, this_linguistic_cat)
-        for category in CP.category_labels_sensorimotor
+        for category in CP.category_labels
     }
     add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
     main_data.rename(columns={TTFA: TTFA_LINGUISTIC}, inplace=True)
@@ -102,7 +101,7 @@ def main(input_results_dir_sensorimotor: str,
     # Sensorimotor TTFAs
     sensorimotor_ttfas = {
         category: get_model_ttfas_for_category_sensorimotor(category, input_results_dir_sensorimotor)
-        for category in CP.category_labels
+        for category in CP.category_labels_sensorimotor
     }
     add_ttfa_column(main_data, model_type=ModelType.sensorimotor, ttfas=sensorimotor_ttfas)
     main_data.rename(columns={TTFA: TTFA_SENSORIMOTOR}, inplace=True)
