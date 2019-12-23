@@ -52,6 +52,8 @@ FULL_ACTIVATION = ActivationValue(1.0)
 def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
+         buffer_capacity: int,
+         accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
          accessible_set_threshold: ActivationValue,
          median: float,
@@ -72,7 +74,9 @@ def main(distance_type_name: str,
                                 f" e-decay-median {median};"
                                 f" e-decay-sigma {sigma};"
                                 f" as-θ {accessible_set_threshold};"
-                                f" buff-θ {buffer_threshold}")
+                                f" as-cap {accessible_set_capacity:,};"
+                                f" buff-θ {buffer_threshold};"
+                                f" buff-cap {buffer_capacity}")
     if not path.isdir(response_dir):
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
@@ -85,13 +89,13 @@ def main(distance_type_name: str,
         max_sphere_radius=max_sphere_radius,
         lognormal_median=median,
         lognormal_sigma=sigma,
-        buffer_capacity=None,
+        buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
         accessible_set_threshold=accessible_set_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
-        accessible_set_capacity=None,
+        accessible_set_capacity=accessible_set_capacity,
     )
 
     sc.save_model_spec(response_dir)
@@ -184,6 +188,8 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--node_decay_median", required=True, type=float)
     parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
+    parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
+    parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
 
     args = parser.parse_args()
@@ -191,6 +197,8 @@ if __name__ == '__main__':
     main(max_sphere_radius=args.max_sphere_radius,
          distance_type_name=args.distance_type,
          length_factor=args.length_factor,
+         buffer_capacity=args.buffer_capacity,
+         accessible_set_capacity=args.accessible_set_capacity,
          accessible_set_threshold=args.accessible_set_threshold,
          buffer_threshold=args.buffer_threshold,
          median=args.node_decay_median,
