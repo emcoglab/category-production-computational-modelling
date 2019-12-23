@@ -157,11 +157,9 @@ def main(input_results_dir_sensorimotor: str,
     optimum_hitrate_fit_rmr = -Inf
     optimum_ttfa_cutoff_rpf = -Inf
     optimum_hitrate_fit_rpf = -Inf
-    cut_data: DataFrame = main_data.copy()
     for ttfa_cutoff in range(max_ttfa):
         # Model gets a hit if its TTFA is less than the cutoff
-        cut_data[MODEL_HIT] = cut_data[TTFA_COMBINED] < ttfa_cutoff
-        cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+        cut_data = apply_cutoff(main_data, TTFA_COMBINED, ttfa_cutoff)
         hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
         hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
         hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
@@ -174,13 +172,11 @@ def main(input_results_dir_sensorimotor: str,
             optimum_ttfa_cutoff_rpf = ttfa_cutoff
 
     # Save optimal graphs
-    cut_data[MODEL_HIT] = cut_data[TTFA_COMBINED] < optimum_ttfa_cutoff_rmr
-    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    cut_data = apply_cutoff(main_data, TTFA_COMBINED, optimum_ttfa_cutoff_rmr)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal ({optimum_ttfa_cutoff_rmr})")
 
-    cut_data[MODEL_HIT] = cut_data[TTFA_COMBINED] < optimum_ttfa_cutoff_rpf
-    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    cut_data = apply_cutoff(main_data, TTFA_COMBINED, optimum_ttfa_cutoff_rpf)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal ({optimum_ttfa_cutoff_rpf})")
 
@@ -188,28 +184,31 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Apply cutoff to individual components
 
-    # TODO: refactor all this repeated code
-    cut_data[MODEL_HIT] = cut_data[TTFA_LINGUISTIC] < optimum_ttfa_cutoff_rmr
-    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, optimum_ttfa_cutoff_rmr)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal linguistic ({optimum_ttfa_cutoff_rmr})")
 
-    cut_data[MODEL_HIT] = cut_data[TTFA_SENSORIMOTOR_SCALED] < optimum_ttfa_cutoff_rmr
-    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, optimum_ttfa_cutoff_rmr)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal sensorimotor ({optimum_ttfa_cutoff_rmr})")
 
-    cut_data[MODEL_HIT] = cut_data[TTFA_LINGUISTIC] < optimum_ttfa_cutoff_rpf
-    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, optimum_ttfa_cutoff_rpf)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal linguistic ({optimum_ttfa_cutoff_rpf})")
 
-    cut_data[MODEL_HIT] = cut_data[TTFA_SENSORIMOTOR_SCALED] < optimum_ttfa_cutoff_rpf
-    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, optimum_ttfa_cutoff_rpf)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal sensorimotor ({optimum_ttfa_cutoff_rpf})")
 
     # endregion -------------------
+
+
+def apply_cutoff(data, ttfa_column, ttfa_cutoff):
+    """Adds a cut-off `MODEL_HIT` column to a copy of `data`."""
+    cut_data = data.copy()
+    cut_data[MODEL_HIT] = cut_data[ttfa_column] < ttfa_cutoff
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    return cut_data
 
 
 if __name__ == '__main__':
