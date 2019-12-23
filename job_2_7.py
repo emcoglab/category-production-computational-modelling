@@ -3,6 +3,10 @@ import logging
 from model.utils.job import LinguisticSAJob, LinguisticSASpec
 
 
+logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_dateformat = "%Y-%m-%d %H:%M:%S"
+
+
 class Job_2_7(LinguisticSAJob):
 
     # graph_size -> RAM/G
@@ -39,10 +43,6 @@ class Job_2_7(LinguisticSAJob):
     def _ram_requirement_g(self):
         assert isinstance(self.spec, LinguisticSASpec)
         return self.RAM[self.spec.graph_size]
-
-
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)

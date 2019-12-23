@@ -4,6 +4,10 @@ from model.utils.job import SensorimotorSAJob, SensorimotorSASpec
 from ldm.utils.maths import DistanceType
 
 
+logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_dateformat = "%Y-%m-%d %H:%M:%S"
+
+
 class Job_2_4(SensorimotorSAJob):
 
     # max_sphere_radius -> RAM/G
@@ -43,10 +47,6 @@ class Job_2_4(SensorimotorSAJob):
     def _ram_requirement_g(self):
         assert isinstance(self.spec, SensorimotorSASpec)
         return self.RAM[self.spec.max_radius]
-
-
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 if __name__ == '__main__':

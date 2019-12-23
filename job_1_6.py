@@ -5,6 +5,10 @@ from model.utils.job import Job, SASpec
 from ldm.utils.maths import DistanceType
 
 
+logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
+logger_dateformat = "%Y-%m-%d %H:%M:%S"
+
+
 @dataclass
 class Spec_1_6(SASpec):
     distance_type: DistanceType
@@ -59,10 +63,6 @@ class Job_1_6(Job):
     def _ram_requirement_g(self):
         assert isinstance(self.spec, Spec_1_6)
         return self.RAM[self.spec.pruning_length]
-
-
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 if __name__ == '__main__':
