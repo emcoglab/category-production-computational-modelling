@@ -31,6 +31,8 @@ class Job_2_8(SensorimotorSAJob):
         # script args
         cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
         cmd += f" --max_sphere_radius {self.spec.max_radius}"
+        cmd += f" --accessible_set_capacity {self.spec.accessible_set_capacity}"
+        cmd += f" --buffer_capacity {self.spec.buffer_capacity}"
         cmd += f" --buffer_threshold {self.spec.buffer_threshold}"
         cmd += f" --accessible_set_threshold {self.spec.accessible_set_threshold}"
         cmd += f" --length_factor {self.spec.length_factor}"
@@ -53,10 +55,10 @@ if __name__ == '__main__':
     accessible_set_capacity = 3_000
 
     specs = [
-        # SensorimotorSASpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, median=500, sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        # SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, median=500, sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        # SensorimotorSASpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, median=500, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        # SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, median=100, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
+        SensorimotorSASpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, median=500, sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
+        SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, median=500, sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
+        SensorimotorSASpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, median=500, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
+        SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, median=100, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
         SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, median=500, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
         SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, median=75, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
         SensorimotorSASpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, median=100, sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),

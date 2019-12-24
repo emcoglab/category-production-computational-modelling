@@ -30,9 +30,9 @@ class Job_2_4(SensorimotorSAJob):
     @property
     def command(self) -> str:
         cmd = self.script_name
-        cmd += f" --accessible_set_capacity {self.spec.accessible_set_capacity}"
         cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
         cmd += f" --max_sphere_radius {self.spec.max_radius}"
+        cmd += f" --accessible_set_capacity {self.spec.accessible_set_capacity}"
         cmd += f" --buffer_capacity {self.spec.buffer_capacity}"
         cmd += f" --buffer_threshold {self.spec.buffer_threshold}"
         cmd += f" --accessible_set_threshold {self.spec.accessible_set_threshold}"
