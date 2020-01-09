@@ -75,7 +75,6 @@ def main(input_results_dir_sensorimotor: str,
     # model_identifier = f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name} — " \
     #                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}"
     model_identifier = "combined test"
-    output_dir = f"Category production fit {MODEL_TYPE.name}"
 
     if this_linguistic_cat is not None:
         file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
@@ -137,8 +136,9 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Scale sensorimotor TTFAs to achieve 1:1 ratio
 
-    ratio = mean_ttfa_sensorimotor / mean_ttfa_linguistic
-    main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] / ratio
+    ratio = mean_ttfa_linguistic / mean_ttfa_sensorimotor
+    logger.info(f"Sensorimotor TTFAs *= {ratio}")
+    main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] * ratio
 
     # endregion -------------------
 
