@@ -24,7 +24,7 @@ from os import path
 from typing import Optional
 
 from matplotlib import pyplot
-from numpy import ceil, asarray
+from numpy import ceil, asarray, savetxt, array
 from pandas import DataFrame
 
 from preferences import Preferences
@@ -155,15 +155,15 @@ def main(input_results_dir_sensorimotor: str,
     max_ttfa = int(ceil(max(main_data[TTFA_LINGUISTIC].max(), main_data[TTFA_SENSORIMOTOR_SCALED].max())))
 
     combined_hitrates_rmr, combined_hitrates_rpf = [], []
-    for ttfa_cutoff in range(max_ttfa):
+    for ttfa_cutoff in range(max_ttfa + 1):
         cut_data = apply_cutoff(main_data, TTFA_COMBINED, ttfa_cutoff)
-        hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-        combined_hitrates_rmr.append(frac_within_sd_of_hitrate_mean(hr_rmr))
-        combined_hitrates_rpf.append(frac_within_sd_of_hitrate_mean(hr_rpf))
+        hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+        combined_hitrates_rmr.append(frac_within_sd_of_hitrate_mean(hrs_rmr))
+        combined_hitrates_rpf.append(frac_within_sd_of_hitrate_mean(hrs_rpf))
 
     # Convert to arrays so I can do quick argmax
-    combined_hitrates_rmr = asarray(combined_hitrates_rmr)
-    combined_hitrates_rpf = asarray(combined_hitrates_rpf)
+    combined_hitrates_rmr: array = asarray(combined_hitrates_rmr)
+    combined_hitrates_rpf: array = asarray(combined_hitrates_rpf)
 
     # Optimum cutoffs for each stat
     combined_rmr_ttfa_cutoff = combined_hitrates_rmr.argmax()
@@ -173,24 +173,30 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Graph cutoff-by-fit
 
+    # Save values
+    savetxt(path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname, "rmr cutoff.csv"),
+            combined_hitrates_rmr, delimiter=",")
+    savetxt(path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname, "rpf cutoff.csv"),
+            combined_hitrates_rpf, delimiter=",")
+
+    # RMR graph
     pyplot.plot(combined_hitrates_rmr)
     pyplot.ylim((0, 1))
     pyplot.xlabel("TTFA cutoff")
     pyplot.ylabel("Fraction of hitrates within 1SD of participant mean")
     pyplot.title("Noninteractive combined fits (RMR)")
     pyplot.savefig(path.join(Preferences.figures_dir, MODEL_TYPE.figures_dirname, "rmr fits by cutoff.png"))
-
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
 
+    # RPF graph
     pyplot.plot(combined_hitrates_rpf)
     pyplot.ylim((0, 1))
     pyplot.xlabel("TTFA cutoff")
     pyplot.ylabel("Fraction of hitrates within 1SD of participant mean")
     pyplot.title("Noninteractive combined fits (RPF)")
     pyplot.savefig(path.join(Preferences.figures_dir, MODEL_TYPE.figures_dirname, "rpf fits by cutoff.png"))
-
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
@@ -201,45 +207,45 @@ def main(input_results_dir_sensorimotor: str,
 
     # Combined (rmr-optimal)
     cut_data = apply_cutoff(main_data, TTFA_COMBINED, combined_rmr_ttfa_cutoff)
-    hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-    save_hitrate_graphs(hr_rpf, hr_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal ({combined_rmr_ttfa_cutoff})")
-    logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hr_rmr)}")
-    logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hr_rpf)}")
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal ({combined_rmr_ttfa_cutoff})")
+    logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     # Combined (rpf-optimal)
     cut_data = apply_cutoff(main_data, TTFA_COMBINED, combined_rpf_ttfa_cutoff)
-    hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-    save_hitrate_graphs(hr_rpf, hr_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal ({combined_rpf_ttfa_cutoff})")
-    logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hr_rmr)}")
-    logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hr_rpf)}")
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal ({combined_rpf_ttfa_cutoff})")
+    logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     # endregion -----------------
 
     # region Apply cutoff to individual components
 
     cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, combined_rmr_ttfa_cutoff)
-    hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-    save_hitrate_graphs(hr_rpf, hr_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal linguistic ({combined_rmr_ttfa_cutoff})")
-    logger.info(f"rmr-optimal ling ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hr_rmr)}")
-    logger.info(f"rmr-optimal ling ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hr_rpf)}")
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal linguistic ({combined_rmr_ttfa_cutoff})")
+    logger.info(f"rmr-optimal ling ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"rmr-optimal ling ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, combined_rmr_ttfa_cutoff)
-    hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-    save_hitrate_graphs(hr_rpf, hr_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal sensorimotor ({combined_rmr_ttfa_cutoff})")
-    logger.info(f"rmr-optimal sm ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hr_rmr)}")
-    logger.info(f"rmr-optimal sm ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hr_rpf)}")
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal sensorimotor ({combined_rmr_ttfa_cutoff})")
+    logger.info(f"rmr-optimal sm ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"rmr-optimal sm ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, combined_rpf_ttfa_cutoff)
-    hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-    save_hitrate_graphs(hr_rpf, hr_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal linguistic ({combined_rpf_ttfa_cutoff})")
-    logger.info(f"rpf-optimal ling ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hr_rmr)}")
-    logger.info(f"rpf-optimal ling ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hr_rpf)}")
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal linguistic ({combined_rpf_ttfa_cutoff})")
+    logger.info(f"rpf-optimal ling ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"rpf-optimal ling ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, combined_rpf_ttfa_cutoff)
-    hr_rpf, hr_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
-    save_hitrate_graphs(hr_rpf, hr_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal sensorimotor ({combined_rpf_ttfa_cutoff})")
-    logger.info(f"rpf-optimal sm ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hr_rmr)}")
-    logger.info(f"rpf-optimal sm ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hr_rpf)}")
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal sensorimotor ({combined_rpf_ttfa_cutoff})")
+    logger.info(f"rpf-optimal sm ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"rpf-optimal sm ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     # endregion -------------------
 
