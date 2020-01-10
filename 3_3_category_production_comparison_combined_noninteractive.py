@@ -75,7 +75,6 @@ def main(input_results_dir_sensorimotor: str,
     # model_identifier = f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name} — " \
     #                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}"
     model_identifier = "combined test"
-    output_dir = f"Category production fit {MODEL_TYPE.name}"
 
     if this_linguistic_cat is not None:
         file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
@@ -137,8 +136,9 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Scale sensorimotor TTFAs to achieve 1:1 ratio
 
-    ratio = mean_ttfa_sensorimotor / mean_ttfa_linguistic
-    main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] / ratio
+    ratio = mean_ttfa_linguistic / mean_ttfa_sensorimotor
+    logger.info(f"Sensorimotor TTFAs *= {ratio}")
+    main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] * ratio
 
     # endregion -------------------
 
@@ -174,10 +174,18 @@ def main(input_results_dir_sensorimotor: str,
     cut_data = apply_cutoff(main_data, TTFA_COMBINED, optimum_ttfa_cutoff_rmr)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal ({optimum_ttfa_cutoff_rmr})")
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    logger.info(f"rmr-optimal ({optimum_ttfa_cutoff_rmr}) hitrate fit rmr: {hitrate_fit_rmr}")
+    logger.info(f"rmr-optimal ({optimum_ttfa_cutoff_rmr}) hitrate fit rpf: {hitrate_fit_rpf}")
 
     cut_data = apply_cutoff(main_data, TTFA_COMBINED, optimum_ttfa_cutoff_rpf)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal ({optimum_ttfa_cutoff_rpf})")
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    logger.info(f"rpf-optimal ({optimum_ttfa_cutoff_rpf}) hitrate fit rmr: {hitrate_fit_rmr}")
+    logger.info(f"rpf-optimal ({optimum_ttfa_cutoff_rpf}) hitrate fit rpf: {hitrate_fit_rpf}")
 
     # endregion -------------------
 
@@ -186,18 +194,34 @@ def main(input_results_dir_sensorimotor: str,
     cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, optimum_ttfa_cutoff_rmr)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal linguistic ({optimum_ttfa_cutoff_rmr})")
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    logger.info(f"rmr-optimal linguistic ({optimum_ttfa_cutoff_rmr}) hitrate fit rmr: {hitrate_fit_rmr}")
+    logger.info(f"rmr-optimal linguistic ({optimum_ttfa_cutoff_rmr}) hitrate fit rpf: {hitrate_fit_rpf}")
 
     cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, optimum_ttfa_cutoff_rmr)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal sensorimotor ({optimum_ttfa_cutoff_rmr})")
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    logger.info(f"rmr-optimal sensorimotor ({optimum_ttfa_cutoff_rmr}) hitrate fit rmr: {hitrate_fit_rmr}")
+    logger.info(f"rmr-optimal sensorimotor ({optimum_ttfa_cutoff_rmr}) hitrate fit rpf: {hitrate_fit_rpf}")
 
     cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, optimum_ttfa_cutoff_rpf)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal linguistic ({optimum_ttfa_cutoff_rpf})")
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    logger.info(f"rpf-optimal linguistic ({optimum_ttfa_cutoff_rpf}) hitrate fit rmr: {hitrate_fit_rmr}")
+    logger.info(f"rpf-optimal linguistic ({optimum_ttfa_cutoff_rpf}) hitrate fit rpf: {hitrate_fit_rpf}")
 
     cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, optimum_ttfa_cutoff_rpf)
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal sensorimotor ({optimum_ttfa_cutoff_rpf})")
+    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
+    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    logger.info(f"rpf-optimal sensorimotor ({optimum_ttfa_cutoff_rpf}) hitrate fit rmr: {hitrate_fit_rmr}")
+    logger.info(f"rpf-optimal sensorimotor ({optimum_ttfa_cutoff_rpf}) hitrate fit rpf: {hitrate_fit_rpf}")
 
     # endregion -------------------
 
