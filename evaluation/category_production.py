@@ -481,9 +481,8 @@ def process_one_model_output(main_data: DataFrame,
     save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
 
     # Compute hitrate fits
-    # TODO: these names are whack
-    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf)
+    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -519,8 +518,8 @@ def process_one_model_output_distance_only(main_data: DataFrame,
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
 
     # Compute hitrate fits
-    hitrate_fit_rpf = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rpf)
-    hitrate_fit_rmr = hitrate_within_sd_of_hitrate_mean_frac(hitrates_per_rmr)
+    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf)
+    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr)
 
     save_model_performance_stats(
         main_data,
@@ -636,7 +635,7 @@ def drop_missing_data_to_add_types(main_data: DataFrame, type_dict: Dict):
         main_data[c] = main_data[c].astype(t)
 
 
-def hitrate_within_sd_of_hitrate_mean_frac(df: DataFrame) -> DataFrame:
+def frac_within_sd_of_hitrate_mean(df: DataFrame) -> DataFrame:
     # When the model hitrate is within one SD of the hitrate mean
     within = Series(
         (df[MODEL_HITRATE] > df["Hitrate Mean"] - df["Hitrate SD"])
