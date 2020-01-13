@@ -84,6 +84,7 @@ def main(quantile: float,
         f"Linguistic distance-only model:",
         f"\t        model = {distributional_model.name}",
         f"\t        words = {n_words:_}",
+        f"\t     quantile = {quantile}",
     ]
     if distance_type is not None:
         csv_comments.append(f"\tdistance type = {distance_type.name}")

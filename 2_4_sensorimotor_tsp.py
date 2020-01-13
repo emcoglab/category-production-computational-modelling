@@ -94,11 +94,11 @@ def main(distance_type_name: str,
         node_decay_lognormal_sigma=node_decay_sigma,
         buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
-        activation_cap=activation_cap,
+        accessible_set_capacity=accessible_set_capacity,
         accessible_set_threshold=accessible_set_threshold,
+        activation_cap=activation_cap,
         norm_attenuation_statistic=norm_attenuation_statistic,
         use_prepruned=use_prepruned,
-        accessible_set_capacity=accessible_set_capacity,
     )
 
     sc.save_model_spec(response_dir, {
@@ -123,11 +123,17 @@ def main(distance_type_name: str,
 
         # Record topology
         csv_comments.append(f"Running sensorimotor spreading activation (v{VERSION}) using parameters:")
-        csv_comments.append(f"\tlength_factor = {length_factor:_}")
-        csv_comments.append(f"\t      pruning = {max_sphere_radius}")
-        csv_comments.append(f"\t WMB capacity = {buffer_capacity}")
-        csv_comments.append(f"\t  AS capacity = {accessible_set_capacity}")
-        csv_comments.append(f"\t node decay σ = {node_decay_sigma} (σ * lf = {node_decay_sigma * length_factor})")
+        csv_comments.append(f"\t length_factor = {length_factor:_}")
+        csv_comments.append(f"\t distance_type = {distance_type.name}")
+        csv_comments.append(f"\t   attenuation = {norm_attenuation_statistic.name}")
+        csv_comments.append(f"\t       pruning = {max_sphere_radius}")
+        csv_comments.append(f"\t  WMB capacity = {buffer_capacity}")
+        csv_comments.append(f"\t   AS capacity = {accessible_set_capacity}")
+        csv_comments.append(f"\t WMB threshold = {buffer_threshold}")
+        csv_comments.append(f"\t  AS threshold = {accessible_set_threshold}")
+        csv_comments.append(f"\t  node decay m = {node_decay_median}")
+        csv_comments.append(f"\t  node decay σ = {node_decay_sigma} (σ * lf = {node_decay_sigma * length_factor})")
+        csv_comments.append(f"\tactivation cap = {activation_cap}")
 
         # Do the spreading activation
 

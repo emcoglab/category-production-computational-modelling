@@ -56,6 +56,7 @@ def main(quantile: float, distance_type: Optional[DistanceType]):
         f"Sensorimotor distance-only model:",
         f"\t        model = sensorimotor",
         f"\tdistance type = {distance_type.name}",
+        f"\t     quantile = {quantile}",
     ]
 
     model_responses_path = path.join(response_dir, "hits.csv")
