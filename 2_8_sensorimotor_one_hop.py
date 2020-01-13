@@ -56,8 +56,8 @@ def main(distance_type_name: str,
          accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
          accessible_set_threshold: ActivationValue,
-         median: float,
-         sigma: float,
+         node_decay_median: float,
+         node_decay_sigma: float,
          use_prepruned: bool = False,
          ):
 
@@ -71,8 +71,8 @@ def main(distance_type_name: str,
                              f"Sensorimotor one-hop {VERSION}",
                              f"{distance_type.name} length {length_factor} attenuate {norm_attenuation_statistic.name}",
                              f"max-r {max_sphere_radius};"
-                                f" e-decay-median {median};"
-                                f" e-decay-sigma {sigma};"
+                                f" n-decay-median {node_decay_median};"
+                                f" n-decay-sigma {node_decay_sigma};"
                                 f" as-θ {accessible_set_threshold};"
                                 f" as-cap {accessible_set_capacity:,};"
                                 f" buff-θ {buffer_threshold};"
@@ -87,8 +87,8 @@ def main(distance_type_name: str,
         distance_type=distance_type,
         length_factor=length_factor,
         max_sphere_radius=max_sphere_radius,
-        lognormal_median=median,
-        lognormal_sigma=sigma,
+        node_decay_lognormal_median=node_decay_median,
+        node_decay_lognormal_sigma=node_decay_sigma,
         buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
@@ -117,7 +117,7 @@ def main(distance_type_name: str,
         csv_comments.append(f"Running sensorimotor spreading activation (v{VERSION}) using parameters:")
         csv_comments.append(f"\tlength_factor = {length_factor:_}")
         csv_comments.append(f"\t      pruning = {max_sphere_radius}")
-        csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
+        csv_comments.append(f"\t  node decay σ = {node_decay_sigma} (σ * lf = {node_decay_sigma * length_factor})")
 
         # Do the spreading activation
 
@@ -201,8 +201,8 @@ if __name__ == '__main__':
          accessible_set_capacity=args.accessible_set_capacity,
          accessible_set_threshold=args.accessible_set_threshold,
          buffer_threshold=args.buffer_threshold,
-         median=args.node_decay_median,
-         sigma=args.node_decay_sigma,
+         node_decay_median=args.node_decay_median,
+         node_decay_sigma=args.node_decay_sigma,
          use_prepruned=args.use_prepruned)
     logger.info("Done!")
 

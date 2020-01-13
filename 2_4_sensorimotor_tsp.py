@@ -56,8 +56,8 @@ def main(distance_type_name: str,
          buffer_threshold: ActivationValue,
          accessible_set_threshold: ActivationValue,
          run_for_ticks: int,
-         median: float,
-         sigma: float,
+         node_decay_median: float,
+         node_decay_sigma: float,
          bailout: int = None,
          use_prepruned: bool = False,
          ):
@@ -72,8 +72,8 @@ def main(distance_type_name: str,
                              f"Sensorimotor {VERSION}",
                              f"{distance_type.name} length {length_factor} attenuate {norm_attenuation_statistic.name}",
                              f"max-r {max_sphere_radius};"
-                                f" e-decay-median {median};"
-                                f" e-decay-sigma {sigma};"
+                                f" n-decay-median {node_decay_median};"
+                                f" n-decay-sigma {node_decay_sigma};"
                                 f" as-θ {accessible_set_threshold};"
                                 f" as-cap {accessible_set_capacity:,};"
                                 f" buff-θ {buffer_threshold};"
@@ -90,8 +90,8 @@ def main(distance_type_name: str,
         distance_type=distance_type,
         length_factor=length_factor,
         max_sphere_radius=max_sphere_radius,
-        lognormal_median=median,
-        lognormal_sigma=sigma,
+        node_decay_lognormal_median=node_decay_median,
+        node_decay_lognormal_sigma=node_decay_sigma,
         buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
@@ -127,7 +127,7 @@ def main(distance_type_name: str,
         csv_comments.append(f"\t      pruning = {max_sphere_radius}")
         csv_comments.append(f"\t WMB capacity = {buffer_capacity}")
         csv_comments.append(f"\t  AS capacity = {accessible_set_capacity}")
-        csv_comments.append(f"\t            σ = {sigma} (σ * lf = {sigma * length_factor})")
+        csv_comments.append(f"\t node decay σ = {node_decay_sigma} (σ * lf = {node_decay_sigma * length_factor})")
 
         # Do the spreading activation
 
@@ -225,8 +225,8 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("-l", "--length_factor", required=True, type=Length)
     parser.add_argument("-m", "--node_decay_median", required=True, type=float)
-    parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
+    parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
     parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
     parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
     parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
@@ -242,8 +242,8 @@ if __name__ == '__main__':
          accessible_set_threshold=args.accessible_set_threshold,
          buffer_threshold=args.buffer_threshold,
          run_for_ticks=args.run_for_ticks,
-         median=args.node_decay_median,
-         sigma=args.node_decay_sigma,
+         node_decay_median=args.node_decay_median,
+         node_decay_sigma=args.node_decay_sigma,
          bailout=args.bailout,
          use_prepruned=args.use_prepruned)
     logger.info("Done!")
