@@ -203,7 +203,25 @@ def main(input_results_dir_sensorimotor: str,
 
     # endregion -----------------
 
+    # region Find balanced cut-off point
+
+    # Find the first point at which the two stats become equal (or flipped)
+    rmr_is_smaller = combined_hitrates_rmr[0] < combined_hitrates_rpf[0]
+    balanced_cut_off = 0
+    for balanced_cut_off, (hr_rmr, hr_rpf) in enumerate(zip(combined_hitrates_rmr, combined_hitrates_rpf)):
+        if (hr_rmr < hr_rpf) != rmr_is_smaller:
+            break
+
+    # endregion -----------------
+
     # region Save optimal graphs
+
+    # Combined (balanced)
+    cut_data = apply_cutoff(main_data, TTFA_COMBINED, balanced_cut_off)
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" combined ({balanced_cut_off})")
+    logger.info(f"combined ({balanced_cut_off}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"combined ({balanced_cut_off}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
     # Combined (rmr-optimal)
     cut_data = apply_cutoff(main_data, TTFA_COMBINED, combined_rmr_ttfa_cutoff)
@@ -223,6 +241,20 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Apply cutoff to individual components
 
+    # balanced
+    cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, balanced_cut_off)
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" balanced linguistic ({balanced_cut_off})")
+    logger.info(f"balanced ling ({balanced_cut_off}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"balanced ling ({balanced_cut_off}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
+
+    cut_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, balanced_cut_off)
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" balanced sensorimotor ({balanced_cut_off})")
+    logger.info(f"balanced sm ({balanced_cut_off}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
+    logger.info(f"balanced sm ({balanced_cut_off}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
+
+    # rmr optimal
     cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, combined_rmr_ttfa_cutoff)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rmr-optimal linguistic ({combined_rmr_ttfa_cutoff})")
@@ -235,6 +267,7 @@ def main(input_results_dir_sensorimotor: str,
     logger.info(f"rmr-optimal sm ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr)}")
     logger.info(f"rmr-optimal sm ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf)}")
 
+    # rpf optimal
     cut_data = apply_cutoff(main_data, TTFA_LINGUISTIC, combined_rpf_ttfa_cutoff)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cut_data, MODEL_TYPE)
     save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" rpf-optimal linguistic ({combined_rpf_ttfa_cutoff})")
