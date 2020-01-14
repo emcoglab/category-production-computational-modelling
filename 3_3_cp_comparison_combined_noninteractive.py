@@ -39,7 +39,7 @@ from evaluation.column_names import TTFA, MODEL_HIT
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
+logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 
 SN = SensorimotorNorms()
 CP = CategoryProduction()
@@ -139,7 +139,7 @@ def main(input_results_dir_sensorimotor: str,
     # region Scale sensorimotor TTFAs to achieve 1:1 ratio
 
     ratio = mean_ttfa_linguistic / mean_ttfa_sensorimotor
-    logger.info(f"Sensorimotor TTFAs *= {ratio}")
+    logger.info(f"Sensorimotor TTFAs *= {ratio:.4f}")
     main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] * ratio
 
     # endregion -------------------
