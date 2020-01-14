@@ -90,16 +90,6 @@ class ModelType(Enum):
         return f"Category production fit {self.name}"
 
 
-class ParticipantSummaryType(Enum):
-    """Represents a way to summarise participant data."""
-    # Individual hitrates of participants (all responses)
-    individual_hitrates = auto()
-    # mean and sd of hitrates over categories
-    hitrates_mean_sd    = auto()
-    # everything smooshed together
-    overlaid            = auto()
-
-
 def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
     """
     Gets the number of words from a path storing results.
@@ -343,41 +333,23 @@ def save_item_level_data(main_data: DataFrame, save_path):
     main_data.to_csv(save_path, index=False)
 
 
-def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
-                                model_type: ModelType, summarise_participants_by: ParticipantSummaryType):
+def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name, model_type: ModelType):
     """Save a summary table as a figure."""
 
-    # add participant bounds
-    if summarise_participants_by == ParticipantSummaryType.individual_hitrates:
-        for participant in _CP.participants:
-            pyplot.plot(summary_table.reset_index()[x_selector],
-                        summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                        linewidth=0.4, linestyle="-", color="b", alpha=0.4)
-    elif summarise_participants_by == ParticipantSummaryType.hitrates_mean_sd:
-        pyplot.fill_between(x=summary_table.reset_index()[x_selector],
-                            y1=summary_table['Hitrate Mean'] - summary_table[
-                                'Hitrate SD'],
-                            y2=summary_table['Hitrate Mean'] + summary_table[
-                                'Hitrate SD'])
-        pyplot.scatter(x=summary_table.reset_index()[x_selector],
-                       y=summary_table['Hitrate Mean'])
-    elif summarise_participants_by == ParticipantSummaryType.overlaid:
-        pyplot.fill_between(x=summary_table.reset_index()[x_selector],
-                            y1=summary_table['Hitrate Mean'] - summary_table[
-                                'Hitrate SD'],
-                            y2=summary_table['Hitrate Mean'] + summary_table[
-                                'Hitrate SD'],
-                            # dark sky blue 8CBED6
-                            color='#8CBED6')
-        for participant in _CP.participants:
-            pyplot.plot(summary_table.reset_index()[x_selector],
-                        summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                        linewidth=0.2, linestyle="-", color="k", alpha=0.4)
+    pyplot.fill_between(x=summary_table.reset_index()[x_selector],
+                        y1=summary_table['Hitrate Mean'] - summary_table[
+                            'Hitrate SD'],
+                        y2=summary_table['Hitrate Mean'] + summary_table[
+                            'Hitrate SD'],
+                        # dark sky blue 8CBED6
+                        color='#8CBED6')
+    for participant in _CP.participants:
         pyplot.plot(summary_table.reset_index()[x_selector],
-                    summary_table['Hitrate Mean'],
-                    linewidth=1.0, linestyle="-", color="#0000ff")
-    else:
-        raise NotImplementedError()
+                    summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
+                    linewidth=0.2, linestyle="-", color="k", alpha=0.4)
+    pyplot.plot(summary_table.reset_index()[x_selector],
+                summary_table['Hitrate Mean'],
+                linewidth=1.0, linestyle="-", color="#0000ff")
     pyplot.ylabel("hitrate")
 
     # add model performance
@@ -390,19 +362,9 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name,
     pyplot.title(fig_title)
     pyplot.xlabel(x_selector)
 
-    if summarise_participants_by == ParticipantSummaryType.individual_hitrates:
-        filename = f"{fig_name} traces.png"
-    elif summarise_participants_by == ParticipantSummaryType.hitrates_mean_sd:
-        filename = f"{fig_name} hitrate-sd.png"
-    elif summarise_participants_by == ParticipantSummaryType.overlaid:
-        filename = f"{fig_name} overlaid.png"
-    else:
-        raise NotImplementedError()
-
-    pyplot.savefig(
-        path.join(Preferences.figures_dir,
-                  model_type.figures_dirname,
-                  filename))
+    pyplot.savefig(path.join(Preferences.figures_dir,
+                             model_type.figures_dirname,
+                             f"{fig_name}.png"))
 
     pyplot.clf()
     pyplot.cla()
@@ -450,15 +412,13 @@ def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suf
                                 x_selector=RANKED_PRODUCTION_FREQUENCY,
                                 fig_title="Hitrate per RPF",
                                 fig_name=f"hitrate per RPF {file_suffix}",
-                                model_type=model_type,
-                                summarise_participants_by=ParticipantSummaryType.overlaid)
+                                model_type=model_type)
     # rmr sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
                                 x_selector=ROUNDED_MEAN_RANK,
                                 fig_title="Hitrate per RMR",
                                 fig_name=f"hitrate per RMR {file_suffix}",
-                                model_type=model_type,
-                                summarise_participants_by=ParticipantSummaryType.overlaid)
+                                model_type=model_type)
 
 
 def process_one_model_output(main_data: DataFrame,
