@@ -446,8 +446,10 @@ def process_one_model_output(main_data: DataFrame,
     save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
 
     # Compute hitrate fits
-    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE)
-    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE)
+    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
+    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
+    hitrate_fit_rpf_head = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)
+    hitrate_fit_rmr_head = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)
 
     drop_missing_data_to_add_types(main_data, {TTFA: int})
 
@@ -458,6 +460,8 @@ def process_one_model_output(main_data: DataFrame,
         min_first_rank_freq=min_first_rank_freq,
         hitrate_fit_rpf_hr=hitrate_fit_rpf,
         hitrate_fit_rmr_hr=hitrate_fit_rmr,
+        hitrate_fit_rpf_hr_head=hitrate_fit_rpf_head,
+        hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
     )
@@ -483,8 +487,10 @@ def process_one_model_output_distance_only(main_data: DataFrame,
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
 
     # Compute hitrate fits
-    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE)
-    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE)
+    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
+    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
+    hitrate_fit_rpf_head = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)
+    hitrate_fit_rmr_head = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)
 
     save_model_performance_stats(
         main_data,
@@ -493,6 +499,8 @@ def process_one_model_output_distance_only(main_data: DataFrame,
         min_first_rank_freq=min_first_rank_freq,
         hitrate_fit_rpf_hr=hitrate_fit_rpf,
         hitrate_fit_rmr_hr=hitrate_fit_rmr,
+        hitrate_fit_rpf_hr_head=hitrate_fit_rpf_head,
+        hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
         conscious_access_threshold=None,
     )
@@ -506,6 +514,8 @@ def save_model_performance_stats(main_dataframe,
                                  min_first_rank_freq: Optional[int],
                                  hitrate_fit_rpf_hr,
                                  hitrate_fit_rmr_hr,
+                                 hitrate_fit_rpf_hr_head,
+                                 hitrate_fit_rmr_hr_head,
                                  model_type: ModelType,
                                  conscious_access_threshold: Optional[float],
                                  ):
@@ -530,6 +540,8 @@ def save_model_performance_stats(main_dataframe,
     df_dict.update({
         "Hitrate within SD of HR mean (RPF)": hitrate_fit_rpf_hr,
         "Hitrate within SD of HR mean (RMR)": hitrate_fit_rmr_hr,
+        "Hitrate within SD of HR mean (RPF) head only": hitrate_fit_rpf_hr_head,
+        "Hitrate within SD of HR mean (RMR) head only": hitrate_fit_rmr_hr_head,
     })
 
     if conscious_access_threshold is not None:
@@ -600,10 +612,19 @@ def drop_missing_data_to_add_types(main_data: DataFrame, type_dict: Dict):
         main_data[c] = main_data[c].astype(t)
 
 
-def frac_within_sd_of_hitrate_mean(df: DataFrame, test_column: str) -> DataFrame:
+def frac_within_sd_of_hitrate_mean(df: DataFrame, test_column: str, only_before_sd_includes_0: bool) -> float:
     """
     test_column: the column containing the hitrates to test
+    only_before_sd_includes_0: if true, only compute fraction in region before SD region first touches 0
     """
+    if only_before_sd_includes_0:
+        # [PyCharm thinks the first comparison gives a bool but it's actually a Series, so ignore this warning]
+        # noinspection PyUnresolvedReferences
+        df = df[
+            # True whenever SD region includes or is below 0
+            (df["Hitrate Mean"] <= df["Hitrate SD"])
+            # .cumsum() starts at 0 and increments when above is true, so will be > 0 after the first time it's true
+            .cumsum() <= 0]
     # When the test hitrate is within one SD of the hitrate mean
     within = Series(
         (df[test_column] > df["Hitrate Mean"] - df["Hitrate SD"])
