@@ -30,7 +30,6 @@ from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
-from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
@@ -253,7 +252,3 @@ if __name__ == '__main__':
          bailout=args.bailout,
          use_prepruned=args.use_prepruned)
     logger.info("Done!")
-
-    Emailer(Preferences.email_connection_details_path).send_email(
-        f"Done running {path.basename(__file__)} with radius {args.max_sphere_radius}.",
-        Preferences.target_email_address)

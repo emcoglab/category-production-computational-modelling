@@ -218,8 +218,3 @@ if __name__ == '__main__':
          run_for_ticks=args.run_for_ticks,
          bailout=args.bailout)
     logger.info("Done!")
-
-    # from model.utils.email import Emailer
-    # emailer = Emailer(Preferences.email_connection_details_path)
-    # emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
-    #                    Preferences.target_email_address)

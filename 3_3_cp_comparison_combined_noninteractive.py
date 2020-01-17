@@ -20,7 +20,8 @@ caiwingfield.net
 import argparse
 import logging
 import sys
-from os import path
+from os import path, makedirs
+from pathlib import Path
 from typing import Optional
 
 from matplotlib import pyplot
@@ -71,12 +72,14 @@ def main(input_results_dir_sensorimotor: str,
     else:
         this_linguistic_cat = linguistic_cat
 
-    # TODO: this makes a "name too long" error
-    # input_results_dir_linguistic, input_results_dir_sensorimotor = Path(input_results_dir_linguistic), Path(
-    #     input_results_dir_sensorimotor)
-    # model_identifier = f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name} — " \
-    #                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}"
-    model_identifier = "combined test"
+    input_results_dir_linguistic   = Path(input_results_dir_linguistic)
+    input_results_dir_sensorimotor = Path(input_results_dir_sensorimotor)
+    # Organise by linguistic and sensorimotor model names
+    evaluation_save_dir = path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname,
+                                    f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name}",
+                                    f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}")
+    makedirs(evaluation_save_dir, exist_ok=True)
+    model_identifier = MODEL_TYPE.name
 
     if this_linguistic_cat is not None:
         file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
@@ -169,11 +172,11 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Graph cutoff-by-fit
 
-    # Save values
-    savetxt(path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname, "rmr cutoff.csv"),
-            combined_hitrates_rmr, delimiter=",")
-    savetxt(path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname, "rpf cutoff.csv"),
-            combined_hitrates_rpf, delimiter=",")
+    # Save values (ignore erroneous inferred type check errors)
+    # noinspection PyTypeChecker
+    savetxt(path.join(evaluation_save_dir, "rmr cutoff.csv"), combined_hitrates_rmr, delimiter=",")
+    # noinspection PyTypeChecker
+    savetxt(path.join(evaluation_save_dir, "rpf cutoff.csv"), combined_hitrates_rpf, delimiter=",")
 
     # RMR graph
     pyplot.plot(combined_hitrates_rmr)
