@@ -333,7 +333,7 @@ def save_item_level_data(main_data: DataFrame, save_path):
     main_data.to_csv(save_path, index=False)
 
 
-def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name, model_type: ModelType):
+def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name, model_type: ModelType, figures_dir):
     """Save a summary table as a figure."""
 
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
@@ -362,7 +362,7 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name, 
     pyplot.title(fig_title)
     pyplot.xlabel(x_selector)
 
-    pyplot.savefig(path.join(Preferences.figures_dir,
+    pyplot.savefig(path.join(figures_dir,
                              model_type.figures_dirname,
                              f"{fig_name}.png"))
 
@@ -406,20 +406,22 @@ def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, 
                             index=False)
 
 
-def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix):
+def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix, figures_dir: str = Preferences.figures_dir):
 
     # rpf sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
                                 x_selector=RANKED_PRODUCTION_FREQUENCY,
                                 fig_title="Hitrate per RPF",
                                 fig_name=f"hitrate per RPF {file_suffix}",
-                                model_type=model_type)
+                                model_type=model_type,
+                                figures_dir=figures_dir)
     # rmr sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
                                 x_selector=ROUNDED_MEAN_RANK,
                                 fig_title="Hitrate per RMR",
                                 fig_name=f"hitrate per RMR {file_suffix}",
-                                model_type=model_type)
+                                model_type=model_type,
+                                figures_dir=figures_dir)
 
 
 def process_one_model_output(main_data: DataFrame,
