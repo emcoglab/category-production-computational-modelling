@@ -79,17 +79,14 @@ def main(input_results_dir_sensorimotor: str,
     evaluation_save_dir = path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname,
                                     f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name}",
                                     f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}")
-    figures_dir = path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname,
+    figures_dir = path.join(Preferences.figures_dir, MODEL_TYPE.figures_dirname,
                             f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name}",
                             f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}")
     makedirs(evaluation_save_dir, exist_ok=True)
     makedirs(figures_dir, exist_ok=True)
     model_identifier = MODEL_TYPE.name
 
-    if this_linguistic_cat is not None:
-        file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
-    else:
-        file_suffix = f"({model_identifier})"
+    file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
 
     # endregion -------------------
 
@@ -189,7 +186,7 @@ def main(input_results_dir_sensorimotor: str,
     pyplot.xlabel("TTFA cutoff")
     pyplot.ylabel("Fraction of hitrates within 1SD of participant mean")
     pyplot.title("Noninteractive combined fits (RMR)")
-    pyplot.savefig(path.join(Preferences.figures_dir, MODEL_TYPE.figures_dirname, "rmr fits by cutoff.png"))
+    pyplot.savefig(path.join(figures_dir, "rmr fits by cutoff.png"))
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
@@ -200,7 +197,7 @@ def main(input_results_dir_sensorimotor: str,
     pyplot.xlabel("TTFA cutoff")
     pyplot.ylabel("Fraction of hitrates within 1SD of participant mean")
     pyplot.title("Noninteractive combined fits (RPF)")
-    pyplot.savefig(path.join(Preferences.figures_dir, MODEL_TYPE.figures_dirname, "rpf fits by cutoff.png"))
+    pyplot.savefig(path.join(figures_dir, "rpf fits by cutoff.png"))
     pyplot.clf()
     pyplot.cla()
     pyplot.close()
