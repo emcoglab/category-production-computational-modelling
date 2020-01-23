@@ -62,7 +62,7 @@ def main(input_results_dir_sensorimotor: str,
          linguistic_cat: Optional[int] = None):
 
     logger.info("")
-    logger.info(path.basename(f"{input_results_dir_sensorimotor}, {input_results_dir_linguistic}"))
+    logger.info(f"{input_results_dir_sensorimotor}, {input_results_dir_linguistic}")
 
     # region Process args
 
