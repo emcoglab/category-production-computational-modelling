@@ -103,10 +103,6 @@ def main(n_words: int,
 
         csv_comments = []
 
-        # Skip the check if the category won't be in the network
-        if category_label not in lc.available_words:
-            continue
-
         # Only run the TSA if we've not already done it
         if path.exists(model_responses_path):
             logger.info(f"{model_responses_path} exists, skipping.")
@@ -133,12 +129,12 @@ def main(n_words: int,
 
         # Do the spreading activation
 
-        # If the category has a single norm, activate it
+        # If the category has a single label, activate it
         if category_label in filtered_words:
             logger.info(f"Running spreading activation for category {category_label}")
             lc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
-        # If the category has no single norm, activate all constituent words
+        # If the category has no single label, activate all constituent words
         else:
             category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
             logger.info(f"Running spreading activation for category {category_label}"

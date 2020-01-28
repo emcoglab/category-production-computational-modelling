@@ -60,10 +60,6 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram",  length_factor=10, firing_threshold=0.7, edge_decay_sd=35.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram",  length_factor=10, firing_threshold=0.6, edge_decay_sd=25.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram",  length_factor=10, firing_threshold=0.7, edge_decay_sd=30.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
-        LinguisticSASpec(graph_size=graph_size, model_name="pmi_ngram",  length_factor=10, firing_threshold=0.6, edge_decay_sd=30.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
         LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.7, edge_decay_sd=35.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
         LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.5, edge_decay_sd=15.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),
         LinguisticSASpec(graph_size=graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.7, edge_decay_sd=20.0, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None),

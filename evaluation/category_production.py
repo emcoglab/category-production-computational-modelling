@@ -49,8 +49,8 @@ CATEGORIES_PER_PARTICIPANT = 39
 PARTICIPANTS_PER_CATEGORY = 20
 # Participants were separated into 3 equipollent sets, each of which saw disjoint equipollent sets of categories.
 PARTICIPANT_SETS = 3
-TOTAL_PARTICIPANTS = PARTICIPANTS_PER_CATEGORY * PARTICIPANT_SETS
-TOTAL_CATEGORIES = CATEGORIES_PER_PARTICIPANT * PARTICIPANT_SETS
+TOTAL_PARTICIPANTS = PARTICIPANTS_PER_CATEGORY * PARTICIPANT_SETS  # 60
+TOTAL_CATEGORIES = CATEGORIES_PER_PARTICIPANT * PARTICIPANT_SETS  # 117
 assert (TOTAL_CATEGORIES == len(_CP.category_labels))
 
 
@@ -298,24 +298,25 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
         # for any response.
         try:
             # response -> TTFA
-            c_ttfas: Dict[str, int] = ttfas[c]
+            ttfas_for_category: Dict[str, int] = ttfas[c]
         except KeyError:
             return nan
 
         # If the response was directly found, we can return it
-        if r in c_ttfas:
-            return c_ttfas[r]
+        if r in ttfas_for_category:
+            return ttfas_for_category[r]
 
-        # Otherwise, try to break the response into components and find any one of them
+        # Otherwise, try to break the response into components and find any one of them.
+        # Component words which aren't found are just ignored.
         else:
-            r_ttfas = [c_ttfas[w]
-                       for w in modified_word_tokenize(r)
-                       if (w not in _CP.ignored_words)
-                       and (w in c_ttfas)]
+            ttfas_for_response = [ttfas_for_category[w]
+                                  for w in modified_word_tokenize(r)
+                                  if (w not in _CP.ignored_words)
+                                  and (w in ttfas_for_category)]
 
             # The multi-word response is said to be activated the first time any one of its constituent words are
-            if len(r_ttfas) > 1:
-                return min(r_ttfas)
+            if len(ttfas_for_response) > 1:
+                return min(ttfas_for_response)
             # If none of the constituent words have a ttfa, we have no ttfa for the multiword term
             else:
                 return nan
