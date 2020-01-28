@@ -95,7 +95,11 @@ def main(quantile: float,
         if category in filtered_words:
             category_words = [category]
         else:
-            category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
+            category_words = [w
+                              for w in modified_word_tokenize(category)
+                              if w not in cp.ignored_words
+                              # Ignore words which aren't available: activate all words we can
+                              and w in filtered_words]
         for response in cp.responses_for_category(category):
             try:
                 # Hit if hit for any category word

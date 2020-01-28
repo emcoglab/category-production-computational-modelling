@@ -71,8 +71,6 @@ def main(n_words: int,
     distance_type = DistanceType.from_name(distance_type_name)
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
-    filtered_words = set(freq_dist.most_common_tokens(n_words))
-
     pruning_suffix = f", importance pruning {prune_importance}" if prune_importance is not None else ""
     response_dir = path.join(Preferences.output_dir,
                              "Category production",
@@ -139,13 +137,17 @@ def main(n_words: int,
         # Do the spreading activation
 
         # If the category has a single label, activate it
-        if category_label in filtered_words:
+        if category_label in lc.available_words:
             logger.info(f"Running spreading activation for category {category_label}")
             lc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         # If the category has no single label, activate all constituent words
         else:
-            category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
+            category_words = [word
+                              for word in modified_word_tokenize(category_label)
+                              if word not in cp.ignored_words
+                              # Ignore words which aren't available: activate all words we can
+                              and word in lc.available_words]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             lc.activate_items_with_labels(category_words, FULL_ACTIVATION)

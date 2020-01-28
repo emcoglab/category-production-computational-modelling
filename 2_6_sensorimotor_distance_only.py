@@ -66,7 +66,11 @@ def main(quantile: float, distance_type: Optional[DistanceType]):
         if category in sm.words:
             category_words = [category]
         else:
-            category_words = [w for w in modified_word_tokenize(category) if w not in cp.ignored_words]
+            category_words = [w
+                              for w in modified_word_tokenize(category)
+                              if w not in cp.ignored_words
+                              # Ignore words which aren't available: activate all words we can
+                              and w in cp.category_labels_sensorimotor]
         for response in cp.responses_for_category(category, use_sensorimotor=True, force_unique=True):
             try:
                 # Hit if hit for any category word

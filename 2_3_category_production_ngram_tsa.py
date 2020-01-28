@@ -95,8 +95,6 @@ def main(n_words: int,
         "Bailout": bailout
     })
 
-    filtered_words = set(freq_dist.most_common_tokens(n_words))
-
     for category_label in cp.category_labels:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
@@ -130,13 +128,17 @@ def main(n_words: int,
         # Do the spreading activation
 
         # If the category has a single label, activate it
-        if category_label in filtered_words:
+        if category_label in lc.available_words:
             logger.info(f"Running spreading activation for category {category_label}")
             lc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         # If the category has no single label, activate all constituent words
         else:
-            category_words = [word for word in modified_word_tokenize(category_label) if word not in cp.ignored_words]
+            category_words = [word
+                              for word in modified_word_tokenize(category_label)
+                              if word not in cp.ignored_words
+                              # Ignore words which aren't available: activate all words we can
+                              and word in lc.available_words]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             lc.activate_items_with_labels(category_words, FULL_ACTIVATION)
