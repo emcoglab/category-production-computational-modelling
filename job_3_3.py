@@ -1,5 +1,6 @@
 import logging
 from os import path
+from threading import Thread
 from typing import Optional
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
@@ -120,5 +121,10 @@ if __name__ == '__main__':
         LinguisticSASpec(graph_size=ling_graph_size, model_name="ppmi_ngram", length_factor=10, firing_threshold=0.5, edge_decay_sd=30.0, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None),
     ]
 
-    for job in [Job_3_3(sm_spec, ling_spec, attenuate, ling_rft, sm_rft, ling_bail, sm_bail) for ling_spec in ling_specs for sm_spec in sm_specs]:
-        job.run_locally()
+    threads = [
+        Thread(target=Job_3_3(sm_spec, ling_spec, attenuate, ling_rft, sm_rft, ling_bail, sm_bail).run_locally)
+        for ling_spec in ling_specs
+        for sm_spec in sm_specs
+    ]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
