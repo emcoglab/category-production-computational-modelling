@@ -117,8 +117,6 @@ if __name__ == '__main__':
         LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
         LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
         LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
-        LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=20, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
-        LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=30, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
     ]
 
     threads = [
