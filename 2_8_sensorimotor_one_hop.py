@@ -30,7 +30,6 @@ from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
 from model.naïve_sensorimotor import SensorimotorOneHopComponent
 from model.sensorimotor_component import NormAttenuationStatistic
-from model.utils.email import Emailer
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
 from preferences import Preferences
@@ -217,7 +216,3 @@ if __name__ == '__main__':
          node_decay_sigma=args.node_decay_sigma,
          use_prepruned=args.use_prepruned)
     logger.info("Done!")
-
-    Emailer(Preferences.email_connection_details_path).send_email(
-        f"Done running {path.basename(__file__)} with radius {args.max_sphere_radius}.",
-        Preferences.target_email_address)

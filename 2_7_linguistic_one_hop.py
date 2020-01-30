@@ -203,8 +203,3 @@ if __name__ == '__main__':
          edge_decay_sd_factor=args.edge_decay_sd_factor,
          impulse_pruning_threshold=args.impulse_pruning_threshold)
     logger.info("Done!")
-
-    from model.utils.email import Emailer
-    emailer = Emailer(Preferences.email_connection_details_path)
-    emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
-                       Preferences.target_email_address)
