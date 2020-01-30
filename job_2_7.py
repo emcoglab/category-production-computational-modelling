@@ -1,4 +1,5 @@
 import logging
+from typing import Dict
 
 from model.utils.job import LinguisticSAJob, LinguisticSASpec
 
@@ -9,13 +10,22 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 class Job_2_7(LinguisticSAJob):
 
-    # graph_size -> RAM/G
-    RAM = {
-        1_000: 2,
-        3_000: 3,
-        10_000: 7,
-        30_000: 11,
-        40_000: 15,
+    # model_name -> graph_size -> RAM/G
+    RAM: Dict[str, Dict[int, int]] = {
+        "pmi_ngram": {
+            1_000: 2,
+            3_000: 3,
+            10_000: 7,
+            30_000: 11,
+            40_000: 15,
+        },
+        "ppmi_ngram": {
+            1_000: 2,
+            3_000: 3,
+            10_000: 5,
+            30_000: 7,
+            40_000: 8,
+        }
     }
 
     def __init__(self, spec: LinguisticSASpec):
@@ -42,7 +52,7 @@ class Job_2_7(LinguisticSAJob):
     @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, LinguisticSASpec)
-        return self.RAM[self.spec.graph_size]
+        return self.RAM[self.spec.model_name][self.spec.graph_size]
 
 if __name__ == '__main__':
     logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
