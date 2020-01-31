@@ -126,3 +126,6 @@ if __name__ == '__main__':
     ]
     [t.start() for t in threads]
     [t.join() for t in threads]
+
+    from model.utils.email import Emailer
+    Emailer(Preferences.email_connection_details_path).send_email(f"Done running {path.basename(__file__)} parallel batch.", Preferences.target_email_address)
