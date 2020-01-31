@@ -27,7 +27,7 @@ class Preferences(object):
 
     # Paths
 
-    email_connection_details_path = "/Users/caiwingfield/Box Sync/Admin dox/notify@cwcomplex.net.txt"
+    email_connection_details_path = "/Users/caiwingfield/Resilio Sync/Resilio Sync Lancaster/notify@cwcomplex.net.txt"
     target_email_address = "c.wingfield@lancaster.ac.uk"
 
     graphs_dir = path.join(local_data, "graphs")

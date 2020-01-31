@@ -36,6 +36,7 @@ from model.graph_propagation import GraphPropagation
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import *
+from model.utils.maths import cm_to_inches
 from preferences import Preferences
 
 logger = logging.getLogger(__name__)
@@ -334,7 +335,7 @@ def save_item_level_data(main_data: DataFrame, save_path):
     main_data.to_csv(save_path, index=False)
 
 
-def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name, figures_dir):
+def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir):
     """Save a summary table as a figure."""
 
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
@@ -342,28 +343,30 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_title, fig_name, 
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
                             'Hitrate SD'],
-                        # dark sky blue 8CBED6
-                        color='#8CBED6')
+                        color='#A6C8FF', zorder=0)
+    # Participant traces
     for participant in _CP.participants:
         pyplot.plot(summary_table.reset_index()[x_selector],
                     summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                    linewidth=0.2, linestyle="-", color="k", alpha=0.4)
+                    linewidth=0.5, linestyle="-", color="k", alpha=0.5, zorder=10)
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table['Hitrate Mean'],
-                linewidth=1.0, linestyle="-", color="#0000ff")
-    pyplot.ylabel("hitrate")
+                linewidth=2.0, linestyle="-",
+                color="#00EB0C", zorder=20)
 
     # add model performance
-    pyplot.scatter(x=summary_table.reset_index()[x_selector],
-                   y=summary_table[MODEL_HITRATE],
-                   marker="o", color="g")
+    pyplot.plot(summary_table.reset_index()[x_selector],
+                summary_table[MODEL_HITRATE],
+                linewidth=2.0, linestyle='-',
+                color="#FA5300", zorder=30)
 
     pyplot.ylim((0, None))
 
-    pyplot.title(fig_title)
+    pyplot.ylabel("Hit rate")
     pyplot.xlabel(x_selector)
 
-    pyplot.savefig(path.join(figures_dir, f"{fig_name}.png"))
+    pyplot.gcf().set_size_inches(cm_to_inches(15), cm_to_inches(10))
+    pyplot.savefig(path.join(figures_dir, f"{fig_name}.png"), dpi=600)
 
     pyplot.clf()
     pyplot.cla()
@@ -413,13 +416,11 @@ def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suf
     # rpf sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
                                 x_selector=RANKED_PRODUCTION_FREQUENCY,
-                                fig_title="Hitrate per RPF",
                                 fig_name=f"hitrate per RPF {file_suffix}",
                                 figures_dir=figures_dir)
     # rmr sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rmr,
                                 x_selector=ROUNDED_MEAN_RANK,
-                                fig_title="Hitrate per RMR",
                                 fig_name=f"hitrate per RMR {file_suffix}",
                                 figures_dir=figures_dir)
 

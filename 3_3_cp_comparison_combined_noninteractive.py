@@ -189,7 +189,6 @@ def main(input_results_dir_sensorimotor: str,
         # noinspection PyTypeChecker
         savetxt(path.join(evaluation_save_dir, "rpf cutoff.csv"), combined_hitrates_rpf, delimiter=",")
 
-        # RMR graph
         pyplot.plot(combined_hitrates_rmr)
         pyplot.ylim((0, 1))
         pyplot.xlabel("TTFA cutoff")
