@@ -35,7 +35,7 @@ from category_production.category_production import ColNames as CPColNames, Cate
 from evaluation.category_production import add_ttfa_column, ModelType, save_hitrate_graphs, \
     get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
     get_n_words_from_path_linguistic, frac_within_sd_of_hitrate_mean, \
-    get_firing_threshold_from_path_linguistic, prepare_category_production_data
+    get_firing_threshold_from_path_linguistic, prepare_category_production_data, get_hitrate_variance
 from evaluation.column_names import TTFA, MODEL_HIT, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f
 
 logger = logging.getLogger(__name__)
@@ -192,7 +192,7 @@ def main(input_results_dir_sensorimotor: str,
         pyplot.plot(combined_hitrates_rmr)
         pyplot.ylim((0, 1))
         pyplot.xlabel("TTFA cutoff")
-        pyplot.ylabel("Fraction of hitrates within 1SD of participant mean")
+        pyplot.ylabel("Fraction of hit rates within 1SD of participant mean")
         pyplot.title("Noninteractive combined fits")
         pyplot.plot(combined_hitrates_rpf)
         pyplot.savefig(path.join(figures_dir, "rmr & rpf fits by cutoff.png"))
@@ -254,25 +254,29 @@ def main(input_results_dir_sensorimotor: str,
 
     else:
 
-        # Combined (balanced)
+        # Combined
         cutoff_data = apply_cutoff(main_data, TTFA_COMBINED, manual_cut_off)
         hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data, MODEL_TYPE)
         save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" manual combined ({manual_cut_off})", figures_dir=figures_dir)
         log_output.append(f"manual combined ({manual_cut_off}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
         log_output.append(f"manual combined ({manual_cut_off}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+        get_hitrate_variance(cutoff_data).to_csv(path.join(evaluation_save_dir, "combined hitrate variance.csv"), na_rep="")
 
-        # manual
+        # linguistic
         cutoff_data = apply_cutoff(main_data, TTFA_LINGUISTIC, manual_cut_off)
         hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data, MODEL_TYPE)
         save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" manual linguistic ({manual_cut_off})", figures_dir=figures_dir)
         log_output.append(f"manual ling ({manual_cut_off}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
         log_output.append(f"manual ling ({manual_cut_off}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+        get_hitrate_variance(cutoff_data).to_csv(path.join(evaluation_save_dir, "linguistic hitrate variance.csv"), na_rep="")
 
+        # sensorimotor
         cutoff_data = apply_cutoff(main_data, TTFA_SENSORIMOTOR_SCALED, manual_cut_off)
         hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data, MODEL_TYPE)
         save_hitrate_graphs(hrs_rpf, hrs_rmr, MODEL_TYPE, file_suffix + f" manual sensorimotor ({manual_cut_off})", figures_dir=figures_dir)
         log_output.append(f"manual sm ({manual_cut_off}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
         log_output.append(f"manual sm ({manual_cut_off}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+        get_hitrate_variance(cutoff_data).to_csv(path.join(evaluation_save_dir, "sensorimotor hitrate variance.csv"), na_rep="")
 
         # endregion -------------------
 

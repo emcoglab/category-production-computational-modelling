@@ -668,6 +668,22 @@ def get_summary_table(main_dataframe, groupby_column):
     return df
 
 
+def get_hitrate_variance(main_dataframe: DataFrame) -> DataFrame:
+    df = DataFrame()
+    df[MODEL_HITRATE_PER_CATEGORY] = (
+            main_dataframe
+            .groupby(CPColNames.Category)
+            .mean()[MODEL_HIT])
+    for participant in _CP.participants:
+        participant_df = DataFrame()
+        participant_df[PARTICIPANT_HITRATE_PER_CATEGORY_f.format(participant)] = (
+            main_dataframe[main_dataframe[PARTICIPANT_SAW_CATEGORY_f.format(participant)] == True]
+            .groupby(CPColNames.Category)
+            .mean()[PARTICIPANT_RESPONSE_HIT_f.format(participant)])
+        df = df.join(participant_df, how="left")
+    return df
+
+
 def find_output_dirs(root_dir: str):
     """Finds all model-output dirs within a specified root directory."""
     # Find ` model_spec.yaml` files. Then each lives alongside the model output, so we return the containing dirs
