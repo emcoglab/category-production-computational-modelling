@@ -25,13 +25,14 @@ from pathlib import Path
 from typing import Optional
 
 from matplotlib import pyplot
-from numpy import ceil, savetxt, array
+from numpy import ceil, savetxt, array, loadtxt
 from pandas import DataFrame
 
 from preferences import Preferences
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from category_production.category_production import ColNames as CPColNames, CategoryProduction
 
+from model.utils.maths import cm_to_inches
 from evaluation.category_production import add_ttfa_column, ModelType, save_hitrate_graphs, \
     get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
     get_n_words_from_path_linguistic, frac_within_sd_of_hitrate_mean, \
@@ -165,6 +166,11 @@ def main(input_results_dir_sensorimotor: str,
 
     # endregion -------------------
 
+    rmr_cutoff_filename = path.join(evaluation_save_dir, "rmr cutoff.csv")
+    rpf_cutoff_filename = path.join(evaluation_save_dir, "rpf cutoff.csv")
+    combined_hitrates_rmr = None
+    combined_hitrates_rpf = None
+
     if manual_cut_off is None:
 
         # region Compute cut-off points
@@ -181,24 +187,11 @@ def main(input_results_dir_sensorimotor: str,
         combined_hitrates_rmr = array(combined_hitrates_rmr)
         combined_hitrates_rpf = array(combined_hitrates_rpf)
 
-        # Graph cut-of-by-fit
-
         # Save values (ignore erroneous inferred type check errors)
         # noinspection PyTypeChecker
-        savetxt(path.join(evaluation_save_dir, "rmr cutoff.csv"), combined_hitrates_rmr, delimiter=",")
+        savetxt(rmr_cutoff_filename, combined_hitrates_rmr, delimiter=",")
         # noinspection PyTypeChecker
-        savetxt(path.join(evaluation_save_dir, "rpf cutoff.csv"), combined_hitrates_rpf, delimiter=",")
-
-        pyplot.plot(combined_hitrates_rmr)
-        pyplot.ylim((0, 1))
-        pyplot.xlabel("TTFA cutoff")
-        pyplot.ylabel("Fraction of hit rates within 1SD of participant mean")
-        pyplot.title("Noninteractive combined fits")
-        pyplot.plot(combined_hitrates_rpf)
-        pyplot.savefig(path.join(figures_dir, "rmr & rpf fits by cutoff.png"))
-        pyplot.clf()
-        pyplot.cla()
-        pyplot.close()
+        savetxt(rpf_cutoff_filename, combined_hitrates_rpf, delimiter=",")
 
         # Optimum cutoffs for each stat
         combined_rmr_ttfa_cutoff = combined_hitrates_rmr.argmax()
@@ -279,6 +272,43 @@ def main(input_results_dir_sensorimotor: str,
         get_hitrate_variance(cutoff_data).to_csv(path.join(evaluation_save_dir, "sensorimotor hitrate variance.csv"), na_rep="")
 
         # endregion -------------------
+
+    # region Graph cut-of-by-fit
+
+    if combined_hitrates_rmr is None:
+        combined_hitrates_rmr = loadtxt(rmr_cutoff_filename, delimiter=',')
+    if combined_hitrates_rpf is None:
+        combined_hitrates_rpf = loadtxt(rpf_cutoff_filename, delimiter=',')
+
+    cutoff_graph_data = DataFrame()
+    cutoff_graph_data["MR"] = combined_hitrates_rmr
+    cutoff_graph_data["PF"] = combined_hitrates_rpf
+
+    pyplot.plot(combined_hitrates_rmr, label="MR", zorder=10)
+    pyplot.plot(combined_hitrates_rpf, label="PF", zorder=10)
+
+    pyplot.xlim((100, 800))
+    pyplot.ylim((0, 1))
+
+    pyplot.xlabel("TTFA cutoff")
+    pyplot.ylabel("Fraction of hit rates within 1SD of participant mean")
+    pyplot.title("Noninteractive combined fits")
+
+    if manual_cut_off is None:
+        graph_filename = path.join(figures_dir, "rmr & rpf fits by cutoff.png")
+    else:
+        pyplot.plot([manual_cut_off, manual_cut_off], [0, 1], 'r--', label="Optimal cut off", zorder=0)
+        graph_filename = path.join(figures_dir, f"rmr & rpf fits by cutoff (ref {manual_cut_off}).png")
+
+    pyplot.legend()
+
+    pyplot.gcf().set_size_inches(cm_to_inches(15), cm_to_inches(10))
+    pyplot.savefig(graph_filename, dpi=600)
+    pyplot.clf()
+    pyplot.cla()
+    pyplot.close()
+
+    # endregion
 
     # region Participant hitrate %s
 
