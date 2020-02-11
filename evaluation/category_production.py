@@ -58,16 +58,14 @@ assert (TOTAL_CATEGORIES == len(_CP.category_labels))
 class ModelType(Enum):
     """Represents the type of model being used in the comparison."""
     # Linguistic models
-    linguistic = auto()
-    linguistic_distance_only = auto()
-    linguistic_one_hop = auto()
+    linguistic                 = auto()
+    linguistic_one_hop         = auto()
     # Sensorimotor models
-    sensorimotor = auto()
-    sensorimotor_distance_only = auto()
-    sensorimotor_one_hop = auto()
+    sensorimotor               = auto()
+    sensorimotor_one_hop       = auto()
     # Combined models
-    combined_noninteractive = auto()
-    combined_full_tandem = auto()
+    combined_noninteractive    = auto()
+    combined_interactive       = auto()
 
     @property
     def name(self) -> str:

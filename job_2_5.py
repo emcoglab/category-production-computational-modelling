@@ -8,7 +8,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-class Job_2_7(LinguisticSAJob):
+class Job_2_5(LinguisticSAJob):
 
     # model_name -> graph_size -> RAM/G
     RAM: Dict[str, Dict[int, int]] = {
@@ -30,8 +30,8 @@ class Job_2_7(LinguisticSAJob):
 
     def __init__(self, spec: LinguisticSASpec):
         super().__init__(
-            script_number="2_7",
-            script_name="2_7_linguistic_one_hop.py",
+            script_number="2_5",
+            script_name="2_5_linguistic_one_hop.py",
             spec=spec)
 
     @property
@@ -71,5 +71,5 @@ if __name__ == '__main__':
         LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
     ]
 
-    for job in [Job_2_7(spec) for spec in specs]:
+    for job in [Job_2_5(spec) for spec in specs]:
         job.submit()

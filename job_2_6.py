@@ -8,7 +8,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-class Job_2_8(SensorimotorSAJob):
+class Job_2_6(SensorimotorSAJob):
 
     # max_sphere_radius -> RAM/G
     RAM = {
@@ -21,8 +21,8 @@ class Job_2_8(SensorimotorSAJob):
 
     def __init__(self, spec: SensorimotorSASpec):
         super().__init__(
-            script_number="2_8",
-            script_name="2_8_sensorimotor_one_hop.py",
+            script_number="2_6",
+            script_name="2_6_sensorimotor_one_hop.py",
             spec=spec)
 
     @property
@@ -64,5 +64,5 @@ if __name__ == '__main__':
         SensorimotorSASpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
     ]
 
-    for job in [Job_2_8(spec) for spec in specs]:
+    for job in [Job_2_6(spec) for spec in specs]:
         job.submit()
