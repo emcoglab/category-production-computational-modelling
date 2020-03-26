@@ -20,6 +20,7 @@ import logging
 import sys
 from os import path, makedirs
 
+from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
@@ -97,6 +98,7 @@ def main(n_words: int,
 
     for category_label in cp.category_labels:
 
+        suprathreshold_path  = path.join(response_dir, f"supra_threshold_{category_label}.csv")
         model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
 
         csv_comments = []
@@ -144,6 +146,8 @@ def main(n_words: int,
             lc.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
+        # Initialise list of concurrent activations which will be nan-populated if the run ends early
+        suprathreshold_this_category = [nan] * run_for_ticks
         for tick in range(0, run_for_ticks):
 
             logger.info(f"Clock = {tick}")
@@ -157,12 +161,19 @@ def main(n_words: int,
                     event.activation,
                     event.time))
 
+            n_suprathreshold_items = len(lc.suprathreshold_items())
+            suprathreshold_this_category[tick] = n_suprathreshold_items
+
             # Break early if we've got a probable explosion
-            if len(lc.suprathreshold_items()) > bailout > 0:
+            if n_suprathreshold_items > bailout > 0:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(lc.suprathreshold_items())} nodes activated.")
+                                    f"with {n_suprathreshold_items} nodes activated.")
                 break
+
+        with open(suprathreshold_path, mode="w", encoding="utf-8") as supratheshold_file:
+            DataFrame.from_records([[category_label] + suprathreshold_this_category])\
+                .to_csv(supratheshold_file, index=False, header=False)
 
         model_responses_df = DataFrame(model_response_entries, columns=[
             RESPONSE,
