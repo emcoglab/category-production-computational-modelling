@@ -37,8 +37,8 @@ class Job_2_4(SensorimotorSAJob):
         cmd += f" --buffer_threshold {self.spec.buffer_threshold}"
         cmd += f" --accessible_set_threshold {self.spec.accessible_set_threshold}"
         cmd += f" --length_factor {self.spec.length_factor}"
-        cmd += f" --node_decay_median {self.spec.median}"
-        cmd += f" --node_decay_sigma {self.spec.sigma}"
+        cmd += f" --node_decay_median {self.spec.node_decay_median}"
+        cmd += f" --node_decay_sigma {self.spec.node_decay_sigma}"
         cmd += f" --run_for_ticks {self.run_for_ticks}"
         cmd += f" --bailout {self.bailout}" if self.bailout else ""
         return cmd
