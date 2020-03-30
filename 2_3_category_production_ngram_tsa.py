@@ -16,7 +16,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path, makedirs
 
@@ -34,11 +33,8 @@ from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
 from model.linguistic_component import LinguisticComponent
 from model.utils.file import comment_line_from_str
+from model.utils.logging import logger
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 # Results DataFrame column names
@@ -199,7 +195,6 @@ def main(n_words: int,
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")

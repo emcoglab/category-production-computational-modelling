@@ -1,12 +1,7 @@
-import logging
 from dataclasses import dataclass
 
 from model.utils.job import Job, SASpec
 from ldm.utils.maths import DistanceType
-
-
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 @dataclass
@@ -66,8 +61,6 @@ class Job_1_6(Job):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
-
     for pruning_length in range(20, 261, 20):
         Job_1_6(Spec_1_6(pruning_length=pruning_length,
                          distance_type=DistanceType.Minkowski3,

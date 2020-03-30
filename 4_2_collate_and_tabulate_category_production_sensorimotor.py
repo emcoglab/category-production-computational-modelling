@@ -20,17 +20,14 @@ caiwingfield.net
 
 import argparse
 import glob
-import logging
 import sys
 from os import path, makedirs
 
 from pandas import concat, read_csv, DataFrame
 
 from evaluation.tabulation import save_tabulation
+from model.utils.logging import logger
 
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 dvs = [
     # correlation dvs
@@ -76,7 +73,6 @@ def collate_data(results_dir: str) -> DataFrame:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")

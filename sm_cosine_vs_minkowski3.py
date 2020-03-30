@@ -14,8 +14,6 @@ caiwingfield.net
 2019
 ---------------------------
 """
-
-import logging
 from collections import defaultdict
 from os import path
 from typing import Dict, DefaultDict
@@ -30,9 +28,7 @@ from preferences import Preferences
 from sensorimotor_norms.exceptions import WordNotInNormsError
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
+from model.utils.logging import logger
 
 _COSINE_DISTANCE = "Cosine distance"
 _MINKOWSKI_DISTANCE = "Minkowski-3 distance"
@@ -86,6 +82,6 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
 
     main()

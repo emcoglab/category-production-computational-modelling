@@ -26,14 +26,11 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
-from model.linguistic_component import load_labels_from_corpus
+from model.linguistic_propagator import _load_labels_from_corpus
+from model.utils.logging import logger
 from model.graph import Graph
 from model.utils.maths import nearest_value_at_quantile
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):
@@ -47,7 +44,7 @@ def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name:
 
     # Load node relabelling dictionary
     logger.info(f"Loading node labels")
-    node_labelling_dictionary = load_labels_from_corpus(corpus, n_words)
+    node_labelling_dictionary = _load_labels_from_corpus(corpus, n_words)
 
     # Load the full graph
     logger.info(f"Loading graph from {graph_file_name}")
@@ -98,7 +95,6 @@ def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name:
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")

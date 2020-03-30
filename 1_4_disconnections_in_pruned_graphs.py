@@ -16,7 +16,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path
 
@@ -26,12 +25,9 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.count import CountVectorModel
 from ldm.utils.maths import DistanceType
+from model.utils.logging import logger
 from model.graph import Graph, log_graph_topology
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(n_words: int, prune_top_percentile: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):
@@ -62,7 +58,7 @@ def main(n_words: int, prune_top_percentile: int, length_factor: int, corpus_nam
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")

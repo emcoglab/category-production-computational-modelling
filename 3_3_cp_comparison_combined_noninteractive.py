@@ -18,7 +18,6 @@ caiwingfield.net
 """
 
 import argparse
-import logging
 import sys
 from os import path, makedirs
 from pathlib import Path
@@ -32,16 +31,13 @@ from preferences import Preferences
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from category_production.category_production import ColNames as CPColNames, CategoryProduction
 
+from model.utils.logging import logger
 from model.utils.maths import cm_to_inches
 from evaluation.category_production import add_ttfa_column, ModelType, save_hitrate_graphs, \
     get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
     get_n_words_from_path_linguistic, frac_within_sd_of_hitrate_mean, \
     get_firing_threshold_from_path_linguistic, prepare_category_production_data, get_hitrate_variance
 from evaluation.column_names import TTFA, MODEL_HIT, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 
 SN = SensorimotorNorms()
 CP = CategoryProduction()
@@ -344,7 +340,6 @@ def apply_cutoff(data, ttfa_column, ttfa_cutoff):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")

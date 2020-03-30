@@ -15,7 +15,6 @@ caiwingfield.net
 ---------------------------
 """
 
-import logging
 import sys
 
 from pandas import DataFrame
@@ -24,9 +23,7 @@ from category_production.category_production import CategoryProduction, ColNames
 from ldm.corpus.indexing import FreqDist
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 
-logger = logging.getLogger()
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
+from model.utils.logging import logger
 
 
 def is_single_word(word: str) -> bool:
@@ -96,7 +93,6 @@ def main():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
     main()
     logger.info("Done!")

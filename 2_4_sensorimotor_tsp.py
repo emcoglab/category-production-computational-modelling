@@ -16,7 +16,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path, makedirs
 
@@ -26,17 +25,15 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
+
 from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
 from model.sensorimotor_propagator import SensorimotorPropagator
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from model.utils.file import comment_line_from_str
+from model.utils.logging import logger
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s:l.%(lineno)d | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -226,7 +223,6 @@ def main(distance_type_name: str,
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")

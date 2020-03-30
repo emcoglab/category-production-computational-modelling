@@ -1,5 +1,3 @@
-import logging
-
 from model.utils.job import SensorimotorSAJob, SensorimotorSASpec
 from ldm.utils.maths import DistanceType
 
@@ -47,7 +45,7 @@ class Job_2_6(SensorimotorSAJob):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
 
     length_factor = 100
     distance_type = DistanceType.Minkowski3

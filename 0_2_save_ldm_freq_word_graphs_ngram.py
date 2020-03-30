@@ -17,7 +17,6 @@ caiwingfield.net
 """
 import argparse
 import json
-import logging
 import sys
 from os import path
 
@@ -26,11 +25,10 @@ from ldm.corpus.indexing import FreqDist, TokenIndex
 from ldm.model.base import DistributionalSemanticModel
 from ldm.model.ngram import NgramModel
 from ldm.utils.logging import log_message, date_format
+from model.utils.logging import logger
 from model.graph import save_edgelist_from_similarity_matrix
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
 
 
 def main(length_factor: int, corpus_name: str, model_name: str, radius: int):
@@ -98,7 +96,7 @@ def main(length_factor: int, corpus_name: str, model_name: str, radius: int):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
+
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Save a number of commonly-used graphs built from the most frequent words in the corpora.")

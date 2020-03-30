@@ -1,11 +1,6 @@
-import logging
 from typing import Dict
 
 from model.utils.job import LinguisticSAJob, LinguisticSASpec
-
-
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 class Job_2_3(LinguisticSAJob):
@@ -60,7 +55,7 @@ class Job_2_3(LinguisticSAJob):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
 
     graph_size = 40_000
     bailout = int(graph_size / 2)

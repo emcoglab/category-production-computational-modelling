@@ -1,4 +1,3 @@
-import logging
 from typing import Dict
 
 from model.utils.job import LinguisticSAJob, LinguisticSASpec
@@ -55,7 +54,7 @@ class Job_2_5(LinguisticSAJob):
         return self.RAM[self.spec.model_name][self.spec.graph_size]
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
 
     graph_size = 40_000
     impulse_pruning_threshold = 0.05

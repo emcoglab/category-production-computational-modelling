@@ -1,4 +1,3 @@
-import logging
 from os import path
 from threading import Thread
 from typing import Optional
@@ -91,7 +90,7 @@ class Job_3_3(Job):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
 
     sm_length_factor = 100
     sm_distance_type = DistanceType.Minkowski3

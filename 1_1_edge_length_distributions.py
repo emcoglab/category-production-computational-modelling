@@ -16,7 +16,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from collections import defaultdict, Counter
 from os import path
@@ -30,12 +29,10 @@ from ldm.model.base import DistributionalSemanticModel
 from ldm.model.count import LogCoOccurrenceCountModel
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from ldm.utils.maths import DistanceType
+from model.utils.logging import logger
+
 from model.graph import iter_edges_from_edgelist
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main_linguistic(n_words: int, length_factor: int):
@@ -137,7 +134,7 @@ def main_sensorimotor(length_factor: int, distance_type_name: str):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
+
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")

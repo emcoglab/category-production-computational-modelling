@@ -25,11 +25,8 @@ from seaborn import distplot
 
 from ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology
+from model.utils.logging import logger
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
-logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
-logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
 def main(length_factor: int,
@@ -63,7 +60,6 @@ def main(length_factor: int,
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=logger_format, datefmt=logger_dateformat, level=logging.INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")

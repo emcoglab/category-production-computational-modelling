@@ -17,7 +17,6 @@ caiwingfield.net
 
 
 import re
-import logging
 from collections import defaultdict
 from enum import Enum, auto
 from glob import glob
@@ -32,14 +31,13 @@ from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
 from ldm.corpus.tokenising import modified_word_tokenize
-from model.graph_propagation import GraphPropagator
+from model.utils.logging import logger
+from model.graph_propagator import GraphPropagator
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import *
 from model.utils.maths import cm_to_inches
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
 
 
 _CP = CategoryProduction()

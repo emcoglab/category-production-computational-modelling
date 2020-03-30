@@ -17,16 +17,15 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path
 
 from ldm.utils.logging import log_message, date_format
 from ldm.utils.maths import DistanceType
+from model.utils.logging import logger
+
 from model.graph import Graph
 from preferences import Preferences
-
-logger = logging.getLogger(__name__)
 
 
 def main(length_factor: int, distance_type_name: str, pruning_length: int):
@@ -49,7 +48,7 @@ def main(length_factor: int, distance_type_name: str, pruning_length: int):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
+
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Save pruned graphs.")

@@ -17,7 +17,6 @@ caiwingfield.net
 """
 import argparse
 import json
-import logging
 import sys
 from os import path
 
@@ -25,11 +24,10 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 from ldm.utils.logging import log_message, date_format
 from ldm.utils.maths import DistanceType
+from model.utils.logging import logger
 from model.graph import save_edgelist_from_distance_matrix
 from preferences import Preferences
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
-
-logger = logging.getLogger(__name__)
 
 
 def main(length_factor: int, distance_type_name: str):
@@ -77,7 +75,7 @@ def main(length_factor: int, distance_type_name: str):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format=log_message, datefmt=date_format, level=logging.INFO)
+
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Save graphs built from sensorimotor norms.")
