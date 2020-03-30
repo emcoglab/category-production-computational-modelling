@@ -122,7 +122,7 @@ def main(n_words: int,
         # Do the spreading activation
 
         # If the category has a single label, activate it
-        if category_label in lc.available_words:
+        if category_label in lc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
             lc.activate_item_with_label(category_label, FULL_ACTIVATION)
 
@@ -132,7 +132,7 @@ def main(n_words: int,
                               for word in modified_word_tokenize(category_label)
                               if word not in cp.ignored_words
                               # Ignore words which aren't available: activate all words we can
-                              and word in lc.available_words]
+                              and word in lc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             lc.activate_items_with_labels(category_words, FULL_ACTIVATION)

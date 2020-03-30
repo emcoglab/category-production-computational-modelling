@@ -131,7 +131,7 @@ def main(distance_type_name: str,
         # Do the spreading activation
 
         # If the category has a single norm, activate it
-        if category_label in sc.concept_labels:
+        if category_label in sc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
             sc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
 
@@ -141,7 +141,7 @@ def main(distance_type_name: str,
                               for word in modified_word_tokenize(category_label)
                               if word not in cp.ignored_words
                               # Ignore words which aren't available: activate all words we can
-                              and word in sc.concept_labels]
+                              and word in sc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             sc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
