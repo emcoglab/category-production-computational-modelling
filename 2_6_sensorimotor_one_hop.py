@@ -28,8 +28,8 @@ from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
-from model.naïve_sensorimotor import SensorimotorOneHopComponent
-from model.sensorimotor_component import NormAttenuationStatistic
+from model.sensorimotor_components import NormAttenuationStatistic, BufferedSensorimotorComponent
+from model.sensorimotor_propagator import SensorimotorOneHopPropagator
 from model.utils.file import comment_line_from_str
 from model.version import VERSION
 from preferences import Preferences
@@ -82,18 +82,20 @@ def main(distance_type_name: str,
 
     # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()
-    sc = SensorimotorOneHopComponent(
-        distance_type=distance_type,
-        length_factor=length_factor,
-        max_sphere_radius=max_sphere_radius,
-        node_decay_lognormal_median=node_decay_median,
-        node_decay_lognormal_sigma=node_decay_sigma,
+    sc = BufferedSensorimotorComponent(
+        propagator=SensorimotorOneHopPropagator(
+            distance_type=distance_type,
+            length_factor=length_factor,
+            max_sphere_radius=max_sphere_radius,
+            node_decay_lognormal_median=node_decay_median,
+            node_decay_lognormal_sigma=node_decay_sigma,
+            use_prepruned=use_prepruned,
+        ),
         buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
         accessible_set_threshold=accessible_set_threshold,
         norm_attenuation_statistic=norm_attenuation_statistic,
-        use_prepruned=use_prepruned,
         accessible_set_capacity=accessible_set_capacity,
     )
 
@@ -131,7 +133,7 @@ def main(distance_type_name: str,
         # If the category has a single norm, activate it
         if category_label in sc.concept_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            sc.activate_item_with_label(category_label, FULL_ACTIVATION)
+            sc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         # If the category has no single norm, activate all constituent words
         else:
@@ -142,7 +144,7 @@ def main(distance_type_name: str,
                               and word in sc.concept_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            sc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
         for tick in count(start=0):
@@ -154,7 +156,7 @@ def main(distance_type_name: str,
 
             for activation_event in activation_events:
                 model_response_entries.append((
-                    sc.idx2label[activation_event.item],                   # RESPONSE
+                    sc.propagator.idx2label[activation_event.item],                   # RESPONSE
                     activation_event.item,                                 # NODE_ID
                     activation_event.activation,                           # ACTIVATION
                     activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
@@ -162,7 +164,8 @@ def main(distance_type_name: str,
                 ))
 
             # Break when there are no impulses remaining on-route
-            if sc.scheduled_activation_count() == 0:
+            assert isinstance(sc.propagator, SensorimotorOneHopPropagator)
+            if sc.propagator.scheduled_activation_count() == 0:
                 csv_comments.append(f"No further scheduled activations after {tick} ticks")
                 logger.info(f"No further scheduled activations after {tick} ticks")
                 break

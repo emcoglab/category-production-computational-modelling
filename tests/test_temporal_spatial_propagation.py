@@ -1,6 +1,6 @@
 """
 ===========================
-Tests for TemporalSpatialPropagation.
+Tests for SensorimotorPropagator.
 ===========================
 
 Dr. Cai Wingfield
@@ -21,7 +21,7 @@ from numpy import array
 
 from model.events import ItemActivatedEvent
 from model.graph import Graph
-from model.temporal_spatial_propagation import TemporalSpatialPropagation
+from model.sensorimotor_propagator import SensorimotorPropagator
 from model.utils.maths import make_decay_function_exponential_with_decay_factor
 
 
@@ -37,7 +37,7 @@ class TestTemporalSpatialPropagationToyExample(unittest.TestCase):
             distance_matrix=distance_matrix,
             length_granularity=10,
         )
-        tsp = TemporalSpatialPropagation(
+        tsp = SensorimotorPropagator(
             underlying_graph=graph,
             idx2label={0: "lion", 1: "tiger", 2: "stripes"},
             node_decay_function=make_decay_function_exponential_with_decay_factor(decay_factor=0.9),

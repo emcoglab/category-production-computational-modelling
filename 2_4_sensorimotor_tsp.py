@@ -26,10 +26,11 @@ from pandas import DataFrame
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
+from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
+from model.sensorimotor_propagator import SensorimotorPropagator
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
-from model.sensorimotor_component import SensorimotorComponent, NormAttenuationStatistic
 from model.utils.file import comment_line_from_str
 from preferences import Preferences
 
@@ -85,19 +86,21 @@ def main(distance_type_name: str,
 
     # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()
-    sc = SensorimotorComponent(
-        distance_type=distance_type,
-        length_factor=length_factor,
-        max_sphere_radius=max_sphere_radius,
-        node_decay_lognormal_median=node_decay_median,
-        node_decay_lognormal_sigma=node_decay_sigma,
+    sc = BufferedSensorimotorComponent(
+        propagator=SensorimotorPropagator(
+            distance_type=distance_type,
+            length_factor=length_factor,
+            max_sphere_radius=max_sphere_radius,
+            node_decay_lognormal_median=node_decay_median,
+            node_decay_lognormal_sigma=node_decay_sigma,
+            use_prepruned=use_prepruned,
+        ),
         buffer_capacity=buffer_capacity,
         buffer_threshold=buffer_threshold,
         accessible_set_capacity=accessible_set_capacity,
         accessible_set_threshold=accessible_set_threshold,
         activation_cap=activation_cap,
         norm_attenuation_statistic=norm_attenuation_statistic,
-        use_prepruned=use_prepruned,
     )
 
     sc.save_model_spec(response_dir, {
@@ -139,7 +142,7 @@ def main(distance_type_name: str,
         # If the category has a single norm, activate it
         if category_label in sc.concept_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            sc.activate_item_with_label(category_label, FULL_ACTIVATION)
+            sc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         # If the category has no single norm, activate all constituent words
         else:
@@ -150,7 +153,7 @@ def main(distance_type_name: str,
                               and word in sc.concept_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            sc.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            sc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
@@ -169,15 +172,15 @@ def main(distance_type_name: str,
             accessible_set_this_category[tick] = accessible_set_size
 
             if any(isinstance(e, BufferFloodEvent) for e in tick_events):
-                logger.warning(f"Buffer flood occurred at t={sc.clock}")
-                buffer_floods.append(sc.clock)
+                logger.warning(f"Buffer flood occurred at t={sc.propagator.clock}")
+                buffer_floods.append(sc.propagator.clock)
 
             for activation_event in activation_events:
                 model_response_entries.append((
-                    sc.idx2label[activation_event.item],                   # RESPONSE
-                    activation_event.item,                                 # NODE_ID
-                    activation_event.activation,                           # ACTIVATION
-                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
+                    sc.propagator.idx2label[activation_event.item],  # RESPONSE
+                    activation_event.item,  # NODE_ID
+                    activation_event.activation,  # ACTIVATION
+                    activation_event.time,  # TICK_ON_WHICH_ACTIVATED
                     isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER
                 ))
 

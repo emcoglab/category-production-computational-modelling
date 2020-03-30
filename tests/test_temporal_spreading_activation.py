@@ -1,6 +1,6 @@
 """
 ===========================
-Tests for TemporalSpreadingActivation.
+Tests for LinguisticPropagator.
 ===========================
 
 Dr. Cai Wingfield
@@ -23,7 +23,7 @@ from model.events import ItemActivatedEvent
 from .approximate_comparator.approximate_comparator import is_almost_equal
 
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.linguistic_propagator import LinguisticPropagator
 from model.utils.maths import make_decay_function_exponential_with_decay_factor, \
     make_decay_function_exponential_with_half_life, make_decay_function_gaussian_with_sd
 
@@ -40,7 +40,7 @@ class TestTemporalSpreadingActivationToyExample(unittest.TestCase):
             distance_matrix=distance_matrix,
             length_granularity=10,
         )
-        tsa = TemporalSpreadingActivation(
+        tsa = LinguisticPropagator(
             graph=graph,
             idx2label={0: "lion", 1: "tiger", 2: "stripes"},
             firing_threshold=0.3,
@@ -138,7 +138,7 @@ class TestDecayFunctions(unittest.TestCase):
             [.0, .5],
             [.5, .0]
         ])
-        tsa_frac = TemporalSpreadingActivation(
+        tsa_frac = LinguisticPropagator(
             graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
@@ -149,7 +149,7 @@ class TestDecayFunctions(unittest.TestCase):
             edge_decay_function=make_decay_function_gaussian_with_sd(0.42 * 100),
             idx2label=dict()
         )
-        tsa = TemporalSpreadingActivation(
+        tsa = LinguisticPropagator(
             graph=Graph.from_distance_matrix(
                 distance_matrix=distance_matrix,
                 length_granularity=100,
@@ -173,56 +173,6 @@ class TestDecayFunctions(unittest.TestCase):
             tsa_frac.activation_of_item_with_idx(0),
             tsa.activation_of_item_with_idx(0)
         )
-
-    def test_gaussian_decay_different_granularity_same_function_maker(self):
-        """
-        The values in this test haven't been manually verified, and has so far only been used to test that refactoring
-        has no effect.
-        """
-
-        distance_matrix = array([
-            [.0, .5],
-            [.5, .0]
-        ])
-        sd_frac = 0.42
-        granularity = 390
-        tsa_390 = TemporalSpreadingActivation(
-            graph=Graph.from_distance_matrix(
-                distance_matrix=distance_matrix,
-                length_granularity=granularity,
-            ),
-            impulse_pruning_threshold=0,
-            firing_threshold=0.5,
-            node_decay_function=make_decay_function_exponential_with_half_life(50),
-            edge_decay_function=make_decay_function_gaussian_with_sd(sd_frac * granularity),
-            idx2label=dict()
-        )
-        granularity = 1000
-        tsa_1000 = TemporalSpreadingActivation(
-            graph=Graph.from_distance_matrix(
-                distance_matrix=distance_matrix,
-                length_granularity=granularity,
-            ),
-            impulse_pruning_threshold=0,
-            firing_threshold=0.5,
-            node_decay_function=make_decay_function_exponential_with_half_life(50),
-            edge_decay_function=make_decay_function_gaussian_with_sd(sd_frac * granularity),
-            idx2label=dict()
-        )
-
-        tsa_390.activate_item_with_idx(idx=0, activation=1.0)
-        tsa_1000.activate_item_with_idx(idx=0, activation=1.0)
-
-        # Different granularity, same function-maker
-        almost_equal = is_almost_equal(
-            # There will be only one impulse in each edge at this point so we can just grab it without worrying about
-            # the lack of ordering in the set of impulses.
-            set(float(v) for v in tsa_390.impulses_headed_for(1).values()),
-            set(float(v) for v in tsa_1000.impulses_headed_for(1).values()),
-            places=5
-        )
-
-        self.assertTrue(almost_equal)
 
 
 if __name__ == '__main__':

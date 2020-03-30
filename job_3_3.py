@@ -8,7 +8,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.utils.job import SensorimotorSASpec, Job, LinguisticSASpec, NoninteractiveCombinedSpec
-from model.sensorimotor_component import NormAttenuationStatistic
+from model.sensorimotor_propagator import NormAttenuationStatistic
 from model.version import VERSION
 from preferences import Preferences
 

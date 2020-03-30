@@ -29,7 +29,7 @@ from ldm.utils.maths import DistanceType
 from ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.events import ItemActivatedEvent
 from model.graph import Graph
-from model.temporal_spreading_activation import TemporalSpreadingActivation
+from model.linguistic_propagator import LinguisticPropagator
 from model.utils.maths import make_decay_function_exponential_with_decay_factor, make_decay_function_gaussian_with_sd
 from model.utils.indexing import list_index_dictionaries
 from preferences import Preferences
@@ -104,7 +104,7 @@ def main():
                 logger.info(f"Setting up spreading output")
                 logger.info(f"Using values: l={length_factor}, θ={firing_threshold}, δ={node_decay_factor}, sd={edge_decay_sd}")
 
-                tsa = TemporalSpreadingActivation(
+                tsa = LinguisticPropagator(
                     graph=graph,
                     firing_threshold=firing_threshold,
                     impulse_pruning_threshold=impulse_pruning_threshold,
