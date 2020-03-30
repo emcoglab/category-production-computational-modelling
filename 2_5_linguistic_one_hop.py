@@ -21,6 +21,7 @@ import sys
 from itertools import count
 from os import path, makedirs
 
+from numpy import Infinity
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
@@ -28,7 +29,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
-from model.naïve_linguistic import LinguisticOneHopComponent
+from model.linguistic_component import LinguisticComponent
+from model.linguistic_propagator import LinguisticOneHopPropagator
 from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
@@ -77,14 +79,19 @@ def main(n_words: int,
         makedirs(response_dir)
 
     cp = CategoryProduction()
-    lc = LinguisticOneHopComponent(
-        n_words=n_words,
-        distributional_model=distributional_model,
-        length_factor=length_factor,
-        impulse_pruning_threshold=impulse_pruning_threshold,
-        edge_decay_sd_factor=edge_decay_sd_factor,
-        node_decay_factor=node_decay_factor,
+    lc = LinguisticComponent(
+        propagator=LinguisticOneHopPropagator(
+            length_factor=length_factor,
+            n_words=n_words,
+            distributional_model=distributional_model,
+            distance_type=None,
+            node_decay_factor=node_decay_factor,
+            edge_decay_sd_factor=edge_decay_sd_factor,
+            edge_pruning=None,
+            edge_pruning_type=None,
+        ),
         firing_threshold=firing_threshold,
+        activation_cap=Infinity,
     )
 
     lc.save_model_spec(response_dir)
@@ -113,18 +120,18 @@ def main(n_words: int,
         csv_comments.append(f"\t              δ = {node_decay_factor}")
         csv_comments.append(f"\t      sd_factor = {edge_decay_sd_factor}")
         csv_comments.append(f"\timpulse pruning = {impulse_pruning_threshold}")
-        if lc.graph.is_connected():
+        if lc.propagator.graph.is_connected():
             csv_comments.append(f"\t      connected = yes")
         else:
             csv_comments.append(f"\t      connected = no")
-            csv_comments.append(f"\t        orphans = {'yes' if lc.graph.has_orphaned_nodes() else 'no'}")
+            csv_comments.append(f"\t        orphans = {'yes' if lc.propagator.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
 
         # If the category has a single label, activate it
         if category_label in lc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            lc.activate_item_with_label(category_label, FULL_ACTIVATION)
+            lc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         # If the category has no single label, activate all constituent words
         else:
@@ -135,7 +142,7 @@ def main(n_words: int,
                               and word in lc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            lc.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            lc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
         for tick in count(start=0):
@@ -146,13 +153,13 @@ def main(n_words: int,
 
             for event in firing_events:
                 model_response_entries.append((
-                    lc.idx2label[event.item],
+                    lc.propagator.idx2label[event.item],
                     event.item,
                     event.activation,
                     event.time))
 
             # Break when there are no impulses remaining on-route
-            if lc.scheduled_activation_count() == 0:
+            if lc.propagator.scheduled_activation_count() == 0:
                 csv_comments.append(f"No further schedule activations after {tick} ticks")
                 logger.info(f"No further scheduled activations after {tick} ticks")
                 break

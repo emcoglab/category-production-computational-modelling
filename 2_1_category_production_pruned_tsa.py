@@ -20,6 +20,7 @@ import logging
 import sys
 from os import path, makedirs
 
+from numpy import Infinity
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
@@ -28,6 +29,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
+from model.linguistic_propagator import LinguisticPropagator
 from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
@@ -90,18 +92,19 @@ def main(n_words: int,
         logger.warning(f"{response_dir} directory does not exist; making it.")
         makedirs(response_dir)
 
-    cp = CategoryProduction()
     lc = LinguisticComponent(
-        n_words=n_words,
-        distributional_model=distributional_model,
-        length_factor=length_factor,
-        impulse_pruning_threshold=impulse_pruning_threshold,
-        edge_decay_sd_factor=edge_decay_sd_factor,
-        node_decay_factor=node_decay_factor,
+        propagator=LinguisticPropagator(
+            length_factor=length_factor,
+            n_words=n_words,
+            distributional_model=distributional_model,
+            distance_type=distance_type,
+            node_decay_factor=node_decay_factor,
+            edge_decay_sd_factor=edge_decay_sd_factor,
+            edge_pruning=prune_percent,
+            edge_pruning_type=EdgePruningType.Percent
+        ),
         firing_threshold=firing_threshold,
-        edge_pruning=prune_percent,
-        distance_type=distance_type,
-        edge_pruning_type=EdgePruningType.Percent,
+        activation_cap=Infinity,
     )
 
     lc.save_model_spec(response_dir, {
@@ -109,6 +112,7 @@ def main(n_words: int,
         "Bailout": bailout
     })
 
+    cp = CategoryProduction()
     for category_label in cp.category_labels:
 
         model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
@@ -133,16 +137,16 @@ def main(n_words: int,
         csv_comments.append(f"\t              δ = {node_decay_factor}")
         csv_comments.append(f"\t      sd_factor = {edge_decay_sd_factor}")
         csv_comments.append(f"\timpulse pruning = {impulse_pruning_threshold}")
-        if lc.graph.is_connected():
+        if lc.propagator.graph.is_connected():
             csv_comments.append(f"\t        connected = yes")
         else:
             csv_comments.append(f"\t        connected = no")
-            csv_comments.append(f"\t          orphans = {'yes' if lc.graph.has_orphaned_nodes() else 'no'}")
+            csv_comments.append(f"\t          orphans = {'yes' if lc.propagator.graph.has_orphaned_nodes() else 'no'}")
 
         # If the category has a single label, activate it
         if category_label in lc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            lc.activate_item_with_label(category_label, FULL_ACTIVATION)
+            lc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
 
         # If the category has no single label, activate all constituent words
         else:
@@ -153,7 +157,7 @@ def main(n_words: int,
                               and word in lc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            lc.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            lc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
         for tick in range(0, run_for_ticks):
@@ -164,7 +168,7 @@ def main(n_words: int,
 
             for event in firing_events:
                 model_response_entries.append((
-                    lc.idx2label[event.item],
+                    lc.propagator.idx2label[event.item],
                     event.item,
                     event.activation,
                     event.time))
