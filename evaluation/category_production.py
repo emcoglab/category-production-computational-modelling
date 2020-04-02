@@ -31,8 +31,8 @@ from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
 from ldm.corpus.tokenising import modified_word_tokenize
+from model.components import ModelComponent
 from model.utils.logging import logger
-from model.graph_propagator import GraphPropagator
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import *
@@ -533,7 +533,7 @@ def save_model_performance_stats(main_dataframe,
 
     if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
         # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
-        df_dict.update(GraphPropagator.load_model_spec(results_dir))
+        df_dict.update(ModelComponent.load_model_spec(results_dir))
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
 
     df_dict.update({
