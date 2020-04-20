@@ -341,12 +341,12 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
                             'Hitrate SD'],
-                        color='#A6C8FF', zorder=0)
+                        color='#D1E3FF', zorder=0)
     # Participant traces
     for participant in _CP.participants:
         pyplot.plot(summary_table.reset_index()[x_selector],
                     summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                    linewidth=0.5, linestyle="-", color="k", alpha=0.5, zorder=10)
+                    linewidth=0.2, linestyle="-", color="k", alpha=0.5, zorder=10)
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table['Hitrate Mean'],
                 linewidth=2.0, linestyle="-",
@@ -363,7 +363,8 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
     pyplot.ylabel("Hit rate")
     pyplot.xlabel(x_selector)
 
-    pyplot.gcf().set_size_inches(cm_to_inches(15), cm_to_inches(10))
+    pyplot.gcf().set_size_inches(cm_to_inches(7), cm_to_inches(7))
+    pyplot.subplots_adjust(bottom=0.15, top=0.96, left=0.19, right=0.99)
     pyplot.savefig(path.join(figures_dir, f"{fig_name}.png"), dpi=600)
 
     pyplot.clf()
@@ -626,6 +627,7 @@ def frac_within_sd_of_hitrate_mean(df: DataFrame, test_column: str, only_before_
             (df["Hitrate Mean"] <= df["Hitrate SD"])
             # .cumsum() starts at 0 and increments when above is true, so will be > 0 after the first time it's true
             .cumsum() <= 0]
+        logger.info(f"fraction calculated in region [0, {df.shape[0]}]")
     # When the test hitrate is within one SD of the hitrate mean
     within = Series(
         (df[test_column] > df["Hitrate Mean"] - df["Hitrate SD"])
