@@ -1,4 +1,4 @@
-from model.utils.job import SensorimotorPropagationJob, SensorimotorPropagationSpec
+from model.utils.job import SensorimotorPropagationJob, SensorimotorPropagationJobSpec
 from ldm.utils.maths import DistanceType
 
 
@@ -17,7 +17,7 @@ class Job_2_4(SensorimotorPropagationJob):
         250: 120,
     }
 
-    def __init__(self, spec: SensorimotorPropagationSpec):
+    def __init__(self, spec: SensorimotorPropagationJobSpec):
         super().__init__(
             script_number="2_4",
             script_name="2_4_sensorimotor_tsp.py",
@@ -25,7 +25,7 @@ class Job_2_4(SensorimotorPropagationJob):
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, SensorimotorPropagationSpec)
+        assert isinstance(self.spec, SensorimotorPropagationJobSpec)
         return self.RAM[self.spec.max_radius]
 
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     accessible_set_capacity = 3_000
 
     specs = [
-        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500.0, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, run_for_ticks=10_000, bailout=None),
+        SensorimotorPropagationJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500.0, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, run_for_ticks=10_000, bailout=None),
     ]
 
     for job in [Job_2_4(spec) for spec in specs]:

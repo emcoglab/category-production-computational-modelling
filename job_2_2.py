@@ -1,4 +1,4 @@
-from model.utils.job import LinguisticPropagationJob, LinguisticPropagationSpec
+from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
 
 
 class Job_2_2(LinguisticPropagationJob):
@@ -12,7 +12,7 @@ class Job_2_2(LinguisticPropagationJob):
         40_000: {                                              50: 160,                        10: 80,      },
     }
 
-    def __init__(self, spec: LinguisticPropagationSpec):
+    def __init__(self, spec: LinguisticPropagationJobSpec):
         super().__init__(
             script_number="2_2",
             script_name="2_2_category_production_importance_pruned_tsa.py",
@@ -25,5 +25,5 @@ class Job_2_2(LinguisticPropagationJob):
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, LinguisticPropagationSpec)
+        assert isinstance(self.spec, LinguisticPropagationJobSpec)
         return self.RAM[self.spec.graph_size][self.spec.pruning]

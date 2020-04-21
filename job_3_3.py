@@ -7,7 +7,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.sensorimotor_components import NormAttenuationStatistic
-from model.utils.job import SensorimotorPropagationSpec, Job, LinguisticPropagationSpec, NoninteractiveCombinedSpec
+from model.utils.job import SensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 from model.version import VERSION
 from preferences import Preferences
 
@@ -18,20 +18,20 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 # noinspection PyPep8Naming
 class Job_3_3(Job):
 
-    def __init__(self, sm_spec: SensorimotorPropagationSpec, ling_spec: LinguisticPropagationSpec,
+    def __init__(self, sm_spec: SensorimotorPropagationJobSpec, ling_spec: LinguisticPropagationJobSpec,
                  sm_attenuate: NormAttenuationStatistic,
                  manual_cut_off: Optional[int] = None
                  ):
         super().__init__(
             script_number="3_3",
             script_name="3_3_cp_comparison_combined_noninteractive.py",
-            spec=NoninteractiveCombinedSpec(linguistic_spec=ling_spec, sensorimotor_spec=sm_spec))
+            spec=NoninteractiveCombinedJobSpec(linguistic_spec=ling_spec, sensorimotor_spec=sm_spec))
         self.sm_attenuate: NormAttenuationStatistic = sm_attenuate
         self.manual_cut_off: Optional[int] = manual_cut_off
 
-        assert isinstance(self.spec, NoninteractiveCombinedSpec)
+        assert isinstance(self.spec, NoninteractiveCombinedJobSpec)
 
-        # TODO: there is now the Spec classes, the model_spec dictionaries and the models themselves.  And it's not
+        # TODO: there is now the JobSpec classes, the model_spec dictionaries and the models themselves.  And it's not
         #  obvious where something like this should live, but it should be accessible in more than one place, because
         #  right now it's just copied from the associated script.
         self._sm_dir: str = path.join(Preferences.output_dir,
@@ -84,7 +84,6 @@ class Job_3_3(Job):
 
 if __name__ == '__main__':
 
-
     sm_length_factor = 100
     sm_distance_type = DistanceType.Minkowski3
     attenuate = NormAttenuationStatistic.Prevalence
@@ -94,13 +93,13 @@ if __name__ == '__main__':
     sm_bail = None
 
     sm_specs = [
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=75.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=100.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
-        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
-        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
-        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=150, node_decay_median=75.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=150, node_decay_median=100.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationJobSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
     ]
 
     ling_graph_size = 40_000
@@ -112,9 +111,9 @@ if __name__ == '__main__':
     ling_bail = int(ling_graph_size / 2)
 
     ling_specs = [
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
+        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
+        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
+        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
     ]
 
     threads = [

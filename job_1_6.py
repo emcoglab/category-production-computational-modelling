@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import List
 
-from model.utils.job import Job, Spec
+from model.utils.job import Job, JobSpec
 from ldm.utils.maths import DistanceType
 
 
 @dataclass
-class Spec_1_6(Spec):
+class JobSpec_1_6(JobSpec):
     length_factor: int
     distance_type: DistanceType
     pruning_length: int
@@ -44,7 +44,7 @@ class Job_1_6(Job):
         260: 120,
     }
 
-    def __init__(self, spec: Spec_1_6):
+    def __init__(self, spec: JobSpec_1_6):
         super().__init__(
             script_number="1_6",
             script_name="1_6_sensorimotor_neighbourhood_densities.py",
@@ -57,13 +57,13 @@ class Job_1_6(Job):
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, Spec_1_6)
+        assert isinstance(self.spec, JobSpec_1_6)
         return self.RAM[self.spec.pruning_length]
 
 
 if __name__ == '__main__':
     for pruning_length in range(20, 261, 20):
-        Job_1_6(Spec_1_6(pruning_length=pruning_length,
-                         distance_type=DistanceType.Minkowski3,
-                         length_factor=100)
+        Job_1_6(JobSpec_1_6(pruning_length=pruning_length,
+                            distance_type=DistanceType.Minkowski3,
+                            length_factor=100)
                 ).submit()
