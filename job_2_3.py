@@ -1,9 +1,9 @@
 from typing import Dict
 
-from model.utils.job import LinguisticSAJob, LinguisticSASpec
+from model.utils.job import LinguisticPropagationJob, LinguisticPropagationSpec
 
 
-class Job_2_3(LinguisticSAJob):
+class Job_2_3(LinguisticPropagationJob):
 
     # model_name -> graph_size -> RAM/G
     RAM: Dict[str, Dict[int, int]] = {
@@ -23,7 +23,7 @@ class Job_2_3(LinguisticSAJob):
         }
     }
 
-    def __init__(self, spec: LinguisticSASpec, run_for_ticks: int, bailout: int):
+    def __init__(self, spec: LinguisticPropagationSpec, run_for_ticks: int, bailout: int):
         super().__init__(
             script_number="2_3",
             script_name="2_3_category_production_ngram_tsa.py",
@@ -50,7 +50,7 @@ class Job_2_3(LinguisticSAJob):
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, LinguisticSASpec)
+        assert isinstance(self.spec, LinguisticPropagationSpec)
         return self.RAM[self.spec.model_name][self.spec.graph_size]
 
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
     ]
 
     for job in [Job_2_3(spec, run_for_ticks=3_000, bailout=bailout) for spec in specs]:

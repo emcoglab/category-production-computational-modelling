@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from model.utils.job import Job, SASpec
+from model.utils.job import Job, PropagationSpec
 from ldm.utils.maths import DistanceType
 
 
 @dataclass
-class Spec_1_6(SASpec):
+class Spec_1_6(PropagationSpec):
     distance_type: DistanceType
     pruning_length: int
 

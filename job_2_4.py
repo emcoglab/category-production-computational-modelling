@@ -1,4 +1,4 @@
-from model.utils.job import SensorimotorSAJob, SensorimotorSASpec
+from model.utils.job import SensorimotorPropagationJob, SensorimotorPropagationSpec
 from ldm.utils.maths import DistanceType
 
 
@@ -6,7 +6,7 @@ logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 
-class Job_2_4(SensorimotorSAJob):
+class Job_2_4(SensorimotorPropagationJob):
 
     # max_sphere_radius -> RAM/G
     RAM = {
@@ -17,7 +17,7 @@ class Job_2_4(SensorimotorSAJob):
         250: 120,
     }
 
-    def __init__(self, spec: SensorimotorSASpec, run_for_ticks: int, bailout: int = None):
+    def __init__(self, spec: SensorimotorPropagationSpec, run_for_ticks: int, bailout: int = None):
         super().__init__(
             script_number="2_4",
             script_name="2_4_sensorimotor_tsp.py",
@@ -43,7 +43,7 @@ class Job_2_4(SensorimotorSAJob):
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, SensorimotorSASpec)
+        assert isinstance(self.spec, SensorimotorPropagationSpec)
         return self.RAM[self.spec.max_radius]
 
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     accessible_set_capacity = 3_000
 
     specs = [
-        SensorimotorSASpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500.0, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
+        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500.0, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
     ]
 
     for job in [Job_2_4(spec, run_for_ticks=10_000) for spec in specs]:
