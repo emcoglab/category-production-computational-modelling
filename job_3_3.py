@@ -6,8 +6,8 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
+from model.sensorimotor_components import NormAttenuationStatistic
 from model.utils.job import SensorimotorPropagationSpec, Job, LinguisticPropagationSpec, NoninteractiveCombinedSpec
-from model.sensorimotor_propagator import NormAttenuationStatistic
 from model.version import VERSION
 from preferences import Preferences
 

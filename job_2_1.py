@@ -25,7 +25,7 @@ class Job_2_1(LinguisticPropagationJob):
         return super().name + "_pc"
 
     @property
-    def qsub_command(self) -> str:
+    def command(self) -> str:
         cmd = self.script_name
         # script args
         cmd += f" --prune_percent {self.spec.pruning}"

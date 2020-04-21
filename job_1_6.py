@@ -46,7 +46,7 @@ class Job_1_6(Job):
         return super().name + "_nbhd"
 
     @property
-    def qsub_command(self) -> str:
+    def command(self) -> str:
         cmd = self.script_name
         # script args
         cmd += f" --length_factor {self.spec.length_factor}"
