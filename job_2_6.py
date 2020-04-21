@@ -24,21 +24,6 @@ class Job_2_6(SensorimotorPropagationJob):
             spec=spec)
 
     @property
-    def command(self) -> str:
-        cmd = self.script_name
-        # script args
-        cmd += f" --distance_type {self.spec.distance_type.name}" if self.spec.distance_type else ""
-        cmd += f" --max_sphere_radius {self.spec.max_radius}"
-        cmd += f" --accessible_set_capacity {self.spec.accessible_set_capacity}"
-        cmd += f" --buffer_capacity {self.spec.buffer_capacity}"
-        cmd += f" --buffer_threshold {self.spec.buffer_threshold}"
-        cmd += f" --accessible_set_threshold {self.spec.accessible_set_threshold}"
-        cmd += f" --length_factor {self.spec.length_factor}"
-        cmd += f" --node_decay_median {self.spec.median}"
-        cmd += f" --node_decay_sigma {self.spec.sigma}"
-        return cmd
-
-    @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, SensorimotorPropagationSpec)
         return self.RAM[self.spec.max_radius]
@@ -46,20 +31,19 @@ class Job_2_6(SensorimotorPropagationJob):
 
 if __name__ == '__main__':
 
-
     length_factor = 100
     distance_type = DistanceType.Minkowski3
     buffer_capacity = 10
     accessible_set_capacity = 3_000
 
     specs = [
-        SensorimotorPropagationSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        SensorimotorPropagationSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=100, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=75, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
-        SensorimotorPropagationSpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor),
+        SensorimotorPropagationSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
+        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
+        SensorimotorPropagationSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
+        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=100, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
+        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
+        SensorimotorPropagationSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=75,  node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
+        SensorimotorPropagationSpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None),
     ]
 
     for job in [Job_2_6(spec) for spec in specs]:

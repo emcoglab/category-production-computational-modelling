@@ -1,13 +1,23 @@
 from dataclasses import dataclass
+from typing import List
 
-from model.utils.job import Job, PropagationSpec
+from model.utils.job import Job, Spec
 from ldm.utils.maths import DistanceType
 
 
 @dataclass
-class Spec_1_6(PropagationSpec):
+class Spec_1_6(Spec):
+    length_factor: int
     distance_type: DistanceType
     pruning_length: int
+
+    @property
+    def cli_args(self) -> List[str]:
+        return super().cli_args + [
+            f" --length_factor {self.length_factor}",
+            f" --distance_type {self.distance_type.name}",
+            f" --pruning_length {self.pruning_length}",
+        ]
 
     @property
     def shorthand(self) -> str:
@@ -44,15 +54,6 @@ class Job_1_6(Job):
     def name(self) -> str:
         # percentage pruned
         return super().name + "_nbhd"
-
-    @property
-    def command(self) -> str:
-        cmd = self.script_name
-        # script args
-        cmd += f" --length_factor {self.spec.length_factor}"
-        cmd += f" --distance_type {self.spec.distance_type.name}"
-        cmd += f" --pruning_length {self.spec.pruning_length}"
-        return cmd
 
     @property
     def _ram_requirement_g(self):

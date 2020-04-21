@@ -34,21 +34,6 @@ class Job_2_5(LinguisticPropagationJob):
             spec=spec)
 
     @property
-    def command(self) -> str:
-        cmd = self.script_name
-        # script args
-        cmd += f" --corpus_name {self.spec.corpus_name}"
-        cmd += f" --firing_threshold {self.spec.firing_threshold}"
-        cmd += f" --impulse_pruning_threshold {self.spec.impulse_pruning_threshold}"
-        cmd += f" --length_factor {self.spec.length_factor}"
-        cmd += f" --model_name {self.spec.model_name}"
-        cmd += f" --node_decay_factor {self.spec.node_decay_factor}"
-        cmd += f" --radius {self.spec.model_radius}"
-        cmd += f" --edge_decay_sd_factor {self.spec.edge_decay_sd}"
-        cmd += f" --words {int(self.spec.graph_size)}"
-        return cmd
-
-    @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, LinguisticPropagationSpec)
         return self.RAM[self.spec.model_name][self.spec.graph_size]
@@ -63,11 +48,11 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.5, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.6, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.5, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, graph_size=graph_size, length_factor=10, bailout=None, run_for_ticks=None),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.6, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, graph_size=graph_size, length_factor=10, bailout=None, run_for_ticks=None),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, graph_size=graph_size, length_factor=10, bailout=None, run_for_ticks=None),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, graph_size=graph_size, length_factor=10, bailout=None, run_for_ticks=None),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, graph_size=graph_size, length_factor=10, bailout=None, run_for_ticks=None),
     ]
 
     for job in [Job_2_5(spec) for spec in specs]:

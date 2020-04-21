@@ -343,8 +343,8 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
-    parser.add_argument("linguistic_path", type=str, help="The path in which to find the linguistic results.")
-    parser.add_argument("sensorimotor_path", type=str, help="The path in which to find the sensorimotor results.")
+    parser.add_argument("--linguistic_path", type=str, help="The path in which to find the linguistic results.")
+    parser.add_argument("--sensorimotor_path", type=str, help="The path in which to find the sensorimotor results.")
     parser.add_argument("cat", type=float, nargs="?", default=None,
                         help="The conscious-access threshold."
                              " Omit to use CAT = firing threshold.")

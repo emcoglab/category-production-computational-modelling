@@ -16,7 +16,6 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path, makedirs
 

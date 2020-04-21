@@ -20,8 +20,6 @@ class Job_3_3(Job):
 
     def __init__(self, sm_spec: SensorimotorPropagationSpec, ling_spec: LinguisticPropagationSpec,
                  sm_attenuate: NormAttenuationStatistic,
-                 # TODO: is there a reason these aren't part of the LingusticSASpec and SensorimotorPropagationSpec?
-                 ling_rft: int, sm_rft: int, ling_bail: Optional[int], sm_bail: Optional[int],
                  manual_cut_off: Optional[int] = None
                  ):
         super().__init__(
@@ -29,10 +27,6 @@ class Job_3_3(Job):
             script_name="3_3_cp_comparison_combined_noninteractive.py",
             spec=NoninteractiveCombinedSpec(linguistic_spec=ling_spec, sensorimotor_spec=sm_spec))
         self.sm_attenuate: NormAttenuationStatistic = sm_attenuate
-        self.ling_rft: int = ling_rft
-        self.sm_rft: int = sm_rft
-        self.ling_bail: int = ling_bail
-        self.sm_bail: int = sm_bail
         self.manual_cut_off: Optional[int] = manual_cut_off
 
         assert isinstance(self.spec, NoninteractiveCombinedSpec)
@@ -53,8 +47,8 @@ class Job_3_3(Job):
                                       f" as-cap {self.spec.sensorimotor_spec.accessible_set_capacity:,};"
                                       f" buff-θ {self.spec.sensorimotor_spec.buffer_threshold};"
                                       f" buff-cap {self.spec.sensorimotor_spec.buffer_capacity};"
-                                      f" run-for {self.sm_rft};"
-                                      f" bail {self.sm_bail}")
+                                      f" run-for {self.spec.sensorimotor_spec.run_for_ticks};"
+                                      f" bail {self.spec.sensorimotor_spec.bailout}")
 
         # TODO: This is absurd
         corpus = get_corpus_from_name(self.spec.linguistic_spec.corpus_name)
@@ -70,16 +64,15 @@ class Job_3_3(Job):
                                    f" n-decay-f {self.spec.linguistic_spec.node_decay_factor};"
                                    f" e-decay-sd {self.spec.linguistic_spec.edge_decay_sd:.1f};"
                                    f" imp-prune-θ {self.spec.linguistic_spec.impulse_pruning_threshold};"
-                                   f" run-for {self.ling_rft};"
-                                   f" bail {self.ling_bail}")
+                                   f" run-for {self.spec.linguistic_spec.run_for_ticks};"
+                                   f" bail {self.spec.linguistic_spec.bailout}")
 
     @property
     def command(self) -> str:
-        assert isinstance(self.spec, NoninteractiveCombinedSpec)
-        cmd = self.script_name
+        cmd = super().command
         # script args
-        cmd += f" \"{self._ling_dir}\""
-        cmd += f" \"{self._sm_dir}\""
+        cmd += f"--linguistic_path \"{self._ling_dir}\""
+        cmd += f"--sensorimotor_path \"{self._sm_dir}\""
         if self.manual_cut_off is not None:
             cmd += f" --manual-cut-off {self.manual_cut_off}"
         return cmd
@@ -101,13 +94,13 @@ if __name__ == '__main__':
     sm_bail = None
 
     sm_specs = [
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=75.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=100.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
-        SensorimotorPropagationSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
-        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
-        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
-        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor),
+        SensorimotorPropagationSpec(max_radius=150, node_decay_median=75.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationSpec(max_radius=150, node_decay_median=100.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
+        SensorimotorPropagationSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft),
     ]
 
     ling_graph_size = 40_000
@@ -119,13 +112,13 @@ if __name__ == '__main__':
     ling_bail = int(ling_graph_size / 2)
 
     ling_specs = [
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
-        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, graph_size=ling_graph_size, length_factor=10, ),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
+        LinguisticPropagationSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, graph_size=ling_graph_size, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
     ]
 
     threads = [
-        Thread(target=Job_3_3(sm_spec, ling_spec, attenuate, ling_rft, sm_rft, ling_bail, sm_bail).run_locally)
+        Thread(target=Job_3_3(sm_spec, ling_spec, attenuate).run_locally)
         for ling_spec in ling_specs
         for sm_spec in sm_specs
     ]
