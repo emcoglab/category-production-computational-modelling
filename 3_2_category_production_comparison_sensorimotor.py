@@ -22,7 +22,6 @@ import argparse
 import sys
 from os import path
 
-from ldm.utils.logging import date_format, log_message
 from category_production.category_production import CategoryProduction
 
 from evaluation.category_production import add_ttfa_column, get_model_ttfas_for_category_sensorimotor, \

@@ -17,7 +17,7 @@ caiwingfield.net
 """
 import argparse
 import sys
-from os import path, makedirs
+from pathlib import Path
 
 from numpy import nan
 from pandas import DataFrame
@@ -28,6 +28,7 @@ from ldm.utils.maths import DistanceType
 
 from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
 from model.sensorimotor_propagator import SensorimotorPropagator
+from model.utils.job import SensorimotorPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
@@ -55,31 +56,29 @@ def main(distance_type_name: str,
          run_for_ticks: int,
          node_decay_median: float,
          node_decay_sigma: float,
+         attenuation: NormAttenuationStatistic,
          bailout: int = None,
          use_prepruned: bool = False,
          ):
 
     distance_type = DistanceType.from_name(distance_type_name)
-    norm_attenuation_statistic = NormAttenuationStatistic.Prevalence
     # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
-    response_dir = path.join(Preferences.output_dir,
-                             "Category production",
-                             f"Sensorimotor {VERSION}",
-                             f"{distance_type.name} length {length_factor} attenuate {norm_attenuation_statistic.name}",
-                             f"max-r {max_sphere_radius};"
-                                f" n-decay-median {node_decay_median};"
-                                f" n-decay-sigma {node_decay_sigma};"
-                                f" as-θ {accessible_set_threshold};"
-                                f" as-cap {accessible_set_capacity:,};"
-                                f" buff-θ {buffer_threshold};"
-                                f" buff-cap {buffer_capacity};"
-                                f" run-for {run_for_ticks};"
-                                f" bail {bailout}")
-    if not path.isdir(response_dir):
+    response_dir: Path = Path(Preferences.output_dir,
+                              "Category production",
+                              SensorimotorPropagationJobSpec(
+                                  distance_type=DistanceType.Minkowski3, length_factor=length_factor,
+                                  max_radius=max_sphere_radius,
+                                  buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
+                                  accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
+                                  node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
+                                  attenuation_statistic=attenuation,
+                                  run_for_ticks=run_for_ticks, bailout=bailout,
+                              ).output_location(for_version=VERSION))
+    if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
-        makedirs(response_dir)
+        response_dir.mkdir(parents=True)
 
     # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()
@@ -97,24 +96,35 @@ def main(distance_type_name: str,
         accessible_set_capacity=accessible_set_capacity,
         accessible_set_threshold=accessible_set_threshold,
         activation_cap=activation_cap,
-        norm_attenuation_statistic=norm_attenuation_statistic,
+        norm_attenuation_statistic=attenuation,
     )
 
-    sc.save_model_spec(response_dir, {
-        "Run for ticks": run_for_ticks,
-        "Bailout": bailout
-    })
+    SensorimotorPropagationJobSpec(
+        distance_type=distance_type,
+        length_factor=length_factor,
+        max_radius=max_sphere_radius,
+        node_decay_median=node_decay_median,
+        node_decay_sigma=node_decay_sigma,
+        buffer_capacity=buffer_capacity,
+        buffer_threshold=buffer_threshold,
+        accessible_set_capacity=accessible_set_capacity,
+        accessible_set_threshold=accessible_set_threshold,
+        activation_cap=activation_cap,
+        attenuation_statistic=attenuation,
+        bailout=bailout,
+        run_for_ticks=run_for_ticks,
+    ).save()
 
     for category_label in cp.category_labels_sensorimotor:
 
-        accessible_set_path  = path.join(response_dir, f"accessible_set_{category_label}.csv")
-        buffer_floods_path   = path.join(response_dir, f"buffer_floods_{category_label}.csv")
-        model_responses_path = path.join(response_dir, f"responses_{category_label}.csv")
+        accessible_set_path  = Path(response_dir, f"accessible_set_{category_label}.csv")
+        buffer_floods_path   = Path(response_dir, f"buffer_floods_{category_label}.csv")
+        model_responses_path = Path(response_dir, f"responses_{category_label}.csv")
 
         csv_comments = []
 
         # Only run the TSA if we've not already done it
-        if path.exists(model_responses_path):
+        if model_responses_path.exists():
             logger.info(f"{model_responses_path} exists, skipping.")
             continue
 
@@ -124,7 +134,7 @@ def main(distance_type_name: str,
         csv_comments.append(f"Running sensorimotor spreading activation (v{VERSION}) using parameters:")
         csv_comments.append(f"\t length_factor = {length_factor:_}")
         csv_comments.append(f"\t distance_type = {distance_type.name}")
-        csv_comments.append(f"\t   attenuation = {norm_attenuation_statistic.name}")
+        csv_comments.append(f"\t   attenuation = {attenuation.name}")
         csv_comments.append(f"\t       pruning = {max_sphere_radius}")
         csv_comments.append(f"\t  WMB capacity = {buffer_capacity}")
         csv_comments.append(f"\t   AS capacity = {accessible_set_capacity}")
@@ -239,6 +249,8 @@ if __name__ == '__main__':
     parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
     parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
     parser.add_argument("-U", "--use_prepruned", action="store_true")
+    parser.add_argument("-A", "--attenuation", required=True, type=str,
+                        choices=[n.name for n in NormAttenuationStatistic])
 
     args = parser.parse_args()
 
@@ -253,5 +265,6 @@ if __name__ == '__main__':
          node_decay_median=args.node_decay_median,
          node_decay_sigma=args.node_decay_sigma,
          bailout=args.bailout,
-         use_prepruned=args.use_prepruned)
+         use_prepruned=args.use_prepruned,
+         attenuation=NormAttenuationStatistic.from_slug(args.attenuation))
     logger.info("Done!")

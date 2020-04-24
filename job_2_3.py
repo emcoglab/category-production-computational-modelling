@@ -1,11 +1,11 @@
 from typing import Dict
 
-from model.utils.job import LinguisticSAJob, LinguisticSASpec
+from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
 
 
-class Job_2_3(LinguisticSAJob):
+class Job_2_3(LinguisticPropagationJob):
 
-    # model_name -> graph_size -> RAM/G
+    # model_name -> n_words -> RAM/G
     RAM: Dict[str, Dict[int, int]] = {
         "pmi_ngram": {
             1_000: 2,
@@ -23,39 +23,19 @@ class Job_2_3(LinguisticSAJob):
         }
     }
 
-    def __init__(self, spec: LinguisticSASpec, run_for_ticks: int, bailout: int):
+    def __init__(self, spec: LinguisticPropagationJobSpec):
         super().__init__(
             script_number="2_3",
             script_name="2_3_category_production_ngram_tsa.py",
-            spec=spec,
-            run_for_ticks=run_for_ticks,
-            bailout=bailout)
-
-    @property
-    def command(self) -> str:
-        cmd = self.script_name
-        # script args
-        cmd += f" --bailout {self.bailout}"
-        cmd += f" --corpus_name {self.spec.corpus_name}"
-        cmd += f" --firing_threshold {self.spec.firing_threshold}"
-        cmd += f" --impulse_pruning_threshold {self.spec.impulse_pruning_threshold}"
-        cmd += f" --length_factor {self.spec.length_factor}"
-        cmd += f" --model_name {self.spec.model_name}"
-        cmd += f" --node_decay_factor {self.spec.node_decay_factor}"
-        cmd += f" --radius {self.spec.model_radius}"
-        cmd += f" --edge_decay_sd_factor {self.spec.edge_decay_sd}"
-        cmd += f" --run_for_ticks {self.run_for_ticks}"
-        cmd += f" --words {int(self.spec.graph_size)}"
-        return cmd
+            spec=spec)
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, LinguisticSASpec)
-        return self.RAM[self.spec.model_name][self.spec.graph_size]
+        assert isinstance(self.spec, LinguisticPropagationJobSpec)
+        return self.RAM[self.spec.model_name][self.spec.n_words]
 
 
 if __name__ == '__main__':
-
 
     graph_size = 40_000
     bailout = int(graph_size / 2)
@@ -65,8 +45,8 @@ if __name__ == '__main__':
     corpus_name = "bbc"
 
     specs = [
-        LinguisticSASpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, graph_size=graph_size, length_factor=10, ),
+        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, graph_size=graph_size, length_factor=10, run_for_ticks=3_000, bailout=bailout),
     ]
 
-    for job in [Job_2_3(spec, run_for_ticks=3_000, bailout=bailout) for spec in specs]:
+    for job in [Job_2_3(spec) for spec in specs]:
         job.submit()

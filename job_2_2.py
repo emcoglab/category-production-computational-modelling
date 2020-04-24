@@ -1,9 +1,9 @@
-from model.utils.job import LinguisticSAJob, LinguisticSASpec
+from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
 
 
-class Job_2_2(LinguisticSAJob):
+class Job_2_2(LinguisticPropagationJob):
 
-    # graph_size -> pruning -> RAM/G
+    # n_words -> pruning -> RAM/G
     RAM = {
         3_000:  {100: 5,   90: 5,   80: 5,   70: 5,   60: 5,   50: 5 , 40: 5 , 30: 5 , 20: 5 , 10: 5 , 0: 5  },
         10_000: {100: 30,  90: 26,  80: 24,  70: 22,  60: 20,  50: 15, 40: 13, 30: 12, 20: 12, 10: 12, 0: 12 },
@@ -12,13 +12,11 @@ class Job_2_2(LinguisticSAJob):
         40_000: {                                              50: 160,                        10: 80,      },
     }
 
-    def __init__(self, spec: LinguisticSASpec, run_for_ticks: int, bailout: int = None):
+    def __init__(self, spec: LinguisticPropagationJobSpec):
         super().__init__(
             script_number="2_2",
             script_name="2_2_category_production_importance_pruned_tsa.py",
-            spec=spec,
-            run_for_ticks=run_for_ticks,
-            bailout=bailout)
+            spec=spec)
 
     @property
     def name(self) -> str:
@@ -26,25 +24,6 @@ class Job_2_2(LinguisticSAJob):
         return super().name + "_im"
 
     @property
-    def command(self) -> str:
-        cmd = self.script_name
-        # script args
-        cmd += f" --prune_importance {self.spec.pruning}"
-        cmd += f" --bailout {self.bailout}"
-        cmd += f" --corpus_name {self.spec.corpus_name}"
-        cmd += f" --firing_threshold {self.spec.firing_threshold}"
-        cmd += f" --impulse_pruning_threshold {self.spec.impulse_pruning_threshold}"
-        cmd += f" --distance_type {self.spec.distance_type.name}"
-        cmd += f" --length_factor {self.spec.length_factor}"
-        cmd += f" --model_name {self.spec.model_name}"
-        cmd += f" --node_decay_factor {self.spec.node_decay_factor}"
-        cmd += f" --radius {self.spec.model_radius}"
-        cmd += f" --edge_decay_sd_factor {self.spec.edge_decay_sd}"
-        cmd += f" --run_for_ticks {self.run_for_ticks}"
-        cmd += f" --words {int(self.spec.graph_size)}"
-        return cmd
-
-    @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, LinguisticSASpec)
-        return self.RAM[self.spec.graph_size][self.spec.pruning]
+        assert isinstance(self.spec, LinguisticPropagationJobSpec)
+        return self.RAM[self.spec.n_words][self.spec.pruning]
