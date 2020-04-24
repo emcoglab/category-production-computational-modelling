@@ -20,7 +20,6 @@ import sys
 from itertools import count
 from pathlib import Path
 
-from numpy import Infinity
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
@@ -91,7 +90,6 @@ def main(n_words: int,
             edge_pruning_type=None,
         ),
         firing_threshold=firing_threshold,
-        activation_cap=Infinity,
     )
 
     LinguisticOneHopJobSpec(
