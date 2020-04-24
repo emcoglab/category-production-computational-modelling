@@ -5,7 +5,7 @@ from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSp
 
 class Job_2_3(LinguisticPropagationJob):
 
-    # model_name -> graph_size -> RAM/G
+    # model_name -> n_words -> RAM/G
     RAM: Dict[str, Dict[int, int]] = {
         "pmi_ngram": {
             1_000: 2,
@@ -32,7 +32,7 @@ class Job_2_3(LinguisticPropagationJob):
     @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, LinguisticPropagationJobSpec)
-        return self.RAM[self.spec.model_name][self.spec.graph_size]
+        return self.RAM[self.spec.model_name][self.spec.n_words]
 
 
 if __name__ == '__main__':

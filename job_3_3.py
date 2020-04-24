@@ -59,7 +59,7 @@ class Job_3_3(Job):
                                    "Category production",
                                    f"Linguistic {VERSION}",
                                    f"{distributional_model.name}"
-                                   f" {self.spec.linguistic_spec.graph_size:,} words, length {self.spec.linguistic_spec.length_factor}",
+                                   f" {self.spec.linguistic_spec.n_words:,} words, length {self.spec.linguistic_spec.length_factor}",
                                    f"firing-θ {self.spec.linguistic_spec.firing_threshold};"
                                    f" n-decay-f {self.spec.linguistic_spec.node_decay_factor};"
                                    f" e-decay-sd {self.spec.linguistic_spec.edge_decay_sd:.1f};"

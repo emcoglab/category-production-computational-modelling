@@ -17,7 +17,7 @@ caiwingfield.net
 """
 import argparse
 import sys
-from os import path, makedirs
+from pathlib import Path
 
 from numpy import Infinity
 from pandas import DataFrame
@@ -29,6 +29,7 @@ from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
 from model.linguistic_propagator import LinguisticPropagator
+from model.utils.job import LinguisticPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
@@ -72,21 +73,21 @@ def main(n_words: int,
     distance_type = DistanceType.from_name(distance_type_name)
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
-    pruning_suffix = f", longest {prune_percent}% edges removed" if prune_percent is not None else ""
-    response_dir = path.join(Preferences.output_dir,
-                             "Category production",
-                             f"Linguistic {VERSION}",
-                             f"{distributional_model.name} {distance_type.name}"
-                                f" {n_words:,} words, length {length_factor}{pruning_suffix}",
-                             f"firing-θ {firing_threshold};"
-                                f" n-decay-f {node_decay_factor};"
-                                f" e-decay-sd {edge_decay_sd_factor};"
-                                f" imp-prune-θ {impulse_pruning_threshold};"
-                                f" run-for {run_for_ticks};"
-                                f" bail {bailout}")
-    if not path.isdir(response_dir):
+    response_dir: Path = Path(Preferences.output_dir,
+                              "Category production",
+                              LinguisticPropagationJobSpec(
+                                  model_name=distributional_model.name, model_radius=radius,
+                                  corpus_name=distributional_model.corpus_meta.name,
+                                  distance_type=distance_type, n_words=n_words,
+                                  firing_threshold=firing_threshold, length_factor=length_factor,
+                                  pruning_type=EdgePruningType.Percent, pruning=prune_percent,
+                                  node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
+                                  impulse_pruning_threshold=impulse_pruning_threshold,
+                                  run_for_ticks=run_for_ticks, bailout=bailout,
+                              ).output_location(for_version=VERSION))
+    if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
-        makedirs(response_dir)
+        response_dir.mkdir(parents=True)
 
     lc = LinguisticComponent(
         propagator=LinguisticPropagator(
@@ -111,12 +112,13 @@ def main(n_words: int,
     cp = CategoryProduction()
     for category_label in cp.category_labels:
 
-        model_responses_path = path.join(response_dir, f"responses_{category_label}_{n_words:,}.csv")
+        model_responses_path = Path(response_dir,
+                                    f"responses_{category_label}_{n_words:,}.csv")
 
         csv_comments = []
 
         # Only run the TSA if we've not already done it
-        if path.exists(model_responses_path):
+        if model_responses_path.exists():
             logger.info(f"{model_responses_path} exists, skipping.")
             continue
 
@@ -233,8 +235,8 @@ if __name__ == '__main__':
 
     emailer = Emailer(Preferences.email_connection_details_path)
     if args.prune_percent is not None:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words and {args.prune_percent:.2f}% pruning.",
+        emailer.send_email(f"Done running {Path(__file__).name} with {args.words} words and {args.prune_percent:.2f}% pruning.",
                            Preferences.target_email_address)
     else:
-        emailer.send_email(f"Done running {path.basename(__file__)} with {args.words} words.",
+        emailer.send_email(f"Done running {Path(__file__).name} with {args.words} words.",
                            Preferences.target_email_address)

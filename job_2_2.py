@@ -3,7 +3,7 @@ from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSp
 
 class Job_2_2(LinguisticPropagationJob):
 
-    # graph_size -> pruning -> RAM/G
+    # n_words -> pruning -> RAM/G
     RAM = {
         3_000:  {100: 5,   90: 5,   80: 5,   70: 5,   60: 5,   50: 5 , 40: 5 , 30: 5 , 20: 5 , 10: 5 , 0: 5  },
         10_000: {100: 30,  90: 26,  80: 24,  70: 22,  60: 20,  50: 15, 40: 13, 30: 12, 20: 12, 10: 12, 0: 12 },
@@ -26,4 +26,4 @@ class Job_2_2(LinguisticPropagationJob):
     @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, LinguisticPropagationJobSpec)
-        return self.RAM[self.spec.graph_size][self.spec.pruning]
+        return self.RAM[self.spec.n_words][self.spec.pruning]
