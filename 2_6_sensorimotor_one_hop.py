@@ -97,7 +97,21 @@ def main(distance_type_name: str,
         accessible_set_capacity=accessible_set_capacity,
     )
 
-    sc.save_model_spec(response_dir)
+    SensorimotorOneHopJobSpec(
+        distance_type=distance_type,
+        length_factor=length_factor,
+        max_radius=max_sphere_radius,
+        node_decay_median=node_decay_median,
+        node_decay_sigma=node_decay_sigma,
+        buffer_capacity=buffer_capacity,
+        buffer_threshold=buffer_threshold,
+        accessible_set_capacity=accessible_set_capacity,
+        accessible_set_threshold=accessible_set_threshold,
+        activation_cap=activation_cap,
+        attenuation_statistic=attenuation,
+        bailout=None,
+        run_for_ticks=None,
+    ).save()
 
     for category_label in cp.category_labels_sensorimotor:
 

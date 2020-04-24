@@ -94,7 +94,22 @@ def main(n_words: int,
         activation_cap=Infinity,
     )
 
-    lc.save_model_spec(response_dir)
+    LinguisticOneHopJobSpec(
+        length_factor=length_factor,
+        n_words=n_words,
+        model_name=distributional_model.name,
+        model_radius=radius,
+        corpus_name=corpus_name,
+        distance_type=None,
+        node_decay_factor=node_decay_factor,
+        edge_decay_sd=edge_decay_sd_factor,
+        pruning=None,
+        pruning_type=None,
+        firing_threshold=firing_threshold,
+        impulse_pruning_threshold=impulse_pruning_threshold,
+        bailout=None,
+        run_for_ticks=None,
+    ).save()
 
     for category_label in cp.category_labels:
 

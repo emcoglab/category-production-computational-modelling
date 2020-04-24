@@ -23,7 +23,6 @@ import sys
 from os import path
 from typing import Optional
 
-from ldm.utils.logging import date_format, log_message
 from category_production.category_production import CategoryProduction
 
 from evaluation.category_production import get_n_words_from_path_linguistic, get_model_ttfas_for_category_linguistic, \
