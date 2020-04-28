@@ -27,6 +27,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
+from model.components import FULL_ACTIVATION
 from model.linguistic_propagator import LinguisticPropagator
 from model.utils.job import LinguisticPropagationJobSpec
 from model.version import VERSION
@@ -45,8 +46,6 @@ RESPONSE = "Response"
 NODE_ID = "Node ID"
 ACTIVATION = "ActivationValue"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-
-FULL_ACTIVATION = ActivationValue(1.0)
 
 
 def main(n_words: int,

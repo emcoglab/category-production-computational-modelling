@@ -1,4 +1,4 @@
-from model.sensorimotor_components import NormAttenuationStatistic, FULL_ACTIVATION
+from model.sensorimotor_components import NormAttenuationStatistic
 from model.utils.job import SensorimotorPropagationJob, SensorimotorOneHopJobSpec
 from ldm.utils.maths import DistanceType
 
@@ -37,16 +37,15 @@ if __name__ == '__main__':
     buffer_capacity = 10
     accessible_set_capacity = 3_000
     attenuation = NormAttenuationStatistic.Prevalence
-    activation_cap = FULL_ACTIVATION
 
     specs = [
-        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
-        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=100, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=75,  node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
-        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation, activation_cap=activation_cap),
+        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=100, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=75,  node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
     ]
 
     for job in [Job_2_6(spec) for spec in specs]:

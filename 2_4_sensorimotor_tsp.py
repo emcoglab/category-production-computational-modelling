@@ -26,7 +26,8 @@ from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 
-from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic, FULL_ACTIVATION
+from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
+from model.components import FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorPropagator
 from model.utils.job import SensorimotorPropagationJobSpec
 from model.version import VERSION
@@ -74,7 +75,6 @@ def main(distance_type_name: str,
                                   node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
                                   attenuation_statistic=attenuation,
                                   run_for_ticks=run_for_ticks, bailout=bailout,
-                                  activation_cap=activation_cap,
                               ).output_location())
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -109,7 +109,6 @@ def main(distance_type_name: str,
         buffer_threshold=buffer_threshold,
         accessible_set_capacity=accessible_set_capacity,
         accessible_set_threshold=accessible_set_threshold,
-        activation_cap=activation_cap,
         attenuation_statistic=attenuation,
         bailout=bailout,
         run_for_ticks=run_for_ticks,
