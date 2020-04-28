@@ -64,18 +64,19 @@ def main(distance_type_name: str,
     # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
+    job_spec = SensorimotorPropagationJobSpec(
+        distance_type=distance_type, length_factor=length_factor, max_radius=max_sphere_radius,
+        buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
+        accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
+        attenuation_statistic=attenuation,
+        node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
+        run_for_ticks=run_for_ticks, bailout=bailout,
+    )
+    job_spec.save()
+
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
-                              SensorimotorPropagationJobSpec(
-                                  distance_type=DistanceType.Minkowski3, length_factor=length_factor,
-                                  max_radius=max_sphere_radius,
-                                  buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
-                                  accessible_set_threshold=accessible_set_threshold,
-                                  accessible_set_capacity=accessible_set_capacity,
-                                  node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
-                                  attenuation_statistic=attenuation,
-                                  run_for_ticks=run_for_ticks, bailout=bailout,
-                              ).output_location())
+                              job_spec.output_location())
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)
@@ -98,21 +99,6 @@ def main(distance_type_name: str,
         activation_cap=activation_cap,
         norm_attenuation_statistic=attenuation,
     )
-
-    SensorimotorPropagationJobSpec(
-        distance_type=distance_type,
-        length_factor=length_factor,
-        max_radius=max_sphere_radius,
-        node_decay_median=node_decay_median,
-        node_decay_sigma=node_decay_sigma,
-        buffer_capacity=buffer_capacity,
-        buffer_threshold=buffer_threshold,
-        accessible_set_capacity=accessible_set_capacity,
-        accessible_set_threshold=accessible_set_threshold,
-        attenuation_statistic=attenuation,
-        bailout=bailout,
-        run_for_ticks=run_for_ticks,
-    ).save()
 
     for category_label in cp.category_labels_sensorimotor:
 

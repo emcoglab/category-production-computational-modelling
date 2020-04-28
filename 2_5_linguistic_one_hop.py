@@ -60,18 +60,21 @@ def main(n_words: int,
     freq_dist = FreqDist.load(corpus.freq_dist_path)
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
+    job_spec = LinguisticOneHopJobSpec(
+      model_name=distributional_model.name, model_radius=radius,
+      corpus_name=distributional_model.corpus_meta.name,
+      distance_type=None, n_words=n_words,
+      firing_threshold=firing_threshold, length_factor=length_factor,
+      pruning_type=None, pruning=None,
+      node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
+      impulse_pruning_threshold=impulse_pruning_threshold,
+      run_for_ticks=None, bailout=None,
+    )
+    job_spec.save()
+
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
-                              LinguisticOneHopJobSpec(
-                                  model_name=distributional_model.name, model_radius=radius,
-                                  corpus_name=distributional_model.corpus_meta.name,
-                                  distance_type=None, n_words=n_words,
-                                  firing_threshold=firing_threshold, length_factor=length_factor,
-                                  pruning_type=None, pruning=None,
-                                  node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
-                                  impulse_pruning_threshold=impulse_pruning_threshold,
-                                  run_for_ticks=None, bailout=None,
-                              ).output_location())
+                              job_spec.output_location())
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)
@@ -90,23 +93,6 @@ def main(n_words: int,
         ),
         firing_threshold=firing_threshold,
     )
-
-    LinguisticOneHopJobSpec(
-        length_factor=length_factor,
-        n_words=n_words,
-        model_name=distributional_model.name,
-        model_radius=radius,
-        corpus_name=corpus_name,
-        distance_type=None,
-        node_decay_factor=node_decay_factor,
-        edge_decay_sd=edge_decay_sd_factor,
-        pruning=None,
-        pruning_type=None,
-        firing_threshold=firing_threshold,
-        impulse_pruning_threshold=impulse_pruning_threshold,
-        bailout=None,
-        run_for_ticks=None,
-    ).save()
 
     for category_label in cp.category_labels:
 
