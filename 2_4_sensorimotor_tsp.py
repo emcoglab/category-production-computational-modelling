@@ -26,7 +26,7 @@ from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 
-from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
+from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic, FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorPropagator
 from model.utils.job import SensorimotorPropagationJobSpec
 from model.version import VERSION
@@ -42,8 +42,6 @@ NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 ENTERED_BUFFER = "Item entered WM buffer"
-
-FULL_ACTIVATION = ActivationValue(1.0)
 
 
 def main(distance_type_name: str,
@@ -71,11 +69,13 @@ def main(distance_type_name: str,
                                   distance_type=DistanceType.Minkowski3, length_factor=length_factor,
                                   max_radius=max_sphere_radius,
                                   buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
-                                  accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
+                                  accessible_set_threshold=accessible_set_threshold,
+                                  accessible_set_capacity=accessible_set_capacity,
                                   node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
                                   attenuation_statistic=attenuation,
                                   run_for_ticks=run_for_ticks, bailout=bailout,
-                              ).output_location(for_version=VERSION))
+                                  activation_cap=activation_cap,
+                              ).output_location())
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)

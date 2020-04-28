@@ -27,7 +27,7 @@ from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
-from model.sensorimotor_components import NormAttenuationStatistic, BufferedSensorimotorComponent
+from model.sensorimotor_components import NormAttenuationStatistic, BufferedSensorimotorComponent, FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorOneHopPropagator
 from model.utils.file import comment_line_from_str
 from model.utils.job import SensorimotorOneHopJobSpec
@@ -41,8 +41,6 @@ NODE_ID = "Node ID"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 ENTERED_BUFFER = "Item entered WM buffer"
-
-FULL_ACTIVATION = ActivationValue(1.0)
 
 
 def main(distance_type_name: str,
@@ -73,7 +71,7 @@ def main(distance_type_name: str,
                                   node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
                                   attenuation_statistic=attenuation,
                                   run_for_ticks=None, bailout=None,
-                              ).output_location(for_version=VERSION))
+                              ).output_location())
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)

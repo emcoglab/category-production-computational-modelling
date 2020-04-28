@@ -83,7 +83,7 @@ def main(n_words: int,
                                   node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
                                   impulse_pruning_threshold=impulse_pruning_threshold,
                                   run_for_ticks=run_for_ticks, bailout=bailout,
-                              ).output_location(for_version=VERSION))
+                              ).output_location())
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)
