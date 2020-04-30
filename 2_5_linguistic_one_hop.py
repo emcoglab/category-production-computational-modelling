@@ -28,7 +28,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from model.components import FULL_ACTIVATION
-from model.linguistic_component import LinguisticComponent
+from model.linguistic_components import LinguisticComponent
 from model.linguistic_propagator import LinguisticOneHopPropagator
 from model.utils.job import LinguisticOneHopJobSpec
 from model.version import VERSION

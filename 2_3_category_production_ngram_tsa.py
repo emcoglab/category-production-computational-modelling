@@ -33,7 +33,7 @@ from model.utils.job import LinguisticPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue
 from model.events import ItemActivatedEvent
-from model.linguistic_component import LinguisticComponent
+from model.linguistic_components import LinguisticComponent
 from model.utils.file import comment_line_from_str
 from model.utils.logging import logger
 from preferences import Preferences
