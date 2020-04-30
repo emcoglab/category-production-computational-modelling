@@ -48,10 +48,10 @@ ENTERED_BUFFER = "Item entered WM buffer"
 def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
-         buffer_capacity: int,
-         accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
+         buffer_capacity: int,
          accessible_set_threshold: ActivationValue,
+         accessible_set_capacity: int,
          run_for_ticks: int,
          node_decay_median: float,
          node_decay_sigma: float,
@@ -224,19 +224,19 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-a", "--accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
-    parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-l", "--length_factor", required=True, type=Length)
-    parser.add_argument("-m", "--node_decay_median", required=True, type=float)
-    parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
-    parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
-    parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
-    parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
-    parser.add_argument("-U", "--use_prepruned", action="store_true")
-    parser.add_argument("-A", "--attenuation", required=True, type=str,
+    parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--bailout", required=False, type=int, default=None)
+    parser.add_argument("--distance_type", required=True, type=str)
+    parser.add_argument("--buffer_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--length_factor", required=True, type=Length)
+    parser.add_argument("--node_decay_median", required=True, type=float)
+    parser.add_argument("--node_decay_sigma", required=True, type=float)
+    parser.add_argument("--max_sphere_radius", required=True, type=Length)
+    parser.add_argument("--run_for_ticks", required=True, type=int)
+    parser.add_argument("--buffer_capacity", required=True, type=int)
+    parser.add_argument("--use_prepruned", action="store_true")
+    parser.add_argument("--attenuation", required=True, type=str,
                         choices=[n.name for n in NormAttenuationStatistic])
 
     args = parser.parse_args()

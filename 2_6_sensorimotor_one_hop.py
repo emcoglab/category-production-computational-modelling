@@ -15,6 +15,7 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import argparse
 import sys
 from itertools import count
@@ -194,17 +195,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-a", "--accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-l", "--length_factor", required=True, type=Length)
-    parser.add_argument("-m", "--node_decay_median", required=True, type=float)
-    parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
-    parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
-    parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
-    parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
-    parser.add_argument("-U", "--use_prepruned", action="store_true")
-    parser.add_argument("-A", "--attenuation", required=True, type=str,
+    parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--distance_type", required=True, type=str)
+    parser.add_argument("--buffer_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--length_factor", required=True, type=Length)
+    parser.add_argument("--node_decay_median", required=True, type=float)
+    parser.add_argument("--max_sphere_radius", required=True, type=Length)
+    parser.add_argument("--node_decay_sigma", required=True, type=float)
+    parser.add_argument("--buffer_capacity", required=True, type=int)
+    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--use_prepruned", action="store_true")
+    parser.add_argument("--attenuation", required=True, type=str,
                         choices=[n.name for n in NormAttenuationStatistic])
 
     args = parser.parse_args()

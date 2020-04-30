@@ -58,6 +58,8 @@ def main(n_words: int,
          firing_threshold: float,
          node_decay_factor: float,
          edge_decay_sd_factor: float,
+         accessible_set_threshold: ActivationValue,
+         accessible_set_capacity: int,
          impulse_pruning_threshold: float,
          run_for_ticks: int,
          bailout: int,
@@ -74,6 +76,7 @@ def main(n_words: int,
         firing_threshold=firing_threshold, length_factor=length_factor,
         pruning_type=EdgePruningType.Importance, pruning=prune_importance,
         node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
+        accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
         impulse_pruning_threshold=impulse_pruning_threshold,
         run_for_ticks=run_for_ticks, bailout=bailout,
     )
@@ -96,8 +99,10 @@ def main(n_words: int,
             node_decay_factor=node_decay_factor,
             edge_decay_sd_factor=edge_decay_sd_factor,
             edge_pruning=prune_importance,
-            edge_pruning_type=EdgePruningType.Importance
+            edge_pruning_type=EdgePruningType.Importance,
         ),
+        accessible_set_threshold=accessible_set_threshold,
+        accessible_set_capacity=accessible_set_capacity,
         firing_threshold=firing_threshold,
     )
 
@@ -164,10 +169,10 @@ def main(n_words: int,
                     event.time))
 
             # Break early if we've got a probable explosion
-            if len(lc.suprathreshold_items()) > bailout:
+            if len(lc.accessible_set.items) > bailout:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {len(lc.suprathreshold_items())} nodes activated.")
+                                    f"with {len(lc.accessible_set.items)} nodes activated.")
                 break
 
         model_responses_df = DataFrame(model_response_entries, columns=[
@@ -192,20 +197,22 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-b", "--bailout", required=True, type=int)
-    parser.add_argument("-c", "--corpus_name", required=True, type=str)
-    parser.add_argument("-f", "--firing_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-l", "--length_factor", required=True, type=int)
-    parser.add_argument("-m", "--model_name", required=True, type=str)
-    parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-p", "--prune_importance", required=False, type=int,
+    parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--bailout", required=True, type=int)
+    parser.add_argument("--corpus_name", required=True, type=str)
+    parser.add_argument("--firing_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--impulse_pruning_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--distance_type", required=True, type=str)
+    parser.add_argument("--length_factor", required=True, type=int)
+    parser.add_argument("--model_name", required=True, type=str)
+    parser.add_argument("--node_decay_factor", required=True, type=float)
+    parser.add_argument("--prune_importance", required=False, type=int,
                         help="The importance level from which to prune from the graph.", default=None)
-    parser.add_argument("-r", "--radius", required=True, type=int)
-    parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
-    parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--words", type=int, required=True,
+    parser.add_argument("--radius", required=True, type=int)
+    parser.add_argument("--edge_decay_sd_factor", required=True, type=float)
+    parser.add_argument("--run_for_ticks", required=True, type=int)
+    parser.add_argument("--words", type=int, required=True,
                         help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
@@ -220,9 +227,12 @@ if __name__ == '__main__':
          firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
          edge_decay_sd_factor=args.edge_decay_sd_factor,
+         accessible_set_capacity=args.accessible_set_capacity,
+         accessible_set_threshold=args.accessible_set_threshold,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
-         bailout=args.bailout)
+         bailout=args.bailout,
+         )
     logger.info("Done!")
 
     emailer = Emailer(Preferences.email_connection_details_path)
