@@ -72,14 +72,16 @@ def main(distance_type_name: str,
         node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
         run_for_ticks=run_for_ticks, bailout=bailout,
     )
-    job_spec.save()
 
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
-                              job_spec.output_location())
+                              job_spec.output_location_relative())
+
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)
+
+    job_spec.save(in_location=response_dir)
 
     # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()

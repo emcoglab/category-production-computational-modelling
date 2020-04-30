@@ -70,14 +70,16 @@ def main(n_words: int,
       impulse_pruning_threshold=impulse_pruning_threshold,
       run_for_ticks=None, bailout=None,
     )
-    job_spec.save()
 
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
-                              job_spec.output_location())
+                              job_spec.output_location_relative())
+
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)
+
+    job_spec.save(in_location=response_dir)
 
     cp = CategoryProduction()
     lc = LinguisticComponent(
