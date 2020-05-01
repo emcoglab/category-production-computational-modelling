@@ -163,8 +163,8 @@ def main(n_words: int,
 
             for event in firing_events:
                 model_response_entries.append((
-                    lc.propagator.idx2label[event.item],
-                    event.item,
+                    lc.propagator.idx2label[event.item.idx],
+                    event.item.idx,
                     event.activation,
                     event.time))
 

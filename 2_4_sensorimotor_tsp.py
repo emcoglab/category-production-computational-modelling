@@ -171,10 +171,10 @@ def main(distance_type_name: str,
 
             for activation_event in activation_events:
                 model_response_entries.append((
-                    sc.propagator.idx2label[activation_event.item],  # RESPONSE
-                    activation_event.item,  # NODE_ID
-                    activation_event.activation,  # ACTIVATION
-                    activation_event.time,  # TICK_ON_WHICH_ACTIVATED
+                    sc.propagator.idx2label[activation_event.item.idx],    # RESPONSE
+                    activation_event.item.idx,                             # NODE_ID
+                    activation_event.activation,                           # ACTIVATION
+                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
                     isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER
                 ))
 

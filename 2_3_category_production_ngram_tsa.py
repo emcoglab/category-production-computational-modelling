@@ -162,15 +162,15 @@ def main(n_words: int,
 
             for event in firing_events:
                 model_response_entries.append((
-                    lc.propagator.idx2label[event.item],
-                    event.item,
+                    lc.propagator.idx2label[event.item.idx],
+                    event.item.idx,
                     event.activation,
                     event.time))
 
             suprathreshold_this_category[tick] = lc.accessible_set.items
 
             # Break early if we've got a probable explosion
-            if lc.accessible_set.items > bailout > 0:
+            if len(lc.accessible_set) > bailout > 0:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
                                     f"with {lc.accessible_set.items} nodes activated.")
