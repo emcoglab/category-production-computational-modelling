@@ -29,7 +29,7 @@ from ldm.utils.maths import DistanceType
 from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
 from model.components import FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorPropagator
-from model.utils.job import SensorimotorPropagationJobSpec
+from model.utils.job import BufferedSensorimotorPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
@@ -64,7 +64,7 @@ def main(distance_type_name: str,
     # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
-    job_spec = SensorimotorPropagationJobSpec(
+    job_spec = BufferedSensorimotorPropagationJobSpec(
         distance_type=distance_type, length_factor=length_factor, max_radius=max_sphere_radius,
         buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
         accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
@@ -85,22 +85,7 @@ def main(distance_type_name: str,
 
     # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()
-    sc = BufferedSensorimotorComponent(
-        propagator=SensorimotorPropagator(
-            distance_type=distance_type,
-            length_factor=length_factor,
-            max_sphere_radius=max_sphere_radius,
-            node_decay_lognormal_median=node_decay_median,
-            node_decay_lognormal_sigma=node_decay_sigma,
-            use_prepruned=use_prepruned,
-        ),
-        buffer_capacity=buffer_capacity,
-        buffer_threshold=buffer_threshold,
-        accessible_set_capacity=accessible_set_capacity,
-        accessible_set_threshold=accessible_set_threshold,
-        activation_cap=activation_cap,
-        norm_attenuation_statistic=attenuation,
-    )
+    sc = BufferedSensorimotorComponent.from_spec(job_spec, use_prepruned=use_prepruned)
 
     for category_label in cp.category_labels_sensorimotor:
 

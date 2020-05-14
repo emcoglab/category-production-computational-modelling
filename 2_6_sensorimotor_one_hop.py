@@ -32,7 +32,7 @@ from model.sensorimotor_components import NormAttenuationStatistic, BufferedSens
 from model.components import FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorOneHopPropagator
 from model.utils.file import comment_line_from_str
-from model.utils.job import SensorimotorOneHopJobSpec
+from model.utils.job import BufferedSensorimotorOneHopJobSpec
 from model.version import VERSION
 from model.utils.logging import logger
 from preferences import Preferences
@@ -62,7 +62,7 @@ def main(distance_type_name: str,
     # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
-    job_spec = SensorimotorOneHopJobSpec(
+    job_spec = BufferedSensorimotorOneHopJobSpec(
       distance_type=DistanceType.Minkowski3, length_factor=length_factor,
       max_radius=max_sphere_radius,
       buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,

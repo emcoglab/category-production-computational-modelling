@@ -1,5 +1,5 @@
 from model.sensorimotor_components import NormAttenuationStatistic
-from model.utils.job import SensorimotorPropagationJob, SensorimotorOneHopJobSpec
+from model.utils.job import SensorimotorPropagationJob, BufferedSensorimotorOneHopJobSpec
 from ldm.utils.maths import DistanceType
 
 
@@ -18,7 +18,7 @@ class Job_2_6(SensorimotorPropagationJob):
         250: 120,
     }
 
-    def __init__(self, spec: SensorimotorOneHopJobSpec):
+    def __init__(self, spec: BufferedSensorimotorOneHopJobSpec):
         super().__init__(
             script_number="2_6",
             script_name="2_6_sensorimotor_one_hop.py",
@@ -26,7 +26,7 @@ class Job_2_6(SensorimotorPropagationJob):
 
     @property
     def _ram_requirement_g(self):
-        assert isinstance(self.spec, SensorimotorOneHopJobSpec)
+        assert isinstance(self.spec, BufferedSensorimotorOneHopJobSpec)
         return self.RAM[self.spec.max_radius]
 
 
@@ -39,13 +39,13 @@ if __name__ == '__main__':
     attenuation = NormAttenuationStatistic.Prevalence
 
     specs = [
-        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
-        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=100, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
-        SensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=75,  node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
-        SensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.9, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=100, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=75, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
+        BufferedSensorimotorOneHopJobSpec(max_radius=198, buffer_threshold=0.7, accessible_set_threshold=0.5, node_decay_median=500, node_decay_sigma=0.3, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, bailout=None, run_for_ticks=None, attenuation_statistic=attenuation),
     ]
 
     for job in [Job_2_6(spec) for spec in specs]:

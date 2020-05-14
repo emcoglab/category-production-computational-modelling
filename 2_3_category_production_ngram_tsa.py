@@ -23,21 +23,16 @@ from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
-from ldm.model.base import DistributionalSemanticModel
-from model.components import FULL_ACTIVATION
-from model.linguistic_propagator import LinguisticPropagator
-from model.utils.job import LinguisticPropagationJobSpec
-from model.version import VERSION
 from model.basic_types import ActivationValue
+from model.components import FULL_ACTIVATION
 from model.events import ItemActivatedEvent
 from model.linguistic_components import LinguisticComponent
 from model.utils.file import comment_line_from_str
+from model.utils.job import LinguisticPropagationJobSpec
 from model.utils.logging import logger
+from model.version import VERSION
 from preferences import Preferences
-
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -60,13 +55,9 @@ def main(n_words: int,
          run_for_ticks: int,
          bailout: int):
 
-    corpus = get_corpus_from_name(corpus_name)
-    freq_dist = FreqDist.load(corpus.freq_dist_path)
-    distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
-
     job_spec = LinguisticPropagationJobSpec(
-        model_name=distributional_model.name, model_radius=radius,
-        corpus_name=distributional_model.corpus_meta.name,
+        model_name=model_name, model_radius=radius,
+        corpus_name=corpus_name,
         distance_type=None, n_words=n_words,
         firing_threshold=firing_threshold, length_factor=length_factor,
         pruning_type=None, pruning=None,
@@ -85,21 +76,7 @@ def main(n_words: int,
 
     job_spec.save(in_location=response_dir)
 
-    lc = LinguisticComponent(
-        propagator=LinguisticPropagator(
-            length_factor=length_factor,
-            n_words=n_words,
-            distributional_model=distributional_model,
-            distance_type=None,
-            node_decay_factor=node_decay_factor,
-            edge_decay_sd_factor=edge_decay_sd_factor,
-            edge_pruning=None,
-            edge_pruning_type=None,
-        ),
-        firing_threshold=firing_threshold,
-        accessible_set_threshold=accessible_set_threshold,
-        accessible_set_capacity=accessible_set_capacity,
-    )
+    lc = LinguisticComponent.from_spec(job_spec)
 
     cp = CategoryProduction()
     for category_label in cp.category_labels:
@@ -120,7 +97,7 @@ def main(n_words: int,
 
         # Record topology
         csv_comments.append(f"Running spreading activation (v{VERSION}) using parameters:")
-        csv_comments.append(f"\t          model = {distributional_model.name}")
+        csv_comments.append(f"\t          model = {model_name}")
         csv_comments.append(f"\t          words = {n_words:_}")
         csv_comments.append(f"\t  length factor = {length_factor}")
         csv_comments.append(f"\t       firing θ = {firing_threshold}")
