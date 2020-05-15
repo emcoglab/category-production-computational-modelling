@@ -6,7 +6,7 @@ from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
 from ldm.utils.maths import DistanceType
-from model.norm_attenuation_statistic import NormAttenuationStatistic
+from model.attenuation_statistic import AttenuationStatistic
 from model.utils.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 from model.version import VERSION
 from preferences import Preferences
@@ -19,14 +19,14 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 class Job_3_3(Job):
 
     def __init__(self, sm_spec: BufferedSensorimotorPropagationJobSpec, ling_spec: LinguisticPropagationJobSpec,
-                 sm_attenuate: NormAttenuationStatistic,
+                 sm_attenuate: AttenuationStatistic,
                  manual_cut_off: Optional[int] = None
                  ):
         super().__init__(
             script_number="3_3",
             script_name="3_3_cp_comparison_combined_noninteractive.py",
             spec=NoninteractiveCombinedJobSpec(linguistic_spec=ling_spec, sensorimotor_spec=sm_spec))
-        self.sm_attenuate: NormAttenuationStatistic = sm_attenuate
+        self.sm_attenuate: AttenuationStatistic = sm_attenuate
         self.manual_cut_off: Optional[int] = manual_cut_off
 
         assert isinstance(self.spec, NoninteractiveCombinedJobSpec)
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     sm_length_factor = 100
     sm_distance_type = DistanceType.Minkowski3
-    attenuate = NormAttenuationStatistic.Prevalence
+    attenuate = AttenuationStatistic.Prevalence
     sm_buffer_capacity = 10
     sm_accessible_set_capacity = 3_000
     sm_rft = 10_000

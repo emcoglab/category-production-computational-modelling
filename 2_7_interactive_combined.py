@@ -29,7 +29,7 @@ from model.components import FULL_ACTIVATION
 from model.events import ItemActivatedEvent, ItemEnteredBufferEvent
 from model.linguistic_components import LinguisticComponent
 from model.sensorimotor_components import SensorimotorComponent
-from model.norm_attenuation_statistic import NormAttenuationStatistic
+from model.attenuation_statistic import AttenuationStatistic
 from model.utils.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 from model.utils.logging import logger
 from model.version import VERSION
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     parser.add_argument("--sensorimotor_node_decay_sigma", required=True, type=float)
     parser.add_argument("--sensorimotor_max_sphere_radius", required=True, type=Length)
     parser.add_argument("--sensorimotor_use_prepruned", action="store_true")
-    parser.add_argument("--sensorimotor_attenuation", required=True, type=str, choices=[n.name for n in NormAttenuationStatistic])
+    parser.add_argument("--sensorimotor_attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
 
     parser.add_argument("--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("--buffer_capacity_linguistic_items", required=True, type=int)

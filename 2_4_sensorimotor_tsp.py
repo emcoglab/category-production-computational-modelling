@@ -27,7 +27,7 @@ from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 
 from model.sensorimotor_components import BufferedSensorimotorComponent
-from model.norm_attenuation_statistic import NormAttenuationStatistic
+from model.attenuation_statistic import AttenuationStatistic
 from model.components import FULL_ACTIVATION
 from model.utils.job import BufferedSensorimotorPropagationJobSpec
 from model.version import VERSION
@@ -55,7 +55,7 @@ def main(distance_type_name: str,
          run_for_ticks: int,
          node_decay_median: float,
          node_decay_sigma: float,
-         attenuation: NormAttenuationStatistic,
+         attenuation: AttenuationStatistic,
          bailout: int = None,
          use_prepruned: bool = False,
          ):
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     parser.add_argument("--run_for_ticks", required=True, type=int)
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
-    parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in NormAttenuationStatistic])
+    parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
 
     args = parser.parse_args()
 
@@ -223,5 +223,5 @@ if __name__ == '__main__':
          node_decay_sigma=args.node_decay_sigma,
          bailout=args.bailout,
          use_prepruned=args.use_prepruned,
-         attenuation=NormAttenuationStatistic.from_slug(args.attenuation))
+         attenuation=AttenuationStatistic.from_slug(args.attenuation))
     logger.info("Done!")

@@ -1,4 +1,4 @@
-from model.norm_attenuation_statistic import NormAttenuationStatistic
+from model.attenuation_statistic import AttenuationStatistic
 from model.utils.job import SensorimotorPropagationJob, BufferedSensorimotorPropagationJobSpec
 from ldm.utils.maths import DistanceType
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     distance_type = DistanceType.Minkowski3
     buffer_capacity = 10
     accessible_set_capacity = 3_000
-    attenuation = NormAttenuationStatistic.Prevalence
+    attenuation = AttenuationStatistic.Prevalence
 
     specs = [
         BufferedSensorimotorPropagationJobSpec(max_radius=150, buffer_threshold=0.7, accessible_set_threshold=0.3, node_decay_median=500.0, node_decay_sigma=0.9, buffer_capacity=buffer_capacity, accessible_set_capacity=accessible_set_capacity, distance_type=distance_type, length_factor=length_factor, run_for_ticks=10_000, bailout=None, attenuation_statistic=attenuation),

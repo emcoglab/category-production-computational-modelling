@@ -29,7 +29,7 @@ from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
 from model.sensorimotor_components import BufferedSensorimotorComponent
-from model.norm_attenuation_statistic import NormAttenuationStatistic
+from model.attenuation_statistic import AttenuationStatistic
 from model.components import FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorOneHopPropagator
 from model.utils.file import comment_line_from_str
@@ -55,7 +55,7 @@ def main(distance_type_name: str,
          accessible_set_threshold: ActivationValue,
          node_decay_median: float,
          node_decay_sigma: float,
-         attenuation: NormAttenuationStatistic,
+         attenuation: AttenuationStatistic,
          use_prepruned: bool = False,
          ):
 
@@ -99,7 +99,7 @@ def main(distance_type_name: str,
         buffer_threshold=buffer_threshold,
         activation_cap=activation_cap,
         accessible_set_threshold=accessible_set_threshold,
-        norm_attenuation_statistic=attenuation,
+        attenuation_statistic=attenuation,
         accessible_set_capacity=accessible_set_capacity,
     )
 
@@ -196,7 +196,7 @@ if __name__ == '__main__':
     parser.add_argument("--accessible_set_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
     parser.add_argument("--attenuation", required=True, type=str,
-                        choices=[n.name for n in NormAttenuationStatistic])
+                        choices=[n.name for n in AttenuationStatistic])
 
     args = parser.parse_args()
 
@@ -210,5 +210,5 @@ if __name__ == '__main__':
          node_decay_median=args.node_decay_median,
          node_decay_sigma=args.node_decay_sigma,
          use_prepruned=args.use_prepruned,
-         attenuation=NormAttenuationStatistic.from_slug(args.attenuation))
+         attenuation=AttenuationStatistic.from_slug(args.attenuation))
     logger.info("Done!")

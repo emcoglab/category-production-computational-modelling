@@ -1,7 +1,7 @@
 from typing import Dict
 
 from ldm.utils.maths import DistanceType
-from model.norm_attenuation_statistic import NormAttenuationStatistic
+from model.attenuation_statistic import AttenuationStatistic
 from model.utils.job import InteractiveCombinedJob, \
     InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     sensorimotor_distance_type = DistanceType.Minkowski3
     sensorimotor_buffer_capacity = 10
     sensorimotor_accessible_set_capacity = 3_000
-    sensorimotor_attenuation = NormAttenuationStatistic.Prevalence
+    sensorimotor_attenuation = AttenuationStatistic.Prevalence
 
     bailout = 20_000
     run_for_ticks = 10_000
