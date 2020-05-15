@@ -42,9 +42,6 @@ ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 ENTERED_BUFFER = "Item entered WM buffer"
 
-sensorimotor_to_lingusitic_delay = 30
-linguistic_to_sensorimotor_delay = 10
-
 
 def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
 
