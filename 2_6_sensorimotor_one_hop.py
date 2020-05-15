@@ -28,7 +28,8 @@ from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
-from model.sensorimotor_components import NormAttenuationStatistic, BufferedSensorimotorComponent
+from model.sensorimotor_components import BufferedSensorimotorComponent
+from model.norm_attenuation_statistic import NormAttenuationStatistic
 from model.components import FULL_ACTIVATION
 from model.sensorimotor_propagator import SensorimotorOneHopPropagator
 from model.utils.file import comment_line_from_str

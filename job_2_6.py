@@ -1,4 +1,4 @@
-from model.sensorimotor_components import NormAttenuationStatistic
+from model.norm_attenuation_statistic import NormAttenuationStatistic
 from model.utils.job import SensorimotorPropagationJob, BufferedSensorimotorOneHopJobSpec
 from ldm.utils.maths import DistanceType
 

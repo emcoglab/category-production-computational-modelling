@@ -28,7 +28,8 @@ from model.combined_cognitive_model import InteractiveCombinedCognitiveModel
 from model.components import FULL_ACTIVATION
 from model.events import ItemActivatedEvent, ItemEnteredBufferEvent
 from model.linguistic_components import LinguisticComponent
-from model.sensorimotor_components import SensorimotorComponent, NormAttenuationStatistic
+from model.sensorimotor_components import SensorimotorComponent
+from model.norm_attenuation_statistic import NormAttenuationStatistic
 from model.utils.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 from model.utils.logging import logger
 from model.version import VERSION

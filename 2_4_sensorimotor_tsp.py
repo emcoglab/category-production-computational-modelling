@@ -26,7 +26,8 @@ from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.utils.maths import DistanceType
 
-from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
+from model.sensorimotor_components import BufferedSensorimotorComponent
+from model.norm_attenuation_statistic import NormAttenuationStatistic
 from model.components import FULL_ACTIVATION
 from model.utils.job import BufferedSensorimotorPropagationJobSpec
 from model.version import VERSION
