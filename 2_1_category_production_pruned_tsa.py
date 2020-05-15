@@ -104,14 +104,7 @@ def main(n_words: int,
         lc.reset()
 
         csv_comments.append(f"Running spreading activation (v{VERSION}) using parameters:")
-        csv_comments.append(f"\t          words = {n_words:_}")
-        csv_comments.append(f"\t    granularity = {length_factor:_}")
-        if prune_percent is not None:
-            csv_comments.append(f"\t        pruning = {prune_percent:.2f}%")
-        csv_comments.append(f"\t       firing θ = {firing_threshold}")
-        csv_comments.append(f"\t              δ = {node_decay_factor}")
-        csv_comments.append(f"\t      sd_factor = {edge_decay_sd_factor}")
-        csv_comments.append(f"\timpulse pruning = {impulse_pruning_threshold}")
+        csv_comments.extend(job_spec.csv_comments())
         if lc.propagator.graph.is_connected():
             csv_comments.append(f"\t        connected = yes")
         else:

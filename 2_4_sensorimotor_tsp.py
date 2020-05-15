@@ -28,7 +28,6 @@ from ldm.utils.maths import DistanceType
 
 from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
 from model.components import FULL_ACTIVATION
-from model.sensorimotor_propagator import SensorimotorPropagator
 from model.utils.job import BufferedSensorimotorPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
@@ -83,7 +82,6 @@ def main(distance_type_name: str,
 
     job_spec.save(in_location=response_dir)
 
-    # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()
     sc = BufferedSensorimotorComponent.from_spec(job_spec, use_prepruned=use_prepruned)
 
@@ -93,8 +91,6 @@ def main(distance_type_name: str,
         buffer_floods_path   = Path(response_dir, f"buffer_floods_{category_label}.csv")
         model_responses_path = Path(response_dir, f"responses_{category_label}.csv")
 
-        csv_comments = []
-
         # Only run the TSA if we've not already done it
         if model_responses_path.exists():
             logger.info(f"{model_responses_path} exists, skipping.")
@@ -102,19 +98,8 @@ def main(distance_type_name: str,
 
         sc.reset()
 
-        # Record topology
-        csv_comments.append(f"Running sensorimotor spreading activation (v{VERSION}) using parameters:")
-        csv_comments.append(f"\t length_factor = {length_factor:_}")
-        csv_comments.append(f"\t distance_type = {distance_type.name}")
-        csv_comments.append(f"\t   attenuation = {attenuation.name}")
-        csv_comments.append(f"\t       pruning = {max_sphere_radius}")
-        csv_comments.append(f"\t  WMB capacity = {buffer_capacity}")
-        csv_comments.append(f"\t   AS capacity = {accessible_set_capacity}")
-        csv_comments.append(f"\t WMB threshold = {buffer_threshold}")
-        csv_comments.append(f"\t  AS threshold = {accessible_set_threshold}")
-        csv_comments.append(f"\t  node decay m = {node_decay_median}")
-        csv_comments.append(f"\t  node decay σ = {node_decay_sigma} (σ * lf = {node_decay_sigma * length_factor})")
-        csv_comments.append(f"\tactivation cap = {activation_cap}")
+        csv_comments = [f"Running sensorimotor spreading activation (v{VERSION}) using parameters:"]
+        csv_comments.extend(job_spec.csv_comments())
 
         # Do the spreading activation
 
@@ -221,8 +206,7 @@ if __name__ == '__main__':
     parser.add_argument("--run_for_ticks", required=True, type=int)
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
-    parser.add_argument("--attenuation", required=True, type=str,
-                        choices=[n.name for n in NormAttenuationStatistic])
+    parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in NormAttenuationStatistic])
 
     args = parser.parse_args()
 
