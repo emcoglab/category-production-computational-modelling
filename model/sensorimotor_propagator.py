@@ -4,7 +4,7 @@ from os import path
 from typing import Dict, List
 
 from ldm.utils.maths import DistanceType
-from model.basic_types import ItemIdx, ItemLabel, Node, ActivationValue
+from model.basic_types import ItemIdx, ItemLabel, Node, ActivationValue, Component
 from model.events import ModelEvent
 from model.graph import Graph
 from model.graph_propagator import GraphPropagator, _load_labels, IMPULSE_PRUNING_THRESHOLD
@@ -50,8 +50,8 @@ class SensorimotorPropagator(GraphPropagator):
 
         # max_sphere_radius == 0 would be degenerate: no item can ever activate any other item.
         assert (max_sphere_radius > 0)
-        # node_decay_lognormal_sigma or node_decay_lognormal_median == 0 will probably cause a division-by-zero error, and anyway is
-        # degenerate: it causes everything to decay to 0 activation in a single tick.
+        # node_decay_lognormal_sigma or node_decay_lognormal_median == 0 will probably cause a division-by-zero error,
+        # and anyway is degenerate: it causes everything to decay to 0 activation in a single tick.
         assert (node_decay_lognormal_median > 0)
         assert (node_decay_lognormal_sigma > 0)
 
@@ -71,6 +71,7 @@ class SensorimotorPropagator(GraphPropagator):
             # The max sphere radius is baked into the underlying graph.
             # However we add a minute threshold here in case activation has been modulated down to zero
             impulse_pruning_threshold=IMPULSE_PRUNING_THRESHOLD,
+            component=Component.sensorimotor,
         )
 
 

@@ -15,8 +15,8 @@ caiwingfield.net
 2019
 ---------------------------
 """
+
 import argparse
-import logging
 import sys
 from os import path
 

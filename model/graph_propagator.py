@@ -16,10 +16,10 @@ caiwingfield.net
 """
 import json
 from abc import ABC
-from collections import namedtuple, defaultdict
-from typing import Dict, DefaultDict, Optional, List, Callable
+from collections import namedtuple, defaultdict, deque
+from typing import Dict, DefaultDict, Optional, List, Callable, Deque
 
-from model.basic_types import ActivationValue, ItemIdx, ItemLabel
+from model.basic_types import ActivationValue, ItemIdx, ItemLabel, Item, Component
 from model.events import ModelEvent, ItemActivatedEvent
 from model.graph import Graph
 from model.utils.maths import make_decay_function_constant
@@ -59,6 +59,7 @@ class GraphPropagator(ABC):
                  impulse_pruning_threshold: ActivationValue,
                  node_decay_function: Optional[DecayFunction],
                  edge_decay_function: Optional[DecayFunction],
+                 component: Component,
                  ):
         """
         Underlying shared code between model components which operate via propagation of activation on a graph.
@@ -119,7 +120,7 @@ class GraphPropagator(ABC):
         #     The unmodified presynaptic activation.
         # :return:
         #     The modified presynaptic activation.
-        self.presynaptic_modulations: List[Modulation] = []
+        self.presynaptic_modulations: Deque[Modulation] = deque()
         # presynaptic_guards:
         #     Guards a node's accumulation (and hence also its firing) based on its activation before incoming activation has
         #     accumulated.  (E.g. making sufficiently-activated nodes into sinks until they decay.)
@@ -131,7 +132,7 @@ class GraphPropagator(ABC):
         #     The activation level of the item before accumulation.
         # :return:
         #     True if the node should be allowed fire, else False.
-        self.presynaptic_guards: List[Guard] = []
+        self.presynaptic_guards: Deque[Guard] = deque()
         # postsynaptic_modulations:
         #     Modulates the activations of items after accumulation, but before firing.
         #     (E.g. applying an activation cap).
@@ -143,7 +144,7 @@ class GraphPropagator(ABC):
         #     The unmodified postsynaptic activation.
         # :return:
         #     The modified postsynaptic activation.
-        self.postsynaptic_modulations: List[Modulation] = []
+        self.postsynaptic_modulations: Deque[Modulation] = deque()
         # postsynaptic_guards:
         #     Guards a node's firing based on its activation after incoming activation has accumulated.
         #     (E.g. applying a firing threshold.)
@@ -156,7 +157,7 @@ class GraphPropagator(ABC):
         #     The activation level of the item after accumulation.
         # :return:
         #     True if the node should be allowed to fire, else False.
-        self.postsynaptic_guards: List[Guard] = []
+        self.postsynaptic_guards: Deque[Guard] = deque()
 
         # endregion
 
@@ -186,6 +187,8 @@ class GraphPropagator(ABC):
                 # 0 activation, which allows for handy use of +=
                 lambda: ActivationValue(0)
             ))
+
+        self.component: Component = component
 
         # endregion
 
@@ -240,7 +243,7 @@ class GraphPropagator(ABC):
         events = self.__apply_activations()
 
         # There will be at most one event for each item which has an event
-        assert len(events) == len(set(e.item for e in events))
+        assert len(events) == len(set(e.item.idx for e in events))
 
         return events
 
@@ -249,8 +252,8 @@ class GraphPropagator(ABC):
         activation_events = []
         if self.clock in self._scheduled_activations:
 
-            # This is an item-keyed dict of activation ready to arrive
-            scheduled_activations: DefaultDict = self._scheduled_activations.pop(self.clock)
+            # This is an item_idx-keyed dict of activation ready to arrive
+            scheduled_activations: DefaultDict[ItemIdx, ActivationValue] = self._scheduled_activations.pop(self.clock)
 
             # TODO optimisation: sort into numpy.array and apply presynaptic modulation in a vectorised manner
             if len(scheduled_activations) > 0:
@@ -304,7 +307,8 @@ class GraphPropagator(ABC):
             new_activation = modulation(idx, new_activation)
 
         # The item activated, so an activation event occurs
-        event = ItemActivatedEvent(time=self.clock, item=idx, activation=new_activation, fired=False)
+        event = ItemActivatedEvent(time=self.clock, item=Item(idx=idx, component=self.component), activation=new_activation,
+                                   fired=False)
 
         # Record the activation
         self._activation_records[idx] = ActivationRecord(new_activation, self.clock)

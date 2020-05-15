@@ -28,7 +28,7 @@ from ldm.corpus.indexing import FreqDist
 from ldm.corpus.tokenising import modified_word_tokenize
 from ldm.model.base import DistributionalSemanticModel
 from model.components import FULL_ACTIVATION
-from model.linguistic_component import LinguisticComponent
+from model.linguistic_components import LinguisticComponent
 from model.linguistic_propagator import LinguisticOneHopPropagator
 from model.utils.job import LinguisticOneHopJobSpec
 from model.version import VERSION
@@ -54,6 +54,8 @@ def main(n_words: int,
          firing_threshold: ActivationValue,
          node_decay_factor: float,
          edge_decay_sd_factor: float,
+         accessible_set_threshold: ActivationValue,
+         accessible_set_capacity: int,
          impulse_pruning_threshold: ActivationValue):
 
     corpus = get_corpus_from_name(corpus_name)
@@ -67,6 +69,7 @@ def main(n_words: int,
       firing_threshold=firing_threshold, length_factor=length_factor,
       pruning_type=None, pruning=None,
       node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
+      accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
       impulse_pruning_threshold=impulse_pruning_threshold,
       run_for_ticks=None, bailout=None,
     )
@@ -94,6 +97,8 @@ def main(n_words: int,
             edge_pruning_type=None,
         ),
         firing_threshold=firing_threshold,
+        accessible_set_threshold=accessible_set_threshold,
+        accessible_set_capacity=accessible_set_capacity,
     )
 
     for category_label in cp.category_labels:
@@ -111,15 +116,8 @@ def main(n_words: int,
 
         lc.reset()
 
-        # Record topology
         csv_comments.append(f"Running spreading activation (v{VERSION}) using parameters:")
-        csv_comments.append(f"\t          model = {distributional_model.name}")
-        csv_comments.append(f"\t          words = {n_words:_}")
-        csv_comments.append(f"\t  length factor = {length_factor}")
-        csv_comments.append(f"\t       firing θ = {firing_threshold}")
-        csv_comments.append(f"\t              δ = {node_decay_factor}")
-        csv_comments.append(f"\t      sd_factor = {edge_decay_sd_factor}")
-        csv_comments.append(f"\timpulse pruning = {impulse_pruning_threshold}")
+        csv_comments.extend(job_spec.csv_comments())
         if lc.propagator.graph.is_connected():
             csv_comments.append(f"\t      connected = yes")
         else:
@@ -153,8 +151,8 @@ def main(n_words: int,
 
             for event in firing_events:
                 model_response_entries.append((
-                    lc.propagator.idx2label[event.item],
-                    event.item,
+                    lc.propagator.idx2label[event.item.idx],
+                    event.item.idx,
                     event.activation,
                     event.time))
 
@@ -186,15 +184,17 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-c", "--corpus_name", required=True, type=str)
-    parser.add_argument("-f", "--firing_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-i", "--impulse_pruning_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-l", "--length_factor", required=True, type=int)
-    parser.add_argument("-m", "--model_name", required=True, type=str)
-    parser.add_argument("-n", "--node_decay_factor", required=True, type=float)
-    parser.add_argument("-r", "--radius", required=True, type=int)
-    parser.add_argument("-s", "--edge_decay_sd_factor", required=True, type=float)
-    parser.add_argument("-w", "--words", type=int, required=True,
+    parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--corpus_name", required=True, type=str)
+    parser.add_argument("--firing_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--impulse_pruning_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--length_factor", required=True, type=int)
+    parser.add_argument("--model_name", required=True, type=str)
+    parser.add_argument("--node_decay_factor", required=True, type=float)
+    parser.add_argument("--radius", required=True, type=int)
+    parser.add_argument("--edge_decay_sd_factor", required=True, type=float)
+    parser.add_argument("--words", type=int, required=True,
                         help="The number of words to use from the corpus. (Top n words.)")
 
     args = parser.parse_args()
@@ -207,5 +207,8 @@ if __name__ == '__main__':
          firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
          edge_decay_sd_factor=args.edge_decay_sd_factor,
-         impulse_pruning_threshold=args.impulse_pruning_threshold)
+         accessible_set_capacity=args.accessible_set_capacity,
+         accessible_set_threshold=args.accessible_set_threshold,
+         impulse_pruning_threshold=args.impulse_pruning_threshold,
+         )
     logger.info("Done!")

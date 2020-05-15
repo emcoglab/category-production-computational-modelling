@@ -43,9 +43,11 @@ if __name__ == '__main__':
     node_decay_factor = 0.99
     model_radius = 5
     corpus_name = "bbc"
+    accessible_set_threshold = 0
+    accessible_set_capacity = None
 
     specs = [
-        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, run_for_ticks=3_000, bailout=bailout),
+        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, run_for_ticks=3_000, bailout=bailout, accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity),
     ]
 
     for job in [Job_2_3(spec) for spec in specs]:

@@ -28,8 +28,7 @@ from ldm.utils.maths import DistanceType
 
 from model.sensorimotor_components import BufferedSensorimotorComponent, NormAttenuationStatistic
 from model.components import FULL_ACTIVATION
-from model.sensorimotor_propagator import SensorimotorPropagator
-from model.utils.job import SensorimotorPropagationJobSpec
+from model.utils.job import BufferedSensorimotorPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
@@ -48,10 +47,10 @@ ENTERED_BUFFER = "Item entered WM buffer"
 def main(distance_type_name: str,
          length_factor: int,
          max_sphere_radius: int,
-         buffer_capacity: int,
-         accessible_set_capacity: int,
          buffer_threshold: ActivationValue,
+         buffer_capacity: int,
          accessible_set_threshold: ActivationValue,
+         accessible_set_capacity: int,
          run_for_ticks: int,
          node_decay_median: float,
          node_decay_sigma: float,
@@ -64,7 +63,7 @@ def main(distance_type_name: str,
     # Once a node is fully activated, that's enough.
     activation_cap = FULL_ACTIVATION
 
-    job_spec = SensorimotorPropagationJobSpec(
+    job_spec = BufferedSensorimotorPropagationJobSpec(
         distance_type=distance_type, length_factor=length_factor, max_radius=max_sphere_radius,
         buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
         accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
@@ -83,32 +82,14 @@ def main(distance_type_name: str,
 
     job_spec.save(in_location=response_dir)
 
-    # If we're using the prepruned version, we can risk using the cache too
     cp = CategoryProduction()
-    sc = BufferedSensorimotorComponent(
-        propagator=SensorimotorPropagator(
-            distance_type=distance_type,
-            length_factor=length_factor,
-            max_sphere_radius=max_sphere_radius,
-            node_decay_lognormal_median=node_decay_median,
-            node_decay_lognormal_sigma=node_decay_sigma,
-            use_prepruned=use_prepruned,
-        ),
-        buffer_capacity=buffer_capacity,
-        buffer_threshold=buffer_threshold,
-        accessible_set_capacity=accessible_set_capacity,
-        accessible_set_threshold=accessible_set_threshold,
-        activation_cap=activation_cap,
-        norm_attenuation_statistic=attenuation,
-    )
+    sc = BufferedSensorimotorComponent.from_spec(job_spec, use_prepruned=use_prepruned)
 
     for category_label in cp.category_labels_sensorimotor:
 
         accessible_set_path  = Path(response_dir, f"accessible_set_{category_label}.csv")
         buffer_floods_path   = Path(response_dir, f"buffer_floods_{category_label}.csv")
         model_responses_path = Path(response_dir, f"responses_{category_label}.csv")
-
-        csv_comments = []
 
         # Only run the TSA if we've not already done it
         if model_responses_path.exists():
@@ -117,19 +98,8 @@ def main(distance_type_name: str,
 
         sc.reset()
 
-        # Record topology
-        csv_comments.append(f"Running sensorimotor spreading activation (v{VERSION}) using parameters:")
-        csv_comments.append(f"\t length_factor = {length_factor:_}")
-        csv_comments.append(f"\t distance_type = {distance_type.name}")
-        csv_comments.append(f"\t   attenuation = {attenuation.name}")
-        csv_comments.append(f"\t       pruning = {max_sphere_radius}")
-        csv_comments.append(f"\t  WMB capacity = {buffer_capacity}")
-        csv_comments.append(f"\t   AS capacity = {accessible_set_capacity}")
-        csv_comments.append(f"\t WMB threshold = {buffer_threshold}")
-        csv_comments.append(f"\t  AS threshold = {accessible_set_threshold}")
-        csv_comments.append(f"\t  node decay m = {node_decay_median}")
-        csv_comments.append(f"\t  node decay σ = {node_decay_sigma} (σ * lf = {node_decay_sigma * length_factor})")
-        csv_comments.append(f"\tactivation cap = {activation_cap}")
+        csv_comments = [f"Running sensorimotor spreading activation (v{VERSION}) using parameters:"]
+        csv_comments.extend(job_spec.csv_comments())
 
         # Do the spreading activation
 
@@ -171,10 +141,10 @@ def main(distance_type_name: str,
 
             for activation_event in activation_events:
                 model_response_entries.append((
-                    sc.propagator.idx2label[activation_event.item],  # RESPONSE
-                    activation_event.item,  # NODE_ID
-                    activation_event.activation,  # ACTIVATION
-                    activation_event.time,  # TICK_ON_WHICH_ACTIVATED
+                    sc.propagator.idx2label[activation_event.item.idx],    # RESPONSE
+                    activation_event.item.idx,                             # NODE_ID
+                    activation_event.activation,                           # ACTIVATION
+                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
                     isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER
                 ))
 
@@ -224,20 +194,19 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
-    parser.add_argument("-a", "--accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-b", "--bailout", required=False, type=int, default=None)
-    parser.add_argument("-d", "--distance_type", required=True, type=str)
-    parser.add_argument("-e", "--buffer_threshold", required=True, type=ActivationValue)
-    parser.add_argument("-l", "--length_factor", required=True, type=Length)
-    parser.add_argument("-m", "--node_decay_median", required=True, type=float)
-    parser.add_argument("-s", "--node_decay_sigma", required=True, type=float)
-    parser.add_argument("-r", "--max_sphere_radius", required=True, type=Length)
-    parser.add_argument("-t", "--run_for_ticks", required=True, type=int)
-    parser.add_argument("-w", "--buffer_capacity", required=True, type=int)
-    parser.add_argument("-c", "--accessible_set_capacity", required=True, type=int)
-    parser.add_argument("-U", "--use_prepruned", action="store_true")
-    parser.add_argument("-A", "--attenuation", required=True, type=str,
-                        choices=[n.name for n in NormAttenuationStatistic])
+    parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--bailout", required=False, type=int, default=None)
+    parser.add_argument("--distance_type", required=True, type=str)
+    parser.add_argument("--buffer_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--length_factor", required=True, type=Length)
+    parser.add_argument("--node_decay_median", required=True, type=float)
+    parser.add_argument("--node_decay_sigma", required=True, type=float)
+    parser.add_argument("--max_sphere_radius", required=True, type=Length)
+    parser.add_argument("--run_for_ticks", required=True, type=int)
+    parser.add_argument("--buffer_capacity", required=True, type=int)
+    parser.add_argument("--use_prepruned", action="store_true")
+    parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in NormAttenuationStatistic])
 
     args = parser.parse_args()
 

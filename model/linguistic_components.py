@@ -14,16 +14,21 @@ caiwingfield.net
 2019
 ---------------------------
 """
+from __future__ import annotations
 
-from typing import Set
+from typing import Optional
 
+from cli.lookups import get_corpus_from_name, get_model_from_params
+from ldm.corpus.indexing import FreqDist
+from ldm.model.base import DistributionalSemanticModel
 from model.basic_types import ActivationValue, ItemIdx
-from model.components import ModelComponent
+from model.components import ModelComponentWithAccessibleSet
 from model.graph_propagator import Guard
 from model.linguistic_propagator import LinguisticPropagator
+from model.utils.job import LinguisticPropagationJobSpec
 
 
-class LinguisticComponent(ModelComponent):
+class LinguisticComponent(ModelComponentWithAccessibleSet):
     """
     The linguistic component of the model.
     Uses an exponential decay on nodes and a gaussian decay on edges.
@@ -31,6 +36,8 @@ class LinguisticComponent(ModelComponent):
 
     def __init__(self,
                  propagator: LinguisticPropagator,
+                 accessible_set_threshold: ActivationValue,
+                 accessible_set_capacity: Optional[int],
                  firing_threshold: ActivationValue,
                  ):
         """
@@ -43,7 +50,7 @@ class LinguisticComponent(ModelComponent):
         # Use >= and < to test for above/below
         self.firing_threshold: ActivationValue = firing_threshold
 
-        super().__init__(propagator)
+        super().__init__(propagator, accessible_set_threshold, accessible_set_capacity)
         assert isinstance(self.propagator, LinguisticPropagator)
 
         self.propagator.presynaptic_guards.extend([
@@ -58,6 +65,27 @@ class LinguisticComponent(ModelComponent):
             self._exceeds_firing_threshold(self.firing_threshold)
         ])
 
+    @classmethod
+    def from_spec(cls, spec: LinguisticPropagationJobSpec) -> LinguisticComponent:
+        corpus = get_corpus_from_name(spec.corpus_name)
+        freq_dist = FreqDist.load(corpus.freq_dist_path)
+        distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, spec.model_name, spec.model_radius)
+        return cls(
+            propagator=LinguisticPropagator(
+                distance_type=spec.distance_type,
+                length_factor=spec.length_factor,
+                n_words=spec.n_words,
+                distributional_model=distributional_model,
+                node_decay_factor=spec.node_decay_factor,
+                edge_decay_sd_factor=spec.edge_decay_sd,
+                edge_pruning_type=spec.pruning_type,
+                edge_pruning=spec.pruning,
+            ),
+            accessible_set_threshold=spec.accessible_set_threshold,
+            accessible_set_capacity=spec.accessible_set_capacity,
+            firing_threshold=spec.firing_threshold,
+        )
+
     @staticmethod
     def _exceeds_firing_threshold(firing_threshold: ActivationValue) -> Guard:
         def guard(idx: ItemIdx, activation: ActivationValue) -> bool:
@@ -69,15 +97,3 @@ class LinguisticComponent(ModelComponent):
         def guard(idx: ItemIdx, activation: ActivationValue) -> bool:
             return activation < firing_threshold
         return guard
-
-    def suprathreshold_items(self) -> Set[ItemIdx]:
-        """
-        Items which are above the firing threshold.
-        May take a long time to compute.
-        :return:
-        """
-        return set(
-            n
-            for n in self.propagator.graph.nodes
-            if self.propagator.activation_of_item_with_idx(n) >= self.firing_threshold
-        )
