@@ -218,7 +218,7 @@ if __name__ == '__main__':
                  length_factor=args.sensorimotor_length_factor,
                  node_decay_median=args.sensorimotor_node_decay_median,
                  node_decay_sigma=args.sensorimotor_node_decay_sigma,
-                 attenuation_statistic=args.sensorimotor_attenuation,
+                 attenuation_statistic=AttenuationStatistic.from_slug(args.sensorimotor_attenuation),
                  max_radius=args.sensorimotor_max_sphere_radius,
                  bailout=args.bailout,
                  run_for_ticks=args.run_for_ticks,
