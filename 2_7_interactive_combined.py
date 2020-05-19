@@ -23,6 +23,7 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from ldm.corpus.tokenising import modified_word_tokenize
+from ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Component, Length
 from model.combined_cognitive_model import InteractiveCombinedCognitiveModel
 from model.components import FULL_ACTIVATION
@@ -214,7 +215,7 @@ if __name__ == '__main__':
              sensorimotor_spec=SensorimotorPropagationJobSpec(
                  accessible_set_threshold=args.sensorimotor_accessible_set_threshold,
                  accessible_set_capacity=args.sensorimotor_accessible_set_capacity,
-                 distance_type=args.sensorimotor_distance_type,
+                 distance_type=DistanceType.from_name(args.sensorimotor_distance_type),
                  length_factor=args.sensorimotor_length_factor,
                  node_decay_median=args.sensorimotor_node_decay_median,
                  node_decay_sigma=args.sensorimotor_node_decay_sigma,
