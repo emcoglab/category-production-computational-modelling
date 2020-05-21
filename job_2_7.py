@@ -106,4 +106,4 @@ if __name__ == '__main__':
     ]
 
     for job in [Job_2_7(spec) for spec in specs]:
-        job.submit()
+        job.run_locally(extra_arguments="--sensorimotor_use_prepruned")
