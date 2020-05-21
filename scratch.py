@@ -1,35 +1,35 @@
+from typing import FrozenSet
+
+
 class Base:
-    def __init__(self):
-        self.x = set()
+    def __init__(self, items=None):
+        self.items: FrozenSet = frozenset() if items is None else items
 
     @property
-    def x(self):
-        return self.__x
+    def items(self) -> FrozenSet:
+        print("Base getter")
+        return self.__items
 
-    @x.setter
-    def x(self, value):
-        self.__x = value
+    @items.setter
+    def items(self, value):
+        print("Base setter")
+        self.__items = value
 
 
 class Derived(Base):
 
     @property
-    def x(self):
-        return set(i[0] for i in self.__x)
+    def items(self) -> FrozenSet:
+        print("Derived getter")
+        return self.__items
 
-    @x.setter
-    def x(self, value):
-        self.__x = set((i, 9) for i in value)
-
-    def print_x(self):
-        print(self.__x)
+    @items.setter
+    def items(self, value):
+        print("Derived setter")
+        self.__items = value
 
 
 if __name__ == '__main__':
-    b = Base()
-    b.x = {(1,0), (2,0), (3,0)}
-    print(b.x)
-
-    d = Derived()
-    d.x = {1, 2, 3}
-    d.print_x()
+    d = Derived(frozenset({0, 1, 2}))
+    d.items -= {0}
+    print(d.items)
