@@ -100,8 +100,9 @@ if __name__ == '__main__':
             buffer_threshold=0.7,
             buffer_capacity_linguistic_items=12,
             buffer_capacity_sensorimotor_items=9,
-            lc_to_smc_delay=10,
-            smc_to_lc_delay=30,
+            lc_to_smc_delay=100,
+            smc_to_lc_delay=150,
+            inter_component_attenuation=0.7,
         )
     ]
 
