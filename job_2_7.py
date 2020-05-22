@@ -2,8 +2,8 @@ from typing import Dict
 
 from ldm.utils.maths import DistanceType
 from model.attenuation_statistic import AttenuationStatistic
-from model.utils.job import InteractiveCombinedJob, \
-    InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
+from model.utils.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
+    SensorimotorPropagationJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
