@@ -19,6 +19,7 @@ from sys import argv
 from argparse import ArgumentParser
 from pathlib import Path
 
+from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
@@ -73,6 +74,7 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
     for category_label in cp.category_labels:
 
         model_responses_path = Path(response_dir, f"responses_{category_label}.csv")
+        accessible_set_path  = Path(response_dir, f"accessible_set_{category_label}.csv")
 
         # Only run the TSA if we've not already done it
         if model_responses_path.exists():
@@ -114,6 +116,9 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
             model.sensorimotor_component.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         model_response_entries = []
+        # Initialise list of concurrent activations which will be nan-populated if the run ends early
+        accessible_set_this_category_linguistic = [nan] * job_spec.run_for_ticks
+        accessible_set_this_category_sensorimotor = [nan] * job_spec.run_for_ticks
 
         for tick in range(0, job_spec.run_for_ticks):
 
@@ -122,6 +127,9 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
             tick_events = model.tick()
 
             activation_events = [e for e in tick_events if isinstance(e, ItemActivatedEvent)]
+
+            accessible_set_this_category_linguistic[tick] = len(model.linguistic_component.accessible_set)
+            accessible_set_this_category_sensorimotor[tick] = len(model.sensorimotor_component.accessible_set)
 
             for activation_event in activation_events:
                 label = (model.sensorimotor_component
@@ -154,8 +162,15 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
 
         model_response_df = DataFrame(model_response_entries).sort_values([TICK_ON_WHICH_ACTIVATED, COMPONENT, ITEM_ID])
 
+        # Record model output
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
             model_response_df.to_csv(output_file, index=False)
+
+        # Record accessible set size
+        with open(accessible_set_path, mode="w", encoding="utf-8") as accessible_set_file:
+            DataFrame.from_records([[category_label + " (linguistic)"] + accessible_set_this_category_linguistic,
+                                    [category_label + " (sensorimotor)"] + accessible_set_this_category_sensorimotor])\
+                     .to_csv(accessible_set_file, index=False, header=False)
 
 
 if __name__ == '__main__':
