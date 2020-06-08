@@ -58,8 +58,8 @@ if __name__ == '__main__':
     linguistic_accessible_set_capacity = 3_000
 
     sensorimotor_length_factor = 100
+    sensorimotor_max_radius = 150
     sensorimotor_distance_type = DistanceType.Minkowski3
-    sensorimotor_buffer_capacity = 10
     sensorimotor_accessible_set_capacity = 3_000
     sensorimotor_attenuation = AttenuationStatistic.Prevalence
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                 node_decay_median=500.0,
                 node_decay_sigma=0.9,
                 attenuation_statistic=sensorimotor_attenuation,
-                max_radius=150,
+                max_radius=sensorimotor_max_radius,
                 bailout=bailout,
                 run_for_ticks=run_for_ticks,
             ),
