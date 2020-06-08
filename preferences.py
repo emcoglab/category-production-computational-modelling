@@ -46,6 +46,7 @@ class Preferences(object):
         10_000,
         30_000,
         40_000,
+        60_000,
     ]
 
     min_edges_per_node = 10

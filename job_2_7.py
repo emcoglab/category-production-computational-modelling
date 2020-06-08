@@ -26,6 +26,7 @@ class Job_2_7(InteractiveCombinedJob):
             10_000: 7,
             30_000: 11,
             40_000: 15,
+            60_000: 20,
         },
         "ppmi_ngram": {
             1_000: 2,
@@ -33,6 +34,7 @@ class Job_2_7(InteractiveCombinedJob):
             10_000: 5,
             30_000: 7,
             40_000: 9,
+            60_000: 11,
         }
     }
 
@@ -50,7 +52,7 @@ class Job_2_7(InteractiveCombinedJob):
 
 if __name__ == '__main__':
 
-    linguistic_n_words = 40_000
+    linguistic_n_words = 60_000
     linguistic_impulse_pruning_threshold = 0.05
     linguistic_node_decay_factor = 0.99
     linguistic_model_radius = 5
