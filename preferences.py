@@ -36,6 +36,7 @@ class Preferences(object):
 
     output_dir = path.join(data, "spreading activation model/Model output/")
     results_dir = path.join(data, "spreading activation model/Evaluation/")
+    ancillary_dir = path.join(data, "spreading activation mode/Ancillary results/")
 
     figures_dir = path.join(data, "spreading activation model/Figures/")
 

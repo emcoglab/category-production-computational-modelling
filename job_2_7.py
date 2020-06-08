@@ -64,7 +64,7 @@ if __name__ == '__main__':
     sensorimotor_attenuation = AttenuationStatistic.Prevalence
 
     bailout = 20_000
-    run_for_ticks = 2_000
+    run_for_ticks = 1_000
 
     specs = [
         InteractiveCombinedJobSpec(
