@@ -108,41 +108,6 @@ def compare_with_tysto(only_in_tysto: bool):
     print(i)
 
 
-def distribute_tysto():
-
-    rules: Dict[str, str] = {
-        "l": "ll",
-        "ys": "yz",
-        "ae": "e",
-        "oe": "e",
-        "ce": "se",
-        "re": "er",
-        "is": "iz",
-        "ll": "l",
-        "ou": "o",
-        "uo": "o",
-    }
-
-    distribution = defaultdict(dict)
-
-    with open("/Users/caiwingfield/Resilio Sync/Lancaster/dictionaries/tysto_new.yaml", mode="r") as t:
-        tysto_dict: Dict[str, str] = yaml.load(t, Loader=yaml.SafeLoader)
-
-    for br, am in tysto_dict.items():
-        this_item_done = False
-        for br_fragment, am_fragment in rules.items():
-            if br.replace(br_fragment, am_fragment) == am:
-                distribution[br_fragment][br] = am
-                this_item_done = True
-                break
-        if not this_item_done:
-            distribution["misc"][br] = [am]
-
-    for rule in distribution.keys():
-        with open(f"/Users/caiwingfield/Desktop/{rule}.txt", mode="w") as outfile:
-            yaml.dump(distribution[rule], outfile, yaml.SafeDumper)
-
-
 def list_unique_words():
 
     top_n = 60_000
@@ -179,11 +144,10 @@ def list_unique_words():
 if __name__ == '__main__':
     from sys import argv
     logger.info("Running %s" % " ".join(argv))
-    # list_candidate_translations_breng_ameng(
-    #     breng_fragment="ae",
-    #     ameng_fragmet="e",
-    #     strict_breng=True,
-    #     strict_ameng=True,
-    # )
-    distribute_tysto()
+    list_candidate_translations_breng_ameng(
+        breng_fragment="oe",
+        ameng_fragmet="e",
+        strict_breng=True,
+        strict_ameng=True,
+    )
     logger.info("Done!")
