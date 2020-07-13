@@ -12,4 +12,4 @@
 	url = git@github.com:emcoglab/sensorimotor-norms.git
 [submodule "breng_ameng"]
 	path = breng_ameng
-	url = git@github.com:emcoglab/breng_ameng.git
+	url = git@github.com:emcoglab/BrEng-AmEng.git
