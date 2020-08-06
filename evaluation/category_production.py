@@ -83,7 +83,7 @@ class ModelType(Enum):
         return f"Category production fit {self.name}"
 
 
-def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
+def get_n_words_from_path_linguistic(results_dir_path) -> int:
     """
     Gets the number of words from a path storing results.
     :param results_dir_path:
@@ -99,7 +99,7 @@ def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
         raise ParseError(f"Could not parse number of words from {dir_name}.")
 
 
-def get_firing_threshold_from_path_linguistic(results_dir_path: str) -> ActivationValue:
+def get_firing_threshold_from_path_linguistic(results_dir_path) -> ActivationValue:
     """
     Gets the firing threshold from a path storing the results.
     :param results_dir_path:
@@ -129,9 +129,7 @@ def available_categories(results_dir_path: str) -> List[str]:
     return categories
 
 
-def get_model_ttfas_for_category_linguistic(category: str,
-                                            results_dir: str,
-                                            n_words: int,
+def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
                                             conscious_access_threshold: float) -> DefaultDict[str, int]:
     """
     Dictionary of
@@ -168,7 +166,7 @@ def get_model_ttfas_for_category_linguistic(category: str,
         return defaultdict(lambda: nan)
 
 
-def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> Dict[str, int]:
+def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dict[str, int]:
     """
     Dictionary of
         response -> time to first activation
@@ -324,6 +322,7 @@ def add_model_hit_column(main_data, ttfa_column: str = TTFA):
 
 
 def save_item_level_data(main_data: DataFrame, save_path):
+    """Saves the item-level data to a csv."""
     main_data.to_csv(save_path, index=False)
 
 
@@ -402,10 +401,7 @@ def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, 
                             index=False)
 
 
-def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix, figures_dir: str = None):
-
-    if figures_dir is None:
-        figures_dir = path.join(Preferences.figures_dir, model_type.figures_dirname)
+def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, file_suffix, figures_dir):
 
     # rpf sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
@@ -419,25 +415,59 @@ def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suf
                                 figures_dir=figures_dir)
 
 
+def apply_ttfa_cutoff(data, ttfa_column, ttfa_cutoff):
+    """Adds a cut-off `MODEL_HIT` column to a copy of `data`."""
+    cut_data = data.copy()
+    cut_data[MODEL_HIT] = cut_data[ttfa_column] < ttfa_cutoff
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    return cut_data
+
+
 def process_one_model_output(main_data: DataFrame,
                              model_type: ModelType,
-                             input_results_dir: str,
+                             input_results_dir,
                              min_first_rank_freq: Optional[int],
                              conscious_access_threshold: Optional[float],
+                             manual_ttfa_cutoff: Optional[int] = None,
+                             stats_save_path: Optional = None,
+                             figures_save_path: Optional = None,
                              ):
+    """
+    Computes stats and figures for the output of one run of one model.
+    :param main_data:
+    :param model_type:
+    :param input_results_dir:
+    :param min_first_rank_freq:
+    :param conscious_access_threshold:
+    :param manual_ttfa_cutoff:
+        If specified, applies a TTFA cut-off to the data before processing
+    :param stats_save_path:
+        Supply to override default save location
+    :param figures_save_path:
+        Supply to override default save location
+    :return:
+    """
     assert model_type in [ModelType.linguistic, ModelType.sensorimotor, ModelType.linguistic_one_hop, ModelType.sensorimotor_one_hop]
     input_results_path = Path(input_results_dir)
+
+    if stats_save_path is None:
+        stats_save_path = path.join(Preferences.results_dir, model_type.model_output_dirname)
+    if figures_save_path is None:
+        figures_save_path = path.join(Preferences.figures_dir, model_type.figures_dirname)
+
     model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              model_type.model_output_dirname,
-                                              f"item-level data ({model_identifier})"
-                                              + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
-                                              ".csv"))
+
+    file_suffix = f"({model_identifier})"
 
     if conscious_access_threshold is not None:
-        file_suffix = f"({model_identifier}) CAT={conscious_access_threshold}"
-    else:
-        file_suffix = f"({model_identifier})"
+        file_suffix += f" CAT={conscious_access_threshold}"
+
+    if manual_ttfa_cutoff is not None:
+        file_suffix += f" cutoff {manual_ttfa_cutoff}"
+        main_data = apply_ttfa_cutoff(main_data, TTFA, manual_ttfa_cutoff)
+
+    item_level_path = path.join(stats_save_path, f"item-level data {file_suffix}.csv")
+    save_item_level_data(main_data, item_level_path)
 
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
     save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
@@ -463,7 +493,7 @@ def process_one_model_output(main_data: DataFrame,
         conscious_access_threshold=conscious_access_threshold,
     )
 
-    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, file_suffix=file_suffix, figures_dir=figures_save_path)
 
 
 def save_model_performance_stats(main_dataframe,
@@ -651,6 +681,15 @@ def find_output_dirs(root_dir: str):
 
 
 def prepare_category_production_data(model_type: ModelType) -> DataFrame:
+    """
+    Renames existing precomputed distance columns.
+    Excludes idiosyncratic responses.
+    Adds computed columns:
+        production proportion,
+        ranked production frequency,
+        rounded mean rank,
+    """
+
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = _CP.data.copy()
 
@@ -665,6 +704,7 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     main_data = exclude_idiosyncratic_responses(main_data)
 
     add_predictor_column_production_proportion(main_data)
+    # TODO: strange to have model_type in here...?
     add_rpf_column(main_data, model_type)
     add_rmr_column(main_data)
 
