@@ -67,11 +67,7 @@ class ModelType(Enum):
 
     @property
     def name(self) -> str:
-        if self == ModelType.sensorimotor_distance_only:
-            return "sensorimotor distance-only"
-        elif self == ModelType.linguistic_distance_only:
-            return "linguistic distance-only"
-        elif self == ModelType.linguistic_one_hop:
+        if self == ModelType.linguistic_one_hop:
             return "linguistic one-hop"
         elif self == ModelType.sensorimotor_one_hop:
             return "sensorimotor one-hop"
@@ -242,9 +238,9 @@ def add_predictor_column_production_proportion(main_data):
 
 
 def category_response_col_names_for_model_type(model_type):
-    if model_type in [ModelType.linguistic, ModelType.linguistic_one_hop, ModelType.linguistic_distance_only]:
+    if model_type in [ModelType.linguistic, ModelType.linguistic_one_hop]:
         c, r = CPColNames.Category, CPColNames.Response
-    elif model_type in [ModelType.sensorimotor, ModelType.sensorimotor_one_hop, ModelType.sensorimotor_distance_only]:
+    elif model_type in [ModelType.sensorimotor, ModelType.sensorimotor_one_hop]:
         c, r = CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor
     elif model_type == ModelType.combined_noninteractive:
         # We could use either here
@@ -339,12 +335,12 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
                             'Hitrate SD'],
-                        color='#A6C8FF', zorder=0)
+                        color='#D1E3FF', zorder=0)
     # Participant traces
     for participant in _CP.participants:
         pyplot.plot(summary_table.reset_index()[x_selector],
                     summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                    linewidth=0.5, linestyle="-", color="k", alpha=0.5, zorder=10)
+                    linewidth=0.2, linestyle="-", color="k", alpha=0.5, zorder=10)
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table['Hitrate Mean'],
                 linewidth=2.0, linestyle="-",
@@ -361,7 +357,8 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
     pyplot.ylabel("Hit rate")
     pyplot.xlabel(x_selector)
 
-    pyplot.gcf().set_size_inches(cm_to_inches(15), cm_to_inches(10))
+    pyplot.gcf().set_size_inches(cm_to_inches(7), cm_to_inches(7))
+    pyplot.subplots_adjust(bottom=0.15, top=0.96, left=0.19, right=0.99)
     pyplot.savefig(path.join(figures_dir, f"{fig_name}.png"), dpi=600)
 
     pyplot.clf()
@@ -393,13 +390,14 @@ def get_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType):
     return hitrates_per_rpf, hitrates_per_rmr
 
 
-def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix):
+def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix, output_dir = None):
     # Save summary tables
-    base_dir = path.join(Preferences.results_dir, model_type.model_output_dirname)
-    hitrates_per_rpf.to_csv(path.join(base_dir,
+    if output_dir is None:
+        output_dir = path.join(Preferences.results_dir, model_type.model_output_dirname)
+    hitrates_per_rpf.to_csv(path.join(output_dir,
                                       f"Production proportion per rank frequency of production {file_suffix}.csv"),
                             index=False)
-    hitrates_per_rmr.to_csv(path.join(base_dir,
+    hitrates_per_rmr.to_csv(path.join(output_dir,
                                       f"Production proportion per rounded mean rank {file_suffix}.csv"),
                             index=False)
 
@@ -463,45 +461,6 @@ def process_one_model_output(main_data: DataFrame,
         hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
-    )
-
-    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
-
-
-def process_one_model_output_distance_only(main_data: DataFrame,
-                                           model_type: ModelType,
-                                           input_results_dir: str,
-                                           min_first_rank_freq: Optional[int],
-                                           ):
-    assert model_type in [ModelType.linguistic_distance_only, ModelType.sensorimotor_distance_only]
-    input_results_path = Path(input_results_dir)
-    model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
-    output_dir = f"Category production fit {model_type.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              output_dir,
-                                              f"item-level data ({model_identifier}).csv"))
-
-    file_suffix = f"({model_identifier})"
-
-    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
-
-    # Compute hitrate fits
-    hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
-    hitrate_fit_rmr = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
-    hitrate_fit_rpf_head = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)
-    hitrate_fit_rmr_head = frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)
-
-    save_model_performance_stats(
-        main_data,
-        model_identifier=model_identifier,
-        results_dir=input_results_dir,
-        min_first_rank_freq=min_first_rank_freq,
-        hitrate_fit_rpf_hr=hitrate_fit_rpf,
-        hitrate_fit_rmr_hr=hitrate_fit_rmr,
-        hitrate_fit_rpf_hr_head=hitrate_fit_rpf_head,
-        hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
-        model_type=model_type,
-        conscious_access_threshold=None,
     )
 
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
@@ -624,6 +583,7 @@ def frac_within_sd_of_hitrate_mean(df: DataFrame, test_column: str, only_before_
             (df["Hitrate Mean"] <= df["Hitrate SD"])
             # .cumsum() starts at 0 and increments when above is true, so will be > 0 after the first time it's true
             .cumsum() <= 0]
+        logger.info(f"fraction calculated in region [0, {df.shape[0]}]")
     # When the test hitrate is within one SD of the hitrate mean
     within = Series(
         (df[test_column] > df["Hitrate Mean"] - df["Hitrate SD"])
