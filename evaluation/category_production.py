@@ -40,7 +40,7 @@ from model.utils.maths import cm_to_inches
 from preferences import Preferences
 
 
-_CP = CategoryProduction()
+CP_INSTANCE = CategoryProduction()
 
 # Each participant saw 39 categories
 CATEGORIES_PER_PARTICIPANT = 39
@@ -50,7 +50,7 @@ PARTICIPANTS_PER_CATEGORY = 20
 PARTICIPANT_SETS = 3
 TOTAL_PARTICIPANTS = PARTICIPANTS_PER_CATEGORY * PARTICIPANT_SETS  # 60
 TOTAL_CATEGORIES = CATEGORIES_PER_PARTICIPANT * PARTICIPANT_SETS  # 117
-assert (TOTAL_CATEGORIES == len(_CP.category_labels))
+assert (TOTAL_CATEGORIES == len(CP_INSTANCE.category_labels))
 
 
 class ModelType(Enum):
@@ -306,7 +306,7 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
         else:
             ttfas_for_response = [ttfas_for_category[w]
                                   for w in modified_word_tokenize(r)
-                                  if (w not in _CP.ignored_words)
+                                  if (w not in CP_INSTANCE.ignored_words)
                                   and (w in ttfas_for_category)]
 
             # The multi-word response is said to be activated the first time any one of its constituent words are
@@ -333,7 +333,7 @@ def save_item_level_data(main_data: DataFrame, save_path):
 def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir):
     """Save a summary table as a figure."""
     # Participant traces
-    for participant in _CP.participants:
+    for participant in CP_INSTANCE.participants:
         pyplot.plot(summary_table.reset_index()[x_selector],
                     summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
                     linewidth=0.2, linestyle="-", color="k", alpha=0.3,
@@ -638,7 +638,7 @@ def get_summary_table(main_dataframe, groupby_column):
     df = DataFrame()
 
     # Individual participant columns
-    for participant in _CP.participants:
+    for participant in CP_INSTANCE.participants:
         df[PARTICIPANT_HITRATE_All_f.format(participant)] = (
             main_dataframe
             [main_dataframe[PARTICIPANT_SAW_CATEGORY_f.format(participant)] == True]
@@ -648,8 +648,8 @@ def get_summary_table(main_dataframe, groupby_column):
             / CATEGORIES_PER_PARTICIPANT)
 
     # Participant summary columns: hitrate
-    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in _CP.participants]].mean(axis=1)
-    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in _CP.participants]].std(axis=1)
+    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].mean(axis=1)
+    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].std(axis=1)
 
     # Model columns
     df[MODEL_HITRATE] = (
@@ -671,7 +671,7 @@ def get_hitrate_variance(main_dataframe: DataFrame) -> DataFrame:
             main_dataframe
             .groupby(CPColNames.Category)
             .mean()[MODEL_HIT])
-    for participant in _CP.participants:
+    for participant in CP_INSTANCE.participants:
         participant_df = DataFrame()
         participant_df[PARTICIPANT_HITRATE_PER_CATEGORY_f.format(participant)] = (
             main_dataframe[main_dataframe[PARTICIPANT_SAW_CATEGORY_f.format(participant)] == True]
@@ -702,7 +702,7 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     """
 
     # Main dataframe holds category production data and model response data
-    main_data: DataFrame = _CP.data.copy()
+    main_data: DataFrame = CP_INSTANCE.data.copy()
 
     # Some distances have been precomputed, so we label them as such
     main_data.rename(columns={col_name: f"Precomputed {col_name}"

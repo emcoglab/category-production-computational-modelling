@@ -30,13 +30,12 @@ from matplotlib import pyplot
 from numpy import ceil, savetxt, array
 from pandas import DataFrame
 
-from category_production.category_production import ColNames as CPColNames, CategoryProduction
-from evaluation.category_production import add_ttfa_column, ModelType, \
-    get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
-    get_n_words_from_path_linguistic, frac_within_sd_of_hitrate_mean, \
-    get_firing_threshold_from_path_linguistic, prepare_category_production_data, get_hitrate_variance, \
-    save_hitrate_graphs, add_model_hit_column, \
-    process_one_model_output, apply_ttfa_cutoff
+from category_production.category_production import ColNames as CPColNames
+from evaluation.category_production import add_ttfa_column, ModelType, get_model_ttfas_for_category_sensorimotor, \
+    get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, \
+    frac_within_sd_of_hitrate_mean, get_firing_threshold_from_path_linguistic, prepare_category_production_data, \
+    get_hitrate_variance, save_hitrate_graphs, add_model_hit_column, process_one_model_output, apply_ttfa_cutoff, \
+    CP_INSTANCE
 from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f
 from model.utils.maths import cm_to_inches
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
@@ -47,7 +46,6 @@ logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 
 
 SN = SensorimotorNorms()
-CP = CategoryProduction()
 
 # The number of members of a category to produce when computing TTFA scale ratios
 N_MEMBERS_COREGISTRATION = 3
@@ -97,7 +95,7 @@ def prepare_main_dataframe() -> DataFrame:
     linguistic_ttfas = {
         category: get_model_ttfas_for_category_linguistic(category, input_dirs[ModelType.linguistic],
                                                           n_words, this_linguistic_cat)
-        for category in CP.category_labels
+        for category in CP_INSTANCE.category_labels
     }
     add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
     main_data.rename(columns={TTFA: TTFA_LINGUISTIC}, inplace=True)
@@ -105,7 +103,7 @@ def prepare_main_dataframe() -> DataFrame:
     # Sensorimotor TTFAs
     sensorimotor_ttfas = {
         category: get_model_ttfas_for_category_sensorimotor(category, input_dirs[ModelType.sensorimotor])
-        for category in CP.category_labels_sensorimotor
+        for category in CP_INSTANCE.category_labels_sensorimotor
     }
     add_ttfa_column(main_data, model_type=ModelType.sensorimotor, ttfas=sensorimotor_ttfas)
     main_data.rename(columns={TTFA: TTFA_SENSORIMOTOR}, inplace=True)
@@ -122,7 +120,7 @@ def apply_coregistration(main_data: DataFrame):
             .head(N_MEMBERS_COREGISTRATION)
             .groupby(CPColNames.Category, sort=False)
             .max()
-        [TTFA_LINGUISTIC]
+            [TTFA_LINGUISTIC]
             .mean()
     )
     mean_ttfa_sensorimotor = (
@@ -133,7 +131,7 @@ def apply_coregistration(main_data: DataFrame):
             .head(N_MEMBERS_COREGISTRATION)
             .groupby(CPColNames.CategorySensorimotor, sort=False)
             .max()
-        [TTFA_SENSORIMOTOR]
+            [TTFA_SENSORIMOTOR]
             .mean()
     )
 
@@ -159,12 +157,12 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
             category: get_model_ttfas_for_category_linguistic(
                 category, input_dirs[model_type], n_words,
                 conscious_access_threshold=get_firing_threshold_from_path_linguistic(input_dirs[model_type]))
-            for category in CP.category_labels
+            for category in CP_INSTANCE.category_labels
         }
     elif model_type in {ModelType.sensorimotor, ModelType.sensorimotor_one_hop}:
         ttfas = {
             category: get_model_ttfas_for_category_sensorimotor(category, input_dirs[model_type])
-            for category in CP.category_labels_sensorimotor
+            for category in CP_INSTANCE.category_labels_sensorimotor
         }
     else:
         raise NotImplementedError()
@@ -190,10 +188,12 @@ def process_coregistered_model_output(data: DataFrame, model_type: ModelType, cu
     save_hitrate_graphs(hrs_rpf, hrs_rmr,
                         file_suffix=f" {model_type.name} cutoff={cutoff}",
                         figures_dir=output_dirs[model_type])
+    logger.info(f"Hitrate fits for {model_type.name} model")
     logger.info(f"cutoff={cutoff} rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
     logger.info(f"cutoff={cutoff} rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
-    get_hitrate_variance(cutoff_data).to_csv(Path(output_dirs[model_type], "linguistic hitrate variance.csv"),
+    get_hitrate_variance(cutoff_data).to_csv(Path(output_dirs[model_type], f"{model_type.name} hitrate variance.csv"),
                                              na_rep="")
+    logger.info("Computing participant hitrates")
     save_participant_hitrates(cutoff_data)
 
 
@@ -235,18 +235,14 @@ def explore_ttfa_cutoffs(main_data):
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(
         apply_ttfa_cutoff(main_data, TTFA_COMBINED, combined_rmr_ttfa_cutoff),
         ModelType.combined_noninteractive)
-    logger.info(
-        f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
-    logger.info(
-        f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+    logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+    logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
     # Combined (rpf-optimal)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(
         apply_ttfa_cutoff(main_data, TTFA_COMBINED, combined_rpf_ttfa_cutoff),
         ModelType.combined_noninteractive)
-    logger.info(
-        f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
-    logger.info(
-        f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+    logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+    logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
 
 
 def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf):
@@ -274,15 +270,15 @@ def save_participant_hitrates(data):
     participant_hitrates_rmr = array([
         frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=PARTICIPANT_HITRATE_All_f.format(p),
                                        only_before_sd_includes_0=True)
-        for p in CP.participants
+        for p in CP_INSTANCE.participants
     ])
-    logger.info(f"Mean participant hitrate % (RMR) {participant_hitrates_rmr.mean()} (range {participant_hitrates_rmr.min()}–{participant_hitrates_rmr.max()}) head only")
+    logger.info(f"Mean participant hitrate % (RMR) {participant_hitrates_rmr.mean()} (sd {participant_hitrates_rmr.std()}; range {participant_hitrates_rmr.min()}–{participant_hitrates_rmr.max()}) head only")
     participant_hitrates_rpf = array([
         frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=PARTICIPANT_HITRATE_All_f.format(p),
                                        only_before_sd_includes_0=True)
-        for p in CP.participants
+        for p in CP_INSTANCE.participants
     ])
-    logger.info(f"Mean participant hitrate % (RPF) {participant_hitrates_rpf.mean()} (range {participant_hitrates_rpf.min()}–{participant_hitrates_rpf.max()}) head only")
+    logger.info(f"Mean participant hitrate % (RPF) {participant_hitrates_rpf.mean()} (sd {participant_hitrates_rpf.std()}; range {participant_hitrates_rpf.min()}–{participant_hitrates_rpf.max()}) head only")
 
 
 def main(manual_ttfa_cutoff: Optional[int] = None):
