@@ -27,22 +27,19 @@ from pathlib import Path
 from typing import Optional, Dict
 
 from matplotlib import pyplot
-from numpy import ceil, savetxt, array, loadtxt
+from numpy import ceil, savetxt, array
 from pandas import DataFrame
 
-from preferences import Preferences
-from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from category_production.category_production import ColNames as CPColNames, CategoryProduction
-
-from model.utils.maths import cm_to_inches
 from evaluation.category_production import add_ttfa_column, ModelType, \
     get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
     get_n_words_from_path_linguistic, frac_within_sd_of_hitrate_mean, \
-    get_firing_threshold_from_path_linguistic, prepare_category_production_data, get_hitrate_variance, _CP, \
-    save_hitrate_graphs, save_hitrate_summary_tables, save_item_level_data, add_model_hit_column, \
-    process_one_model_output, apply_ttfa_cutoff, drop_missing_data_to_add_types, save_model_performance_stats
-from evaluation.column_names import TTFA, MODEL_HIT, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, \
-    RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK
+    get_firing_threshold_from_path_linguistic, prepare_category_production_data, get_hitrate_variance, \
+    save_hitrate_graphs, add_model_hit_column, \
+    process_one_model_output, apply_ttfa_cutoff
+from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f
+from model.utils.maths import cm_to_inches
+from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 logger = logging.getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
@@ -73,17 +70,18 @@ root_input_dir = Path("/Users/cai/Box Sync/LANGBOOT Project/Manuscripts/Category
 root_output_dir = Path("/Users/cai/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Results")
 
 input_dirs: Dict[ModelType, Path] = {
-    ModelType.sensorimotor:         Path(root_input_dir, "Sensorimotor 0.7"),
-    ModelType.sensorimotor_one_hop: Path(root_input_dir, "Sensorimotor one-hop 0.7"),
-    ModelType.linguistic:           Path(root_input_dir, "Linguistic 0.7"),
-    ModelType.linguistic_one_hop:   Path(root_input_dir, "Linguistic one-hop 0.7"),
+    ModelType.sensorimotor:         Path(root_input_dir, "Sensorimotor 0.7/Minkowski-3 length 100 attenuate Prevalence/max-r 150; n-decay-median 500.0; n-decay-sigma 0.9; as-θ 0.3; as-cap 3,000; buff-θ 0.7; buff-cap 10; run-for 10000; bail None"),
+    ModelType.sensorimotor_one_hop: Path(root_input_dir, "Sensorimotor one-hop 0.7/Minkowski-3 length 100 attenuate Prevalence/max-r 150; n-decay-median 500.0; n-decay-sigma 0.9; as-θ 0.3; as-cap 3,000; buff-θ 0.7; buff-cap 10"),
+    ModelType.linguistic:           Path(root_input_dir, "Linguistic 0.7/PPMI n-gram (BBC), r=5 40,000 words, length 10/firing-θ 0.9; n-decay-f 0.99; e-decay-sd 15.0; imp-prune-θ 0.05; run-for 3000; bail 20000"),
+    ModelType.linguistic_one_hop:   Path(root_input_dir, "Linguistic one-hop 0.7/PPMI n-gram (BBC), r=5 40,000 words, length 10/firing-θ 0.9; n-decay-f 0.99; e-decay-sd 15.0; imp-prune-θ 0.05"),
 }
 
 output_dirs: Dict[ModelType, Path] = {
-    ModelType.sensorimotor:         Path(root_output_dir, ModelType.sensorimotor.name),
-    ModelType.sensorimotor_one_hop: Path(root_output_dir, ModelType.sensorimotor_one_hop.name),
-    ModelType.linguistic:           Path(root_output_dir, ModelType.linguistic.name),
-    ModelType.linguistic_one_hop:   Path(root_output_dir, ModelType.linguistic_one_hop.name),
+    ModelType.sensorimotor:            Path(root_output_dir, ModelType.sensorimotor.name),
+    ModelType.sensorimotor_one_hop:    Path(root_output_dir, ModelType.sensorimotor_one_hop.name),
+    ModelType.linguistic:              Path(root_output_dir, ModelType.linguistic.name),
+    ModelType.linguistic_one_hop:      Path(root_output_dir, ModelType.linguistic_one_hop.name),
+    ModelType.combined_noninteractive: Path(root_output_dir, ModelType.combined_noninteractive.name),
 }
 
 
@@ -95,9 +93,9 @@ def prepare_main_dataframe() -> DataFrame:
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = prepare_category_production_data(ModelType.combined_noninteractive)
     # Linguistic TTFAs
-    n_words = get_n_words_from_path_linguistic(input_dirs[input_dirs[ModelType.linguistic]])
+    n_words = get_n_words_from_path_linguistic(input_dirs[ModelType.linguistic])
     linguistic_ttfas = {
-        category: get_model_ttfas_for_category_linguistic(category, input_dirs[input_dirs[ModelType.linguistic]],
+        category: get_model_ttfas_for_category_linguistic(category, input_dirs[ModelType.linguistic],
                                                           n_words, this_linguistic_cat)
         for category in CP.category_labels
     }
@@ -153,6 +151,8 @@ def combine_components(main_data):
 
 def process_original_model_output(data: DataFrame, model_type: ModelType):
 
+    local_data = data.copy()
+
     if model_type in {ModelType.linguistic, ModelType.linguistic_one_hop}:
         n_words = get_n_words_from_path_linguistic(input_dirs[model_type])
         ttfas = {
@@ -166,11 +166,13 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
             category: get_model_ttfas_for_category_sensorimotor(category, input_dirs[model_type])
             for category in CP.category_labels_sensorimotor
         }
-    else: raise NotImplementedError()
-    add_ttfa_column(data, model_type=model_type, ttfas=ttfas)
-    add_model_hit_column(data)
+    else:
+        raise NotImplementedError()
 
-    process_one_model_output(main_data=data,
+    add_ttfa_column(local_data, model_type=model_type, ttfas=ttfas)
+    add_model_hit_column(local_data)
+
+    process_one_model_output(main_data=local_data,
                              model_type=model_type,
                              input_results_dir=input_dirs[model_type],
                              min_first_rank_freq=None,
@@ -182,8 +184,8 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
 
 def process_coregistered_model_output(data: DataFrame, model_type: ModelType, cutoff: int):
     cutoff_data = apply_ttfa_cutoff(data,
-                               ttfa_column=TTFA_COLUMNS_FOR_CUTOFF[model_type],
-                               ttfa_cutoff=cutoff)
+                                    ttfa_column=TTFA_COLUMNS_FOR_CUTOFF[model_type],
+                                    ttfa_cutoff=cutoff)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data, model_type)
     save_hitrate_graphs(hrs_rpf, hrs_rmr,
                         file_suffix=f" {model_type.name} cutoff={cutoff}",
@@ -192,6 +194,7 @@ def process_coregistered_model_output(data: DataFrame, model_type: ModelType, cu
     logger.info(f"cutoff={cutoff} rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
     get_hitrate_variance(cutoff_data).to_csv(Path(output_dirs[model_type], "linguistic hitrate variance.csv"),
                                              na_rep="")
+    save_participant_hitrates(cutoff_data)
 
 
 def explore_ttfa_cutoffs(main_data):
@@ -200,6 +203,7 @@ def explore_ttfa_cutoffs(main_data):
 
     max_ttfa = int(ceil(max(main_data[TTFA_LINGUISTIC].max(), main_data[TTFA_SENSORIMOTOR_SCALED].max())))
     for ttfa_cutoff in range(max_ttfa + 1):
+        logger.info(f"Testing cutoff at {ttfa_cutoff}")
         cutoff_data_rpf = apply_ttfa_cutoff(main_data, TTFA_COMBINED, ttfa_cutoff)
         hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data_rpf, ModelType.combined_noninteractive)
         combined_hitrates_rmr.append(
@@ -289,23 +293,20 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
 
     combine_components(main_data)
 
+    # Process separate and one-hop models
+    for model_type in [ModelType.sensorimotor, ModelType.sensorimotor_one_hop,
+                       ModelType.linguistic, ModelType.linguistic_one_hop]:
+        process_original_model_output(main_data, model_type=model_type)
+
     if manual_ttfa_cutoff is None:
-
-        # Process separate and one-hop models
-        for model_type in [ModelType.sensorimotor, ModelType.sensorimotor_one_hop,
-                           ModelType.linguistic, ModelType.linguistic_one_hop]:
-            process_original_model_output(main_data, model_type=model_type)
-
         explore_ttfa_cutoffs(main_data)
 
     else:
-        # Apply cutoffs to joint and original data
-
         # Cut-offs only apply to separate and combined components
-        for model_type in [ModelType.sensorimotor, ModelType.linguistic, ModelType.combined_noninteractive]:
+        for model_type in [ModelType.sensorimotor, ModelType.linguistic,
+                           ModelType.combined_noninteractive]:
+            # Apply cutoffs to joint and original data
             process_coregistered_model_output(main_data, model_type=model_type, cutoff=manual_ttfa_cutoff)
-
-    save_participant_hitrates(main_data)
 
 
 if __name__ == '__main__':

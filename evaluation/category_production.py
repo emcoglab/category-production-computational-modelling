@@ -25,13 +25,13 @@ from os import path, listdir
 from pathlib import Path
 from typing import DefaultDict, Dict, Set, List, Optional
 
+import yaml
 from matplotlib import pyplot
 from numpy import nan
 from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
 from ldm.corpus.tokenising import modified_word_tokenize
-from model.components import ModelComponent
 from model.utils.logging import logger
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
@@ -178,6 +178,10 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dic
     :param results_dir:
     :return:
     """
+
+    # Check for erroneous paths
+    if not path.isdir(results_dir):
+        raise NotADirectoryError(results_dir)
 
     # Try to load model response
     try:
@@ -522,7 +526,9 @@ def save_model_performance_stats(main_dataframe,
 
     if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
         # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
-        df_dict.update(ModelComponent.load_model_spec(results_dir))
+        # TODO: this is getting a bit messy
+        with open(path.join(results_dir, " model_spec.yaml"), mode="r") as f:
+            df_dict.update(yaml.load(f, yaml.SafeLoader))
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
 
     df_dict.update({
