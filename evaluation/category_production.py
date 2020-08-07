@@ -332,28 +332,33 @@ def save_item_level_data(main_data: DataFrame, save_path):
 
 def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir):
     """Save a summary table as a figure."""
-
+    # Participant traces
+    for participant in _CP.participants:
+        pyplot.plot(summary_table.reset_index()[x_selector],
+                    summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
+                    linewidth=0.2, linestyle="-", color="k", alpha=0.3,
+                    zorder=0)
+    # SD region
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
                         y1=summary_table['Hitrate Mean'] - summary_table[
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
                             'Hitrate SD'],
-                        color='#D1E3FF', zorder=0)
-    # Participant traces
-    for participant in _CP.participants:
-        pyplot.plot(summary_table.reset_index()[x_selector],
-                    summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                    linewidth=0.2, linestyle="-", color="k", alpha=0.5, zorder=10)
+                        color="#aeecff", alpha=0.6,
+                        zorder=10)
+    # Mean
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table['Hitrate Mean'],
-                linewidth=2.0, linestyle="-",
-                color="#00EB0C", zorder=20)
+                linewidth=0.5, linestyle="-",
+                color="#000000", alpha=0.5,
+                zorder=20)
 
     # add model performance
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table[MODEL_HITRATE],
                 linewidth=2.0, linestyle='-',
-                color="#FA5300", zorder=30)
+                color="#FA5300",
+                zorder=30)
 
     pyplot.ylim((0, None))
 

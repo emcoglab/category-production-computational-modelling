@@ -21,7 +21,7 @@ caiwingfield.net
 #  "output" project, just like with LDM.
 
 import argparse
-import logging
+from logging import getLogger, basicConfig, INFO
 import sys
 from pathlib import Path
 from typing import Optional, Dict
@@ -41,7 +41,7 @@ from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All
 from model.utils.maths import cm_to_inches
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 
@@ -310,6 +310,7 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
 
 
 if __name__ == '__main__':
+    basicConfig(format=logger_format, datefmt=logger_dateformat, level=INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
     parser = argparse.ArgumentParser()
