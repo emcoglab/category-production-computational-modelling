@@ -344,7 +344,7 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
                             'Hitrate SD'],
-                        color="#aeecff", alpha=0.6,
+                        color="#51fff7", alpha=0.6,
                         zorder=10)
     # Mean
     pyplot.plot(summary_table.reset_index()[x_selector],
