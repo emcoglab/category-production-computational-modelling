@@ -35,8 +35,9 @@ from evaluation.category_production import add_ttfa_column, ModelType, get_model
     get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, \
     frac_within_sd_of_hitrate_mean, get_firing_threshold_from_path_linguistic, prepare_category_production_data, \
     get_hitrate_variance, save_hitrate_graphs, add_model_hit_column, process_one_model_output, apply_ttfa_cutoff, \
-    CP_INSTANCE
-from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f
+    CP_INSTANCE, save_hitrate_summary_tables
+from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
+    RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK
 from model.utils.maths import cm_to_inches
 from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
@@ -55,7 +56,7 @@ TTFA_LINGUISTIC          = f"{TTFA} linguistic"
 TTFA_SENSORIMOTOR        = f"{TTFA} sensorimotor"
 TTFA_SENSORIMOTOR_SCALED = f"{TTFA} sensorimotor scaled"
 TTFA_COMBINED            = f"{TTFA} combined"
-COMPONENT_ACTIVATED      = f"activated in component"
+COMPONENT_ACTIVATED      = f"Activated in component"
 
 TTFA_COLUMNS_FOR_CUTOFF: Dict[ModelType, str] = {
     ModelType.sensorimotor:            TTFA_SENSORIMOTOR_SCALED,
@@ -185,6 +186,9 @@ def process_coregistered_model_output(data: DataFrame, model_type: ModelType, cu
                                     ttfa_column=TTFA_COLUMNS_FOR_CUTOFF[model_type],
                                     ttfa_cutoff=cutoff)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data, model_type)
+    save_hitrate_summary_tables(hrs_rmr, hrs_rpf, model_type,
+                                file_suffix=f"{model_type.name} coregistered cutoff={cutoff}",
+                                output_dir=output_dirs[model_type])
     save_hitrate_graphs(hrs_rpf, hrs_rmr,
                         file_suffix=f" {model_type.name} cutoff={cutoff}",
                         figures_dir=output_dirs[model_type])
@@ -303,6 +307,29 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
                            ModelType.combined_noninteractive]:
             # Apply cutoffs to joint and original data
             process_coregistered_model_output(main_data, model_type=model_type, cutoff=manual_ttfa_cutoff)
+
+    # Save final main dataframe
+    with open(Path(root_output_dir, "main model data.csv"), mode="w", encoding="utf-8") as main_data_output_file:
+        main_data[[
+            # Select only relevant columns for output
+            CPColNames.Category,
+            CPColNames.Response,
+            CPColNames.CategorySensorimotor,
+            CPColNames.ResponseSensorimotor,
+            CPColNames.ProductionFrequency,
+            CPColNames.MeanRank,
+            CPColNames.FirstRankFrequency,
+            CPColNames.MeanRT,
+            CPColNames.MeanZRT,
+            PRODUCTION_PROPORTION,
+            RANKED_PRODUCTION_FREQUENCY,
+            ROUNDED_MEAN_RANK,
+            TTFA_LINGUISTIC,
+            TTFA_SENSORIMOTOR,
+            TTFA_SENSORIMOTOR_SCALED,
+            TTFA_COMBINED,
+            COMPONENT_ACTIVATED,
+        ]].to_csv(main_data_output_file, index=False)
 
 
 if __name__ == '__main__':

@@ -479,7 +479,7 @@ def process_one_model_output(main_data: DataFrame,
     save_item_level_data(main_data, item_level_path)
 
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
-    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
+    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix, output_dir=stats_save_path)
 
     # Compute hitrate fits
     hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
@@ -500,6 +500,7 @@ def process_one_model_output(main_data: DataFrame,
         hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
+        output_dir=stats_save_path,
     )
 
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, file_suffix=file_suffix, figures_dir=figures_save_path)
@@ -515,6 +516,7 @@ def save_model_performance_stats(main_dataframe,
                                  hitrate_fit_rmr_hr_head,
                                  model_type: ModelType,
                                  conscious_access_threshold: Optional[float],
+                                 output_dir: str = None
                                  ):
 
     # Build output dir
@@ -522,9 +524,12 @@ def save_model_performance_stats(main_dataframe,
         filename_suffix = f" CAT={conscious_access_threshold}"
     else:
         filename_suffix = ""
+    if output_dir is None:
+        output_dir = path.join(
+            Preferences.results_dir,
+            model_type.model_output_dirname)
     overall_stats_output_path = path.join(
-        Preferences.results_dir,
-        model_type.model_output_dirname,
+        output_dir,
         f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
 
     df_dict = dict()
