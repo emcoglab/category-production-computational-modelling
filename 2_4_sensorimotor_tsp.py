@@ -203,7 +203,7 @@ if __name__ == '__main__':
     parser.add_argument("--length_factor", required=True, type=Length)
     parser.add_argument("--node_decay_median", required=True, type=float)
     parser.add_argument("--node_decay_sigma", required=True, type=float)
-    parser.add_argument("--max_sphere_radius", required=True, type=Length)
+    parser.add_argument("--max_sphere_radius", required=True, type=float)
     parser.add_argument("--run_for_ticks", required=True, type=int)
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")

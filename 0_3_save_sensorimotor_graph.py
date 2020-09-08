@@ -22,7 +22,6 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from ldm.utils.logging import log_message, date_format
 from ldm.utils.maths import DistanceType
 from model.utils.logging import logger
 from model.graph import save_edgelist_from_distance_matrix

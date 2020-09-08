@@ -1,0 +1,13 @@
+Bailout: 20000
+Firing threshold: 0.9
+Impulse pruning threshold: 0.05
+Length factor: 10
+Model name: 'ppmi_ngram'
+Model radius: 5
+Corpus name: 'bbc'
+Node decay: 0.99
+Run for ticks: 2000
+Edge decay SD: 15.0
+Words: 40000
+Accessible set capacity: None
+Accessible set threshold: 0

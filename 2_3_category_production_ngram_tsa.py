@@ -48,7 +48,7 @@ def main(n_words: int,
          length_factor: int,
          firing_threshold: ActivationValue,
          node_decay_factor: float,
-         edge_decay_sd_factor: float,
+         edge_decay_sd: float,
          accessible_set_threshold: ActivationValue,
          accessible_set_capacity: int,
          impulse_pruning_threshold: ActivationValue,
@@ -61,7 +61,7 @@ def main(n_words: int,
         distance_type=None, n_words=n_words,
         firing_threshold=firing_threshold, length_factor=length_factor,
         pruning_type=None, pruning=None,
-        node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
+        node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd,
         accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
         impulse_pruning_threshold=impulse_pruning_threshold,
         run_for_ticks=run_for_ticks, bailout=bailout,
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run temporal spreading activation on a graph.")
 
     parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--accessible_set_capacity", required=True)
     parser.add_argument("--bailout", required=False, default=0, type=int,
                         help="The number of concurrent activations necessary to "
                              "pull the emergency handbrake. Set to 0 to never bailout.")
@@ -184,7 +184,7 @@ if __name__ == '__main__':
     parser.add_argument("--model_name", required=True, type=str)
     parser.add_argument("--node_decay_factor", required=True, type=float)
     parser.add_argument("--radius", required=True, type=int)
-    parser.add_argument("--edge_decay_sd_factor", required=True, type=float)
+    parser.add_argument("--edge_decay_sd", required=True, type=float)
     parser.add_argument("--run_for_ticks", required=True, type=int)
     parser.add_argument("--words", type=int, required=True,
                         help="The number of words to use from the corpus. (Top n words.)")
@@ -198,8 +198,8 @@ if __name__ == '__main__':
          length_factor=args.length_factor,
          firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
-         edge_decay_sd_factor=args.edge_decay_sd_factor,
-         accessible_set_capacity=args.accessible_set_capacity,
+         edge_decay_sd=args.edge_decay_sd,
+         accessible_set_capacity=int(args.accessible_set_capacity) if args.accessible_set_capacity != 'None' else None,
          accessible_set_threshold=args.accessible_set_threshold,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
