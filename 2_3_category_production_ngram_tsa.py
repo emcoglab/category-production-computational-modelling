@@ -120,7 +120,8 @@ def main(n_words: int,
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             # Divide activation among multi-word categories
-            lc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION / len(category_words))
+            if category_words:
+                lc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION / len(category_words))
 
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
