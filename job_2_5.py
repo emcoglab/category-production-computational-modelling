@@ -40,6 +40,10 @@ class Job_2_5(LinguisticPropagationJob):
 
 
 if __name__ == '__main__':
-    job = Job_2_5(LinguisticOneHopJobSpec.load(
-        Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml")))
-    job.run_locally(extra_arguments=["--multiword-divide"])
+    jobs = [
+        Job_2_5(s)
+        for s in LinguisticOneHopJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic_search.yaml"))
+    ]
+    for job in jobs:
+        job.run_locally(extra_arguments=[])

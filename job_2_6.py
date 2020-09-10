@@ -30,6 +30,10 @@ class Job_2_6(SensorimotorPropagationJob):
 
 
 if __name__ == '__main__':
-    job = Job_2_6(BufferedSensorimotorOneHopJobSpec.load(
-        Path(Path(__file__).parent, "job_specifications/job_cognition_paper_sensorimotor.yaml")))
-    job.run_locally(extra_arguments=["--use_prepruned", "--multiword_divide"])
+    jobs = [
+        Job_2_6(s)
+        for s in BufferedSensorimotorOneHopJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_sensorimotor.yaml"))
+    ]
+    for job in jobs:
+        job.run_locally(extra_arguments=["--use_prepruned"])
