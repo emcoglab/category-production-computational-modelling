@@ -53,7 +53,9 @@ def main(n_words: int,
          accessible_set_capacity: int,
          impulse_pruning_threshold: ActivationValue,
          run_for_ticks: int,
-         bailout: int):
+         bailout: int,
+         divide_initial_activation_for_multiword_categories: bool,
+         ):
 
     job_spec = LinguisticPropagationJobSpec(
         model_name=model_name, model_radius=radius,
@@ -121,7 +123,10 @@ def main(n_words: int,
                         f" (activating individual words: {', '.join(category_words)})")
             # Divide activation among multi-word categories
             if category_words:
-                lc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION / len(category_words))
+                initial_activation = FULL_ACTIVATION
+                if divide_initial_activation_for_multiword_categories:
+                    initial_activation /= len(category_words)
+                lc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
@@ -139,7 +144,7 @@ def main(n_words: int,
                     event.activation,
                     event.time))
 
-            suprathreshold_this_category[tick] = lc.accessible_set.items
+            suprathreshold_this_category[tick] = len(lc.accessible_set)
 
             # Break early if we've got a probable explosion
             if len(lc.accessible_set) > bailout > 0:
@@ -176,9 +181,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
     parser.add_argument("--accessible_set_capacity", required=True)
-    parser.add_argument("--bailout", required=False, default=0, type=int,
-                        help="The number of concurrent activations necessary to "
-                             "pull the emergency handbrake. Set to 0 to never bailout.")
+    parser.add_argument("--bailout", required=False, default=0, type=int)
     parser.add_argument("--corpus_name", required=True, type=str)
     parser.add_argument("--firing_threshold", required=True, type=ActivationValue)
     parser.add_argument("--impulse_pruning_threshold", required=True, type=ActivationValue)
@@ -188,8 +191,8 @@ if __name__ == '__main__':
     parser.add_argument("--radius", required=True, type=int)
     parser.add_argument("--edge_decay_sd", required=True, type=float)
     parser.add_argument("--run_for_ticks", required=True, type=int)
-    parser.add_argument("--words", type=int, required=True,
-                        help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("--words", type=int, required=True)
+    parser.add_argument("--multiword_divide", type=bool, action="store_true")
 
     args = parser.parse_args()
 
@@ -206,5 +209,6 @@ if __name__ == '__main__':
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          bailout=args.bailout,
+         divide_initial_activation_for_multiword_categories=args.multiword_divide,
          )
     logger.info("Done!")

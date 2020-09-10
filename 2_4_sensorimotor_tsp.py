@@ -56,6 +56,7 @@ def main(distance_type_name: str,
          node_decay_median: float,
          node_decay_sigma: float,
          attenuation: AttenuationStatistic,
+         divide_initial_activation_for_multiword_categories: bool,
          bailout: int = None,
          use_prepruned: bool = False,
          ):
@@ -120,7 +121,10 @@ def main(distance_type_name: str,
                         f" (activating individual words: {', '.join(category_words)})")
             # Divide activation among multi-word categories
             if category_words:
-                sc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION / len(category_words))
+                initial_activation = FULL_ACTIVATION
+                if divide_initial_activation_for_multiword_categories:
+                    initial_activation /= len(category_words)
+                sc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
@@ -210,6 +214,7 @@ if __name__ == '__main__':
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
     parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
+    parser.add_argument("--multiword_divide", type=bool, action="store_true")
 
     args = parser.parse_args()
 
@@ -225,5 +230,7 @@ if __name__ == '__main__':
          node_decay_sigma=args.node_decay_sigma,
          bailout=args.bailout,
          use_prepruned=args.use_prepruned,
-         attenuation=AttenuationStatistic.from_slug(args.attenuation))
+         attenuation=AttenuationStatistic.from_slug(args.attenuation),
+         divide_initial_activation_for_multiword_categories=args.multiword_divide,
+         )
     logger.info("Done!")
