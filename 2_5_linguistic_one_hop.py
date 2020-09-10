@@ -218,7 +218,7 @@ if __name__ == '__main__':
          firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
          edge_decay_sd=args.edge_decay_sd,
-         accessible_set_capacity=args.accessible_set_capacity,
+         accessible_set_capacity=int(args.accessible_set_capacity) if args.accessible_set_capacity != 'None' else None,
          accessible_set_threshold=args.accessible_set_threshold,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          divide_initial_activation_for_multiword_categories=args.multiword_divide,
