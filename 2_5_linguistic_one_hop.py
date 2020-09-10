@@ -196,7 +196,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--accessible_set_capacity", required=True)
     parser.add_argument("--corpus_name", required=True, type=str)
     parser.add_argument("--firing_threshold", required=True, type=ActivationValue)
     parser.add_argument("--impulse_pruning_threshold", required=True, type=ActivationValue)
