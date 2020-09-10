@@ -214,7 +214,7 @@ if __name__ == '__main__':
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
     parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
-    parser.add_argument("--multiword_divide", type=bool, action="store_true")
+    parser.add_argument("--multiword_divide", action="store_true")
 
     args = parser.parse_args()
 
