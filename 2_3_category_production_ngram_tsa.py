@@ -192,7 +192,7 @@ if __name__ == '__main__':
     parser.add_argument("--edge_decay_sd", required=True, type=float)
     parser.add_argument("--run_for_ticks", required=True, type=int)
     parser.add_argument("--words", type=int, required=True)
-    parser.add_argument("--multiword_divide", type=bool, action="store_true")
+    parser.add_argument("--multiword_divide", action="store_true")
 
     args = parser.parse_args()
 
