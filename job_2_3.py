@@ -39,4 +39,4 @@ class Job_2_3(LinguisticPropagationJob):
 if __name__ == '__main__':
     job = Job_2_3(LinguisticPropagationJobSpec.load(
         Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml")))
-    job.run_locally()
+    job.run_locally(extra_arguments=["--multiword_divide"])

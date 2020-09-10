@@ -78,6 +78,8 @@ def main(distance_type_name: str,
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
                               job_spec.output_location_relative())
+    if divide_initial_activation_for_multiword_categories:
+        response_dir = Path(*response_dir.parts[:-1], response_dir.parts[-1] + " divided")
 
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
