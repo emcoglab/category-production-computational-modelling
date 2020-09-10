@@ -31,7 +31,6 @@ class Job_2_4(SensorimotorPropagationJob):
 
 
 if __name__ == '__main__':
-
     job = Job_2_4(BufferedSensorimotorPropagationJobSpec.load(
         Path(Path(__file__).parent, "job_specifications/job_cognition_paper_sensorimotor.yaml")))
     job.run_locally(extra_arguments="--use_prepruned")

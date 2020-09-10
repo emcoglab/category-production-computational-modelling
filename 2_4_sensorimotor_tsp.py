@@ -119,10 +119,12 @@ def main(distance_type_name: str,
                               and word in sc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            # Divide activation among multi-word categories
             if category_words:
                 initial_activation = FULL_ACTIVATION
                 if divide_initial_activation_for_multiword_categories:
+                    # Divide activation among multi-word categories
+                    logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
+                    csv_comments.extend(f"Dividing activation of multi-word category {len(category_words)} ways")
                     initial_activation /= len(category_words)
                 sc.propagator.activate_items_with_labels(category_words, initial_activation)
 

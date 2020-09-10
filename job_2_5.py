@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Dict
 
 from model.utils.job import LinguisticPropagationJob, LinguisticOneHopJobSpec
@@ -39,22 +40,6 @@ class Job_2_5(LinguisticPropagationJob):
 
 
 if __name__ == '__main__':
-
-    n_words = 40_000
-    impulse_pruning_threshold = 0.05
-    node_decay_factor = 0.99
-    model_radius = 5
-    corpus_name = "bbc"
-    accessible_set_threshold = 0
-    accessible_set_capacity = None
-
-    specs = [
-        LinguisticOneHopJobSpec(model_name="ppmi_ngram", firing_threshold=0.5, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, bailout=None, run_for_ticks=None, accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity),
-        LinguisticOneHopJobSpec(model_name="ppmi_ngram", firing_threshold=0.6, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, bailout=None, run_for_ticks=None, accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity),
-        LinguisticOneHopJobSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, bailout=None, run_for_ticks=None, accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity),
-        LinguisticOneHopJobSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, bailout=None, run_for_ticks=None, accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity),
-        LinguisticOneHopJobSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=10, impulse_pruning_threshold=impulse_pruning_threshold, node_decay_factor=node_decay_factor, model_radius=model_radius, corpus_name=corpus_name, pruning=None, pruning_type=None, n_words=n_words, length_factor=10, bailout=None, run_for_ticks=None, accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity),
-    ]
-
-    for job in [Job_2_5(spec) for spec in specs]:
-        job.submit()
+    job = Job_2_5(LinguisticOneHopJobSpec.load(
+        Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml")))
+    job.run_locally()
