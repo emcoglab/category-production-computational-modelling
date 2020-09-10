@@ -207,6 +207,9 @@ if __name__ == '__main__':
     parser.add_argument("--edge_decay_sd", required=True, type=float)
     parser.add_argument("--words", type=int, required=True)
     parser.add_argument("--multiword_divide", action="store_true")
+    # Unused, just here for interface matching with 2_3
+    parser.add_argument("--bailout", required=False, default=0, type=int)
+    parser.add_argument("--run_for_ticks", required=False, default=1000, type=int)
 
     args = parser.parse_args()
 
