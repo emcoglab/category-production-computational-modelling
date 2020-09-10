@@ -53,10 +53,12 @@ def main(n_words: int,
          length_factor: int,
          firing_threshold: ActivationValue,
          node_decay_factor: float,
-         edge_decay_sd_factor: float,
+         edge_decay_sd: float,
          accessible_set_threshold: ActivationValue,
          accessible_set_capacity: int,
-         impulse_pruning_threshold: ActivationValue):
+         impulse_pruning_threshold: ActivationValue,
+         divide_initial_activation_for_multiword_categories: bool,
+         ):
 
     corpus = get_corpus_from_name(corpus_name)
     freq_dist = FreqDist.load(corpus.freq_dist_path)
@@ -68,7 +70,7 @@ def main(n_words: int,
       distance_type=None, n_words=n_words,
       firing_threshold=firing_threshold, length_factor=length_factor,
       pruning_type=None, pruning=None,
-      node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd_factor,
+      node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd,
       accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
       impulse_pruning_threshold=impulse_pruning_threshold,
       run_for_ticks=None, bailout=None,
@@ -92,7 +94,7 @@ def main(n_words: int,
             distributional_model=distributional_model,
             distance_type=None,
             node_decay_factor=node_decay_factor,
-            edge_decay_sd_factor=edge_decay_sd_factor,
+            edge_decay_sd=edge_decay_sd,
             edge_pruning=None,
             edge_pruning_type=None,
         ),
@@ -140,7 +142,14 @@ def main(n_words: int,
                               and word in lc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            lc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            if category_words:
+                initial_activation = FULL_ACTIVATION
+                if divide_initial_activation_for_multiword_categories:
+                    # Divide activation among multi-word categories
+                    logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
+                    csv_comments.extend(f"Dividing activation of multi-word category {len(category_words)} ways")
+                    initial_activation /= len(category_words)
+                lc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
         for tick in count(start=0):
@@ -193,9 +202,9 @@ if __name__ == '__main__':
     parser.add_argument("--model_name", required=True, type=str)
     parser.add_argument("--node_decay_factor", required=True, type=float)
     parser.add_argument("--radius", required=True, type=int)
-    parser.add_argument("--edge_decay_sd_factor", required=True, type=float)
-    parser.add_argument("--words", type=int, required=True,
-                        help="The number of words to use from the corpus. (Top n words.)")
+    parser.add_argument("--edge_decay_sd", required=True, type=float)
+    parser.add_argument("--words", type=int, required=True)
+    parser.add_argument("--multiword_divide", action="store_true")
 
     args = parser.parse_args()
 
@@ -206,9 +215,10 @@ if __name__ == '__main__':
          length_factor=args.length_factor,
          firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
-         edge_decay_sd_factor=args.edge_decay_sd_factor,
+         edge_decay_sd=args.edge_decay_sd,
          accessible_set_capacity=args.accessible_set_capacity,
          accessible_set_threshold=args.accessible_set_threshold,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
+         divide_initial_activation_for_multiword_categories=args.multiword_divide,
          )
     logger.info("Done!")

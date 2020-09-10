@@ -1,0 +1,13 @@
+Accessible set capacity: 3000
+Accessible set threshold: 0.3
+Activation cap: 1.0
+Activation threshold: 0.3
+Buffer capacity: 10
+Buffer threshold: 0.7
+Distance type: 'Minkowski-3'
+Length factor: 100
+Log-normal median: 5.0
+Log-normal sigma: 0.9
+Max sphere radius: 1.5
+Attenuation statistic: 'Prevalence'
+Run for ticks: 2000

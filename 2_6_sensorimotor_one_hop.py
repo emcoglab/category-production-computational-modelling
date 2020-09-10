@@ -56,6 +56,7 @@ def main(distance_type_name: str,
          node_decay_median: float,
          node_decay_sigma: float,
          attenuation: AttenuationStatistic,
+         divide_initial_activation_for_multiword_categories: bool,
          use_prepruned: bool = False,
          ):
 
@@ -135,7 +136,14 @@ def main(distance_type_name: str,
                               and word in sc.available_labels]
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
-            sc.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            if category_words:
+                initial_activation = FULL_ACTIVATION
+                if divide_initial_activation_for_multiword_categories:
+                    # Divide activation among multi-word categories
+                    logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
+                    csv_comments.extend(f"Dividing activation of multi-word category {len(category_words)} ways")
+                    initial_activation /= len(category_words)
+                sc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
         for tick in count(start=0):
@@ -195,8 +203,8 @@ if __name__ == '__main__':
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--accessible_set_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
-    parser.add_argument("--attenuation", required=True, type=str,
-                        choices=[n.name for n in AttenuationStatistic])
+    parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
+    parser.add_argument("--multiword_divide", action="store_true")
 
     args = parser.parse_args()
 
@@ -210,5 +218,7 @@ if __name__ == '__main__':
          node_decay_median=args.node_decay_median,
          node_decay_sigma=args.node_decay_sigma,
          use_prepruned=args.use_prepruned,
-         attenuation=AttenuationStatistic.from_slug(args.attenuation))
+         attenuation=AttenuationStatistic.from_slug(args.attenuation),
+         divide_initial_activation_for_multiword_categories=args.multiword_divide,
+         )
     logger.info("Done!")
