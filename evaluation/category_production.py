@@ -25,6 +25,7 @@ from os import path, listdir
 from pathlib import Path
 from typing import DefaultDict, Dict, Set, List, Optional
 
+import yaml
 from matplotlib import pyplot
 from numpy import nan
 from pandas import DataFrame, read_csv, isna, Series
@@ -492,7 +493,8 @@ def save_model_performance_stats(main_dataframe,
 
     if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
         # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
-        df_dict.update(ModelComponent.load_model_spec(results_dir))
+        with open(Path(results_dir, " model_spec.yaml"), mode="r") as spec_file:
+            df_dict.update(yaml.load(spec_file, yaml.SafeLoader))
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
 
     df_dict.update({
