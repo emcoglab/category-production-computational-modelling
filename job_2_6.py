@@ -10,11 +10,11 @@ class Job_2_6(SensorimotorPropagationJob):
 
     # max_sphere_radius -> RAM/G
     RAM = {
-        100: 5,
-        150: 30,
-        198: 55,  # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
-        200: 60,
-        250: 120,
+        1.00: 5,
+        1.50: 30,
+        1.98: 55,  # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
+        2.00: 60,
+        2.50: 120,
     }
 
     def __init__(self, spec: BufferedSensorimotorOneHopJobSpec):

@@ -40,7 +40,7 @@ if __name__ == '__main__':
     jobs = [
         Job_2_3(s)
         for s in LinguisticPropagationJobSpec.load_multiple(
-            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic_search.yaml"))
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml"))
     ]
     for job in jobs:
         job.run_locally(extra_arguments=[])

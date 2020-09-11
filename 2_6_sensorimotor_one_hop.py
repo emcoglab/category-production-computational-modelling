@@ -56,7 +56,6 @@ def main(distance_type_name: str,
          node_decay_median: float,
          node_decay_sigma: float,
          attenuation: AttenuationStatistic,
-         divide_initial_activation_for_multiword_categories: bool,
          use_prepruned: bool = False,
          ):
 
@@ -78,8 +77,6 @@ def main(distance_type_name: str,
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
                               job_spec.output_location_relative())
-    if divide_initial_activation_for_multiword_categories:
-        response_dir = Path(*response_dir.parts[:-1], response_dir.parts[-1] + " divided")
 
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -123,11 +120,12 @@ def main(distance_type_name: str,
         csv_comments.extend(job_spec.csv_comments())
 
         # Do the spreading activation
+        initial_activation: ActivationValue = FULL_ACTIVATION
 
         # If the category has a single norm, activate it
         if category_label in sc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            sc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
+            sc.propagator.activate_item_with_label(category_label, initial_activation)
 
         # If the category has no single norm, activate all constituent words
         else:
@@ -139,12 +137,10 @@ def main(distance_type_name: str,
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             if category_words:
-                initial_activation = FULL_ACTIVATION
-                if divide_initial_activation_for_multiword_categories:
-                    # Divide activation among multi-word categories
-                    logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
-                    csv_comments.append(f"Dividing activation of multi-word category {len(category_words)} ways")
-                    initial_activation /= len(category_words)
+                # Divide activation among multi-word categories
+                logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
+                csv_comments.append(f"Dividing activation of multi-word category {len(category_words)} ways")
+                initial_activation /= len(category_words)
                 sc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
@@ -200,13 +196,12 @@ if __name__ == '__main__':
     parser.add_argument("--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("--length_factor", required=True, type=Length)
     parser.add_argument("--node_decay_median", required=True, type=float)
-    parser.add_argument("--max_sphere_radius", required=True, type=Length)
+    parser.add_argument("--max_sphere_radius", required=True, type=float)
     parser.add_argument("--node_decay_sigma", required=True, type=float)
     parser.add_argument("--buffer_capacity", required=True, type=int)
     parser.add_argument("--accessible_set_capacity", required=True, type=int)
     parser.add_argument("--use_prepruned", action="store_true")
     parser.add_argument("--attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
-    parser.add_argument("--multiword_divide", action="store_true")
     # Unused, just here for interface matching with 2_3
     parser.add_argument("--bailout", required=False, default=0, type=int)
     parser.add_argument("--run_for_ticks", required=False, default=1000, type=int)
@@ -224,6 +219,5 @@ if __name__ == '__main__':
          node_decay_sigma=args.node_decay_sigma,
          use_prepruned=args.use_prepruned,
          attenuation=AttenuationStatistic.from_slug(args.attenuation),
-         divide_initial_activation_for_multiword_categories=args.multiword_divide,
          )
     logger.info("Done!")
