@@ -32,7 +32,6 @@ from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
 from ldm.corpus.tokenising import modified_word_tokenize
-from model.components import ModelComponent
 from model.utils.logging import logger
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
@@ -41,7 +40,7 @@ from model.utils.maths import cm_to_inches
 from preferences import Preferences
 
 
-_CP = CategoryProduction()
+CP_INSTANCE = CategoryProduction()
 
 # Each participant saw 39 categories
 CATEGORIES_PER_PARTICIPANT = 39
@@ -51,7 +50,7 @@ PARTICIPANTS_PER_CATEGORY = 20
 PARTICIPANT_SETS = 3
 TOTAL_PARTICIPANTS = PARTICIPANTS_PER_CATEGORY * PARTICIPANT_SETS  # 60
 TOTAL_CATEGORIES = CATEGORIES_PER_PARTICIPANT * PARTICIPANT_SETS  # 117
-assert (TOTAL_CATEGORIES == len(_CP.category_labels))
+assert (TOTAL_CATEGORIES == len(CP_INSTANCE.category_labels))
 
 
 class ModelType(Enum):
@@ -84,7 +83,7 @@ class ModelType(Enum):
         return f"Category production fit {self.name}"
 
 
-def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
+def get_n_words_from_path_linguistic(results_dir_path) -> int:
     """
     Gets the number of words from a path storing results.
     :param results_dir_path:
@@ -100,7 +99,7 @@ def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
         raise ParseError(f"Could not parse number of words from {dir_name}.")
 
 
-def get_firing_threshold_from_path_linguistic(results_dir_path: str) -> ActivationValue:
+def get_firing_threshold_from_path_linguistic(results_dir_path) -> ActivationValue:
     """
     Gets the firing threshold from a path storing the results.
     :param results_dir_path:
@@ -130,9 +129,7 @@ def available_categories(results_dir_path: str) -> List[str]:
     return categories
 
 
-def get_model_ttfas_for_category_linguistic(category: str,
-                                            results_dir: str,
-                                            n_words: int,
+def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
                                             conscious_access_threshold: float) -> DefaultDict[str, int]:
     """
     Dictionary of
@@ -169,7 +166,7 @@ def get_model_ttfas_for_category_linguistic(category: str,
         return defaultdict(lambda: nan)
 
 
-def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -> Dict[str, int]:
+def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dict[str, int]:
     """
     Dictionary of
         response -> time to first activation
@@ -181,6 +178,10 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir: str) -
     :param results_dir:
     :return:
     """
+
+    # Check for erroneous paths
+    if not path.isdir(results_dir):
+        raise NotADirectoryError(results_dir)
 
     # Try to load model response
     try:
@@ -305,7 +306,7 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
         else:
             ttfas_for_response = [ttfas_for_category[w]
                                   for w in modified_word_tokenize(r)
-                                  if (w not in _CP.ignored_words)
+                                  if (w not in CP_INSTANCE.ignored_words)
                                   and (w in ttfas_for_category)]
 
             # The multi-word response is said to be activated the first time any one of its constituent words are
@@ -325,33 +326,39 @@ def add_model_hit_column(main_data, ttfa_column: str = TTFA):
 
 
 def save_item_level_data(main_data: DataFrame, save_path):
+    """Saves the item-level data to a csv."""
     main_data.to_csv(save_path, index=False)
 
 
 def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir):
     """Save a summary table as a figure."""
-
+    # Participant traces
+    for participant in CP_INSTANCE.participants:
+        pyplot.plot(summary_table.reset_index()[x_selector],
+                    summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
+                    linewidth=0.2, linestyle="-", color="k", alpha=0.3,
+                    zorder=0)
+    # SD region
     pyplot.fill_between(x=summary_table.reset_index()[x_selector],
                         y1=summary_table['Hitrate Mean'] - summary_table[
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
                             'Hitrate SD'],
-                        color='#D1E3FF', zorder=0)
-    # Participant traces
-    for participant in _CP.participants:
-        pyplot.plot(summary_table.reset_index()[x_selector],
-                    summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
-                    linewidth=0.2, linestyle="-", color="k", alpha=0.5, zorder=10)
+                        color="#AFF7F3", alpha=0.6,
+                        zorder=10)
+    # Mean
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table['Hitrate Mean'],
-                linewidth=2.0, linestyle="-",
-                color="#00EB0C", zorder=20)
+                linewidth=0.5, linestyle="-",
+                color="#000000", alpha=0.5,
+                zorder=20)
 
     # add model performance
     pyplot.plot(summary_table.reset_index()[x_selector],
                 summary_table[MODEL_HITRATE],
                 linewidth=2.0, linestyle='-',
-                color="#FA5300", zorder=30)
+                color="#FA5300",
+                zorder=30)
 
     pyplot.ylim((0, None))
 
@@ -403,10 +410,7 @@ def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, 
                             index=False)
 
 
-def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix, figures_dir: str = None):
-
-    if figures_dir is None:
-        figures_dir = path.join(Preferences.figures_dir, model_type.figures_dirname)
+def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, file_suffix, figures_dir):
 
     # rpf sd region
     save_hitrate_summary_figure(summary_table=hitrates_per_rpf,
@@ -420,28 +424,62 @@ def save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suf
                                 figures_dir=figures_dir)
 
 
+def apply_ttfa_cutoff(data, ttfa_column, ttfa_cutoff):
+    """Adds a cut-off `MODEL_HIT` column to a copy of `data`."""
+    cut_data = data.copy()
+    cut_data[MODEL_HIT] = cut_data[ttfa_column] < ttfa_cutoff
+    cut_data.fillna(value={MODEL_HIT: False}, inplace=True)
+    return cut_data
+
+
 def process_one_model_output(main_data: DataFrame,
                              model_type: ModelType,
-                             input_results_dir: str,
+                             input_results_dir,
                              min_first_rank_freq: Optional[int],
                              conscious_access_threshold: Optional[float],
+                             manual_ttfa_cutoff: Optional[int] = None,
+                             stats_save_path: Optional = None,
+                             figures_save_path: Optional = None,
                              ):
+    """
+    Computes stats and figures for the output of one run of one model.
+    :param main_data:
+    :param model_type:
+    :param input_results_dir:
+    :param min_first_rank_freq:
+    :param conscious_access_threshold:
+    :param manual_ttfa_cutoff:
+        If specified, applies a TTFA cut-off to the data before processing
+    :param stats_save_path:
+        Supply to override default save location
+    :param figures_save_path:
+        Supply to override default save location
+    :return:
+    """
     assert model_type in [ModelType.linguistic, ModelType.sensorimotor, ModelType.linguistic_one_hop, ModelType.sensorimotor_one_hop]
     input_results_path = Path(input_results_dir)
+
+    if stats_save_path is None:
+        stats_save_path = path.join(Preferences.results_dir, model_type.model_output_dirname)
+    if figures_save_path is None:
+        figures_save_path = path.join(Preferences.figures_dir, model_type.figures_dirname)
+
     model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
-    save_item_level_data(main_data, path.join(Preferences.results_dir,
-                                              model_type.model_output_dirname,
-                                              f"item-level data ({model_identifier})"
-                                              + (f" CAT={conscious_access_threshold}" if conscious_access_threshold is not None else "") +
-                                              ".csv"))
+
+    file_suffix = f"({model_identifier})"
 
     if conscious_access_threshold is not None:
-        file_suffix = f"({model_identifier}) CAT={conscious_access_threshold}"
-    else:
-        file_suffix = f"({model_identifier})"
+        file_suffix += f" CAT={conscious_access_threshold}"
+
+    if manual_ttfa_cutoff is not None:
+        file_suffix += f" cutoff {manual_ttfa_cutoff}"
+        main_data = apply_ttfa_cutoff(main_data, TTFA, manual_ttfa_cutoff)
+
+    item_level_path = path.join(stats_save_path, f"item-level data {file_suffix}.csv")
+    save_item_level_data(main_data, item_level_path)
 
     hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
-    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix)
+    save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix, output_dir=stats_save_path)
 
     # Compute hitrate fits
     hitrate_fit_rpf = frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)
@@ -462,9 +500,14 @@ def process_one_model_output(main_data: DataFrame,
         hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
         conscious_access_threshold=conscious_access_threshold,
+        output_dir=stats_save_path,
     )
 
-    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, model_type, file_suffix)
+    save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, file_suffix=file_suffix, figures_dir=figures_save_path)
+
+    logger.info(f"Hitrate fits for {model_type.name} model")
+    logger.info(f"rmr fit: {frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+    logger.info(f"rpf fit: {frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
 
 
 def save_model_performance_stats(main_dataframe,
@@ -477,6 +520,7 @@ def save_model_performance_stats(main_dataframe,
                                  hitrate_fit_rmr_hr_head,
                                  model_type: ModelType,
                                  conscious_access_threshold: Optional[float],
+                                 output_dir: str = None
                                  ):
 
     # Build output dir
@@ -484,15 +528,19 @@ def save_model_performance_stats(main_dataframe,
         filename_suffix = f" CAT={conscious_access_threshold}"
     else:
         filename_suffix = ""
+    if output_dir is None:
+        output_dir = path.join(
+            Preferences.results_dir,
+            model_type.model_output_dirname)
     overall_stats_output_path = path.join(
-        Preferences.results_dir,
-        model_type.model_output_dirname,
+        output_dir,
         f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
 
     df_dict = dict()
 
     if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
         # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
+        # TODO: this is getting a bit messy
         with open(Path(results_dir, " model_spec.yaml"), mode="r") as spec_file:
             df_dict.update(yaml.load(spec_file, yaml.SafeLoader))
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
@@ -599,7 +647,7 @@ def get_summary_table(main_dataframe, groupby_column):
     df = DataFrame()
 
     # Individual participant columns
-    for participant in _CP.participants:
+    for participant in CP_INSTANCE.participants:
         df[PARTICIPANT_HITRATE_All_f.format(participant)] = (
             main_dataframe
             [main_dataframe[PARTICIPANT_SAW_CATEGORY_f.format(participant)] == True]
@@ -609,8 +657,8 @@ def get_summary_table(main_dataframe, groupby_column):
             / CATEGORIES_PER_PARTICIPANT)
 
     # Participant summary columns: hitrate
-    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in _CP.participants]].mean(axis=1)
-    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in _CP.participants]].std(axis=1)
+    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].mean(axis=1)
+    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].std(axis=1)
 
     # Model columns
     df[MODEL_HITRATE] = (
@@ -632,7 +680,7 @@ def get_hitrate_variance(main_dataframe: DataFrame) -> DataFrame:
             main_dataframe
             .groupby(CPColNames.Category)
             .mean()[MODEL_HIT])
-    for participant in _CP.participants:
+    for participant in CP_INSTANCE.participants:
         participant_df = DataFrame()
         participant_df[PARTICIPANT_HITRATE_PER_CATEGORY_f.format(participant)] = (
             main_dataframe[main_dataframe[PARTICIPANT_SAW_CATEGORY_f.format(participant)] == True]
@@ -653,8 +701,17 @@ def find_output_dirs(root_dir: str):
 
 
 def prepare_category_production_data(model_type: ModelType) -> DataFrame:
+    """
+    Renames existing precomputed distance columns.
+    Excludes idiosyncratic responses.
+    Adds computed columns:
+        production proportion,
+        ranked production frequency,
+        rounded mean rank,
+    """
+
     # Main dataframe holds category production data and model response data
-    main_data: DataFrame = _CP.data.copy()
+    main_data: DataFrame = CP_INSTANCE.data.copy()
 
     # Some distances have been precomputed, so we label them as such
     main_data.rename(columns={col_name: f"Precomputed {col_name}"
@@ -667,6 +724,7 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     main_data = exclude_idiosyncratic_responses(main_data)
 
     add_predictor_column_production_proportion(main_data)
+    # TODO: strange to have model_type in here...?
     add_rpf_column(main_data, model_type)
     add_rmr_column(main_data)
 
