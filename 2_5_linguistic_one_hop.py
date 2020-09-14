@@ -57,7 +57,6 @@ def main(n_words: int,
          accessible_set_threshold: ActivationValue,
          accessible_set_capacity: int,
          impulse_pruning_threshold: ActivationValue,
-         divide_initial_activation_for_multiword_categories: bool,
          ):
 
     corpus = get_corpus_from_name(corpus_name)
@@ -127,11 +126,12 @@ def main(n_words: int,
             csv_comments.append(f"\t        orphans = {'yes' if lc.propagator.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
+        initial_activation: ActivationValue = FULL_ACTIVATION
 
         # If the category has a single label, activate it
         if category_label in lc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            lc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
+            lc.propagator.activate_item_with_label(category_label, initial_activation)
 
         # If the category has no single label, activate all constituent words
         else:
@@ -143,12 +143,10 @@ def main(n_words: int,
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             if category_words:
-                initial_activation = FULL_ACTIVATION
-                if divide_initial_activation_for_multiword_categories:
-                    # Divide activation among multi-word categories
-                    logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
-                    csv_comments.extend(f"Dividing activation of multi-word category {len(category_words)} ways")
-                    initial_activation /= len(category_words)
+                # Divide activation among multi-word categories
+                logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
+                csv_comments.append(f"Dividing activation of multi-word category {len(category_words)} ways")
+                initial_activation /= len(category_words)
                 lc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
@@ -194,7 +192,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("--accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--accessible_set_capacity", required=True)
     parser.add_argument("--corpus_name", required=True, type=str)
     parser.add_argument("--firing_threshold", required=True, type=ActivationValue)
     parser.add_argument("--impulse_pruning_threshold", required=True, type=ActivationValue)
@@ -204,7 +202,9 @@ if __name__ == '__main__':
     parser.add_argument("--radius", required=True, type=int)
     parser.add_argument("--edge_decay_sd", required=True, type=float)
     parser.add_argument("--words", type=int, required=True)
-    parser.add_argument("--multiword_divide", action="store_true")
+    # Unused, just here for interface matching with 2_3
+    parser.add_argument("--bailout", required=False, default=0, type=int)
+    parser.add_argument("--run_for_ticks", required=False, default=1000, type=int)
 
     args = parser.parse_args()
 
@@ -216,9 +216,8 @@ if __name__ == '__main__':
          firing_threshold=args.firing_threshold,
          node_decay_factor=args.node_decay_factor,
          edge_decay_sd=args.edge_decay_sd,
-         accessible_set_capacity=args.accessible_set_capacity,
+         accessible_set_capacity=int(args.accessible_set_capacity) if args.accessible_set_capacity != 'None' else None,
          accessible_set_threshold=args.accessible_set_threshold,
          impulse_pruning_threshold=args.impulse_pruning_threshold,
-         divide_initial_activation_for_multiword_categories=args.multiword_divide,
          )
     logger.info("Done!")

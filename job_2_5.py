@@ -12,18 +12,18 @@ class Job_2_5(LinguisticPropagationJob):
     # model_name -> n_words -> RAM/G
     RAM: Dict[str, Dict[int, int]] = {
         "pmi_ngram": {
-            1_000: 2,
-            3_000: 3,
-            10_000: 7,
-            30_000: 11,
-            40_000: 15,
+            1_000: 3,
+            3_000: 4,
+            10_000: 10,
+            30_000: 16,
+            40_000: 22,
         },
         "ppmi_ngram": {
-            1_000: 2,
-            3_000: 3,
-            10_000: 5,
-            30_000: 7,
-            40_000: 9,
+            1_000: 3,
+            3_000: 4,
+            10_000: 8,
+            30_000: 10,
+            40_000: 14,
         }
     }
 
@@ -40,6 +40,10 @@ class Job_2_5(LinguisticPropagationJob):
 
 
 if __name__ == '__main__':
-    job = Job_2_5(LinguisticOneHopJobSpec.load(
-        Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml")))
-    job.run_locally()
+    jobs = [
+        Job_2_5(s)
+        for s in LinguisticOneHopJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml"))
+    ]
+    for job in jobs:
+        job.run_locally(extra_arguments=[])

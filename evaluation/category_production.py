@@ -89,8 +89,8 @@ def get_n_words_from_path_linguistic(results_dir_path) -> int:
     :param results_dir_path:
     :return: n_words: int
     """
-    dir_name = path.basename(path.dirname(results_dir_path))
-    words_match = re.match(re.compile(r".* (?P<n_words>[0-9,]+) words,.*"), dir_name)
+    dir_name = path.basename(results_dir_path)
+    words_match = re.search(re.compile(r".* (?P<n_words>[0-9,]+) words,.*"), dir_name)
     if words_match:
         # remove the comma and parse as int
         n_words = int(words_match.group("n_words").replace(",", ""))
@@ -106,7 +106,7 @@ def get_firing_threshold_from_path_linguistic(results_dir_path) -> ActivationVal
     :return: firing_threshold: ActivationValue
     """
     dir_name = path.basename(results_dir_path)
-    ft_match = re.match(re.compile(r"firing-θ (?P<firing_threshold>[0-9.]+);"), dir_name)
+    ft_match = re.search(re.compile(r"firing-θ (?P<firing_threshold>[0-9.]+);"), dir_name)
     if ft_match:
         ft = ActivationValue(ft_match.group("firing_threshold"))
         return ft
@@ -537,8 +537,8 @@ def save_model_performance_stats(main_dataframe,
     if model_type in [ModelType.linguistic, ModelType.sensorimotor]:
         # Only spreading-activation models have specs, and produce TTFAs from which correlation stats are generated
         # TODO: this is getting a bit messy
-        with open(path.join(results_dir, " model_spec.yaml"), mode="r") as f:
-            df_dict.update(yaml.load(f, yaml.SafeLoader))
+        with open(Path(results_dir, " model_spec.yaml"), mode="r") as spec_file:
+            df_dict.update(yaml.load(spec_file, yaml.SafeLoader))
         df_dict.update(get_correlation_stats(main_dataframe, min_first_rank_freq, model_type=model_type))
 
     df_dict.update({

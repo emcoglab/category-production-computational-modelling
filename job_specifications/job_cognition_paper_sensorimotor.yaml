@@ -1,12 +1,62 @@
+# Halved original sensorimotor model
+Activation threshold: 0.15
+Accessible set threshold: 0.15
 Accessible set capacity: 3000
-Accessible set threshold: 0.3
-Activation cap: 1.0
-Activation threshold: 0.3
+Buffer threshold: 0.35
 Buffer capacity: 10
-Buffer threshold: 0.7
+Activation cap: 1.0
 Distance type: 'Minkowski-3'
 Length factor: 100
 Log-normal median: 5.0
+Log-normal sigma: 0.9
+Max sphere radius: 1.5
+Attenuation statistic: 'Prevalence'
+Run for ticks: 2000
+---
+# Nearby search
+# changed here
+Activation threshold: 0.2
+Accessible set threshold: 0.2
+Accessible set capacity: 3000
+# changed here
+Buffer threshold: 0.4
+Buffer capacity: 10
+Activation cap: 1.0
+Distance type: 'Minkowski-3'
+Length factor: 100
+Log-normal median: 5.0
+Log-normal sigma: 0.9
+Max sphere radius: 1.5
+Attenuation statistic: 'Prevalence'
+Run for ticks: 2000
+---
+Activation threshold: 0.15
+Accessible set threshold: 0.15
+Accessible set capacity: 3000
+Buffer threshold: 0.35
+Buffer capacity: 10
+Activation cap: 1.0
+Distance type: 'Minkowski-3'
+Length factor: 100
+# changed here
+Log-normal median: 4.0
+Log-normal sigma: 0.9
+Max sphere radius: 1.5
+Attenuation statistic: 'Prevalence'
+Run for ticks: 2000
+---
+# changed here
+Activation threshold: 0.2
+Accessible set threshold: 0.2
+Accessible set capacity: 3000
+# changed here
+Buffer threshold: 0.4
+Buffer capacity: 10
+Activation cap: 1.0
+Distance type: 'Minkowski-3'
+Length factor: 100
+# changed here
+Log-normal median: 4.0
 Log-normal sigma: 0.9
 Max sphere radius: 1.5
 Attenuation statistic: 'Prevalence'

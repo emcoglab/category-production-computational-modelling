@@ -37,6 +37,10 @@ class Job_2_3(LinguisticPropagationJob):
 
 
 if __name__ == '__main__':
-    job = Job_2_3(LinguisticPropagationJobSpec.load(
-        Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml")))
-    job.run_locally()
+    jobs = [
+        Job_2_3(s)
+        for s in LinguisticPropagationJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml"))
+    ]
+    for job in jobs:
+        job.run_locally(extra_arguments=[])

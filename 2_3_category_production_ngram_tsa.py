@@ -54,7 +54,6 @@ def main(n_words: int,
          impulse_pruning_threshold: ActivationValue,
          run_for_ticks: int,
          bailout: int,
-         divide_initial_activation_for_multiword_categories: bool,
          ):
 
     job_spec = LinguisticPropagationJobSpec(
@@ -72,6 +71,7 @@ def main(n_words: int,
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
                               job_spec.output_location_relative())
+
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
         response_dir.mkdir(parents=True)
@@ -106,11 +106,12 @@ def main(n_words: int,
             csv_comments.append(f"\t        orphans = {'yes' if lc.propagator.graph.has_orphaned_nodes() else 'no'}")
 
         # Do the spreading activation
+        initial_activation: ActivationValue = FULL_ACTIVATION
 
         # If the category has a single label, activate it
         if category_label in lc.available_labels:
             logger.info(f"Running spreading activation for category {category_label}")
-            lc.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
+            lc.propagator.activate_item_with_label(category_label, initial_activation)
 
         # If the category has no single label, activate all constituent words
         else:
@@ -122,12 +123,10 @@ def main(n_words: int,
             logger.info(f"Running spreading activation for category {category_label}"
                         f" (activating individual words: {', '.join(category_words)})")
             if category_words:
-                initial_activation = FULL_ACTIVATION
-                if divide_initial_activation_for_multiword_categories:
-                    # Divide activation among multi-word categories
-                    logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
-                    csv_comments.extend(f"Dividing activation of multi-word category {len(category_words)} ways")
-                    initial_activation /= len(category_words)
+                # Divide activation among multi-word categories
+                logger.info(f"Dividing activation of multi-word category {len(category_words)} ways")
+                csv_comments.append(f"Dividing activation of multi-word category {len(category_words)} ways")
+                initial_activation /= len(category_words)
                 lc.propagator.activate_items_with_labels(category_words, initial_activation)
 
         model_response_entries = []
@@ -152,7 +151,7 @@ def main(n_words: int,
             if len(lc.accessible_set) > bailout > 0:
                 csv_comments.append(f"")
                 csv_comments.append(f"Spreading activation ended with a bailout after {tick} ticks "
-                                    f"with {lc.accessible_set.items} nodes activated.")
+                                    f"with {len(lc.accessible_set)} nodes activated.")
                 break
 
         with open(suprathreshold_path, mode="w", encoding="utf-8") as supratheshold_file:
@@ -194,7 +193,6 @@ if __name__ == '__main__':
     parser.add_argument("--edge_decay_sd", required=True, type=float)
     parser.add_argument("--run_for_ticks", required=True, type=int)
     parser.add_argument("--words", type=int, required=True)
-    parser.add_argument("--multiword_divide", action="store_true")
 
     args = parser.parse_args()
 
@@ -211,6 +209,5 @@ if __name__ == '__main__':
          impulse_pruning_threshold=args.impulse_pruning_threshold,
          run_for_ticks=args.run_for_ticks,
          bailout=args.bailout,
-         divide_initial_activation_for_multiword_categories=args.multiword_divide,
          )
     logger.info("Done!")

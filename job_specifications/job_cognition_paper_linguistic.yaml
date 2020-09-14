@@ -1,5 +1,6 @@
+# Halved version of old linguistic model
 Bailout: 20000
-Firing threshold: 0.7
+Firing threshold: 0.45
 Impulse pruning threshold: 0.05
 Length factor: 10
 Model name: 'ppmi_ngram'
@@ -7,7 +8,69 @@ Model radius: 5
 Corpus name: 'bbc'
 Node decay: 0.99
 Run for ticks: 2000
-Edge decay SD: 35.0
+Edge decay SD: 15.0
+Words: 40000
+Accessible set capacity: None
+Accessible set threshold: 0
+---
+# Nearby options
+Bailout: 20000
+Firing threshold: 0.45
+Impulse pruning threshold: 0.0
+Length factor: 10
+Model name: 'ppmi_ngram'
+Model radius: 5
+Corpus name: 'bbc'
+Node decay: 0.99
+Run for ticks: 2000
+# changed here
+Edge decay SD: 14.0
+Words: 40000
+Accessible set capacity: None
+Accessible set threshold: 0
+---
+Bailout: 20000
+Firing threshold: 0.45
+Impulse pruning threshold: 0.0
+Length factor: 10
+Model name: 'ppmi_ngram'
+Model radius: 5
+Corpus name: 'bbc'
+Node decay: 0.99
+Run for ticks: 2000
+# changed here
+Edge decay SD: 13.0
+Words: 40000
+Accessible set capacity: None
+Accessible set threshold: 0
+---
+Bailout: 20000
+Firing threshold: 0.45
+Impulse pruning threshold: 0.0
+Length factor: 10
+Model name: 'ppmi_ngram'
+Model radius: 5
+Corpus name: 'bbc'
+Node decay: 0.99
+Run for ticks: 2000
+# changed here
+Edge decay SD: 12.0
+Words: 40000
+Accessible set capacity: None
+Accessible set threshold: 0
+---
+Bailout: 20000
+# changed here
+Firing threshold: 0.4
+Impulse pruning threshold: 0.0
+Length factor: 10
+Model name: 'ppmi_ngram'
+Model radius: 5
+Corpus name: 'bbc'
+Node decay: 0.99
+Run for ticks: 2000
+# changed here
+Edge decay SD: 10.0
 Words: 40000
 Accessible set capacity: None
 Accessible set threshold: 0

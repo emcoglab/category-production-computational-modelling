@@ -99,10 +99,16 @@ class JobSpec(ABC):
 
     @classmethod
     def load(cls, filename: Path):
-        # This works
-        # noinspection PyTypeChecker
         with open(filename, mode="r", encoding="utf-8") as file:
             return cls._from_dict(yaml.load(file, yaml.SafeLoader))
+
+    @classmethod
+    def load_multiple(cls, filename: Path) -> List:
+        with open(filename, mode="r", encoding="utf-8") as file:
+            return [
+                cls._from_dict(d)
+                for d in yaml.load_all(file, yaml.SafeLoader)
+            ]
 
     def csv_comments(self) -> List[str]:
         """List of commented"""
@@ -182,10 +188,10 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
     def output_location_relative(self) -> Path:
         return Path(
             f"Sensorimotor {VERSION}",
-            f"{self.distance_type.name} length {self.length_factor} attenuate {self.attenuation_statistic.name}",
-            f"max-r {self.max_radius};"
-            f" n-decay-median {self.node_decay_median};"
-            f" n-decay-sigma {self.node_decay_sigma};"
+            f"{self.distance_type.name} length {self.length_factor} att {self.attenuation_statistic.name};"
+            f" max-r {self.max_radius};"
+            f" n-decay-m {self.node_decay_median};"
+            f" n-decay-σ {self.node_decay_sigma};"
             f" as-θ {self.accessible_set_threshold};"
             f" as-cap {self.accessible_set_capacity:,};"
             f" run-for {self.run_for_ticks};"
@@ -243,8 +249,8 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
     def output_location_relative(self) -> Path:
         return Path(
             f"Sensorimotor {VERSION}",
-            f"{self.distance_type.name} length {self.length_factor} attenuate {self.attenuation_statistic.name}",
-            f"max-r {self.max_radius};"
+            f"{self.distance_type.name} length {self.length_factor} attenuate {self.attenuation_statistic.name};"
+            f" max-r {self.max_radius};"
             f" n-decay-median {self.node_decay_median};"
             f" n-decay-sigma {self.node_decay_sigma};"
             f" as-θ {self.accessible_set_threshold};"
@@ -345,17 +351,17 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             raise NotImplementedError()
 
         if self.distance_type is not None:
-            model_dir_name = (f"{self.model_name}"
+            model_name = (f"{self.model_name}"
                               f" {self.distance_type.name}"
                               f" {self.n_words:,} words, length {self.length_factor}{pruning_suffix}")
         else:
-            model_dir_name = (f"{self.model_name}"
+            model_name = (f"{self.model_name}"
                               f" {self.n_words:,} words, length {self.length_factor}{pruning_suffix}")
 
         return Path(
             f"Linguistic {VERSION}",
-            model_dir_name,
-            f"firing-θ {self.firing_threshold};"
+            f"{model_name};"
+            f" firing-θ {self.firing_threshold};"
             f" n-decay-f {self.node_decay_factor};"
             f" e-decay-sd {self.edge_decay_sd};"
             f" as-θ {self.accessible_set_threshold};"
@@ -393,7 +399,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
 
     @classmethod
     def _from_dict(cls, dictionary: _SerialisableDict):
-        return LinguisticPropagationJobSpec(
+        return cls(
             length_factor            =int(dictionary["Length factor"]),
             run_for_ticks            =dictionary["Run for ticks"] if "Run for ticks" in dictionary else None,
             bailout                  =dictionary["Bailout"] if "Bailout" in dictionary else None,
@@ -410,7 +416,6 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             impulse_pruning_threshold=ActivationValue(dictionary["Impulse pruning threshold"]),
             pruning_type             =EdgePruningType.from_name(dictionary["Pruning type"]) if "Pruning type" in dictionary else None,
             pruning                  =int(dictionary["Pruning"]) if "Pruning" in dictionary else None,
-
         )
 
 
@@ -514,8 +519,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
     def output_location_relative(self) -> Path:
         return Path(
             f"Interactive combined {VERSION}",
-            *self.sensorimotor_spec.output_location_relative().parts,
-            *self.linguistic_spec.output_location_relative().parts,
+            *self.sensorimotor_spec.output_location_relative().parts[1:],  # Skip the type name and version number
+            *self.linguistic_spec.output_location_relative().parts[1:],  # Skip the type name and version number
             f"delay-ls {self.lc_to_smc_delay};"
             f" delay-sl {self.smc_to_lc_delay};"
             f" ic-attenuation {self.inter_component_attenuation};"
@@ -639,9 +644,14 @@ class Job(ABC):
         print(command)
         run(f"python {command}", shell=True)
 
-    def submit(self):
-        print(self.qsub_command)
-        run(self.qsub_command, shell=True)
+    def submit(self, extra_arguments: Optional[Union[List[str], str]] = None):
+        if extra_arguments is None:
+            extra_arguments = []
+        elif isinstance(extra_arguments, str):
+            extra_arguments = [extra_arguments]
+        command = self.qsub_command + " " + " ".join(extra_arguments)
+        print(command)
+        run(command, shell=True)
 
     @classmethod
     def _without_py(cls, script_name: str) -> str:

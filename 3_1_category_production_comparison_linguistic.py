@@ -76,12 +76,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("path", type=str, help="The path in which to find the results.")
-    parser.add_argument("min_frf", type=int, nargs="?", default=1,
-                        help="The minimum FRF required for zRT and FRF correlations."
-                             " Omit to use 1.")
-    parser.add_argument("cat", type=float, nargs="?", default=None,
-                        help="The conscious-access threshold."
-                             " Omit to use CAT = firing threshold.")
+    parser.add_argument("min_frf", type=int, nargs="?", default=1, help="The minimum FRF required for zRT and FRF correlations. Omit to use 1.")
+    parser.add_argument("cat", type=float, nargs="?", default=None, help="The conscious-access threshold. Omit to use CAT = firing threshold.")
     parser.add_argument("-v-", "--variant", type=str, choices=["one-hop", "full"])
     args = parser.parse_args()
 
