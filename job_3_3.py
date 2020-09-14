@@ -1,12 +1,11 @@
 from os import path
+from pathlib import Path
 from threading import Thread
 from typing import Optional
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from ldm.corpus.indexing import FreqDist
 from ldm.model.base import DistributionalSemanticModel
-from ldm.utils.maths import DistanceType
-from model.attenuation_statistic import AttenuationStatistic
 from model.utils.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 from model.version import VERSION
 from preferences import Preferences
@@ -19,17 +18,16 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 class Job_3_3(Job):
 
     def __init__(self, sm_spec: BufferedSensorimotorPropagationJobSpec, ling_spec: LinguisticPropagationJobSpec,
-                 sm_attenuate: AttenuationStatistic,
                  manual_cut_off: Optional[int] = None
                  ):
         super().__init__(
             script_number="3_3",
             script_name="3_3_cp_comparison_combined_noninteractive.py",
             spec=NoninteractiveCombinedJobSpec(linguistic_spec=ling_spec, sensorimotor_spec=sm_spec))
-        self.sm_attenuate: AttenuationStatistic = sm_attenuate
         self.manual_cut_off: Optional[int] = manual_cut_off
 
         assert isinstance(self.spec, NoninteractiveCombinedJobSpec)
+        assert isinstance(self.spec.sensorimotor_spec, BufferedSensorimotorPropagationJobSpec)
 
         # TODO: there is now the JobSpec classes, the model_spec dictionaries and the models themselves.  And it's not
         #  obvious where something like this should live, but it should be accessible in more than one place, because
@@ -39,10 +37,10 @@ class Job_3_3(Job):
                                       f"Sensorimotor {VERSION}",
                                       f"{self.spec.sensorimotor_spec.distance_type.name}"
                                       f" length {self.spec.sensorimotor_spec.length_factor}"
-                                      f" attenuate {self.sm_attenuate.name}",
-                                      f"max-r {self.spec.sensorimotor_spec.max_radius};"
-                                      f" n-decay-median {self.spec.sensorimotor_spec.node_decay_median:.1f};"
-                                      f" n-decay-sigma {self.spec.sensorimotor_spec.node_decay_sigma};"
+                                      f" att {self.spec.sensorimotor_spec.attenuation_statistic.name};"
+                                      f" max-r {self.spec.sensorimotor_spec.max_radius};"
+                                      f" n-decay-m {self.spec.sensorimotor_spec.node_decay_median:.1f};"
+                                      f" n-decay-σ {self.spec.sensorimotor_spec.node_decay_sigma};"
                                       f" as-θ {self.spec.sensorimotor_spec.accessible_set_threshold};"
                                       f" as-cap {self.spec.sensorimotor_spec.accessible_set_capacity:,};"
                                       f" buff-θ {self.spec.sensorimotor_spec.buffer_threshold};"
@@ -59,8 +57,8 @@ class Job_3_3(Job):
                                    "Category production",
                                    f"Linguistic {VERSION}",
                                    f"{distributional_model.name}"
-                                   f" {self.spec.linguistic_spec.n_words:,} words, length {self.spec.linguistic_spec.length_factor}",
-                                   f"firing-θ {self.spec.linguistic_spec.firing_threshold};"
+                                   f" {self.spec.linguistic_spec.n_words:,} words, length {self.spec.linguistic_spec.length_factor};"
+                                   f" firing-θ {self.spec.linguistic_spec.firing_threshold};"
                                    f" n-decay-f {self.spec.linguistic_spec.node_decay_factor};"
                                    f" e-decay-sd {self.spec.linguistic_spec.edge_decay_sd:.1f};"
                                    f" imp-prune-θ {self.spec.linguistic_spec.impulse_pruning_threshold};"
@@ -69,12 +67,14 @@ class Job_3_3(Job):
 
     @property
     def command(self) -> str:
-        cmd = super().command
+        # No call to super().command, as that contains the specs' individual args
+        cmd = self.script_name
+        cmd += " "  # separates args from script name
         # script args
-        cmd += f"--linguistic_path \"{self._ling_dir}\""
-        cmd += f"--sensorimotor_path \"{self._sm_dir}\""
+        cmd += f"--linguistic_path \"{self._ling_dir}\" "
+        cmd += f"--sensorimotor_path \"{self._sm_dir}\" "
         if self.manual_cut_off is not None:
-            cmd += f" --manual-cut-off {self.manual_cut_off}"
+            cmd += f" --manual-cut-off {self.manual_cut_off} "
         return cmd
 
     @property
@@ -84,40 +84,20 @@ class Job_3_3(Job):
 
 if __name__ == '__main__':
 
-    sm_length_factor = 100
-    sm_distance_type = DistanceType.Minkowski3
-    attenuate = AttenuationStatistic.Prevalence
-    sm_buffer_capacity = 10
-    sm_accessible_set_capacity = 3_000
-    sm_rft = 10_000
-    sm_bail = None
-
-    sm_specs = [
-        BufferedSensorimotorPropagationJobSpec(max_radius=150, node_decay_median=75.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
-        BufferedSensorimotorPropagationJobSpec(max_radius=150, node_decay_median=100.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
-        BufferedSensorimotorPropagationJobSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
-        BufferedSensorimotorPropagationJobSpec(max_radius=150, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
-        BufferedSensorimotorPropagationJobSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.7, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
-        BufferedSensorimotorPropagationJobSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.3, accessible_set_threshold=0.5, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
-        BufferedSensorimotorPropagationJobSpec(max_radius=198, node_decay_median=500.0, node_decay_sigma=0.9, accessible_set_threshold=0.3, buffer_threshold=0.9, buffer_capacity=sm_buffer_capacity, accessible_set_capacity=sm_accessible_set_capacity, distance_type=sm_distance_type, length_factor=sm_length_factor, bailout=sm_bail, run_for_ticks=sm_rft, attenuation_statistic=attenuate),
+    sm_specs = jobs = [
+        s
+        for s in BufferedSensorimotorPropagationJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_sensorimotor.yaml"))
     ]
 
-    ling_n_words = 40_000
-    ling_impulse_pruning_threshold = 0.05
-    ling_node_decay_factor = 0.99
-    ling_model_radius = 5
-    ling_corpus_name = "bbc"
-    ling_rft = 3_000
-    ling_bail = int(ling_n_words / 2)
-
     ling_specs = [
-        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.7, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, n_words=ling_n_words, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
-        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.8, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, n_words=ling_n_words, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
-        LinguisticPropagationJobSpec(model_name="ppmi_ngram", firing_threshold=0.9, edge_decay_sd=15, impulse_pruning_threshold=ling_impulse_pruning_threshold, node_decay_factor=ling_node_decay_factor, model_radius=ling_model_radius, corpus_name=ling_corpus_name, pruning=None, pruning_type=None, n_words=ling_n_words, length_factor=10, bailout=ling_bail, run_for_ticks=ling_rft),
+        s
+        for s in LinguisticPropagationJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml"))
     ]
 
     threads = [
-        Thread(target=Job_3_3(sm_spec, ling_spec, attenuate).run_locally)
+        Thread(target=Job_3_3(sm_spec, ling_spec).run_locally)
         for ling_spec in ling_specs
         for sm_spec in sm_specs
     ]
