@@ -90,8 +90,8 @@ def get_n_words_from_path_linguistic(results_dir_path: str) -> int:
     :param results_dir_path:
     :return: n_words: int
     """
-    dir_name = path.basename(path.dirname(results_dir_path))
-    words_match = re.match(re.compile(r".* (?P<n_words>[0-9,]+) words,.*"), dir_name)
+    dir_name = path.basename(results_dir_path)
+    words_match = re.search(re.compile(r".* (?P<n_words>[0-9,]+) words,.*"), dir_name)
     if words_match:
         # remove the comma and parse as int
         n_words = int(words_match.group("n_words").replace(",", ""))
@@ -107,7 +107,7 @@ def get_firing_threshold_from_path_linguistic(results_dir_path: str) -> Activati
     :return: firing_threshold: ActivationValue
     """
     dir_name = path.basename(results_dir_path)
-    ft_match = re.match(re.compile(r"firing-θ (?P<firing_threshold>[0-9.]+);"), dir_name)
+    ft_match = re.search(re.compile(r"firing-θ (?P<firing_threshold>[0-9.]+);"), dir_name)
     if ft_match:
         ft = ActivationValue(ft_match.group("firing_threshold"))
         return ft
