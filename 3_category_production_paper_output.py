@@ -65,14 +65,14 @@ TTFA_COLUMNS_FOR_CUTOFF: Dict[ModelType, str] = {
 }
 
 # Paths
-root_input_dir = Path("/Users/cai/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Model output")
-root_output_dir = Path("/Users/cai/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Results")
+root_input_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Model output")
+root_output_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Results")
 
 input_dirs: Dict[ModelType, Path] = {
-    ModelType.sensorimotor:         Path(root_input_dir, "Sensorimotor 0.7/Minkowski-3 length 100 attenuate Prevalence/max-r 150; n-decay-median 500.0; n-decay-sigma 0.9; as-θ 0.3; as-cap 3,000; buff-θ 0.7; buff-cap 10; run-for 10000; bail None"),
-    ModelType.sensorimotor_one_hop: Path(root_input_dir, "Sensorimotor one-hop 0.7/Minkowski-3 length 100 attenuate Prevalence/max-r 150; n-decay-median 500.0; n-decay-sigma 0.9; as-θ 0.3; as-cap 3,000; buff-θ 0.7; buff-cap 10"),
-    ModelType.linguistic:           Path(root_input_dir, "Linguistic 0.7/PPMI n-gram (BBC), r=5 40,000 words, length 10/firing-θ 0.9; n-decay-f 0.99; e-decay-sd 15.0; imp-prune-θ 0.05; run-for 3000; bail 20000"),
-    ModelType.linguistic_one_hop:   Path(root_input_dir, "Linguistic one-hop 0.7/PPMI n-gram (BBC), r=5 40,000 words, length 10/firing-θ 0.9; n-decay-f 0.99; e-decay-sd 15.0; imp-prune-θ 0.05"),
+    ModelType.sensorimotor:         Path(root_input_dir, "Sensorimotor 0.9.6/Minkowski-3 length 100 att Prevalence; max-r 1.5; n-decay-m 5.0; n-decay-σ 0.9; as-θ 0.15; as-cap 3,000; buff-θ 0.35; buff-cap 10; run-for 2000; bail None"),
+    ModelType.sensorimotor_one_hop: Path(root_input_dir, "Sensorimotor one-hop 0.9.6/Minkowski-3 length 100 att Prevalence; max-r 1.5; n-decay-m 5.0; n-decay-σ 0.9; as-θ 0.15; as-cap 3,000; buff-θ 0.35; buff-cap 10; run-for None; bail None"),
+    ModelType.linguistic:           Path(root_input_dir, "Linguistic 0.9.6/PPMI n-gram (BBC), r=5 40,000 words, length 10; firing-θ 0.45; n-decay-f 0.99; e-decay-sd 15.0; as-θ 0.0; as-cap None; imp-prune-θ 0.05; run-for 2000; bail 20000"),
+    ModelType.linguistic_one_hop:   Path(root_input_dir, "Linguistic one-hop 0.9.6/PPMI n-gram (BBC), r=5 40,000 words, length 10; firing-θ 0.45; n-decay-f 0.99; e-decay-sd 15.0; as-θ 0.0; as-cap None; imp-prune-θ 0.05; run-for None; bail None"),
 }
 
 output_dirs: Dict[ModelType, Path] = {

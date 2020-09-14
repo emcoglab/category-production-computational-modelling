@@ -505,6 +505,10 @@ def process_one_model_output(main_data: DataFrame,
 
     save_hitrate_graphs(hitrates_per_rpf, hitrates_per_rmr, file_suffix=file_suffix, figures_dir=figures_save_path)
 
+    logger.info(f"Hitrate fits for {model_type.name} model")
+    logger.info(f"rmr fit: {frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hitrates_per_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+    logger.info(f"rpf fit: {frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hitrates_per_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
+
 
 def save_model_performance_stats(main_dataframe,
                                  results_dir,
