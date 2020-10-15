@@ -65,8 +65,8 @@ TTFA_COLUMNS_FOR_CUTOFF: Dict[ModelType, str] = {
 }
 
 # Paths
-root_input_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Model output")
-root_output_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Data/Results")
+root_input_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Modelling data and results/Model output")
+root_output_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Modelling data and results/Results")
 
 input_dirs: Dict[ModelType, Path] = {
     ModelType.sensorimotor:         Path(root_input_dir, "Sensorimotor 0.9.6/Minkowski-3 length 100 att Prevalence; max-r 1.5; n-decay-m 5.0; n-decay-σ 0.9; as-θ 0.15; as-cap 3,000; buff-θ 0.35; buff-cap 10; run-for 2000; bail None"),
@@ -271,18 +271,20 @@ def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf):
 
 def save_participant_hitrates(data):
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(data, ModelType.combined_noninteractive)
-    participant_hitrates_rmr = array([
-        frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=PARTICIPANT_HITRATE_All_f.format(p),
-                                       only_before_sd_includes_0=True)
-        for p in CP_INSTANCE.participants
-    ])
-    logger.info(f"Mean participant hitrate % (RMR) {participant_hitrates_rmr.mean()} (sd {participant_hitrates_rmr.std()}; range {participant_hitrates_rmr.min()}–{participant_hitrates_rmr.max()}) head only")
-    participant_hitrates_rpf = array([
-        frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=PARTICIPANT_HITRATE_All_f.format(p),
-                                       only_before_sd_includes_0=True)
-        for p in CP_INSTANCE.participants
-    ])
-    logger.info(f"Mean participant hitrate % (RPF) {participant_hitrates_rpf.mean()} (sd {participant_hitrates_rpf.std()}; range {participant_hitrates_rpf.min()}–{participant_hitrates_rpf.max()}) head only")
+    for head_only in [True, False]:
+        head_message = "head only" if head_only else "whole graph"
+        participant_hitrates_rmr = array([
+            frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=PARTICIPANT_HITRATE_All_f.format(p),
+                                           only_before_sd_includes_0=head_only)
+            for p in CP_INSTANCE.participants
+        ])
+        logger.info(f"Mean participant hitrate % (RMR) {participant_hitrates_rmr.mean()} (sd {participant_hitrates_rmr.std()}; range {participant_hitrates_rmr.min()}–{participant_hitrates_rmr.max()}) {head_message}")
+        participant_hitrates_rpf = array([
+            frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=PARTICIPANT_HITRATE_All_f.format(p),
+                                           only_before_sd_includes_0=head_only)
+            for p in CP_INSTANCE.participants
+        ])
+        logger.info(f"Mean participant hitrate % (RPF) {participant_hitrates_rpf.mean()} (sd {participant_hitrates_rpf.std()}; range {participant_hitrates_rpf.min()}–{participant_hitrates_rpf.max()}) {head_message}")
 
 
 def main(manual_ttfa_cutoff: Optional[int] = None):
@@ -294,8 +296,12 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
     combine_components(main_data)
 
     # Process separate and one-hop models
-    for model_type in [ModelType.sensorimotor, ModelType.sensorimotor_one_hop,
-                       ModelType.linguistic, ModelType.linguistic_one_hop]:
+    for model_type in [
+        ModelType.sensorimotor,
+        ModelType.linguistic,
+        ModelType.sensorimotor_one_hop,
+        ModelType.linguistic_one_hop
+    ]:
         process_original_model_output(main_data, model_type=model_type)
 
     if manual_ttfa_cutoff is None:
@@ -303,8 +309,11 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
 
     else:
         # Cut-offs only apply to separate and combined components
-        for model_type in [ModelType.sensorimotor, ModelType.linguistic,
-                           ModelType.combined_noninteractive]:
+        for model_type in [
+            ModelType.sensorimotor,
+            ModelType.linguistic,
+            ModelType.combined_noninteractive
+        ]:
             # Apply cutoffs to joint and original data
             process_coregistered_model_output(main_data, model_type=model_type, cutoff=manual_ttfa_cutoff)
 
