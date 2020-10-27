@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import DefaultDict, Dict, Set, List, Optional
 
 import yaml
-from matplotlib import pyplot
+from matplotlib import pyplot, ticker
 from numpy import nan
 from pandas import DataFrame, read_csv, isna, Series
 
@@ -332,14 +332,15 @@ def save_item_level_data(main_data: DataFrame, save_path):
 
 def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir):
     """Save a summary table as a figure."""
+    x_values = summary_table.reset_index()[x_selector]
     # Participant traces
     for participant in CP_INSTANCE.participants:
-        pyplot.plot(summary_table.reset_index()[x_selector],
+        pyplot.plot(x_values,
                     summary_table[PARTICIPANT_HITRATE_All_f.format(participant)],
                     linewidth=0.2, linestyle="-", color="k", alpha=0.3,
                     zorder=0)
     # SD region
-    pyplot.fill_between(x=summary_table.reset_index()[x_selector],
+    pyplot.fill_between(x=x_values,
                         y1=summary_table['Hitrate Mean'] - summary_table[
                             'Hitrate SD'],
                         y2=summary_table['Hitrate Mean'] + summary_table[
@@ -347,20 +348,23 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
                         color="#AFF7F3", alpha=0.6,
                         zorder=10)
     # Mean
-    pyplot.plot(summary_table.reset_index()[x_selector],
+    pyplot.plot(x_values,
                 summary_table['Hitrate Mean'],
                 linewidth=0.5, linestyle="-",
                 color="#000000", alpha=0.5,
                 zorder=20)
 
     # add model performance
-    pyplot.plot(summary_table.reset_index()[x_selector],
+    pyplot.plot(x_values,
                 summary_table[MODEL_HITRATE],
                 linewidth=2.0, linestyle='-',
                 color="#FA5300",
                 zorder=30)
 
+    pyplot.xlim((1, summary_table.reset_index()[x_selector].max()))
     pyplot.ylim((0, None))
+
+    pyplot.gca().xaxis.set_minor_locator(ticker.MultipleLocator(1))
 
     pyplot.ylabel("Hit rate")
     pyplot.xlabel(x_selector)
