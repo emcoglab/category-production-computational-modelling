@@ -65,8 +65,8 @@ TTFA_COLUMNS_FOR_CUTOFF: Dict[ModelType, str] = {
 }
 
 # Paths
-root_input_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Modelling data and results/Model output")
-root_output_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Modelling data and results/Results")
+root_input_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Modelling data and results/Model output per category")
+root_output_dir = Path("/Users/caiwingfield/Box Sync/LANGBOOT Project/Manuscripts/Category Production - Full Paper/Modelling data and results/Model hitrates")
 
 input_dirs: Dict[ModelType, Path] = {
     ModelType.sensorimotor:         Path(root_input_dir, "Sensorimotor 0.9.6/Minkowski-3 length 100 att Prevalence; max-r 1.5; n-decay-m 5.0; n-decay-σ 0.9; as-θ 0.15; as-cap 3,000; buff-θ 0.35; buff-cap 10; run-for 2000; bail None"),
