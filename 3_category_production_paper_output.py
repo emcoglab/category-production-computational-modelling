@@ -17,9 +17,6 @@ caiwingfield.net
 ---------------------------
 """
 
-# TODO: This is temporary to create some differently formatted graphs. But eventually it should be refactored into an
-#  "output" project, just like with LDM.
-
 import argparse
 from logging import getLogger, basicConfig, INFO
 import sys
