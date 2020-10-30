@@ -24,19 +24,19 @@ from pathlib import Path
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from model.ldm.corpus.tokenising import modified_word_tokenize
-from model.ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue, Length
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
-from model.sensorimotor_components import BufferedSensorimotorComponent
-from model.attenuation_statistic import AttenuationStatistic
-from model.components import FULL_ACTIVATION
-from model.sensorimotor_propagator import SensorimotorOneHopPropagator
-from model.utils.file import comment_line_from_str
-from model.utils.job import BufferedSensorimotorOneHopJobSpec
-from model.version import VERSION
-from model.utils.logging import logger
-from model.preferences import Preferences
+from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.basic_types import ActivationValue, Length
+from cognitive_model.events import ItemEnteredBufferEvent, ItemActivatedEvent
+from cognitive_model.sensorimotor_components import BufferedSensorimotorComponent
+from cognitive_model.attenuation_statistic import AttenuationStatistic
+from cognitive_model.components import FULL_ACTIVATION
+from cognitive_model.sensorimotor_propagator import SensorimotorOneHopPropagator
+from cognitive_model.utils.file import comment_line_from_str
+from cognitive_model.utils.job import BufferedSensorimotorOneHopJobSpec
+from cognitive_model.version import VERSION
+from cognitive_model.utils.logging import logger
+from cognitive_model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"

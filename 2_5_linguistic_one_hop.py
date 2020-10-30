@@ -24,19 +24,19 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from model.ldm.corpus.indexing import FreqDist
-from model.ldm.corpus.tokenising import modified_word_tokenize
-from model.ldm.model.base import DistributionalSemanticModel
-from model.components import FULL_ACTIVATION
-from model.linguistic_components import LinguisticComponent
-from model.linguistic_propagator import LinguisticOneHopPropagator
-from model.utils.job import LinguisticOneHopJobSpec
-from model.version import VERSION
-from model.basic_types import ActivationValue
-from model.events import ItemActivatedEvent
-from model.utils.file import comment_line_from_str
-from model.utils.logging import logger
-from model.preferences import Preferences
+from cognitive_model.ldm.corpus.indexing import FreqDist
+from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from cognitive_model.ldm.model.base import DistributionalSemanticModel
+from cognitive_model.components import FULL_ACTIVATION
+from cognitive_model.linguistic_components import LinguisticComponent
+from cognitive_model.linguistic_propagator import LinguisticOneHopPropagator
+from cognitive_model.utils.job import LinguisticOneHopJobSpec
+from cognitive_model.version import VERSION
+from cognitive_model.basic_types import ActivationValue
+from cognitive_model.events import ItemActivatedEvent
+from cognitive_model.utils.file import comment_line_from_str
+from cognitive_model.utils.logging import logger
+from cognitive_model.preferences import Preferences
 
 
 # Results DataFrame column names

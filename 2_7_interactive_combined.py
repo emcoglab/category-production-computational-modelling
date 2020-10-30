@@ -23,18 +23,18 @@ from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from model.ldm.corpus.tokenising import modified_word_tokenize
-from model.ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue, Component, Length
-from model.combined_cognitive_model import InteractiveCombinedCognitiveModel
-from model.components import FULL_ACTIVATION
-from model.events import ItemActivatedEvent, ItemEnteredBufferEvent
-from model.linguistic_components import LinguisticComponent
-from model.sensorimotor_components import SensorimotorComponent
-from model.attenuation_statistic import AttenuationStatistic
-from model.utils.logging import logger
-from model.version import VERSION
-from model.preferences import Preferences
+from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.basic_types import ActivationValue, Component, Length
+from cognitive_model.combined_cognitive_model import InteractiveCombinedCognitiveModel
+from cognitive_model.components import FULL_ACTIVATION
+from cognitive_model.events import ItemActivatedEvent, ItemEnteredBufferEvent
+from cognitive_model.linguistic_components import LinguisticComponent
+from cognitive_model.sensorimotor_components import SensorimotorComponent
+from cognitive_model.attenuation_statistic import AttenuationStatistic
+from cognitive_model.utils.logging import logger
+from cognitive_model.version import VERSION
+from cognitive_model.preferences import Preferences
 from job_specifications.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
 # Results DataFrame column names

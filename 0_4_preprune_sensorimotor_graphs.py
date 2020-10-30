@@ -20,12 +20,12 @@ import argparse
 import sys
 from os import path
 
-from model.ldm.utils.logging import log_message, date_format
-from model.ldm.utils.maths import DistanceType
-from model.utils.logging import logger
+from cognitive_model.ldm.utils.logging import log_message, date_format
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.utils.logging import logger
 
-from model.graph import Graph
-from model.preferences import Preferences
+from cognitive_model.graph import Graph
+from cognitive_model.preferences import Preferences
 
 
 def main(length_factor: int, distance_type_name: str, pruning_length: int):

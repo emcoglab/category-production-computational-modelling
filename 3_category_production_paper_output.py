@@ -38,7 +38,7 @@ from evaluation.category_production import add_ttfa_column, ModelType, get_model
     CP_INSTANCE, save_hitrate_summary_tables
 from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
     RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK
-from model.utils.maths import cm_to_inches
+from cognitive_model.utils.maths import cm_to_inches
 
 logger = getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

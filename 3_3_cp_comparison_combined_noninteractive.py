@@ -27,12 +27,12 @@ from matplotlib import pyplot
 from numpy import ceil, savetxt, array, loadtxt
 from pandas import DataFrame
 
-from model.preferences import Preferences
-from model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from cognitive_model.preferences import Preferences
+from cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from category_production.category_production import ColNames as CPColNames, CategoryProduction
 
-from model.utils.logging import logger
-from model.utils.maths import cm_to_inches
+from cognitive_model.utils.logging import logger
+from cognitive_model.utils.maths import cm_to_inches
 from evaluation.category_production import add_ttfa_column, ModelType, save_hitrate_graphs, get_hitrate_variance, \
     get_model_ttfas_for_category_sensorimotor, get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, \
     get_n_words_from_path_linguistic, frac_within_sd_of_hitrate_mean, get_firing_threshold_from_path_linguistic, \

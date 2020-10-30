@@ -22,11 +22,11 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from model.ldm.utils.maths import DistanceType
-from model.utils.logging import logger
-from model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
-from model.graph import save_edgelist_from_distance_matrix
-from model.preferences import Preferences
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.utils.logging import logger
+from cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from cognitive_model.graph import save_edgelist_from_distance_matrix
+from cognitive_model.preferences import Preferences
 
 
 def main(length_factor: int, distance_type_name: str):

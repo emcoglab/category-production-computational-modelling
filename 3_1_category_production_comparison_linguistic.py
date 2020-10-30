@@ -28,7 +28,7 @@ from category_production.category_production import CategoryProduction
 from evaluation.category_production import get_n_words_from_path_linguistic, get_model_ttfas_for_category_linguistic, \
     add_ttfa_column, get_firing_threshold_from_path_linguistic, ModelType, find_output_dirs, \
     prepare_category_production_data, process_one_model_output, add_model_hit_column
-from model.utils.logging import logger
+from cognitive_model.utils.logging import logger
 
 CP = CategoryProduction()
 

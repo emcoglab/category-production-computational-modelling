@@ -22,14 +22,14 @@ from os import path
 from numpy import linspace
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from model.ldm.corpus.indexing import FreqDist
-from model.ldm.model.count import CountVectorModel
-from model.ldm.utils.maths import DistanceType
-from model.linguistic_propagator import _load_labels_from_corpus
-from model.utils.logging import logger
-from model.graph import Graph
-from model.utils.maths import nearest_value_at_quantile
-from model.preferences import Preferences
+from cognitive_model.ldm.corpus.indexing import FreqDist
+from cognitive_model.ldm.model.count import CountVectorModel
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.linguistic_propagator import _load_labels_from_corpus
+from cognitive_model.utils.logging import logger
+from cognitive_model.graph import Graph
+from cognitive_model.utils.maths import nearest_value_at_quantile
+from cognitive_model.preferences import Preferences
 
 
 def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):

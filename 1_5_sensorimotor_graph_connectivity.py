@@ -19,10 +19,10 @@ import argparse
 import sys
 from os import path
 
-from model.ldm.utils.maths import DistanceType
-from model.graph import Graph, log_graph_topology
-from model.utils.logging import logger
-from model.preferences import Preferences
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.graph import Graph, log_graph_topology
+from cognitive_model.utils.logging import logger
+from cognitive_model.preferences import Preferences
 
 
 def main(pruning_length: int,

@@ -2,5 +2,5 @@
 	path = category_production
 	url = git@github.com:emcoglab/category_production.git
 [submodule "cognitive-model"]
-	path = model
+	path = cognitive_model
 	url = git@github.com:emcoglab/cognitive-model.git

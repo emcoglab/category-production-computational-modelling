@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import List
 
 from job_specifications.job import Job, JobSpec
-from model.ldm.utils.maths import DistanceType
+from cognitive_model.ldm.utils.maths import DistanceType
 
 
 @dataclass

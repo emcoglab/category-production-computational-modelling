@@ -21,14 +21,14 @@ from typing import Dict, DefaultDict
 from numpy import array, nan
 from pandas import DataFrame
 
-from model.ldm.utils.maths import DistanceType, distance
+from cognitive_model.ldm.utils.maths import DistanceType, distance
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from model.preferences import Preferences
-from model.sensorimotor_norms.exceptions import WordNotInNormsError
-from model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from cognitive_model.preferences import Preferences
+from cognitive_model.sensorimotor_norms.exceptions import WordNotInNormsError
+from cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
-from model.utils.logging import logger
+from cognitive_model.utils.logging import logger
 
 _COSINE_DISTANCE = "Cosine distance"
 _MINKOWSKI_DISTANCE = "Minkowski-3 distance"

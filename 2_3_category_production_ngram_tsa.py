@@ -23,16 +23,16 @@ from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from model.ldm.corpus.tokenising import modified_word_tokenize
-from model.basic_types import ActivationValue
-from model.components import FULL_ACTIVATION
-from model.events import ItemActivatedEvent
-from model.linguistic_components import LinguisticComponent
-from model.utils.file import comment_line_from_str
-from model.utils.job import LinguisticPropagationJobSpec
-from model.utils.logging import logger
-from model.version import VERSION
-from model.preferences import Preferences
+from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from cognitive_model.basic_types import ActivationValue
+from cognitive_model.components import FULL_ACTIVATION
+from cognitive_model.events import ItemActivatedEvent
+from cognitive_model.linguistic_components import LinguisticComponent
+from cognitive_model.utils.file import comment_line_from_str
+from cognitive_model.utils.job import LinguisticPropagationJobSpec
+from cognitive_model.utils.logging import logger
+from cognitive_model.version import VERSION
+from cognitive_model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"

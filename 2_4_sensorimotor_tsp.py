@@ -24,18 +24,18 @@ from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
 from job_specifications.job import BufferedSensorimotorPropagationJobSpec
-from model.ldm.corpus.tokenising import modified_word_tokenize
-from model.ldm.utils.maths import DistanceType
+from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from cognitive_model.ldm.utils.maths import DistanceType
 
-from model.sensorimotor_components import BufferedSensorimotorComponent
-from model.attenuation_statistic import AttenuationStatistic
-from model.components import FULL_ACTIVATION
-from model.version import VERSION
-from model.basic_types import ActivationValue, Length
-from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
-from model.utils.file import comment_line_from_str
-from model.utils.logging import logger
-from model.preferences import Preferences
+from cognitive_model.sensorimotor_components import BufferedSensorimotorComponent
+from cognitive_model.attenuation_statistic import AttenuationStatistic
+from cognitive_model.components import FULL_ACTIVATION
+from cognitive_model.version import VERSION
+from cognitive_model.basic_types import ActivationValue, Length
+from cognitive_model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
+from cognitive_model.utils.file import comment_line_from_str
+from cognitive_model.utils.logging import logger
+from cognitive_model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"

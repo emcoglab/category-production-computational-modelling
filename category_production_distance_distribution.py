@@ -24,13 +24,13 @@ from scipy.spatial.distance import squareform
 from sklearn.metrics import pairwise_distances
 
 from category_production.category_production import CategoryProduction
-from model.ldm.corpus.indexing import FreqDist, TokenIndex
-from model.ldm.model.count import LogCoOccurrenceCountModel
-from model.ldm.utils.maths import DistanceType
-from model.ldm.preferences.preferences import Preferences as CorpusPreferences
+from cognitive_model.ldm.corpus.indexing import FreqDist, TokenIndex
+from cognitive_model.ldm.model.count import LogCoOccurrenceCountModel
+from cognitive_model.ldm.utils.maths import DistanceType
+from cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
 
-from model.preferences import Preferences
-from model.utils.logging import logger
+from cognitive_model.preferences import Preferences
+from cognitive_model.utils.logging import logger
 
 
 def main():

@@ -21,13 +21,13 @@ import sys
 from os import path
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from model.ldm.corpus.indexing import FreqDist, TokenIndex
-from model.ldm.model.base import DistributionalSemanticModel
-from model.ldm.model.ngram import NgramModel
-from model.utils.logging import logger
-from model.graph import save_edgelist_from_similarity_matrix
-from model.utils.indexing import list_index_dictionaries
-from model.preferences import Preferences
+from cognitive_model.ldm.corpus.indexing import FreqDist, TokenIndex
+from cognitive_model.ldm.model.base import DistributionalSemanticModel
+from cognitive_model.ldm.model.ngram import NgramModel
+from cognitive_model.utils.logging import logger
+from cognitive_model.graph import save_edgelist_from_similarity_matrix
+from cognitive_model.utils.indexing import list_index_dictionaries
+from cognitive_model.preferences import Preferences
 
 
 def main(length_factor: int, corpus_name: str, model_name: str, radius: int):

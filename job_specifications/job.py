@@ -25,18 +25,18 @@ from typing import Optional, List, Dict, Union
 import yaml
 
 from ..cli.lookups import get_model_from_params, get_corpus_from_name
-from ..model.components import ModelComponent, FULL_ACTIVATION
-from ..model.ldm.corpus.indexing import FreqDist
-from ..model.ldm.model.base import DistributionalSemanticModel
-from ..model.linguistic_components import LinguisticComponent
-from ..model.linguistic_propagator import LinguisticPropagator
-from ..model.sensorimotor_components import SensorimotorComponent, BufferedSensorimotorComponent
-from ..model.sensorimotor_propagator import SensorimotorPropagator
-from ..model.ldm.utils.maths import DistanceType
-from ..model.basic_types import ActivationValue
-from ..model.graph import EdgePruningType
-from ..model.attenuation_statistic import AttenuationStatistic
-from ..model.version import VERSION, GIT_HASH
+from ..cognitive_model.components import ModelComponent, FULL_ACTIVATION
+from ..cognitive_model.ldm.corpus.indexing import FreqDist
+from ..cognitive_model.ldm.model.base import DistributionalSemanticModel
+from ..cognitive_model.linguistic_components import LinguisticComponent
+from ..cognitive_model.linguistic_propagator import LinguisticPropagator
+from ..cognitive_model.sensorimotor_components import SensorimotorComponent, BufferedSensorimotorComponent
+from ..cognitive_model.sensorimotor_propagator import SensorimotorPropagator
+from ..cognitive_model.ldm.utils.maths import DistanceType
+from ..cognitive_model.basic_types import ActivationValue
+from ..cognitive_model.graph import EdgePruningType
+from ..cognitive_model.attenuation_statistic import AttenuationStatistic
+from ..cognitive_model.version import VERSION, GIT_HASH
 
 _SerialisableDict = Dict[str, str]
 
