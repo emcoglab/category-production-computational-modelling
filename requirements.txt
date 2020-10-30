@@ -1,4 +1,4 @@
--r model/requirements.txt
+-r cognitive_model/requirements.txt
 -r category_production/requirements.txt
 colorama
 matplotlib
