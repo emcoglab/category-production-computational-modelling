@@ -21,11 +21,11 @@ from typing import Set, Tuple
 from dataclasses import dataclass, field
 
 from category_production.category_production import CategoryProduction
-from ldm.corpus.indexing import FreqDist
-from ldm.corpus.tokenising import modified_word_tokenize
-from ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.ldm.corpus.indexing import FreqDist
+from model.ldm.corpus.tokenising import modified_word_tokenize
+from model.ldm.preferences.preferences import Preferences as CorpusPreferences
 from model.utils.logging import logger
-from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 
 @dataclass

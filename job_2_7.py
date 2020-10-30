@@ -1,6 +1,6 @@
 from typing import Dict
 
-from ldm.utils.maths import DistanceType
+from model.ldm.utils.maths import DistanceType
 from model.attenuation_statistic import AttenuationStatistic
 from model.utils.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
     SensorimotorPropagationJobSpec

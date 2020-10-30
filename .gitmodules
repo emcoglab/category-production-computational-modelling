@@ -2,14 +2,14 @@
 	path = category_production
 	url = git@github.com:emcoglab/category_production.git
 [submodule "approximate_comparator"]
-	path = tests/approximate_comparator
+	path = model/tests/approximate_comparator
 	url = https://caiw@github.com/caiw/approximate_comparator.git
 [submodule "ldm"]
-	path = ldm
+	path = model/ldm
 	url = git@github.com:emcoglab/ldm-core.git
 [submodule "sensorimotor_norms"]
-	path = sensorimotor_norms
+	path = model/sensorimotor_norms
 	url = git@github.com:emcoglab/sensorimotor-norms.git
 [submodule "breng_ameng"]
-	path = breng_ameng
+	path = model/breng_ameng
 	url = git@github.com:emcoglab/BrEng-AmEng.git

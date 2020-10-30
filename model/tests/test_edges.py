@@ -17,8 +17,8 @@ caiwingfield.net
 
 import unittest
 
-from model.graph import Edge
-from model.basic_types import Node
+from ..graph import Edge
+from ..basic_types import Node
 
 
 class TestEdges(unittest.TestCase):

@@ -4,11 +4,11 @@ from threading import Thread
 from typing import Optional
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist
-from ldm.model.base import DistributionalSemanticModel
+from model.ldm.corpus.indexing import FreqDist
+from model.ldm.model.base import DistributionalSemanticModel
 from model.utils.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 from model.version import VERSION
-from preferences import Preferences
+from model.preferences import Preferences
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict
 
-from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
+from job_specifications.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
 
 
 class Job_2_3(LinguisticPropagationJob):

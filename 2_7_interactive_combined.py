@@ -23,8 +23,8 @@ from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from ldm.corpus.tokenising import modified_word_tokenize
-from ldm.utils.maths import DistanceType
+from model.ldm.corpus.tokenising import modified_word_tokenize
+from model.ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Component, Length
 from model.combined_cognitive_model import InteractiveCombinedCognitiveModel
 from model.components import FULL_ACTIVATION
@@ -32,10 +32,10 @@ from model.events import ItemActivatedEvent, ItemEnteredBufferEvent
 from model.linguistic_components import LinguisticComponent
 from model.sensorimotor_components import SensorimotorComponent
 from model.attenuation_statistic import AttenuationStatistic
-from model.utils.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 from model.utils.logging import logger
 from model.version import VERSION
-from preferences import Preferences
+from model.preferences import Preferences
+from job_specifications.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -59,8 +59,10 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
     job_spec.save(in_location=response_dir)
 
     model = InteractiveCombinedCognitiveModel(
-        linguistic_component=LinguisticComponent.from_spec(job_spec.linguistic_spec),
-        sensorimotor_component=SensorimotorComponent.from_spec(job_spec.sensorimotor_spec, use_prepruned=use_prepruned),
+        linguistic_component=job_spec.linguistic_spec.to_component(LinguisticComponent),
+        sensorimotor_component=job_spec.sensorimotor_spec.to_component_prepruned(SensorimotorComponent)
+                               if use_prepruned
+                               else job_spec.sensorimotor_spec.to_component(SensorimotorComponent),
         lc_to_smc_delay=job_spec.lc_to_smc_delay,
         smc_to_lc_delay=job_spec.smc_to_lc_delay,
         inter_component_attenuation=job_spec.inter_component_attenuation,

@@ -23,19 +23,19 @@ from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from ldm.corpus.tokenising import modified_word_tokenize
-from ldm.utils.maths import DistanceType
+from job_specifications.job import BufferedSensorimotorPropagationJobSpec
+from model.ldm.corpus.tokenising import modified_word_tokenize
+from model.ldm.utils.maths import DistanceType
 
 from model.sensorimotor_components import BufferedSensorimotorComponent
 from model.attenuation_statistic import AttenuationStatistic
 from model.components import FULL_ACTIVATION
-from model.utils.job import BufferedSensorimotorPropagationJobSpec
 from model.version import VERSION
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from model.utils.file import comment_line_from_str
 from model.utils.logging import logger
-from preferences import Preferences
+from model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -61,10 +61,8 @@ def main(distance_type_name: str,
          ):
 
     distance_type = DistanceType.from_name(distance_type_name)
-    # Once a node is fully activated, that's enough.
-    activation_cap = FULL_ACTIVATION
 
-    job_spec = BufferedSensorimotorPropagationJobSpec(
+    job_spec: BufferedSensorimotorPropagationJobSpec = BufferedSensorimotorPropagationJobSpec(
         distance_type=distance_type, length_factor=length_factor, max_radius=max_sphere_radius,
         buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
         accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
@@ -84,7 +82,10 @@ def main(distance_type_name: str,
     job_spec.save(in_location=response_dir)
 
     cp = CategoryProduction()
-    sc = BufferedSensorimotorComponent.from_spec(job_spec, use_prepruned=use_prepruned)
+    if use_prepruned:
+        sc: BufferedSensorimotorComponent = job_spec.to_component_prepruned(BufferedSensorimotorComponent)
+    else:
+        sc: BufferedSensorimotorComponent = job_spec.to_component(BufferedSensorimotorComponent)
 
     for category_label in cp.category_labels_sensorimotor:
 

@@ -27,8 +27,8 @@ from matplotlib import pyplot
 from numpy import ceil, savetxt, array, loadtxt
 from pandas import DataFrame
 
-from preferences import Preferences
-from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from model.preferences import Preferences
+from model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from category_production.category_production import ColNames as CPColNames, CategoryProduction
 
 from model.utils.logging import logger

@@ -21,12 +21,12 @@ from typing import Dict, DefaultDict
 from numpy import array, nan
 from pandas import DataFrame
 
-from ldm.utils.maths import DistanceType, distance
+from model.ldm.utils.maths import DistanceType, distance
 from category_production.category_production import CategoryProduction
 from category_production.category_production import ColNames as CPColNames
-from preferences import Preferences
-from sensorimotor_norms.exceptions import WordNotInNormsError
-from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from model.preferences import Preferences
+from model.sensorimotor_norms.exceptions import WordNotInNormsError
+from model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 from model.utils.logging import logger
 

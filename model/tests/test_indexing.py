@@ -17,7 +17,7 @@ caiwingfield.net
 
 import unittest
 
-from model.utils.indexing import list_index_dictionaries
+from ..utils.indexing import list_index_dictionaries
 
 
 class TestListIndexDictionaryExample(unittest.TestCase):

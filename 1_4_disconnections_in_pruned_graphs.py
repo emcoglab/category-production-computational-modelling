@@ -22,12 +22,12 @@ from os import path
 from pandas import DataFrame
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist
-from ldm.model.count import CountVectorModel
-from ldm.utils.maths import DistanceType
+from model.ldm.corpus.indexing import FreqDist
+from model.ldm.model.count import CountVectorModel
+from model.ldm.utils.maths import DistanceType
 from model.utils.logging import logger
 from model.graph import Graph, log_graph_topology
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main(n_words: int, prune_top_percentile: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):

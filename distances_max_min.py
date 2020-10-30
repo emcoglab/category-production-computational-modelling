@@ -20,10 +20,10 @@ from pathlib import Path
 
 import numpy
 
-from ldm.utils.maths import DistanceType
+from model.ldm.utils.maths import DistanceType
 from model.graph import iter_edges_from_edgelist
 from model.utils.logging import logger
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main():

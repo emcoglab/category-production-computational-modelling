@@ -1,4 +1,4 @@
-from model.utils.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
+from job_specifications.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
 
 
 class Job_2_2(LinguisticPropagationJob):

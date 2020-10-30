@@ -16,14 +16,13 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path
 
-from ldm.utils.maths import DistanceType
+from model.ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology
 from model.utils.logging import logger
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main(pruning_length: int,

@@ -31,13 +31,13 @@ from numpy import nan
 from pandas import DataFrame, read_csv, isna, Series
 
 from category_production.category_production import CategoryProduction, ColNames as CPColNames
-from ldm.corpus.tokenising import modified_word_tokenize
+from model.ldm.corpus.tokenising import modified_word_tokenize
 from model.utils.logging import logger
 from model.basic_types import ActivationValue
 from model.utils.exceptions import ParseError
 from evaluation.column_names import *
 from model.utils.maths import cm_to_inches
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 CP_INSTANCE = CategoryProduction()

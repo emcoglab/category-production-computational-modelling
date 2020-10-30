@@ -39,14 +39,11 @@ from evaluation.category_production import add_ttfa_column, ModelType, get_model
 from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
     RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK
 from model.utils.maths import cm_to_inches
-from sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 logger = getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 
-
-SN = SensorimotorNorms()
 
 # The number of members of a category to produce when computing TTFA scale ratios
 N_MEMBERS_COREGISTRATION = 3

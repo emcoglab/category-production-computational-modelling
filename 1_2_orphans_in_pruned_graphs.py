@@ -16,21 +16,20 @@ caiwingfield.net
 ---------------------------
 """
 import argparse
-import logging
 import sys
 from os import path
 
 from numpy import linspace
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist
-from ldm.model.count import CountVectorModel
-from ldm.utils.maths import DistanceType
+from model.ldm.corpus.indexing import FreqDist
+from model.ldm.model.count import CountVectorModel
+from model.ldm.utils.maths import DistanceType
 from model.linguistic_propagator import _load_labels_from_corpus
 from model.utils.logging import logger
 from model.graph import Graph
 from model.utils.maths import nearest_value_at_quantile
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):

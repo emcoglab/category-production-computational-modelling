@@ -20,12 +20,12 @@ import argparse
 import sys
 from os import path
 
-from ldm.utils.logging import log_message, date_format
-from ldm.utils.maths import DistanceType
+from model.ldm.utils.logging import log_message, date_format
+from model.ldm.utils.maths import DistanceType
 from model.utils.logging import logger
 
 from model.graph import Graph
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main(length_factor: int, distance_type_name: str, pruning_length: int):

@@ -24,15 +24,15 @@ from matplotlib import pyplot, ticker
 from numpy import inf
 from seaborn import distplot, barplot
 
-from ldm.corpus.indexing import FreqDist
-from ldm.model.base import DistributionalSemanticModel
-from ldm.model.count import LogCoOccurrenceCountModel
-from ldm.preferences.preferences import Preferences as CorpusPreferences
-from ldm.utils.maths import DistanceType
+from model.ldm.corpus.indexing import FreqDist
+from model.ldm.model.base import DistributionalSemanticModel
+from model.ldm.model.count import LogCoOccurrenceCountModel
+from model.ldm.preferences.preferences import Preferences as CorpusPreferences
+from model.ldm.utils.maths import DistanceType
 from model.utils.logging import logger
 
 from model.graph import iter_edges_from_edgelist
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main_linguistic(n_words: int, length_factor: int):

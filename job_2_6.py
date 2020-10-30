@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from model.utils.job import SensorimotorPropagationJob, BufferedSensorimotorOneHopJobSpec
+from job_specifications.job import SensorimotorPropagationJob, BufferedSensorimotorOneHopJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"

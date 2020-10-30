@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from model.utils.job import Job, JobSpec
-from ldm.utils.maths import DistanceType
+from job_specifications.job import Job, JobSpec
+from model.ldm.utils.maths import DistanceType
 
 
 @dataclass

@@ -23,7 +23,7 @@ from numpy import nan
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from ldm.corpus.tokenising import modified_word_tokenize
+from model.ldm.corpus.tokenising import modified_word_tokenize
 from model.basic_types import ActivationValue
 from model.components import FULL_ACTIVATION
 from model.events import ItemActivatedEvent
@@ -32,7 +32,7 @@ from model.utils.file import comment_line_from_str
 from model.utils.job import LinguisticPropagationJobSpec
 from model.utils.logging import logger
 from model.version import VERSION
-from preferences import Preferences
+from model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"
@@ -78,7 +78,7 @@ def main(n_words: int,
 
     job_spec.save(in_location=response_dir)
 
-    lc = LinguisticComponent.from_spec(job_spec)
+    lc: LinguisticComponent = job_spec.to_component(LinguisticComponent)
 
     cp = CategoryProduction()
     for category_label in cp.category_labels:

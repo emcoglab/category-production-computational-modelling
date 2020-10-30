@@ -24,8 +24,8 @@ from pathlib import Path
 from pandas import DataFrame
 
 from category_production.category_production import CategoryProduction
-from ldm.corpus.tokenising import modified_word_tokenize
-from ldm.utils.maths import DistanceType
+from model.ldm.corpus.tokenising import modified_word_tokenize
+from model.ldm.utils.maths import DistanceType
 from model.basic_types import ActivationValue, Length
 from model.events import ItemEnteredBufferEvent, ItemActivatedEvent
 from model.sensorimotor_components import BufferedSensorimotorComponent
@@ -36,7 +36,7 @@ from model.utils.file import comment_line_from_str
 from model.utils.job import BufferedSensorimotorOneHopJobSpec
 from model.version import VERSION
 from model.utils.logging import logger
-from preferences import Preferences
+from model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"

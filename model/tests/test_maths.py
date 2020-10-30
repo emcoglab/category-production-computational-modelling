@@ -17,10 +17,10 @@ caiwingfield.net
 
 import unittest
 
-from model.utils.maths_core import lognormal_sf, lognormal_pdf, lognormal_cdf
 from scipy.stats import lognorm
 
-from model.utils.maths import scale01, affine_scale
+from ..utils.maths_core import lognormal_sf, lognormal_pdf, lognormal_cdf
+from ..utils.maths import scale01, affine_scale
 
 
 class TestCython(unittest.TestCase):

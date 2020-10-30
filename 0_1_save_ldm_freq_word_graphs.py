@@ -23,16 +23,15 @@ from os import path
 from sklearn.metrics.pairwise import pairwise_distances
 
 from cli.lookups import get_corpus_from_name, get_model_from_params
-from ldm.corpus.indexing import FreqDist, TokenIndex
-from ldm.model.base import DistributionalSemanticModel
-from ldm.model.count import CountVectorModel
-from ldm.utils.logging import log_message, date_format
-from ldm.utils.maths import DistanceType
+from model.ldm.corpus.indexing import FreqDist, TokenIndex
+from model.ldm.model.base import DistributionalSemanticModel
+from model.ldm.model.count import CountVectorModel
+from model.ldm.utils.maths import DistanceType
 
 from model.utils.logging import logger
 from model.graph import save_edgelist_from_distance_matrix
 from model.utils.indexing import list_index_dictionaries
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main(length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):

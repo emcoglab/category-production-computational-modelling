@@ -19,9 +19,9 @@ import unittest
 
 from numpy import array, ones, eye
 
-from model.graph import Graph, Edge
-from model.basic_types import Node
-from tests.test_materials.metadata import test_graph_file_path, test_graph_importance_file_path
+from ..graph import Graph, Edge
+from ..basic_types import Node
+from .test_materials.metadata import test_graph_file_path, test_graph_importance_file_path
 
 
 class TestGraphPruning(unittest.TestCase):

@@ -24,11 +24,19 @@ from typing import Optional, List, Dict, Union
 
 import yaml
 
-from ldm.utils.maths import DistanceType
-from model.basic_types import ActivationValue
-from model.graph import EdgePruningType
-from model.attenuation_statistic import AttenuationStatistic
-from model.version import VERSION, GIT_HASH
+from ..cli.lookups import get_model_from_params, get_corpus_from_name
+from ..model.components import ModelComponent, FULL_ACTIVATION
+from ..model.ldm.corpus.indexing import FreqDist
+from ..model.ldm.model.base import DistributionalSemanticModel
+from ..model.linguistic_components import LinguisticComponent
+from ..model.linguistic_propagator import LinguisticPropagator
+from ..model.sensorimotor_components import SensorimotorComponent, BufferedSensorimotorComponent
+from ..model.sensorimotor_propagator import SensorimotorPropagator
+from ..model.ldm.utils.maths import DistanceType
+from ..model.basic_types import ActivationValue
+from ..model.graph import EdgePruningType
+from ..model.attenuation_statistic import AttenuationStatistic
+from ..model.version import VERSION, GIT_HASH
 
 _SerialisableDict = Dict[str, str]
 
@@ -151,6 +159,10 @@ class PropagationJobSpec(JobSpec, ABC):
             })
         return d
 
+    @abstractmethod
+    def to_component(self, component_class) -> ModelComponent:
+        raise NotImplementedError()
+
 
 @dataclass
 class SensorimotorPropagationJobSpec(PropagationJobSpec):
@@ -227,6 +239,27 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             attenuation_statistic   =AttenuationStatistic.from_slug(dictionary["Attenuation statistic"]),
         )
 
+    def _to_component(self, component_class, use_prepruned: bool) -> SensorimotorComponent:
+        return component_class(
+            propagator=SensorimotorPropagator(
+                distance_type=self.distance_type,
+                length_factor=self.length_factor,
+                max_sphere_radius=self.max_radius,
+                node_decay_lognormal_median=self.node_decay_median,
+                node_decay_lognormal_sigma=self.node_decay_sigma,
+                use_prepruned=use_prepruned,
+            ),
+            accessible_set_threshold=self.accessible_set_threshold,
+            accessible_set_capacity=self.accessible_set_capacity,
+            attenuation_statistic=self.attenuation_statistic,
+            activation_cap=FULL_ACTIVATION
+        )
+
+    def to_component(self, component_class):
+        return self._to_component(component_class, False)
+
+    def to_component_prepruned(self, component_class):
+        return self._to_component(component_class, True)
 
 @dataclass
 class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
@@ -284,6 +317,24 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             accessible_set_threshold=ActivationValue(dictionary["Accessible set threshold"]),
             distance_type           =DistanceType.from_name(dictionary["Distance type"]),
             attenuation_statistic   =AttenuationStatistic.from_slug(dictionary["Attenuation statistic"]),
+        )
+
+    def _to_component(self, component_class, use_prepruned: bool) -> BufferedSensorimotorComponent:
+        return component_class(
+            propagator=SensorimotorPropagator(
+                distance_type=self.distance_type,
+                length_factor=self.length_factor,
+                max_sphere_radius=self.max_radius,
+                node_decay_lognormal_median=self.node_decay_median,
+                node_decay_lognormal_sigma=self.node_decay_sigma,
+                use_prepruned=use_prepruned,
+            ),
+            accessible_set_threshold=self.accessible_set_threshold,
+            accessible_set_capacity=self.accessible_set_capacity,
+            attenuation_statistic=self.attenuation_statistic,
+            activation_cap=FULL_ACTIVATION,
+            buffer_capacity=self.buffer_capacity,
+            buffer_threshold=self.buffer_threshold,
         )
 
 
@@ -418,6 +469,26 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             pruning                  =int(dictionary["Pruning"]) if "Pruning" in dictionary else None,
         )
 
+    def to_component(self, component_class) -> LinguisticComponent:
+        corpus = get_corpus_from_name(self.corpus_name)
+        freq_dist = FreqDist.load(corpus.freq_dist_path)
+        distributional_model: DistributionalSemanticModel = get_model_from_params(
+            corpus, freq_dist, self.model_name, self.model_radius)
+        return component_class(
+            propagator=LinguisticPropagator(
+                distance_type=self.distance_type,
+                length_factor=self.length_factor,
+                n_words=self.n_words,
+                distributional_model=distributional_model,
+                node_decay_factor=self.node_decay_factor,
+                edge_decay_sd=self.edge_decay_sd,
+                edge_pruning_type=self.pruning_type,
+                edge_pruning=self.pruning,
+            ),
+            accessible_set_threshold=self.accessible_set_threshold,
+            accessible_set_capacity=self.accessible_set_capacity,
+            firing_threshold=self.firing_threshold,
+        )
 
 class LinguisticOneHopJobSpec(LinguisticPropagationJobSpec):
     def output_location_relative(self) -> Path:

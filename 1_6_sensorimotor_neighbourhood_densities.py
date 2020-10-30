@@ -23,10 +23,10 @@ from os import path
 from matplotlib import pyplot
 from seaborn import distplot
 
-from ldm.utils.maths import DistanceType
+from model.ldm.utils.maths import DistanceType
 from model.graph import Graph, log_graph_topology
 from model.utils.logging import logger
-from preferences import Preferences
+from model.preferences import Preferences
 
 
 def main(length_factor: int,
