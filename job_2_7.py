@@ -2,7 +2,7 @@ from typing import Dict
 
 from cognitive_model.ldm.utils.maths import DistanceType
 from cognitive_model.attenuation_statistic import AttenuationStatistic
-from cognitive_model.utils.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
+from job_specifications.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
     SensorimotorPropagationJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

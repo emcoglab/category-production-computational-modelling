@@ -6,9 +6,9 @@ from typing import Optional
 from cli.lookups import get_corpus_from_name, get_model_from_params
 from cognitive_model.ldm.corpus.indexing import FreqDist
 from cognitive_model.ldm.model.base import DistributionalSemanticModel
-from cognitive_model.utils.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 from cognitive_model.version import VERSION
 from cognitive_model.preferences import Preferences
+from job_specifications.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
