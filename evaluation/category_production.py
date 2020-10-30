@@ -235,7 +235,7 @@ def add_predictor_column_production_proportion(main_data):
     """Mutates `main_data`."""
     logger.info("Adding production proportion column")
     # Production proportion is the number of times a response was given,
-    # divided by the number of participants who gave it
+    # divided by the number of participants who saw the category in which it is a response.
     main_data[PRODUCTION_PROPORTION] = main_data.apply(lambda row: row[CPColNames.ProductionFrequency] / PARTICIPANTS_PER_CATEGORY, axis=1)
 
 
