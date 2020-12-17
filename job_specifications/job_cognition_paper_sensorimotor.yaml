@@ -11,3 +11,4 @@ Log-normal sigma: 0.9
 Max sphere radius: 1.5
 Attenuation statistic: 'Prevalence'
 Run for ticks: 2000
+Use BrEng translation: False

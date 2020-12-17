@@ -64,14 +64,15 @@ def main(distance_type_name: str,
     activation_cap = FULL_ACTIVATION
 
     job_spec = BufferedSensorimotorOneHopJobSpec(
-      distance_type=DistanceType.Minkowski3, length_factor=length_factor,
-      max_radius=max_sphere_radius,
-      buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
-      accessible_set_threshold=accessible_set_threshold,
-      accessible_set_capacity=accessible_set_capacity,
-      node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
-      attenuation_statistic=attenuation,
-      run_for_ticks=None, bailout=None,
+        distance_type=DistanceType.Minkowski3, length_factor=length_factor,
+        max_radius=max_sphere_radius,
+        buffer_threshold=buffer_threshold, buffer_capacity=buffer_capacity,
+        accessible_set_threshold=accessible_set_threshold,
+        accessible_set_capacity=accessible_set_capacity,
+        node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
+        attenuation_statistic=attenuation,
+        run_for_ticks=None, bailout=None,
+        use_breng_translation=False,
     )
 
     response_dir: Path = Path(Preferences.output_dir,

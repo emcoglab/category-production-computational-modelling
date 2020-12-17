@@ -69,6 +69,7 @@ def main(distance_type_name: str,
         attenuation_statistic=attenuation,
         node_decay_sigma=node_decay_sigma, node_decay_median=node_decay_median,
         run_for_ticks=run_for_ticks, bailout=bailout,
+        use_breng_translation=False,
     )
 
     response_dir: Path = Path(Preferences.output_dir,

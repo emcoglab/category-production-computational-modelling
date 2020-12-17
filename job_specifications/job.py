@@ -173,6 +173,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
     accessible_set_threshold: float
     accessible_set_capacity: Optional[int]
     attenuation_statistic: AttenuationStatistic
+    use_breng_translation: bool
 
     @property
     def cli_args(self) -> List[str]:
@@ -185,12 +186,14 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             f"--node_decay_median {self.node_decay_median}",
             f"--node_decay_sigma {self.node_decay_sigma}",
             f"--attenuation {self.attenuation_statistic.name}",
+            f"--use_breng_translation" if self.use_breng_translation else "",
         ]
         return args
 
     @property
     def shorthand(self) -> str:
         return f"sm_" \
+               f"breng_" if self.use_breng_translation else "" \
                f"r{self.max_radius}_" \
                f"m{self.node_decay_median}_" \
                f"s{self.node_decay_sigma}_" \
@@ -198,8 +201,9 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
                f"ac{self.accessible_set_capacity if self.accessible_set_capacity is not None else '-'}"
 
     def output_location_relative(self) -> Path:
+        breng_string = " BrEng" if self.use_breng_translation else ""
         return Path(
-            f"Sensorimotor {VERSION}",
+            f"Sensorimotor {VERSION}{breng_string}",
             f"{self.distance_type.name} length {self.length_factor} att {self.attenuation_statistic.name};"
             f" max-r {self.max_radius};"
             f" n-decay-m {self.node_decay_median};"
@@ -221,6 +225,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             "Accessible set threshold": str(self.accessible_set_threshold),
             "Accessible set capacity": str(self.accessible_set_capacity),
             "Attenuation statistic": self.attenuation_statistic.name,
+            "Use BrEng translation": self.use_breng_translation,
         })
         return d
 
@@ -237,6 +242,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             accessible_set_threshold=ActivationValue(dictionary["Accessible set threshold"]),
             distance_type           =DistanceType.from_name(dictionary["Distance type"]),
             attenuation_statistic   =AttenuationStatistic.from_slug(dictionary["Attenuation statistic"]),
+            use_breng_translation   =bool(dictionary["Use BrEng translation"]),
         )
 
     def _to_component(self, component_class, use_prepruned: bool) -> SensorimotorComponent:
@@ -252,7 +258,8 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             accessible_set_threshold=self.accessible_set_threshold,
             accessible_set_capacity=self.accessible_set_capacity,
             attenuation_statistic=self.attenuation_statistic,
-            activation_cap=FULL_ACTIVATION
+            activation_cap=FULL_ACTIVATION,
+            use_breng_translation=self.use_breng_translation,
         )
 
     def to_component(self, component_class):
@@ -280,8 +287,9 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
                f"b{self.buffer_threshold}"
 
     def output_location_relative(self) -> Path:
+        breng_string = " BrEng" if self.use_breng_translation else ""
         return Path(
-            f"Sensorimotor {VERSION}",
+            f"Sensorimotor {VERSION}{breng_string}",
             f"{self.distance_type.name} length {self.length_factor} attenuate {self.attenuation_statistic.name};"
             f" max-r {self.max_radius};"
             f" n-decay-m {self.node_decay_median};"
@@ -317,6 +325,7 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             accessible_set_threshold=ActivationValue(dictionary["Accessible set threshold"]),
             distance_type           =DistanceType.from_name(dictionary["Distance type"]),
             attenuation_statistic   =AttenuationStatistic.from_slug(dictionary["Attenuation statistic"]),
+            use_breng_translation   =bool(dictionary["Use BrEng translation"]),
         )
 
     def _to_component(self, component_class, use_prepruned: bool) -> BufferedSensorimotorComponent:
@@ -335,6 +344,7 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             activation_cap=FULL_ACTIVATION,
             buffer_capacity=self.buffer_capacity,
             buffer_threshold=self.buffer_threshold,
+            use_breng_translation=self.use_breng_translation,
         )
 
 
@@ -500,8 +510,9 @@ class LinguisticOneHopJobSpec(LinguisticPropagationJobSpec):
 
 class BufferedSensorimotorOneHopJobSpec(BufferedSensorimotorPropagationJobSpec):
     def output_location_relative(self) -> Path:
+        breng_string = " BrEng" if self.use_breng_translation else ""
         return Path(
-            f"Sensorimotor one-hop {VERSION}",
+            f"Sensorimotor one-hop {VERSION}{breng_string}",
             *super().output_location_relative().parts[1:]
         )
 

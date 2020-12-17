@@ -20,7 +20,6 @@ import argparse
 import sys
 from os import path
 
-from cognitive_model.ldm.utils.logging import log_message, date_format
 from cognitive_model.ldm.utils.maths import DistanceType
 from cognitive_model.utils.logging import logger
 
