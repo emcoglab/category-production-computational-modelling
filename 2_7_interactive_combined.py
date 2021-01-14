@@ -104,13 +104,12 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
             model.linguistic_component.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
 
         # Activate sensorimotor item(s)
-        category_label_sensorimotor = cp.translate_linguistic2sensorimotor[category_label]
-        if category_label_sensorimotor in model.sensorimotor_component.available_labels:
-            logger.info(f"Activating {category_label_sensorimotor} in sensorimotor component")
-            model.sensorimotor_component.propagator.activate_item_with_label(category_label_sensorimotor, FULL_ACTIVATION)
+        if category_label in model.sensorimotor_component.available_labels:
+            logger.info(f"Activating {category_label} in sensorimotor component")
+            model.sensorimotor_component.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
         else:
             category_words = [word
-                              for word in modified_word_tokenize(category_label_sensorimotor)
+                              for word in modified_word_tokenize(category_label)
                               if word not in cp.ignored_words
                               # Ignore words which aren't available: activate all words we can
                               and word in model.sensorimotor_component.available_labels]
