@@ -30,14 +30,14 @@ from matplotlib import pyplot, ticker
 from numpy import nan
 from pandas import DataFrame, read_csv, isna, Series
 
-from category_production.category_production import CategoryProduction, ColNames as CPColNames
-from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
-from cognitive_model.utils.logging import logger
-from cognitive_model.basic_types import ActivationValue
-from cognitive_model.utils.exceptions import ParseError
-from evaluation.column_names import *
-from cognitive_model.utils.maths import cm_to_inches
-from cognitive_model.preferences import Preferences
+from .column_names import *
+from ..category_production.category_production import CategoryProduction, ColNames as CPColNames
+from ..cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from ..cognitive_model.utils.logging import logger
+from ..cognitive_model.basic_types import ActivationValue
+from ..cognitive_model.utils.exceptions import ParseError
+from ..cognitive_model.utils.maths import cm_to_inches
+from ..cognitive_model.preferences import Preferences
 
 
 CP_INSTANCE = CategoryProduction()

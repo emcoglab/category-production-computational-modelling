@@ -22,17 +22,17 @@ from pathlib import Path
 from numpy import nan
 from pandas import DataFrame
 
-from category_production.category_production import CategoryProduction
-from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
-from cognitive_model.basic_types import ActivationValue
-from cognitive_model.components import FULL_ACTIVATION
-from cognitive_model.events import ItemActivatedEvent
-from cognitive_model.linguistic_components import LinguisticComponent
-from cognitive_model.utils.file import comment_line_from_str
-from cognitive_model.utils.job import LinguisticPropagationJobSpec
-from cognitive_model.utils.logging import logger
-from cognitive_model.version import VERSION
-from cognitive_model.preferences import Preferences
+from framework.category_production.category_production import CategoryProduction
+from framework.cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from framework.cognitive_model.basic_types import ActivationValue
+from framework.cognitive_model.components import FULL_ACTIVATION
+from framework.cognitive_model.events import ItemActivatedEvent
+from framework.cognitive_model.linguistic_components import LinguisticComponent
+from framework.cognitive_model.utils.file import comment_line_from_str
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.version import VERSION
+from framework.cognitive_model.preferences import Preferences
+from framework.cli.job import LinguisticPropagationJobSpec
 
 # Results DataFrame column names
 RESPONSE = "Response"

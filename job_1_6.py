@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from job_specifications.job import Job, JobSpec
-from cognitive_model.ldm.utils.maths import DistanceType
+from framework.cli.job import Job, JobSpec
+from framework.cognitive_model.ldm.utils.maths import DistanceType
 
 
 @dataclass

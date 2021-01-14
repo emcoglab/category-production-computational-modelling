@@ -22,20 +22,20 @@ from pathlib import Path
 from numpy import nan
 from pandas import DataFrame
 
-from category_production.category_production import CategoryProduction
-from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
-from cognitive_model.ldm.utils.maths import DistanceType
-from cognitive_model.basic_types import ActivationValue, Component, Length
-from cognitive_model.combined_cognitive_model import InteractiveCombinedCognitiveModel
-from cognitive_model.components import FULL_ACTIVATION
-from cognitive_model.events import ItemActivatedEvent, ItemEnteredBufferEvent
-from cognitive_model.linguistic_components import LinguisticComponent
-from cognitive_model.sensorimotor_components import SensorimotorComponent
-from cognitive_model.attenuation_statistic import AttenuationStatistic
-from cognitive_model.utils.logging import logger
-from cognitive_model.version import VERSION
-from cognitive_model.preferences import Preferences
-from job_specifications.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
+from framework.category_production.category_production import CategoryProduction
+from framework.cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.basic_types import ActivationValue, Component, Length
+from framework.cognitive_model.combined_cognitive_model import InteractiveCombinedCognitiveModel
+from framework.cognitive_model.components import FULL_ACTIVATION
+from framework.cognitive_model.events import ItemActivatedEvent, ItemEnteredBufferEvent
+from framework.cognitive_model.linguistic_components import LinguisticComponent
+from framework.cognitive_model.sensorimotor_components import SensorimotorComponent
+from framework.cognitive_model.attenuation_statistic import AttenuationStatistic
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.version import VERSION
+from framework.cognitive_model.preferences import Preferences
+from framework.cli.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
 # Results DataFrame column names
 RESPONSE = "Response"

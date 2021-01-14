@@ -20,11 +20,11 @@ import argparse
 import sys
 from os import path
 
-from cognitive_model.ldm.utils.maths import DistanceType
-from cognitive_model.utils.logging import logger
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.utils.logging import logger
 
-from cognitive_model.graph import Graph
-from cognitive_model.preferences import Preferences
+from framework.cognitive_model.graph import Graph
+from framework.cognitive_model.preferences import Preferences
 
 
 def main(length_factor: int, distance_type_name: str, pruning_length: int):

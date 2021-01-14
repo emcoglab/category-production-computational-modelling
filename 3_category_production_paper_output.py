@@ -27,15 +27,15 @@ from matplotlib import pyplot
 from numpy import ceil, savetxt, array
 from pandas import DataFrame
 
-from category_production.category_production import ColNames as CPColNames
-from evaluation.category_production import add_ttfa_column, ModelType, get_model_ttfas_for_category_sensorimotor, \
+from framework.category_production.category_production import ColNames as CPColNames
+from framework.evaluation.category_production import add_ttfa_column, ModelType, get_model_ttfas_for_category_sensorimotor, \
     get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, \
     frac_within_sd_of_hitrate_mean, get_firing_threshold_from_path_linguistic, prepare_category_production_data, \
     get_hitrate_variance, save_hitrate_graphs, add_model_hit_column, process_one_model_output, apply_ttfa_cutoff, \
     CP_INSTANCE, save_hitrate_summary_tables
-from evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
+from framework.evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
     RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK
-from cognitive_model.utils.maths import cm_to_inches
+from framework.cognitive_model.utils.maths import cm_to_inches
 
 logger = getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

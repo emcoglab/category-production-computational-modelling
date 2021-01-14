@@ -22,16 +22,15 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from cli.lookups import get_corpus_from_name, get_model_from_params
-from cognitive_model.ldm.corpus.indexing import FreqDist, TokenIndex
-from cognitive_model.ldm.model.base import DistributionalSemanticModel
-from cognitive_model.ldm.model.count import CountVectorModel
-from cognitive_model.ldm.utils.maths import DistanceType
-
-from cognitive_model.utils.logging import logger
-from cognitive_model.graph import save_edgelist_from_distance_matrix
-from cognitive_model.utils.indexing import list_index_dictionaries
-from cognitive_model.preferences import Preferences
+from framework.cli.lookups import get_corpus_from_name, get_model_from_params
+from framework.cognitive_model.ldm.corpus.indexing import FreqDist, TokenIndex
+from framework.cognitive_model.ldm.model.base import DistributionalSemanticModel
+from framework.cognitive_model.ldm.model.count import CountVectorModel
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.graph import save_edgelist_from_distance_matrix
+from framework.cognitive_model.utils.indexing import list_index_dictionaries
+from framework.cognitive_model.preferences import Preferences
 
 
 def main(length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):

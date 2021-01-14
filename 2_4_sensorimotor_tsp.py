@@ -22,20 +22,19 @@ from pathlib import Path
 from numpy import nan
 from pandas import DataFrame
 
-from category_production.category_production import CategoryProduction
-from job_specifications.job import BufferedSensorimotorPropagationJobSpec
-from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
-from cognitive_model.ldm.utils.maths import DistanceType
-
-from cognitive_model.sensorimotor_components import BufferedSensorimotorComponent
-from cognitive_model.attenuation_statistic import AttenuationStatistic
-from cognitive_model.components import FULL_ACTIVATION
-from cognitive_model.version import VERSION
-from cognitive_model.basic_types import ActivationValue, Length
-from cognitive_model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
-from cognitive_model.utils.file import comment_line_from_str
-from cognitive_model.utils.logging import logger
-from cognitive_model.preferences import Preferences
+from framework.category_production.category_production import CategoryProduction
+from framework.cli.job import BufferedSensorimotorPropagationJobSpec
+from framework.cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.sensorimotor_components import BufferedSensorimotorComponent
+from framework.cognitive_model.attenuation_statistic import AttenuationStatistic
+from framework.cognitive_model.components import FULL_ACTIVATION
+from framework.cognitive_model.version import VERSION
+from framework.cognitive_model.basic_types import ActivationValue, Length
+from framework.cognitive_model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
+from framework.cognitive_model.utils.file import comment_line_from_str
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"

@@ -23,11 +23,11 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
-from cognitive_model.ldm.utils.maths import DistanceType
-from cognitive_model.utils.logging import logger
-from cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
-from cognitive_model.graph import save_edgelist_from_distance_matrix
-from cognitive_model.preferences import Preferences
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from framework.cognitive_model.graph import save_edgelist_from_distance_matrix
+from framework.cognitive_model.preferences import Preferences
 
 
 def main(length_factor: int, distance_type_name: str, use_breng_translation: bool):
@@ -35,7 +35,7 @@ def main(length_factor: int, distance_type_name: str, use_breng_translation: boo
     distance_type = DistanceType.from_name(distance_type_name)
 
     if use_breng_translation:
-        from cognitive_model.sensorimotor_norms.breng_translation.dictionary.version import VERSION as SM_BRENG_VERSION
+        from framework.cognitive_model.sensorimotor_norms.breng_translation.dictionary.version import VERSION as SM_BRENG_VERSION
         node_label_filename = f"sensorimotor words BrEng v{SM_BRENG_VERSION}.nodelabels"
     else:
         node_label_filename = "sensorimotor words.nodelabels"

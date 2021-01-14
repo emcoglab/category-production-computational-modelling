@@ -20,12 +20,12 @@ import sys
 from typing import Set, Tuple
 from dataclasses import dataclass, field
 
-from category_production.category_production import CategoryProduction
-from cognitive_model.ldm.corpus.indexing import FreqDist
-from cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
-from cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
-from cognitive_model.utils.logging import logger
-from cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
+from framework.category_production.category_production import CategoryProduction
+from framework.cognitive_model.ldm.corpus.indexing import FreqDist
+from framework.cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from framework.cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
 
 @dataclass

@@ -1,8 +1,8 @@
 from typing import Dict
 
-from cognitive_model.ldm.utils.maths import DistanceType
-from cognitive_model.attenuation_statistic import AttenuationStatistic
-from job_specifications.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.attenuation_statistic import AttenuationStatistic
+from framework.cli.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
     SensorimotorPropagationJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

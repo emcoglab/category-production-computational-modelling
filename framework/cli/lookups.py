@@ -16,12 +16,12 @@ caiwingfield.net
 """
 
 
-from cognitive_model.ldm.corpus.corpus import CorpusMetadata
-from cognitive_model.ldm.corpus.indexing import FreqDist
-from cognitive_model.ldm.model.base import DistributionalSemanticModel
-from cognitive_model.ldm.model.count import LogCoOccurrenceCountModel
-from cognitive_model.ldm.model.ngram import LogNgramModel, PPMINgramModel, PMINgramModel
-from cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
+from ..cognitive_model.ldm.corpus.corpus import CorpusMetadata
+from ..cognitive_model.ldm.corpus.indexing import FreqDist
+from ..cognitive_model.ldm.model.base import DistributionalSemanticModel
+from ..cognitive_model.ldm.model.count import LogCoOccurrenceCountModel
+from ..cognitive_model.ldm.model.ngram import LogNgramModel, PPMINgramModel, PMINgramModel
+from ..cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
 
 
 def get_corpus_from_name(name: str) -> CorpusMetadata:

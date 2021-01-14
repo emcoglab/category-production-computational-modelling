@@ -22,11 +22,11 @@ import argparse
 import sys
 from os import path
 
-from category_production.category_production import CategoryProduction
+from framework.category_production.category_production import CategoryProduction
 
-from evaluation.category_production import add_ttfa_column, get_model_ttfas_for_category_sensorimotor, \
+from framework.evaluation.category_production import add_ttfa_column, get_model_ttfas_for_category_sensorimotor, \
     ModelType, find_output_dirs, prepare_category_production_data, process_one_model_output, add_model_hit_column
-from cognitive_model.utils.logging import logger
+from framework.cognitive_model.utils.logging import logger
 
 
 CP = CategoryProduction()

@@ -25,8 +25,8 @@ from os import path, makedirs
 
 from pandas import concat, read_csv, DataFrame
 
-from evaluation.tabulation import save_tabulation
-from cognitive_model.utils.logging import logger
+from framework.evaluation.tabulation import save_tabulation
+from framework.cognitive_model.utils.logging import logger
 
 
 dvs = [

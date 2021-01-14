@@ -3,12 +3,12 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional
 
-from cli.lookups import get_corpus_from_name, get_model_from_params
-from cognitive_model.ldm.corpus.indexing import FreqDist
-from cognitive_model.ldm.model.base import DistributionalSemanticModel
-from cognitive_model.version import VERSION
-from cognitive_model.preferences import Preferences
-from job_specifications.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
+from framework.cli.lookups import get_corpus_from_name, get_model_from_params
+from framework.cognitive_model.ldm.corpus.indexing import FreqDist
+from framework.cognitive_model.ldm.model.base import DistributionalSemanticModel
+from framework.cognitive_model.version import VERSION
+from framework.cognitive_model.preferences import Preferences
+from framework.cli.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
@@ -104,5 +104,5 @@ if __name__ == '__main__':
     [t.start() for t in threads]
     [t.join() for t in threads]
 
-    from cognitive_model.utils.email import Emailer
+    from framework.cognitive_model.utils.email import Emailer
     Emailer(Preferences.email_connection_details_path).send_email(f"Done running {path.basename(__file__)} parallel batch.", Preferences.target_email_address)

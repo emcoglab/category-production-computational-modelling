@@ -24,15 +24,15 @@ from matplotlib import pyplot, ticker
 from numpy import inf
 from seaborn import distplot, barplot
 
-from cognitive_model.ldm.corpus.indexing import FreqDist
-from cognitive_model.ldm.model.base import DistributionalSemanticModel
-from cognitive_model.ldm.model.count import LogCoOccurrenceCountModel
-from cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
-from cognitive_model.ldm.utils.maths import DistanceType
-from cognitive_model.utils.logging import logger
+from framework.cognitive_model.ldm.corpus.indexing import FreqDist
+from framework.cognitive_model.ldm.model.base import DistributionalSemanticModel
+from framework.cognitive_model.ldm.model.count import LogCoOccurrenceCountModel
+from framework.cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.utils.logging import logger
 
-from cognitive_model.graph import iter_edges_from_edgelist
-from cognitive_model.preferences import Preferences
+from framework.cognitive_model.graph import iter_edges_from_edgelist
+from framework.cognitive_model.preferences import Preferences
 
 
 def main_linguistic(n_words: int, length_factor: int):

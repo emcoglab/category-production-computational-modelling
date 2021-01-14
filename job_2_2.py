@@ -1,4 +1,4 @@
-from job_specifications.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
+from framework.cli.job import LinguisticPropagationJob, LinguisticPropagationJobSpec
 
 
 class Job_2_2(LinguisticPropagationJob):

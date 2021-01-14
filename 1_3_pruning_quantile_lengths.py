@@ -21,13 +21,13 @@ from os import path
 
 from pandas import DataFrame
 
-from cli.lookups import get_corpus_from_name, get_model_from_params
-from cognitive_model.ldm.corpus.indexing import FreqDist
-from cognitive_model.ldm.utils.maths import DistanceType
-from cognitive_model.utils.logging import logger
-from cognitive_model.graph import iter_edges_from_edgelist
-from cognitive_model.utils.maths import nearest_value_at_quantile
-from cognitive_model.preferences import Preferences
+from framework.cli.lookups import get_corpus_from_name, get_model_from_params
+from framework.cognitive_model.ldm.corpus.indexing import FreqDist
+from framework.cognitive_model.ldm.utils.maths import DistanceType
+from framework.cognitive_model.utils.logging import logger
+from framework.cognitive_model.graph import iter_edges_from_edgelist
+from framework.cognitive_model.utils.maths import nearest_value_at_quantile
+from framework.cognitive_model.preferences import Preferences
 
 
 def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):
