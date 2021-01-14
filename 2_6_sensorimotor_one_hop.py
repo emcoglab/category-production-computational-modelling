@@ -102,6 +102,7 @@ def main(distance_type_name: str,
         accessible_set_threshold=accessible_set_threshold,
         attenuation_statistic=attenuation,
         accessible_set_capacity=accessible_set_capacity,
+        use_breng_translation=False,
     )
 
     for category_label in cp.category_labels_sensorimotor:

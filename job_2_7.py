@@ -98,6 +98,7 @@ if __name__ == '__main__':
                 max_radius=sensorimotor_max_radius,
                 bailout=bailout,
                 run_for_ticks=run_for_ticks,
+                use_breng_translation=True,
             ),
             buffer_threshold=0.7,
             buffer_capacity_linguistic_items=12,

@@ -60,9 +60,9 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
 
     model = InteractiveCombinedCognitiveModel(
         linguistic_component=job_spec.linguistic_spec.to_component(LinguisticComponent),
-        sensorimotor_component=job_spec.sensorimotor_spec.to_component_prepruned(SensorimotorComponent)
-                               if use_prepruned
-                               else job_spec.sensorimotor_spec.to_component(SensorimotorComponent),
+        sensorimotor_component=(job_spec.sensorimotor_spec.to_component_prepruned(SensorimotorComponent)
+                                if use_prepruned
+                                else job_spec.sensorimotor_spec.to_component(SensorimotorComponent)),
         lc_to_smc_delay=job_spec.lc_to_smc_delay,
         smc_to_lc_delay=job_spec.smc_to_lc_delay,
         inter_component_attenuation=job_spec.inter_component_attenuation,
@@ -241,6 +241,7 @@ if __name__ == '__main__':
                 node_decay_sigma=args.sensorimotor_node_decay_sigma,
                 attenuation_statistic=AttenuationStatistic.from_slug(args.sensorimotor_attenuation),
                 max_radius=args.sensorimotor_max_sphere_radius,
+                use_breng_translation=True,
                 bailout=args.bailout,
                 run_for_ticks=args.run_for_ticks,
             ),
