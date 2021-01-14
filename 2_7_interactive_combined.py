@@ -181,7 +181,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="Run interactive combined model.")
 
     parser.add_argument("--linguistic_accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("--linguistic_accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--linguistic_accessible_set_capacity", type=int)
     parser.add_argument("--linguistic_corpus_name", required=True, type=str)
     parser.add_argument("--linguistic_firing_threshold", required=True, type=ActivationValue)
     parser.add_argument("--linguistic_impulse_pruning_threshold", required=True, type=ActivationValue)
@@ -198,7 +198,7 @@ if __name__ == '__main__':
     parser.add_argument("--sensorimotor_length_factor", required=True, type=Length)
     parser.add_argument("--sensorimotor_node_decay_median", required=True, type=float)
     parser.add_argument("--sensorimotor_node_decay_sigma", required=True, type=float)
-    parser.add_argument("--sensorimotor_max_sphere_radius", required=True, type=Length)
+    parser.add_argument("--sensorimotor_max_sphere_radius", required=True, type=float)
     parser.add_argument("--sensorimotor_use_prepruned", action="store_true")
     parser.add_argument("--sensorimotor_attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
 
