@@ -254,6 +254,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
                 node_decay_lognormal_median=self.node_decay_median,
                 node_decay_lognormal_sigma=self.node_decay_sigma,
                 use_prepruned=use_prepruned,
+                use_breng_translation=self.use_breng_translation,
             ),
             accessible_set_threshold=self.accessible_set_threshold,
             accessible_set_capacity=self.accessible_set_capacity,
