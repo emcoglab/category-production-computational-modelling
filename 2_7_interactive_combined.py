@@ -182,7 +182,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description="Run interactive combined model.")
 
     parser.add_argument("--linguistic_accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("--linguistic_accessible_set_capacity", type=int)
+    parser.add_argument("--linguistic_accessible_set_capacity", required=False, type=int)
     parser.add_argument("--linguistic_corpus_name", required=True, type=str)
     parser.add_argument("--linguistic_firing_threshold", required=True, type=ActivationValue)
     parser.add_argument("--linguistic_impulse_pruning_threshold", required=True, type=ActivationValue)
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument("--linguistic_words", type=int, required=True)
 
     parser.add_argument("--sensorimotor_accessible_set_threshold", required=True, type=ActivationValue)
-    parser.add_argument("--sensorimotor_accessible_set_capacity", required=True, type=int)
+    parser.add_argument("--sensorimotor_accessible_set_capacity", required=False, type=int)
     parser.add_argument("--sensorimotor_distance_type", required=True, type=str)
     parser.add_argument("--sensorimotor_length_factor", required=True, type=Length)
     parser.add_argument("--sensorimotor_node_decay_median", required=True, type=float)
@@ -202,6 +202,8 @@ if __name__ == '__main__':
     parser.add_argument("--sensorimotor_max_sphere_radius", required=True, type=float)
     parser.add_argument("--sensorimotor_use_prepruned", action="store_true")
     parser.add_argument("--sensorimotor_attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
+    # We have to add this argument to make the interface compatible, but we always use the BrEng translation
+    parser.add_argument("--sensorimotor_use_breng_translation", action="store_true")
 
     parser.add_argument("--buffer_threshold", required=True, type=ActivationValue)
     parser.add_argument("--buffer_capacity_linguistic_items", required=True, type=int)
@@ -213,6 +215,9 @@ if __name__ == '__main__':
     parser.add_argument("--run_for_ticks", required=True, type=int)
 
     args = parser.parse_args()
+
+    if not args.sensorimotor_use_breng_translation:
+        logger.warning("BrEng translation will always be used in the interactive model. This argument will be ignored.")
 
     main(
         job_spec=InteractiveCombinedJobSpec(
@@ -252,6 +257,8 @@ if __name__ == '__main__':
             lc_to_smc_delay=args.lc_to_smc_delay,
             smc_to_lc_delay=args.smc_to_lc_delay,
             inter_component_attenuation=args.inter_component_attenuation,
+            run_for_ticks=args.run_for_ticks,
+            bailout=args.bailout,
         ),
         use_prepruned=args.sensorimotor_use_prepruned)
 
