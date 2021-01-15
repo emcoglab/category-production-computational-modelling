@@ -22,6 +22,12 @@ from pathlib import Path
 from numpy import nan
 from pandas import DataFrame
 
+from os import path
+from framework.cognitive_model.ldm.preferences.config import Config as LDMConfig
+LDMConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "wayland_config_override.yaml"))
+from framework.cognitive_model.sensorimotor_norms.config.config import Config as SMConfig
+SMConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "wayland_config_override.yaml"))
+
 from framework.category_production.category_production import CategoryProduction
 from framework.cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
 from framework.cognitive_model.ldm.utils.maths import DistanceType
