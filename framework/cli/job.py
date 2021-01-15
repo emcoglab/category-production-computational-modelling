@@ -689,7 +689,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
 # region Jobs
 
 class Job(ABC):
-    _shim = "model/utils/shim.sh"
+    _shim = "framework/cognitive_model/utils/shim.sh"
 
     def __init__(self,
                  script_number: str,
