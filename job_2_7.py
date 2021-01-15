@@ -1,9 +1,7 @@
+from pathlib import Path
 from typing import Dict
 
-from framework.cognitive_model.ldm.utils.maths import DistanceType
-from framework.cognitive_model.attenuation_statistic import AttenuationStatistic
-from framework.cli.job import InteractiveCombinedJob, InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, \
-    SensorimotorPropagationJobSpec
+from framework.cli.job import InteractiveCombinedJob, InteractiveCombinedJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "%Y-%m-%d %H:%M:%S"
@@ -52,62 +50,10 @@ class Job_2_7(InteractiveCombinedJob):
 
 if __name__ == '__main__':
 
-    linguistic_n_words = 60_000
-    linguistic_impulse_pruning_threshold = 0.05
-    linguistic_node_decay_factor = 0.99
-    linguistic_model_radius = 5
-    linguistic_corpus_name = "bbc"
-    linguistic_accessible_set_capacity = 3_000
-
-    sensorimotor_length_factor = 100
-    sensorimotor_max_radius = 150
-    sensorimotor_distance_type = DistanceType.Minkowski3
-    sensorimotor_accessible_set_capacity = 3_000
-    sensorimotor_attenuation = AttenuationStatistic.Prevalence
-
-    bailout = 20_000
-    run_for_ticks = 1_000
-
-    specs = [
-        InteractiveCombinedJobSpec(
-            linguistic_spec=LinguisticPropagationJobSpec(
-                accessible_set_threshold=0.3,
-                accessible_set_capacity=linguistic_accessible_set_capacity,
-                corpus_name=linguistic_corpus_name,
-                firing_threshold=0.9,
-                impulse_pruning_threshold=linguistic_impulse_pruning_threshold,
-                length_factor=10,
-                model_name="ppmi_ngram",
-                node_decay_factor=linguistic_node_decay_factor,
-                model_radius=linguistic_model_radius,
-                edge_decay_sd=15,
-                n_words=linguistic_n_words,
-                pruning=None,
-                pruning_type=None,
-                bailout=bailout,
-                run_for_ticks=run_for_ticks,
-            ),
-            sensorimotor_spec=SensorimotorPropagationJobSpec(
-                accessible_set_threshold=0.3,
-                accessible_set_capacity=sensorimotor_accessible_set_capacity,
-                distance_type=sensorimotor_distance_type,
-                length_factor=sensorimotor_length_factor,
-                node_decay_median=500.0,
-                node_decay_sigma=0.9,
-                attenuation_statistic=sensorimotor_attenuation,
-                max_radius=sensorimotor_max_radius,
-                bailout=bailout,
-                run_for_ticks=run_for_ticks,
-                use_breng_translation=True,
-            ),
-            buffer_threshold=0.7,
-            buffer_capacity_linguistic_items=12,
-            buffer_capacity_sensorimotor_items=9,
-            lc_to_smc_delay=100,
-            smc_to_lc_delay=150,
-            inter_component_attenuation=0.7,
-        )
+    jobs = [
+        Job_2_7(s)
+        for s in InteractiveCombinedJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_interactive_testing.yaml"))
     ]
-
-    for job in [Job_2_7(spec) for spec in specs]:
-        job.run_locally(extra_arguments="--sensorimotor_use_prepruned")
+    for job in jobs:
+        job.run_locally()
