@@ -71,6 +71,8 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
         buffer_capacity_sensorimotor_items=job_spec.buffer_capacity_sensorimotor_items,
     )
 
+    model.mapping.save_to(directory=response_dir)
+
     cp = CategoryProduction()
 
     for category_label in cp.category_labels:
