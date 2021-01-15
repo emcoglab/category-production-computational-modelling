@@ -1,16 +1,13 @@
 (Sensorimotor) Activation threshold: 0.15
 (Sensorimotor) Accessible set threshold: 0.15
 (Sensorimotor) Accessible set capacity: 3000
-(Sensorimotor) Buffer threshold: 0.35
-(Sensorimotor) Buffer capacity: 10
 (Sensorimotor) Activation cap: 1.0
 (Sensorimotor) Distance type: 'Minkowski-3'
 (Sensorimotor) Length factor: 100
 (Sensorimotor) Log-normal median: 5.0
 (Sensorimotor) Log-normal sigma: 0.9
-(Sensorimotor) Max sphere radius: 1.5
+(Sensorimotor) Max radius: 1.5
 (Sensorimotor) Attenuation statistic: 'Prevalence'
-(Sensorimotor) Use BrEng translation: True
 (Linguistic) Firing threshold: 0.45
 (Linguistic) Impulse pruning threshold: 0.05
 (Linguistic) Length factor: 10
@@ -22,5 +19,11 @@
 (Linguistic) Words: 40000
 (Linguistic) Accessible set capacity: None
 (Linguistic) Accessible set threshold: 0
+Buffer threshold: 0.35
+Buffer capacity (linguistic items): 12
+Buffer capacity (sensorimotor items): 9
+Linguistic to sensorimotor delay: 50
+Sensorimotor to linguistic delay: 50
+Inter-component attenuation: 0.9
 Bailout: 20000
 Run for ticks: 2000

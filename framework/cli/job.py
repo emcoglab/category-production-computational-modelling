@@ -180,7 +180,6 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
         args = super().cli_args + [
             f"--distance_type {self.distance_type.name}",
             f"--max_sphere_radius {self.max_radius}",
-            f"--accessible_set_capacity {self.accessible_set_capacity}",
             f"--accessible_set_threshold {self.accessible_set_threshold}",
             f"--length_factor {self.length_factor}",
             f"--node_decay_median {self.node_decay_median}",
@@ -188,6 +187,8 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             f"--attenuation {self.attenuation_statistic.name}",
             f"--use_breng_translation" if self.use_breng_translation else "",
         ]
+        if self.accessible_set_capacity is not None:
+            args.append(f"--accessible_set_capacity {self.accessible_set_capacity}")
         return args
 
     @property
@@ -233,7 +234,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
     def _from_dict(cls, dictionary: _SerialisableDict) -> SensorimotorPropagationJobSpec:
         return cls(
             length_factor           =int(dictionary["Length factor"]),
-            run_for_ticks           =dictionary["Run for ticks"] if "Run for ticks" in dictionary else None,
+            run_for_ticks           =int(dictionary["Run for ticks"]),
             bailout                 =dictionary["Bailout"] if "Bailout" in dictionary else None,
             max_radius              =float(dictionary["Max radius"]),
             node_decay_sigma        =float(dictionary["Log-normal sigma"]),
@@ -377,10 +378,11 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             f"--corpus_name {self.corpus_name}",
             f"--edge_decay_sd {self.edge_decay_sd}",
             f"--node_decay_factor {self.node_decay_factor}",
-            f"--accessible_set_capacity {self.accessible_set_capacity}",
             f"--accessible_set_threshold {self.accessible_set_threshold}",
             f"--impulse_pruning_threshold {self.impulse_pruning_threshold}",
         ]
+        if self.accessible_set_capacity is not None:
+            args.append(f"--accessible_set_capacity {self.accessible_set_capacity}")
         if self.pruning is not None:
             if self.pruning_type == EdgePruningType.Importance:
                 args.append(f"--prune_importance {self.pruning}")
@@ -465,7 +467,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
     def _from_dict(cls, dictionary: _SerialisableDict):
         return cls(
             length_factor            =int(dictionary["Length factor"]),
-            run_for_ticks            =dictionary["Run for ticks"] if "Run for ticks" in dictionary else None,
+            run_for_ticks            =int(dictionary["Run for ticks"]),
             bailout                  =dictionary["Bailout"] if "Bailout" in dictionary else None,
             distance_type            =DistanceType.from_name(dictionary["Distance type"]) if "Distance type" in dictionary else None,
             n_words                  =int(dictionary["Words"]),
@@ -503,6 +505,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             firing_threshold=self.firing_threshold,
         )
 
+
 class LinguisticOneHopJobSpec(LinguisticPropagationJobSpec):
     def output_location_relative(self) -> Path:
         return Path(
@@ -530,14 +533,6 @@ class CombinedJobSpec(JobSpec, ABC):
         assert self.linguistic_spec.run_for_ticks == self.sensorimotor_spec.run_for_ticks
 
     @property
-    def run_for_ticks(self) -> int:
-        return self.linguistic_spec.run_for_ticks
-
-    @property
-    def bailout(self) -> int:
-        return self.linguistic_spec.bailout
-
-    @property
     def cli_args(self) -> List[str]:
         linguistic_args = [
             f"--linguistic_{a.lstrip('-')}"
@@ -556,29 +551,30 @@ class CombinedJobSpec(JobSpec, ABC):
         return {
             **super()._to_dict(),
             **{
-                f"(Linguistic) " + key: value
+                self._linguistic_prefix() + key: value
                 for key, value in self.linguistic_spec._to_dict().items()
             },
             **{
-                f"(Sensorimotor) " + key: value
+                self._sensorimotor_prefix() + key: value
                 for key, value in self.sensorimotor_spec._to_dict().items()
             }
         }
 
     @classmethod
-    def _from_dict(cls, dictionary: _SerialisableDict):
-        def trim_and_filter_keys(d: _SerialisableDict, prefix: str):
-            return {
-                key[len(prefix)]: value
-                for key, value in d.items()
-                if key.startswith(prefix)
-            }
-        return CombinedJobSpec(
-            linguistic_spec=LinguisticPropagationJobSpec._from_dict(
-                trim_and_filter_keys(dictionary, "(Linguistic) ")),
-            sensorimotor_spec=SensorimotorPropagationJobSpec._from_dict(
-                trim_and_filter_keys(dictionary, "(Sensorimotor) ")),
-        )
+    def _linguistic_prefix(cls):
+        return "(Linguistic) "
+
+    @classmethod
+    def _sensorimotor_prefix(cls):
+        return "(Sensorimotor) "
+
+    @classmethod
+    def _trim_and_filter_keys(cls, d: _SerialisableDict, prefix: str):
+        return {
+            key[len(prefix):]: value
+            for key, value in d.items()
+            if key.startswith(prefix)
+        }
 
 
 @dataclass
@@ -599,6 +595,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
     buffer_threshold: ActivationValue
     buffer_capacity_linguistic_items: Optional[int]
     buffer_capacity_sensorimotor_items: Optional[int]
+    run_for_ticks: int
+    bailout: Optional[int]
 
     def output_location_relative(self) -> Path:
         return Path(
@@ -610,7 +608,9 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             f" ic-attenuation {self.inter_component_attenuation};"
             f" buff-θ {self.buffer_threshold};"
             f" buff-cap-ling {self.buffer_capacity_linguistic_items};"
-            f" buff-cap-sm {self.buffer_capacity_sensorimotor_items}"
+            f" buff-cap-sm {self.buffer_capacity_sensorimotor_items};"
+            f" run-for {self.run_for_ticks};"
+            f" bail {self.bailout}"
         )
 
     @property
@@ -627,19 +627,21 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
 
     @property
     def cli_args(self) -> List[str]:
-        return super().cli_args + [
+        args = super().cli_args + [
             f"--buffer_threshold {self.buffer_threshold}",
             f"--buffer_capacity_linguistic_items {self.buffer_capacity_linguistic_items}",
             f"--buffer_capacity_sensorimotor_items {self.buffer_capacity_sensorimotor_items}",
             f"--lc_to_smc_delay {self.lc_to_smc_delay}",
             f"--smc_to_lc_delay {self.smc_to_lc_delay}",
             f"--inter_component_attenuation {self.inter_component_attenuation}",
-            f"--bailout {self.bailout}",
             f"--run_for_ticks {self.run_for_ticks}",
         ]
+        if self.bailout is not None:
+            args.append(f"--bailout {self.bailout}")
+        return args
 
     def _to_dict(self) -> _SerialisableDict:
-        return {
+        d = {
             **super()._to_dict(),
             "Linguistic to sensorimotor delay": str(self.lc_to_smc_delay),
             "Sensorimotor to linguistic delay": str(self.smc_to_lc_delay),
@@ -647,20 +649,38 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             "Buffer threshold": str(self.buffer_threshold),
             "Buffer capacity (linguistic items)": str(self.buffer_capacity_linguistic_items),
             "Buffer capacity (sensorimotor items)": str(self.buffer_capacity_sensorimotor_items),
+            "Run for ticks": str(self.run_for_ticks),
         }
+        if self.bailout is not None:
+            d["Bailout"] = str(self.bailout)
+        return d
 
     @classmethod
     def _from_dict(cls, dictionary: _SerialisableDict) -> InteractiveCombinedJobSpec:
-        cjs = CombinedJobSpec._from_dict(dictionary)
         return cls(
-            linguistic_spec=cjs.linguistic_spec,
-            sensorimotor_spec=cjs.sensorimotor_spec,
+            linguistic_spec=LinguisticPropagationJobSpec._from_dict({
+                **cls._trim_and_filter_keys(dictionary, cls._linguistic_prefix()),
+                # Push the shared values into the separate dictionaries
+                **{
+                    "Run for ticks": dictionary["Run for ticks"]
+                }
+            }),
+            sensorimotor_spec=SensorimotorPropagationJobSpec._from_dict({
+                **cls._trim_and_filter_keys(dictionary, cls._sensorimotor_prefix()),
+                **{
+                    "Run for ticks": dictionary["Run for ticks"],
+                    "Use BrEng translation": True,
+                }
+            }),
             lc_to_smc_delay=int(dictionary["Linguistic to sensorimotor delay"]),
             smc_to_lc_delay=int(dictionary["Sensorimotor to linguistic delay"]),
             inter_component_attenuation=float(dictionary["Inter-component attenuation"]),
             buffer_threshold=ActivationValue(dictionary["Buffer threshold"]),
             buffer_capacity_linguistic_items=int(dictionary["Buffer capacity (linguistic items)"]),
             buffer_capacity_sensorimotor_items=int(dictionary["Buffer capacity (sensorimotor items)"]),
+            # These replace items which would be shared by individual components
+            run_for_ticks=int(dictionary["Run for ticks"]),
+            bailout=int(dictionary["Bailout"]) if "Bailout" in dictionary else None,
         )
 
 # endregion
