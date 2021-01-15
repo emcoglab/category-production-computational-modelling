@@ -30,7 +30,7 @@ from framework.cognitive_model.graph import save_edgelist_from_distance_matrix
 from framework.cognitive_model.preferences import Preferences
 
 
-def main(length_factor: int, distance_type_name: str, use_breng_translation: bool):
+def main(length_factor: int, distance_type_name: str, use_breng_translation: bool, force_overwrite_labels: bool):
 
     distance_type = DistanceType.from_name(distance_type_name)
 
@@ -73,12 +73,12 @@ def main(length_factor: int, distance_type_name: str, use_breng_translation: boo
 
     # Save node label dictionary
     node_label_filename = path.join(Preferences.graphs_dir, node_label_filename)
-    if path.isfile(node_label_filename):
+    if path.isfile(node_label_filename) and not force_overwrite_labels:
         logger.info(f"{path.basename(node_label_filename)} exists, skipping")
     else:
         logger.info(f"Saving node label dictionary to {path.basename(node_label_filename)}")
         with open(node_label_filename, mode="w", encoding="utf-8") as node_label_file:
-            json.dump(node_label_dict, node_label_file)
+            json.dump(node_label_dict, node_label_file, indent=1)
 
 
 if __name__ == '__main__':
@@ -89,10 +89,12 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--length_factor", required=True, type=int)
     parser.add_argument("-d", "--distance_type", required=True, type=str)
     parser.add_argument("--use-breng-translation", action="store_true")
+    parser.add_argument("--force-overwrite-labels", action="store_true")
     args = parser.parse_args()
 
     main(length_factor=args.length_factor,
          distance_type_name=args.distance_type,
-         use_breng_translation=args.use_breng_translation)
+         use_breng_translation=args.use_breng_translation,
+         force_overwrite_labels=args.force_overwrite_labels)
 
     logger.info("Done!")

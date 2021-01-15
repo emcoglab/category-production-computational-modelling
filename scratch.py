@@ -1,5 +1,8 @@
-from framework.cognitive_model.ldm.utils.maths import binomial_bayes_factor_one_sided
+from framework.cognitive_model.combined_cognitive_model import InterComponentMapping
+from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 
-print(
-    binomial_bayes_factor_one_sided(n=1009, k=540, p0=0.5, alternative_hypothesis=">")#, a=1, b=1)
-)
+sensorimotor_vocab = set(SensorimotorNorms(use_breng_translation=True).iter_words())
+linguistic_vocab = {"part", "of", "a", "pharmacy", "chemist"}
+mapping = InterComponentMapping(linguistic_vocab=linguistic_vocab, sensorimotor_vocab=sensorimotor_vocab, ignore_identity_mapping=True)
+
+pass
