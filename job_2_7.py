@@ -45,7 +45,8 @@ class Job_2_7(InteractiveCombinedJob):
     @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, InteractiveCombinedJobSpec)
-        return self.SM_RAM[self.spec.sensorimotor_spec.max_radius] + self.LING_RAM[self.spec.linguistic_spec.model_name][self.spec.linguistic_spec.n_words]
+        return self.SM_RAM[int(self.spec.sensorimotor_spec.max_radius * self.spec.sensorimotor_spec.length_factor)] \
+               + self.LING_RAM[self.spec.linguistic_spec.model_name][self.spec.linguistic_spec.n_words]
 
 
 if __name__ == '__main__':
