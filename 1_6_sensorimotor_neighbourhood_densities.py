@@ -26,7 +26,7 @@ from seaborn import distplot
 from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.graph import Graph, log_graph_topology
 from framework.cognitive_model.utils.logging import logger
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 
 
 def main(length_factor: int,

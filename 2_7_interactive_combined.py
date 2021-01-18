@@ -15,6 +15,7 @@ caiwingfield.net
 2020
 ---------------------------
 """
+
 from sys import argv
 from argparse import ArgumentParser
 from pathlib import Path
@@ -40,7 +41,7 @@ from framework.cognitive_model.sensorimotor_components import SensorimotorCompon
 from framework.cognitive_model.attenuation_statistic import AttenuationStatistic
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.version import VERSION
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 from framework.cli.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
 # Results DataFrame column names

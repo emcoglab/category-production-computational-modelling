@@ -24,7 +24,7 @@ from pandas import DataFrame
 from framework.cognitive_model.ldm.utils.maths import DistanceType, distance
 from framework.category_production.category_production import CategoryProduction
 from framework.category_production.category_production import ColNames as CPColNames
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 from framework.cognitive_model.sensorimotor_norms.exceptions import WordNotInNormsError
 from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from framework.cognitive_model.utils.logging import logger

@@ -7,7 +7,7 @@ from framework.cli.lookups import get_corpus_from_name, get_model_from_params
 from framework.cognitive_model.ldm.corpus.indexing import FreqDist
 from framework.cognitive_model.ldm.model.base import DistributionalSemanticModel
 from framework.cognitive_model.version import VERSION
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 from framework.cli.job import BufferedSensorimotorPropagationJobSpec, Job, LinguisticPropagationJobSpec, NoninteractiveCombinedJobSpec
 
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'

@@ -34,7 +34,7 @@ from framework.cognitive_model.basic_types import ActivationValue, Length
 from framework.cognitive_model.events import ItemEnteredBufferEvent, ItemActivatedEvent, BufferFloodEvent
 from framework.cognitive_model.utils.file import comment_line_from_str
 from framework.cognitive_model.utils.logging import logger
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 
 # Results DataFrame column names
 RESPONSE = "Response"
