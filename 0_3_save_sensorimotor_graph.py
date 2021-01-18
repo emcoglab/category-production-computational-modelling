@@ -27,7 +27,7 @@ from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
 from framework.cognitive_model.graph import save_edgelist_from_distance_matrix
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 
 
 def main(length_factor: int, distance_type_name: str, use_breng_translation: bool, force_overwrite_labels: bool):

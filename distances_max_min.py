@@ -23,7 +23,7 @@ import numpy
 from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.graph import iter_edges_from_edgelist
 from framework.cognitive_model.utils.logging import logger
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 
 
 def main():

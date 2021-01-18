@@ -27,7 +27,7 @@ from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.graph import iter_edges_from_edgelist
 from framework.cognitive_model.utils.maths import nearest_value_at_quantile
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 
 
 def main(n_words: int, length_factor: int, corpus_name: str, distance_type_name: str, model_name: str, radius: int):

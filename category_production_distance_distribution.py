@@ -28,7 +28,7 @@ from framework.cognitive_model.ldm.corpus.indexing import FreqDist, TokenIndex
 from framework.cognitive_model.ldm.model.count import LogCoOccurrenceCountModel
 from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.ldm.preferences.preferences import Preferences as CorpusPreferences
-from framework.cognitive_model.preferences import Preferences
+from framework.cognitive_model.preferences.preferences import Preferences
 from framework.cognitive_model.utils.logging import logger
 
 
