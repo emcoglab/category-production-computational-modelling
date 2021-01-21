@@ -60,10 +60,10 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
     job_spec.save(in_location=response_dir)
 
     model = InteractiveCombinedCognitiveModel(
-        linguistic_component=job_spec.linguistic_spec.to_component(LinguisticComponent),
         sensorimotor_component=(job_spec.sensorimotor_spec.to_component_prepruned(SensorimotorComponent)
                                 if use_prepruned
                                 else job_spec.sensorimotor_spec.to_component(SensorimotorComponent)),
+        linguistic_component=job_spec.linguistic_spec.to_component(LinguisticComponent),
         lc_to_smc_delay=job_spec.lc_to_smc_delay,
         smc_to_lc_delay=job_spec.smc_to_lc_delay,
         inter_component_attenuation=job_spec.inter_component_attenuation,
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.sensorimotor_use_breng_translation:
-        logger.warning("BrEng translation will always be used in the interactive model. This argument will be ignored.")
+        logger.warning("BrEng translation will always be used in the interactive model.")
 
     main(
         job_spec=InteractiveCombinedJobSpec(
