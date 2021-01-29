@@ -2,28 +2,28 @@
 (Sensorimotor) Accessible set threshold: 0.15
 (Sensorimotor) Accessible set capacity: 3000
 (Sensorimotor) Activation cap: 1.0
+(Sensorimotor) Length factor: 159  # Scaled by the same factor as coregistration in CS paper: 1.5890
 (Sensorimotor) Distance type: 'Minkowski-3'
-(Sensorimotor) Length factor: 100
-(Sensorimotor) Log-normal median: 5.0
+(Sensorimotor) Log-normal median: 7.945  # Scaled by the same factor as coregistration in CS paper: 1.5890
 (Sensorimotor) Log-normal sigma: 0.9
-(Sensorimotor) Max radius: 1.5
+(Sensorimotor) Max radius: 2.3835  # Scaled by the same factor as coregistration in CS paper: 1.5890
 (Sensorimotor) Attenuation statistic: 'Prevalence'
+(Linguistic) Words: 40000
 (Linguistic) Firing threshold: 0.45
-(Linguistic) Impulse pruning threshold: 0.05
+(Linguistic) Accessible set threshold: 0.45
+(Linguistic) Accessible set capacity: 3000
 (Linguistic) Length factor: 10
 (Linguistic) Model name: 'ppmi_ngram'
 (Linguistic) Model radius: 5
 (Linguistic) Corpus name: 'bbc'
 (Linguistic) Node decay: 0.99
 (Linguistic) Edge decay SD: 15.0
-(Linguistic) Words: 40000
-(Linguistic) Accessible set capacity: None
-(Linguistic) Accessible set threshold: 0
+(Linguistic) Impulse pruning threshold: 0.05
 Buffer threshold: 0.35
-Buffer capacity (linguistic items): 12
+Buffer capacity (linguistic items): 12  # Set based on Agata's work
 Buffer capacity (sensorimotor items): 9
-Linguistic to sensorimotor delay: 50
-Sensorimotor to linguistic delay: 50
-Inter-component attenuation: 0.9
+Linguistic to sensorimotor delay: 21  # Shortest pairwise length in sensorimotor component @ 159
+Sensorimotor to linguistic delay: 56  # Shortest pairwise length in linguistic component @ 10 and 40k words
+Inter-component attenuation: 1.0  # Not using currently
 Bailout: 20000
 Run for ticks: 2000
