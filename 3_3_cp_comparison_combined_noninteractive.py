@@ -82,7 +82,7 @@ def main(input_results_dir_sensorimotor: str,
     input_results_dir_linguistic   = Path(input_results_dir_linguistic)
     input_results_dir_sensorimotor = Path(input_results_dir_sensorimotor)
     # Organise by linguistic and sensorimotor model names
-    evaluation_save_dir = path.join(Preferences.results_dir, MODEL_TYPE.model_output_dirname,
+    evaluation_save_dir = path.join(Preferences.evaluation_dir, MODEL_TYPE.model_output_dirname,
                                     f"{input_results_dir_linguistic.parent.name} {input_results_dir_linguistic.name}",
                                     f"{input_results_dir_sensorimotor.parent.name} {input_results_dir_sensorimotor.name}")
     figures_dir = path.join(Preferences.figures_dir, MODEL_TYPE.figures_dirname,

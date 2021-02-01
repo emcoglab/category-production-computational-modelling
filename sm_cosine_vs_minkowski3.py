@@ -74,7 +74,7 @@ def main():
         lambda row: minkowski_distances[row[CPColNames.CategorySensorimotor]][row[CPColNames.ResponseSensorimotor]],
         axis=1)
 
-    main_dataframe.to_csv(path.join(Preferences.results_dir,
+    main_dataframe.to_csv(path.join(Preferences.evaluation_dir,
                                     "Category production fit sensorimotor",
                                     "item-level data (cosine vs Minkowski-3).csv"),
                           index=False)

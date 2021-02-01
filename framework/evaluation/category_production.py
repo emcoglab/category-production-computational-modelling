@@ -405,7 +405,7 @@ def get_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType):
 def save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix, output_dir = None):
     # Save summary tables
     if output_dir is None:
-        output_dir = path.join(Preferences.results_dir, model_type.model_output_dirname)
+        output_dir = path.join(Preferences.evaluation_dir, model_type.model_output_dirname)
     hitrates_per_rpf.to_csv(path.join(output_dir,
                                       f"Production proportion per rank frequency of production {file_suffix}.csv"),
                             index=False)
@@ -464,7 +464,7 @@ def process_one_model_output(main_data: DataFrame,
     input_results_path = Path(input_results_dir)
 
     if stats_save_path is None:
-        stats_save_path = path.join(Preferences.results_dir, model_type.model_output_dirname)
+        stats_save_path = path.join(Preferences.evaluation_dir, model_type.model_output_dirname)
     if figures_save_path is None:
         figures_save_path = path.join(Preferences.figures_dir, model_type.figures_dirname)
 
@@ -534,7 +534,7 @@ def save_model_performance_stats(main_dataframe,
         filename_suffix = ""
     if output_dir is None:
         output_dir = path.join(
-            Preferences.results_dir,
+            Preferences.evaluation_dir,
             model_type.model_output_dirname)
     overall_stats_output_path = path.join(
         output_dir,
