@@ -20,7 +20,7 @@ caiwingfield.net
 
 import argparse
 import sys
-from os import path, replace
+from os import path, rename
 
 from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.utils.logging import logger
@@ -53,7 +53,7 @@ def main(length_factor: int, distance_type_name: str, pruning_distance: float):
             pruned_file.write(edgelist_line(from_edge=edge, with_length=length))
             written_counter += 1
     logger.info(f"Renaming to {pruned_edgelist_filename}")
-    replace(pruned_edgelist_path_incomplete, pruned_edgelist_path)
+    rename(pruned_edgelist_path_incomplete, pruned_edgelist_path)
 
 
 if __name__ == '__main__':
