@@ -27,14 +27,22 @@ class JobSpec_0_3(JobSpec):
 
     @property
     def cli_args(self) -> List[str]:
-        return super().cli_args + [
+        args = super().cli_args + [
             f" --length_factor {self.length_factor}",
+            f" --distance_type {self.distance_type.name}",
         ]
+        if self.use_breng_translation:
+            args.append(f" --use-breng-translation")
+        return args
 
     @property
     def shorthand(self) -> str:
         return f"03_" \
                f"{self.length_factor}"
+               
+    # This isn't used
+    def output_location_relative(self):
+        pass
 
 
 class Job_0_3(Job):
