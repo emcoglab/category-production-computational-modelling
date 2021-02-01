@@ -9,14 +9,21 @@ logger_dateformat = "%Y-%m-%d %H:%M:%S"
 
 class Job_2_7(InteractiveCombinedJob):
 
-    # max_sphere_radius -> RAM/G
-    SM_RAM: Dict[int, int] = {
-        100: 5,
-        150: 30,
-        198: 55,  # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
-        200: 60,
-        250: 120,
-    }
+    # max_sphere_radius (i.e. pruning distance) -> RAM/G
+    def SM_RAM(self, distance: float) -> int:
+        if distance <= 1:
+            return 5
+        elif distance <= 1.5:
+            return 30
+        # 198 is the largest min edge length, so the threshold below which the graph becomes disconnected
+        elif distance <= 1.98:
+            return 55
+        elif distance <= 2:
+            return 60
+        else:
+            # Max
+            return 120
+
     LING_RAM: Dict[str, Dict[int, int]] = {
         "pmi_ngram": {
             1_000: 2,
@@ -45,7 +52,7 @@ class Job_2_7(InteractiveCombinedJob):
     @property
     def _ram_requirement_g(self):
         assert isinstance(self.spec, InteractiveCombinedJobSpec)
-        return self.SM_RAM[int(self.spec.sensorimotor_spec.max_radius * self.spec.sensorimotor_spec.length_factor)] \
+        return self.SM_RAM(self.spec.sensorimotor_spec.max_radius) \
                + self.LING_RAM[self.spec.linguistic_spec.model_name][self.spec.linguistic_spec.n_words]
 
 
