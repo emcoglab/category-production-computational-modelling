@@ -70,7 +70,8 @@ class JobSpec(ABC):
         """
         List of key-value pairs in `--arg_name val` format.
         """
-        raise NotImplementedError()
+        # By default, no arguments. This way we can confidently supply *super().cli_args().
+        return []
 
     @abstractmethod
     def _to_dict(self) -> _SerialisableDict:
