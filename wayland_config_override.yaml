@@ -23,7 +23,7 @@ email_connection_details: "/mmfs1/home/users/wingfiel/notify@cwcomplex.net.txt"
 # Data directories
 graphs_dir:             "/mmfs1/storage/users/wingfiel/graphs"
 
-output_dir:             "/mmfs1/storage/users/wingfiel/spreading_activation_results/Model output/"
+output_dir:             "/mmfs1/scratch/users/wingfiel/spreading_activation_results/Model output/"
 evaluation_dir:         "/mmfs1/storage/users/wingfiel/spreading_activation_results/Evaluation/"
 ancillary_dir:          "/mmfs1/storage/users/wingfiel/spreading_activation_results/Ancillary results/"
 figures_dir:            "/mmfs1/storage/users/wingfiel/spreading_activation_results/Figures/"
