@@ -117,7 +117,7 @@ class JobSpec(ABC):
             return [
                 cls._from_dict(d)
                 # Unclear why we need the [0] here, but we seem to. Must just be the behaviour of yaml.load_all
-                for d in yaml.load_all(file, yaml.SafeLoader)[0]
+                for d in list(yaml.load_all(file, yaml.SafeLoader))[0]
             ]
 
     def csv_comments(self) -> List[str]:
