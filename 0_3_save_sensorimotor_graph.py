@@ -23,6 +23,14 @@ from os import path
 
 from sklearn.metrics.pairwise import pairwise_distances
 
+from os import path
+from framework.cognitive_model.preferences.config import Config as ModelConfig
+ModelConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "wayland_config_override.yaml"))
+from framework.cognitive_model.ldm.preferences.config import Config as LDMConfig
+LDMConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "wayland_config_override.yaml"))
+from framework.cognitive_model.sensorimotor_norms.config.config import Config as SMConfig
+SMConfig(use_config_overrides_from_file=path.join(path.dirname(__file__), "wayland_config_override.yaml"))
+
 from framework.cognitive_model.ldm.utils.maths import DistanceType
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
