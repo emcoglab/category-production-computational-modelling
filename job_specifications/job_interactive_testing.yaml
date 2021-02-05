@@ -5,9 +5,9 @@
   (Sensorimotor) Activation cap: 1.0
   (Sensorimotor) Length factor: 159  # Scaled by the same factor as coregistration in CS paper: 1.5890
   (Sensorimotor) Distance type: 'Minkowski-3'
-  (Sensorimotor) Log-normal median: 7.945  # Scaled by the same factor as coregistration in CS paper: 1.5890
+  (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
-  (Sensorimotor) Max radius: 2.3835  # Scaled by the same factor as coregistration in CS paper: 1.5890
+  (Sensorimotor) Max radius: 1.5
   (Sensorimotor) Attenuation statistic: 'Prevalence'
   (Linguistic) Words: 40000
   (Linguistic) Firing threshold: 0.45
@@ -35,9 +35,9 @@
   (Sensorimotor) Activation cap: 1.0
   (Sensorimotor) Length factor: 159
   (Sensorimotor) Distance type: 'Minkowski-3'
-  (Sensorimotor) Log-normal median: 7.945
+  (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
-  (Sensorimotor) Max radius: 2.3835
+  (Sensorimotor) Max radius: 1.5
   (Sensorimotor) Attenuation statistic: 'Prevalence'
   (Linguistic) Words: 40000
   (Linguistic) Firing threshold: 0.45
@@ -65,9 +65,9 @@
   (Sensorimotor) Activation cap: 1.0
   (Sensorimotor) Length factor: 159
   (Sensorimotor) Distance type: 'Minkowski-3'
-  (Sensorimotor) Log-normal median: 7.945
+  (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
-  (Sensorimotor) Max radius: 2.3835
+  (Sensorimotor) Max radius: 1.5
   (Sensorimotor) Attenuation statistic: 'Prevalence'
   (Linguistic) Words: 40000
   (Linguistic) Firing threshold: 0.45
@@ -95,9 +95,9 @@
   (Sensorimotor) Activation cap: 1.0
   (Sensorimotor) Length factor: 159
   (Sensorimotor) Distance type: 'Minkowski-3'
-  (Sensorimotor) Log-normal median: 7.945
+  (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
-  (Sensorimotor) Max radius: 2.3835
+  (Sensorimotor) Max radius: 1.5
   (Sensorimotor) Attenuation statistic: 'Prevalence'
   (Linguistic) Words: 40000
   (Linguistic) Firing threshold: 0.4  # <--- reduced here
