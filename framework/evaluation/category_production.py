@@ -146,7 +146,8 @@ def get_model_ttfas_for_category_combined_interactive(category: str, results_dir
     model_responses_path = path.join(results_dir, f"responses_{category}.csv")
     try:
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
+            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False,
+                                                  dtype={TICK_ON_WHICH_ACTIVATED: int})
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
