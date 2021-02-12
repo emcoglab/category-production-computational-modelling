@@ -22,7 +22,7 @@ class Job_3_3(Job):
                  ):
         super().__init__(
             script_number="3_3",
-            script_name="3_3_cp_comparison_combined_noninteractive.py",
+            script_name="3_3_evaluate_combined_noninteractive.py",
             spec=NoninteractiveCombinedJobSpec(linguistic_spec=ling_spec, sensorimotor_spec=sm_spec))
         self.manual_cut_off: Optional[int] = manual_cut_off
 

@@ -111,8 +111,12 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                               if word not in cp.ignored_words
                               # Ignore words which aren't available: activate all words we can
                               and word in model.linguistic_component.available_labels]
-            logger.info(f"Activating individual words {category_words} in linguistic component")
-            model.linguistic_component.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            if category_words:
+                logger.info(f"Activating individual words {category_words} in linguistic component")
+                model.linguistic_component.propagator.activate_items_with_labels(
+                    category_words,
+                    # Divide activation among multi-word categories
+                    FULL_ACTIVATION / len(category_words))
 
         # Activate sensorimotor item(s)
         if category_label in model.sensorimotor_component.available_labels:
@@ -124,8 +128,12 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                               if word not in cp.ignored_words
                               # Ignore words which aren't available: activate all words we can
                               and word in model.sensorimotor_component.available_labels]
-            logger.info(f"Activating individual words {category_words} in sensorimotor component")
-            model.sensorimotor_component.propagator.activate_items_with_labels(category_words, FULL_ACTIVATION)
+            if category_words:
+                logger.info(f"Activating individual words {category_words} in sensorimotor component")
+                model.sensorimotor_component.propagator.activate_items_with_labels(
+                    category_words,
+                    # Divide activation among multi-word categories
+                    FULL_ACTIVATION / len(category_words))
 
         model_response_entries = []
         # Initialise list of concurrent activations which will be nan-populated if the run ends early
