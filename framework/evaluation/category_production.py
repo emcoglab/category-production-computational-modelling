@@ -129,8 +129,7 @@ def available_categories(results_dir_path: str) -> List[str]:
     return categories
 
 
-def get_model_ttfas_for_category_combined_interactive(
-        category: str, results_dir) -> DefaultDict[str, int]:
+def get_model_ttfas_for_category_combined_interactive(category: str, results_dir) -> DefaultDict[str, int]:
     """
     Dictionary of
         response -> time to first activation
@@ -151,6 +150,7 @@ def get_model_ttfas_for_category_combined_interactive(
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
+        logger.warning(f"Could not find model output file for {category}")
         return defaultdict(lambda: nan)
 
     consciously_active_data = model_responses.sort_values(by=TICK_ON_WHICH_ACTIVATED)

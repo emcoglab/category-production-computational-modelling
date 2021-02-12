@@ -664,12 +664,14 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
                 **cls._trim_and_filter_keys(dictionary, cls._linguistic_prefix()),
                 # Push the shared values into the separate dictionaries
                 **{
-                    "Run for ticks": dictionary["Run for ticks"]
+                    "Bailout": dictionary["Bailout"],
+                    "Run for ticks": dictionary["Run for ticks"],
                 }
             }),
             sensorimotor_spec=SensorimotorPropagationJobSpec._from_dict({
                 **cls._trim_and_filter_keys(dictionary, cls._sensorimotor_prefix()),
                 **{
+                    "Bailout": dictionary["Bailout"],
                     "Run for ticks": dictionary["Run for ticks"],
                     "Use BrEng translation": True,
                 }
