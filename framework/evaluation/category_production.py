@@ -129,6 +129,40 @@ def available_categories(results_dir_path: str) -> List[str]:
     return categories
 
 
+def get_model_ttfas_for_category_combined_interactive(
+        category: str, results_dir) -> DefaultDict[str, int]:
+    """
+    Dictionary of
+        response -> time to first activation
+    for the specified category.
+
+    DefaultDict gives nans where response not found
+
+    :param category:
+    :param results_dir:
+    :return:
+    """
+
+    # Try to load model response
+    model_responses_path = path.join(results_dir, f"responses_{category}.csv")
+    try:
+        with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
+            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
+
+    # If the category wasn't found, there are no TTFAs
+    except FileNotFoundError:
+        return defaultdict(lambda: nan)
+
+    consciously_active_data = model_responses.sort_values(by=TICK_ON_WHICH_ACTIVATED)
+
+    ttfas = consciously_active_data\
+        .groupby(RESPONSE)\
+        .first()[[TICK_ON_WHICH_ACTIVATED]]\
+        .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
+
+    return defaultdict(lambda: nan, ttfas)
+
+
 def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
                                             conscious_access_threshold: float) -> DefaultDict[str, int]:
     """
@@ -246,6 +280,9 @@ def category_response_col_names_for_model_type(model_type):
         c, r = CPColNames.CategorySensorimotor, CPColNames.ResponseSensorimotor
     elif model_type == ModelType.combined_noninteractive:
         # We could use either here
+        c, r = CPColNames.Category, CPColNames.Response
+    elif model_type == ModelType.combined_interactive:
+        # We're using BrEng words for each of the words, so we'll use the standard columns, which are BrEng anyway
         c, r = CPColNames.Category, CPColNames.Response
     else:
         raise NotImplementedError()

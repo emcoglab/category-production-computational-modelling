@@ -90,7 +90,7 @@ class JobSpec(ABC):
     @abstractmethod
     def output_location_relative(self) -> Path:
         """
-        Relative path for a job's output to be saved.
+        Path for a job's output to be saved, relative to the parent output directory.
         """
         raise NotImplementedError()
 
