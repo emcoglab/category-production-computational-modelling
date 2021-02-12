@@ -176,6 +176,7 @@ def main(spec: InteractiveCombinedJobSpec):
     main_data = prepare_main_dataframe(spec=spec)
 
     output_dir = Path(root_output_dir, spec.shorthand)
+    output_dir.mkdir(exist_ok=True)
 
     # Process separate and one-hop models
     # process_model_output(main_data, model_type=ModelType.combined_interactive, cutoff=)

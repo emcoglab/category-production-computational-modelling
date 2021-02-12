@@ -195,13 +195,18 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
 
     @property
     def shorthand(self) -> str:
-        return f"sm_" \
-               f"breng_" if self.use_breng_translation else "" \
-               f"r{self.max_radius}_" \
-               f"m{self.node_decay_median}_" \
-               f"s{self.node_decay_sigma}_" \
-               f"a{self.accessible_set_threshold}_" \
-               f"ac{self.accessible_set_capacity if self.accessible_set_capacity is not None else '-'}"
+        shorthand = "sm_"
+        if self.use_breng_translation:
+            shorthand += "breng_"
+        shorthand += f"r{self.max_radius}_" \
+                     f"m{self.node_decay_median}_" \
+                     f"s{self.node_decay_sigma}_" \
+                     f"a{self.accessible_set_threshold}_"
+        if self.accessible_set_capacity is not None:
+            shorthand += f"ac{self.accessible_set_capacity}"
+        else:
+            shorthand += f"ac-"
+        return shorthand
 
     def output_location_relative(self) -> Path:
         breng_string = " BrEng" if self.use_breng_translation else ""
@@ -400,13 +405,17 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
 
     @property
     def shorthand(self):
-        return f"{int(self.n_words / 1000)}k_" \
+        shorthand = f"{int(self.n_words / 1000)}k_" \
                f"f{self.firing_threshold}_" \
                f"s{self.edge_decay_sd}_" \
-               f"a{self.accessible_set_threshold}_" \
-               f"ac{self.accessible_set_capacity if self.accessible_set_capacity is not None else '-'}_" \
-               f"{self.model_name}_" \
-               f"pr{self.pruning}"
+               f"a{self.accessible_set_threshold}_"
+        if self.accessible_set_capacity is not None:
+            shorthand += f"ac{self.accessible_set_capacity}_"
+        else:
+            shorthand += f"ac-_"
+        shorthand += f"{self.model_name}_" \
+                     f"pr{self.pruning}"
+        return shorthand
 
     def output_location_relative(self) -> Path:
         if self.pruning_type is None:
