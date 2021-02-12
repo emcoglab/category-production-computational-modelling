@@ -27,8 +27,7 @@ from typing import DefaultDict, Dict, Set, List, Optional
 
 import yaml
 from matplotlib import pyplot, ticker
-from numpy import nan
-from pandas import DataFrame, read_csv, isna, Series
+from pandas import DataFrame, read_csv, isna, Series, NA
 
 from .column_names import *
 from ..category_production.category_production import CategoryProduction, ColNames as CPColNames
@@ -152,7 +151,7 @@ def get_model_ttfas_for_category_combined_interactive(category: str, results_dir
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
         logger.warning(f"Could not find model output file for {category}")
-        return defaultdict(lambda: nan)
+        return defaultdict(lambda: NA)
 
     consciously_active_data = model_responses.sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
@@ -161,7 +160,7 @@ def get_model_ttfas_for_category_combined_interactive(category: str, results_dir
         .first()[[TICK_ON_WHICH_ACTIVATED]]\
         .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-    return defaultdict(lambda: nan, ttfas)
+    return defaultdict(lambda: NA, ttfas)
 
 
 def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
@@ -194,11 +193,11 @@ def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words:
             .first()[[TICK_ON_WHICH_ACTIVATED]]\
             .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-        return defaultdict(lambda: nan, ttfas)
+        return defaultdict(lambda: NA, ttfas)
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
-        return defaultdict(lambda: nan)
+        return defaultdict(lambda: NA)
 
 
 def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dict[str, int]:
@@ -236,11 +235,11 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dic
             .first()[[TICK_ON_WHICH_ACTIVATED]] \
             .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-        return defaultdict(lambda: nan, ttfas)
+        return defaultdict(lambda: NA, ttfas)
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
-        return defaultdict(lambda: nan)
+        return defaultdict(lambda: NA)
 
 
 def get_model_unique_responses_sensorimotor(category: str, results_dir: str) -> Set[str]:
@@ -333,7 +332,7 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
             # response -> TTFA
             ttfas_for_category: Dict[str, int] = ttfas[c]
         except KeyError:
-            return nan
+            return NA
 
         # If the response was directly found, we can return it
         if r in ttfas_for_category:
@@ -352,7 +351,7 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
                 return min(ttfas_for_response)
             # If none of the constituent words have a ttfa, we have no ttfa for the multiword term
             else:
-                return nan
+                return NA
 
     main_data[TTFA] = main_data.apply(get_min_ttfa_for_multiword_responses, axis=1)
 
