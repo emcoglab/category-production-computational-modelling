@@ -3,7 +3,7 @@
   (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
-  (Sensorimotor) Length factor: 159  # Scaled by the same factor as coregistration in CS paper: 1.5890
+  (Sensorimotor) Length factor: 1589  # Scaled by the same factor as coregistration in CS paper: 1.5890
   (Sensorimotor) Distance type: 'Minkowski-3'
   (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
@@ -13,7 +13,7 @@
   (Linguistic) Firing threshold: 0.45
   (Linguistic) Accessible set threshold: 0.45
   (Linguistic) Accessible set capacity: 3000
-  (Linguistic) Length factor: 10
+  (Linguistic) Length factor: 100
   (Linguistic) Model name: 'ppmi_ngram'
   (Linguistic) Model radius: 5
   (Linguistic) Corpus name: 'bbc'
@@ -27,13 +27,13 @@
   Sensorimotor to linguistic delay: 56  # Shortest pairwise length in linguistic component @ 10 and 40k words
   Inter-component attenuation: 1.0  # Not using currently
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 8000
 # Reduced buffer capacity
 - (Sensorimotor) Activation threshold: 0.15
   (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
-  (Sensorimotor) Length factor: 159
+  (Sensorimotor) Length factor: 1589
   (Sensorimotor) Distance type: 'Minkowski-3'
   (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
@@ -43,7 +43,7 @@
   (Linguistic) Firing threshold: 0.45
   (Linguistic) Accessible set threshold: 0.45
   (Linguistic) Accessible set capacity: 3000
-  (Linguistic) Length factor: 10
+  (Linguistic) Length factor: 100
   (Linguistic) Model name: 'ppmi_ngram'
   (Linguistic) Model radius: 5
   (Linguistic) Corpus name: 'bbc'
@@ -57,13 +57,13 @@
   Sensorimotor to linguistic delay: 56
   Inter-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 8000
 # Increased buffer threshold
 - (Sensorimotor) Activation threshold: 0.15
   (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
-  (Sensorimotor) Length factor: 159
+  (Sensorimotor) Length factor: 1589
   (Sensorimotor) Distance type: 'Minkowski-3'
   (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
@@ -73,7 +73,7 @@
   (Linguistic) Firing threshold: 0.45
   (Linguistic) Accessible set threshold: 0.45
   (Linguistic) Accessible set capacity: 3000
-  (Linguistic) Length factor: 10
+  (Linguistic) Length factor: 100
   (Linguistic) Model name: 'ppmi_ngram'
   (Linguistic) Model radius: 5
   (Linguistic) Corpus name: 'bbc'
@@ -87,13 +87,13 @@
   Sensorimotor to linguistic delay: 56
   Inter-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 8000
 # Reduced buffer threshold
 - (Sensorimotor) Activation threshold: 0.15
   (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
-  (Sensorimotor) Length factor: 159
+  (Sensorimotor) Length factor: 1589
   (Sensorimotor) Distance type: 'Minkowski-3'
   (Sensorimotor) Log-normal median: 5.0
   (Sensorimotor) Log-normal sigma: 0.9
@@ -103,7 +103,7 @@
   (Linguistic) Firing threshold: 0.4  # <--- reduced here
   (Linguistic) Accessible set threshold: 0.4  # <--- reduced here
   (Linguistic) Accessible set capacity: 3000
-  (Linguistic) Length factor: 10
+  (Linguistic) Length factor: 100
   (Linguistic) Model name: 'ppmi_ngram'
   (Linguistic) Model radius: 5
   (Linguistic) Corpus name: 'bbc'
@@ -117,4 +117,4 @@
   Sensorimotor to linguistic delay: 56
   Inter-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 8000
