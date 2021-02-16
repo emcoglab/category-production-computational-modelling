@@ -23,7 +23,7 @@ from glob import glob
 from math import floor
 from os import path, listdir
 from pathlib import Path
-from typing import DefaultDict, Dict, Set, List, Optional
+from typing import DefaultDict, Dict, Set, List, Optional, Tuple
 
 import yaml
 from matplotlib import pyplot, ticker
@@ -33,7 +33,7 @@ from .column_names import *
 from ..category_production.category_production import CategoryProduction, ColNames as CPColNames
 from ..cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
 from ..cognitive_model.utils.logging import logger
-from ..cognitive_model.basic_types import ActivationValue
+from ..cognitive_model.basic_types import ActivationValue, Component
 from ..cognitive_model.utils.exceptions import ParseError
 from ..cognitive_model.utils.maths import cm_to_inches
 from ..cognitive_model.preferences.preferences import Preferences
@@ -128,7 +128,7 @@ def available_categories(results_dir_path: str) -> List[str]:
     return categories
 
 
-def get_model_ttfas_for_category_combined_interactive(category: str, results_dir) -> DefaultDict[str, int]:
+def get_model_ttfas_and_components_for_category_combined_interactive(category: str, results_dir) -> Tuple[DefaultDict[str, int], DefaultDict[str, Component]]:
     """
     Dictionary of
         response -> time to first activation
@@ -139,6 +139,10 @@ def get_model_ttfas_for_category_combined_interactive(category: str, results_dir
     :param category:
     :param results_dir:
     :return:
+        tuple(
+            dictionary response -> time,
+            dictionaryh response -> component
+        )
     """
 
     # Try to load model response
@@ -151,7 +155,7 @@ def get_model_ttfas_for_category_combined_interactive(category: str, results_dir
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
         logger.warning(f"Could not find model output file for {category}")
-        return defaultdict(lambda: NA)
+        return (defaultdict(lambda: NA), defaultdict(lambda: NA))
 
     consciously_active_data = model_responses.sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
@@ -160,7 +164,21 @@ def get_model_ttfas_for_category_combined_interactive(category: str, results_dir
         .first()[[TICK_ON_WHICH_ACTIVATED]]\
         .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-    return defaultdict(lambda: NA, ttfas)
+    components = consciously_active_data\
+        .groupby(RESPONSE)\
+        .first()[[COMPONENT]]\
+        .to_dict('dict')[COMPONENT]
+
+    # Return canonical values
+    components = {
+        response: Component[component]
+        for response, component in components.items()
+    }
+
+    return (
+        defaultdict(lambda: NA, ttfas),
+        defaultdict(lambda: NA, components)
+    )
 
 
 def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
@@ -354,6 +372,27 @@ def add_ttfa_column(main_data, ttfas: Dict[str, Dict[str, int]], model_type: Mod
                 return NA
 
     main_data[TTFA] = main_data.apply(get_min_ttfa_for_multiword_responses, axis=1)
+
+
+def add_component_column(main_data, components: Dict[str, Dict[str, Component]], model_type: ModelType):
+    """Mutates `main_data`."""
+    logger.info("Adding components column")
+
+    def get_component(row) -> str:
+        category_column, response_column = category_response_col_names_for_model_type(model_type)
+        c, r = row[category_column], row[response_column]
+        try:
+            components_for_category = components[c]
+        except KeyError:
+            return NA
+
+        # Get the component if we can directly look it up, otherwise nothing
+        if r in components_for_category:
+            return components_for_category[r].name
+        else:
+            return NA
+
+    main_data[COMPONENT] = main_data.apply(get_component, axis=1)
 
 
 def add_model_hit_column(main_data, ttfa_column: str = TTFA):

@@ -31,15 +31,14 @@ from framework.cognitive_model.utils.maths import cm_to_inches
 from framework.evaluation.category_production import add_ttfa_column, ModelType, \
     get_hitrate_summary_tables, frac_within_sd_of_hitrate_mean, prepare_category_production_data, \
     get_hitrate_variance, save_hitrate_graphs, apply_ttfa_cutoff, \
-    CP_INSTANCE, save_hitrate_summary_tables, get_model_ttfas_for_category_combined_interactive
+    CP_INSTANCE, save_hitrate_summary_tables, get_model_ttfas_and_components_for_category_combined_interactive, \
+    add_component_column
 from framework.evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
-    RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK
+    RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK, COMPONENT
 
 logger = getLogger(__name__)
 logger_format = '%(asctime)s | %(levelname)s | %(module)s | %(message)s'
 logger_dateformat = "1%Y-%m-%d %H:%M:%S"
-
-COMPONENT = f"Component"
 
 # Paths
 root_input_dir = Path("/Volumes/Big Data/spreading activation model/Model output/Category production")
@@ -52,13 +51,16 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
     main_data: DataFrame = prepare_category_production_data(ModelType.combined_interactive)
 
     logger.info("Loading model TTFAs")
-    ttfas = {
-        category: get_model_ttfas_for_category_combined_interactive(
+    ttfa_dict = dict()
+    components_dict = dict()
+    for category in CP_INSTANCE.category_labels:
+        ttfas, components = get_model_ttfas_and_components_for_category_combined_interactive(
             category=category,
             results_dir=Path(root_input_dir, spec.output_location_relative()))
-        for category in CP_INSTANCE.category_labels
-    }
-    add_ttfa_column(main_data, model_type=ModelType.combined_interactive, ttfas=ttfas)
+
+        ttfa_dict[category] = ttfas
+    add_ttfa_column(main_data, model_type=ModelType.combined_interactive, ttfas=ttfa_dict)
+    add_component_column(main_data, model_type=ModelType.combined_interactive, components=components_dict)
 
     return main_data
 
@@ -200,8 +202,7 @@ def main(spec: InteractiveCombinedJobSpec):
             RANKED_PRODUCTION_FREQUENCY,
             ROUNDED_MEAN_RANK,
             TTFA,
-            # TODO: record this
-            # COMPONENT,
+            COMPONENT,
         ]].to_csv(main_data_output_file, index=False)
 
 
