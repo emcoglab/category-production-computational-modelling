@@ -93,7 +93,7 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
         csv_comments = [f"Running sensorimotor spreading activation (v{VERSION}) using parameters:"]
         csv_comments.extend(job_spec.csv_comments())
 
-        # Activate linguistic item(s)
+        # Activate linguistic item(s) ONLY, since stimuli were presented as words
         if category_label in model.linguistic_component.available_labels:
             logger.info(f"Activating {category_label} in linguistic component")
             model.linguistic_component.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
@@ -106,23 +106,6 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
             if category_words:
                 logger.info(f"Activating individual words {category_words} in linguistic component")
                 model.linguistic_component.propagator.activate_items_with_labels(
-                    category_words,
-                    # Divide activation among multi-word categories
-                    FULL_ACTIVATION / len(category_words))
-
-        # Activate sensorimotor item(s)
-        if category_label in model.sensorimotor_component.available_labels:
-            logger.info(f"Activating {category_label} in sensorimotor component")
-            model.sensorimotor_component.propagator.activate_item_with_label(category_label, FULL_ACTIVATION)
-        else:
-            category_words = [word
-                              for word in modified_word_tokenize(category_label)
-                              if word not in cp.ignored_words
-                              # Ignore words which aren't available: activate all words we can
-                              and word in model.sensorimotor_component.available_labels]
-            if category_words:
-                logger.info(f"Activating individual words {category_words} in sensorimotor component")
-                model.sensorimotor_component.propagator.activate_items_with_labels(
                     category_words,
                     # Divide activation among multi-word categories
                     FULL_ACTIVATION / len(category_words))
