@@ -62,5 +62,5 @@ class Job_0_4(Job):
 
 if __name__ == '__main__':
     Job_0_4(
-        JobSpec_0_4(distance_type=DistanceType.Minkowski3, length_factor=159, pruning_distance=1.5)
+        JobSpec_0_4(distance_type=DistanceType.Minkowski3, length_factor=1589, pruning_distance=1.5)
     ).submit()
