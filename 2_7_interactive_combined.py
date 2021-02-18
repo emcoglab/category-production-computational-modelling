@@ -131,15 +131,14 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                          if activation_event.item.component == Component.sensorimotor
                          else model.linguistic_component
                          ).propagator.idx2label[activation_event.item.idx]
-
-                model_response_entries.append({
-                    RESPONSE:                label,
-                    ITEM_ID:                 activation_event.item.idx,
-                    COMPONENT:               activation_event.item.component.name,
-                    ACTIVATION:              activation_event.activation,
-                    TICK_ON_WHICH_ACTIVATED: activation_event.time,
-                    ENTERED_BUFFER:          isinstance(activation_event, ItemEnteredBufferEvent),
-                })
+                model_response_entries.append((
+                    label,                                                 # RESPONSE:
+                    activation_event.item.idx,                             # ITEM_ID:
+                    activation_event.item.component.name,                  # COMPONENT:
+                    activation_event.activation,                           # ACTIVATION:
+                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED:
+                    isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER:
+                ))
 
             if job_spec.bailout is not None and (
                     len(model.linguistic_component.accessible_set) > job_spec.bailout
@@ -155,7 +154,14 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                 logger.warning(bailout_message)
                 break
 
-        model_response_df = DataFrame(model_response_entries).sort_values([TICK_ON_WHICH_ACTIVATED, COMPONENT, ITEM_ID])
+        model_response_df = DataFrame(model_response_entries, columns=[
+            RESPONSE,
+            ITEM_ID,
+            COMPONENT,
+            ACTIVATION,
+            TICK_ON_WHICH_ACTIVATED,
+            ENTERED_BUFFER,
+        ]).sort_values([TICK_ON_WHICH_ACTIVATED, COMPONENT, ITEM_ID])
 
         # Record model output
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
