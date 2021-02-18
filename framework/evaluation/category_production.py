@@ -157,16 +157,17 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
         logger.warning(f"Could not find model output file for {category}")
         return (defaultdict(lambda: NA), defaultdict(lambda: NA))
 
-    consciously_active_data = model_responses.sort_values(by=TICK_ON_WHICH_ACTIVATED)
+    in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
+        .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-    ttfas = consciously_active_data\
-        .groupby(RESPONSE)\
-        .first()[[TICK_ON_WHICH_ACTIVATED]]\
+    ttfas = in_buffer_data \
+        .groupby(RESPONSE) \
+        .first()[[TICK_ON_WHICH_ACTIVATED]] \
         .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-    components = consciously_active_data\
-        .groupby(RESPONSE)\
-        .first()[[COMPONENT]]\
+    components = in_buffer_data \
+        .groupby(RESPONSE) \
+        .first()[[COMPONENT]] \
         .to_dict('dict')[COMPONENT]
 
     # Return canonical values
