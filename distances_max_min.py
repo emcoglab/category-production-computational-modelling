@@ -28,11 +28,13 @@ from framework.cognitive_model.preferences.preferences import Preferences
 
 def main(sensorimotor: bool):
     if sensorimotor:
+        logger.info("Sensorimotor")
         distance_type = DistanceType.Minkowski3
         length_factor = 1589
         max_sphere_radius = 1.5
         edgelist_filename = f"sensorimotor for testing only {distance_type.name} distance length {length_factor} pruned {max_sphere_radius}.edgelist"
     else:
+        logger.info("Linguistic")
         length_factor = 100
         words = 40_000
         edgelist_filename = f"PPMI n-gram (BBC), r=5 {words} words length {length_factor}.edgelist"
@@ -58,5 +60,6 @@ def main(sensorimotor: bool):
 
 if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
+    main(sensorimotor=True)
     main(sensorimotor=False)
     logger.info("Done!")
