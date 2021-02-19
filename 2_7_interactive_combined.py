@@ -132,12 +132,12 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                          else model.linguistic_component
                          ).propagator.idx2label[activation_event.item.idx]
                 model_response_entries.append((
-                    label,                                                 # RESPONSE:
-                    activation_event.item.idx,                             # ITEM_ID:
-                    activation_event.item.component.name,                  # COMPONENT:
-                    activation_event.activation,                           # ACTIVATION:
-                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED:
-                    isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER:
+                    label,                                                 # RESPONSE
+                    activation_event.item.idx,                             # ITEM_ID
+                    activation_event.item.component.name,                  # COMPONENT
+                    activation_event.activation,                           # ACTIVATION
+                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
+                    isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER
                 ))
 
             if job_spec.bailout is not None and (
