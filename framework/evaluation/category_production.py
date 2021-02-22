@@ -129,7 +129,10 @@ def available_categories(results_dir_path: str) -> List[str]:
     return categories
 
 
-def get_model_ttfas_and_components_for_category_combined_interactive(category: str, results_dir) -> Tuple[DefaultDict[str, int], DefaultDict[str, Component]]:
+def get_model_ttfas_and_components_for_category_combined_interactive(category: str, results_dir,
+                                                                     require_buffer_entry: bool = True,
+                                                                     require_activations_in_component: Optional[Component] = None,
+                                                                     ) -> Tuple[DefaultDict[str, int], DefaultDict[str, Component]]:
     """
     Dictionary of
         response -> time to first activation
@@ -161,15 +164,19 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
         logger.error(f"Corrupt file at {model_responses_path}")
         raise er
 
-    in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
-        .sort_values(by=TICK_ON_WHICH_ACTIVATED)
+    relevant_data = model_responses.sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-    ttfas = in_buffer_data \
+    if require_buffer_entry:
+        relevant_data = relevant_data[relevant_data[ITEM_ENTERED_BUFFER] == True]
+    if require_activations_in_component is not None:
+        relevant_data = relevant_data[relevant_data[COMPONENT] == require_activations_in_component.name]
+
+    ttfas = relevant_data \
         .groupby(RESPONSE) \
         .first()[[TICK_ON_WHICH_ACTIVATED]] \
         .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
 
-    components = in_buffer_data \
+    components = relevant_data \
         .groupby(RESPONSE) \
         .first()[[COMPONENT]] \
         .to_dict('dict')[COMPONENT]

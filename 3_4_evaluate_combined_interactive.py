@@ -27,6 +27,7 @@ from pandas import DataFrame
 
 from framework.category_production.category_production import ColNames as CPColNames
 from framework.cli.job import InteractiveCombinedJobSpec
+from framework.cognitive_model.basic_types import Component
 from framework.cognitive_model.utils.maths import cm_to_inches
 from framework.evaluation.category_production import add_ttfa_column, ModelType, \
     get_hitrate_summary_tables, frac_within_sd_of_hitrate_mean, prepare_category_production_data, \
@@ -56,7 +57,10 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
     for category in CP_INSTANCE.category_labels:
         ttfas, components = get_model_ttfas_and_components_for_category_combined_interactive(
             category=category,
-            results_dir=Path(root_input_dir, spec.output_location_relative()))
+            results_dir=Path(root_input_dir, spec.output_location_relative()),
+            require_buffer_entry=True,
+            require_activations_in_component=None,
+        )
 
         ttfa_dict[category] = ttfas
     add_ttfa_column(main_data, model_type=ModelType.combined_interactive, ttfas=ttfa_dict)
