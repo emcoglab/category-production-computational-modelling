@@ -28,6 +28,7 @@ from typing import DefaultDict, Dict, Set, List, Optional, Tuple
 import yaml
 from matplotlib import pyplot, ticker
 from pandas import DataFrame, read_csv, isna, Series, NA
+from pandas.errors import ParserError as PandasParserError
 
 from .column_names import *
 from ..category_production.category_production import CategoryProduction, ColNames as CPColNames
@@ -156,6 +157,9 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
     except FileNotFoundError:
         logger.warning(f"Could not find model output file for {category}")
         return (defaultdict(lambda: NA), defaultdict(lambda: NA))
+    except PandasParserError as er:
+        logger.error(f"Corrupt file at {model_responses_path}")
+        raise er
 
     in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
         .sort_values(by=TICK_ON_WHICH_ACTIVATED)
