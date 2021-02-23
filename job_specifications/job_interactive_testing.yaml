@@ -27,7 +27,7 @@
   Sensorimotor to linguistic delay: 56  # Shortest pairwise length in linguistic component @ 10 and 40k words
   Inter-component attenuation: 1.0  # Not using currently
   Bailout: 20000
-  Run for ticks: 500
+  Run for ticks: 2000
 # Reduced buffer capacity
 - (Sensorimotor) Activation threshold: 0.15
   (Sensorimotor) Accessible set threshold: 0.15
@@ -57,7 +57,7 @@
   Sensorimotor to linguistic delay: 56
   Inter-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 500
+  Run for ticks: 2000
 # Increased buffer threshold
 - (Sensorimotor) Activation threshold: 0.15
   (Sensorimotor) Accessible set threshold: 0.15
@@ -87,7 +87,7 @@
   Sensorimotor to linguistic delay: 56
   Inter-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 500
+  Run for ticks: 2000
 # Reduced buffer threshold
 - (Sensorimotor) Activation threshold: 0.15
   (Sensorimotor) Accessible set threshold: 0.15
@@ -117,4 +117,4 @@
   Sensorimotor to linguistic delay: 56
   Inter-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 500
+  Run for ticks: 2000
