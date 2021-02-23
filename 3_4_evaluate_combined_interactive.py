@@ -46,6 +46,7 @@ root_output_dir = Path("/Volumes/Big Data/spreading activation model/Evaluation/
 
 
 def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
+    from framework.cognitive_model.basic_types import Component
 
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = prepare_category_production_data(ModelType.combined_interactive)
@@ -56,7 +57,10 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
     for category in CP_INSTANCE.category_labels:
         ttfas, components = get_model_ttfas_and_components_for_category_combined_interactive(
             category=category,
-            results_dir=Path(root_input_dir, spec.output_location_relative()))
+            results_dir=Path(root_input_dir, spec.output_location_relative()),
+            require_buffer_entry=True,
+            require_activations_in_component=None,
+        )
 
         ttfa_dict[category] = ttfas
     add_ttfa_column(main_data, model_type=ModelType.combined_interactive, ttfas=ttfa_dict)
@@ -159,11 +163,11 @@ def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf, output_dir
     cutoff_graph_data["PF"] = combined_hitrates_rpf
     pyplot.plot(combined_hitrates_rmr, label="MR", zorder=10)
     pyplot.plot(combined_hitrates_rpf, label="PF", zorder=10)
-    pyplot.xlim((100, 800))
+    # pyplot.xlim((100, 800))
     pyplot.ylim((0, 1))
     pyplot.xlabel("TTFA cutoff")
     pyplot.ylabel("Fraction of hit rates within 1SD of participant mean")
-    pyplot.title("Noninteractive combined fits")
+    pyplot.title("Interactive combined fits")
     graph_filename = Path(output_dir, "rmr & rpf fits by cutoff.png")
     pyplot.legend()
     pyplot.gcf().set_size_inches(cm_to_inches(15), cm_to_inches(10))
