@@ -158,7 +158,7 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
-        logger.warning(f"Could not find model output file for {category}")
+        logger.warning(f"Could not find model output file for {category} [{model_responses_path}]")
         return (defaultdict(lambda: NA), defaultdict(lambda: NA))
     except PandasParserError as er:
         logger.error(f"Corrupt file at {model_responses_path}")

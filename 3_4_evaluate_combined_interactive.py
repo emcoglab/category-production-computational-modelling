@@ -59,7 +59,7 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
             category=category,
             results_dir=Path(root_input_dir, spec.output_location_relative()),
             require_buffer_entry=True,
-            require_activations_in_component=None,
+            require_activations_in_component=None,#Component.linguistic,
         )
 
         ttfa_dict[category] = ttfas
