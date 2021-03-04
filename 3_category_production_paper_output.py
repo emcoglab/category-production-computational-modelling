@@ -80,16 +80,13 @@ output_dirs: Dict[ModelType, Path] = {
 
 def prepare_main_dataframe() -> DataFrame:
 
-    # Not using CAT; just use FT
-    this_linguistic_cat = get_firing_threshold_from_path_linguistic(input_dirs[ModelType.linguistic])
-
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = prepare_category_production_data(ModelType.combined_noninteractive)
     # Linguistic TTFAs
     n_words = get_n_words_from_path_linguistic(input_dirs[ModelType.linguistic])
     linguistic_ttfas = {
         category: get_model_ttfas_for_category_linguistic(category, input_dirs[ModelType.linguistic],
-                                                          n_words, this_linguistic_cat)
+                                                          n_words, get_firing_threshold_from_path_linguistic(input_dirs[ModelType.linguistic]))
         for category in CP_INSTANCE.category_labels
     }
     add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
@@ -155,7 +152,7 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
         ttfas = {
             category: get_model_ttfas_for_category_linguistic(
                 category, input_dirs[model_type], n_words,
-                conscious_access_threshold=get_firing_threshold_from_path_linguistic(input_dirs[model_type]))
+                firing_threshold=get_firing_threshold_from_path_linguistic(input_dirs[model_type]))
             for category in CP_INSTANCE.category_labels
         }
     elif model_type in {ModelType.sensorimotor, ModelType.sensorimotor_one_hop}:
@@ -173,7 +170,6 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
                              model_type=model_type,
                              input_results_dir=input_dirs[model_type],
                              min_first_rank_freq=None,
-                             conscious_access_threshold=None,
                              manual_ttfa_cutoff=None,
                              stats_save_path=output_dirs[model_type],
                              figures_save_path=output_dirs[model_type])

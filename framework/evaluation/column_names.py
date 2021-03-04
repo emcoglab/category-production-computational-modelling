@@ -36,9 +36,6 @@ TICK_ON_WHICH_ACTIVATED     = "Tick on which activated"
 COMPONENT                   = "Component"
 
 ITEM_ENTERED_BUFFER         = "Item entered WM buffer"
-REACHED_CAT                 = "Reached conc.acc. θ"
 
 RESPONSE                    = "Response"
 ACTIVATION                  = "Activation"
-
-CAT                         = "CAT"

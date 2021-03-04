@@ -194,7 +194,7 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
 
 
 def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
-                                            conscious_access_threshold: float) -> DefaultDict[str, int]:
+                                            firing_threshold: float) -> DefaultDict[str, int]:
     """
     Dictionary of
         response -> time to first activation
@@ -205,7 +205,7 @@ def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words:
     :param category:
     :param results_dir:
     :param n_words:
-    :param conscious_access_threshold:
+    :param firing_threshold:
     :return:
     """
 
@@ -215,10 +215,10 @@ def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words:
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
             model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
-        consciously_active_data = model_responses[model_responses[ACTIVATION] >= conscious_access_threshold]\
+        activations_which_fired = model_responses[model_responses[ACTIVATION] >= firing_threshold]\
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-        ttfas = consciously_active_data\
+        ttfas = activations_which_fired\
             .groupby(RESPONSE)\
             .first()[[TICK_ON_WHICH_ACTIVATED]]\
             .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
@@ -528,7 +528,6 @@ def process_one_model_output(main_data: DataFrame,
                              model_type: ModelType,
                              input_results_dir,
                              min_first_rank_freq: Optional[int],
-                             conscious_access_threshold: Optional[float],
                              manual_ttfa_cutoff: Optional[int] = None,
                              stats_save_path: Optional = None,
                              figures_save_path: Optional = None,
@@ -539,7 +538,6 @@ def process_one_model_output(main_data: DataFrame,
     :param model_type:
     :param input_results_dir:
     :param min_first_rank_freq:
-    :param conscious_access_threshold:
     :param manual_ttfa_cutoff:
         If specified, applies a TTFA cut-off to the data before processing
     :param stats_save_path:
@@ -559,9 +557,6 @@ def process_one_model_output(main_data: DataFrame,
     model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
 
     file_suffix = f"({model_identifier})"
-
-    if conscious_access_threshold is not None:
-        file_suffix += f" CAT={conscious_access_threshold}"
 
     if manual_ttfa_cutoff is not None:
         file_suffix += f" cutoff {manual_ttfa_cutoff}"
@@ -591,7 +586,6 @@ def process_one_model_output(main_data: DataFrame,
         hitrate_fit_rpf_hr_head=hitrate_fit_rpf_head,
         hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
-        conscious_access_threshold=conscious_access_threshold,
         output_dir=stats_save_path,
     )
 
@@ -611,22 +605,15 @@ def save_model_performance_stats(main_dataframe,
                                  hitrate_fit_rpf_hr_head,
                                  hitrate_fit_rmr_hr_head,
                                  model_type: ModelType,
-                                 conscious_access_threshold: Optional[float],
                                  output_dir: str = None
                                  ):
-
-    # Build output dir
-    if conscious_access_threshold is not None:
-        filename_suffix = f" CAT={conscious_access_threshold}"
-    else:
-        filename_suffix = ""
     if output_dir is None:
         output_dir = path.join(
             Preferences.evaluation_dir,
             model_type.model_output_dirname)
     overall_stats_output_path = path.join(
         output_dir,
-        f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
+        f"model_effectiveness_overall ({model_identifier}).csv")
 
     df_dict = dict()
 
@@ -643,9 +630,6 @@ def save_model_performance_stats(main_dataframe,
         "Hitrate within SD of HR mean (RPF) head only": hitrate_fit_rpf_hr_head,
         "Hitrate within SD of HR mean (RMR) head only": hitrate_fit_rmr_hr_head,
     })
-
-    if conscious_access_threshold is not None:
-        df_dict[CAT] = conscious_access_threshold
 
     model_performance_data: DataFrame = DataFrame.from_records([df_dict])
     model_performance_data.to_csv(overall_stats_output_path,
