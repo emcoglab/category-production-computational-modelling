@@ -25,7 +25,7 @@ from typing import Optional, Dict
 
 from matplotlib import pyplot
 from numpy import ceil, savetxt, array
-from pandas import DataFrame
+from pandas import DataFrame, to_numeric
 
 from framework.category_production.category_production import ColNames as CPColNames
 from framework.evaluation.category_production import add_ttfa_column, ModelType, get_model_ttfas_for_category_sensorimotor, \
@@ -103,6 +103,9 @@ def prepare_main_dataframe() -> DataFrame:
     add_ttfa_column(main_data, model_type=ModelType.sensorimotor, ttfas=sensorimotor_ttfas)
     main_data.rename(columns={TTFA: TTFA_SENSORIMOTOR}, inplace=True)
 
+    main_data[TTFA_LINGUISTIC] = to_numeric(main_data[TTFA_LINGUISTIC])
+    main_data[TTFA_SENSORIMOTOR] = to_numeric(main_data[TTFA_SENSORIMOTOR])
+
     return main_data
 
 
@@ -135,6 +138,7 @@ def apply_coregistration(main_data: DataFrame):
     ratio = mean_ttfa_linguistic / mean_ttfa_sensorimotor
     logger.info(f"Sensorimotor TTFAs *= {ratio:.4f}")
     main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] * ratio
+    main_data[TTFA_SENSORIMOTOR_SCALED] = to_numeric(main_data[TTFA_SENSORIMOTOR_SCALED])
 
 
 def combine_components(main_data):

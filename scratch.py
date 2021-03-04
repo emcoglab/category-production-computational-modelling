@@ -1,11 +1,10 @@
-from logging import basicConfig, INFO
+from framework.category_production.category_production import CategoryProduction
 
-from framework.cognitive_model.sensorimotor_norms.sensorimotor_norms import SensorimotorNorms
-basicConfig(format='%(asctime)s | %(levelname)s | %(funcName)s @ %(module)s:%(lineno)d |➤ %(message)s', datefmt="%Y-%m-%d %H:%M:%S", level=INFO)
-
-SensorimotorNorms(use_breng_translation=True, verbose=True, test_word = "tranquillization")
-SensorimotorNorms(use_breng_translation=True, verbose=True, test_word = "tranquilization")
-SensorimotorNorms(use_breng_translation=True, verbose=True, test_word = "tranquillisation")
-SensorimotorNorms(use_breng_translation=True, verbose=True, test_word = "tranquilisation")
-
-pass
+cp = CategoryProduction(minimum_production_frequency=1)
+for c in cp.category_labels:
+    c_words = [w for w in c.split(" ") if w not in cp.ignored_words]
+    for r in cp.responses_for_category(c):
+        r_words = [w for w in r.split(" ") if w not in cp.ignored_words]
+        for r_word in r_words:
+            if r_word in c_words:
+                print(f"{c.upper()} -> {r.lower()}")

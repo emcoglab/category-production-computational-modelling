@@ -651,7 +651,7 @@ def save_model_performance_stats(main_dataframe,
     model_performance_data.to_csv(overall_stats_output_path,
                                   # As of Python 3.7, dictionary keys are ordered by insertion,
                                   # so we should automatically get a consistent order for stacking,
-                                  columns=list(df_dict.keys()) + [CAT],
+                                  columns=list(df_dict.keys()),
                                   index=False)
 
 
