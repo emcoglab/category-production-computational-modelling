@@ -1,6 +1,6 @@
 from framework.category_production.category_production import CategoryProduction
 
-cp = CategoryProduction(minimum_production_frequency=1)
+cp = CategoryProduction()
 for c in cp.category_labels:
     c_words = [w for w in c.split(" ") if w not in cp.ignored_words]
     for r in cp.responses_for_category(c):

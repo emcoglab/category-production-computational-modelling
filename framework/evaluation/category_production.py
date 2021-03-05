@@ -171,6 +171,13 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
     if require_activations_in_component is not None:
         relevant_data = relevant_data[relevant_data[COMPONENT] == require_activations_in_component.name]
 
+    # In case some of the category words are present in the response, they would count as "free" hits on tick 0.
+    # Thus we exclude any such responses here.
+    # Use > 1 here rather than > 0 to keep compatibility with old versions where initial activations weren't
+    # processed until tick 1. This assumes that the shortest edge is > 1, which it is in everything we have or will
+    # test.
+    relevant_data = relevant_data[relevant_data[TICK_ON_WHICH_ACTIVATED] > 1]
+
     ttfas = relevant_data \
         .groupby(RESPONSE) \
         .first()[[TICK_ON_WHICH_ACTIVATED]] \
@@ -218,6 +225,13 @@ def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words:
         activations_which_fired = model_responses[model_responses[ACTIVATION] >= firing_threshold]\
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
+        # In case some of the category words are present in the response, they would count as "free" hits on tick 0.
+        # Thus we exclude any such responses here.
+        # Use > 1 here rather than > 0 to keep compatibility with old versions where initial activations weren't
+        # processed until tick 1. This assumes that the shortest edge is > 1, which it is in everything we have or will
+        # test.
+        activations_which_fired = activations_which_fired[activations_which_fired[TICK_ON_WHICH_ACTIVATED] > 1]
+
         ttfas = activations_which_fired\
             .groupby(RESPONSE)\
             .first()[[TICK_ON_WHICH_ACTIVATED]]\
@@ -259,6 +273,13 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dic
 
         in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
+
+        # In case some of the category words are present in the response, they would count as "free" hits on tick 0.
+        # Thus we exclude any such responses here.
+        # Use > 1 here rather than > 0 to keep compatibility with old versions where initial activations weren't
+        # processed until tick 1. This assumes that the shortest edge is > 1, which it is in everything we have or will
+        # test.
+        in_buffer_data = in_buffer_data[in_buffer_data[TICK_ON_WHICH_ACTIVATED] > 1]
 
         ttfas: Dict = in_buffer_data \
             .groupby(RESPONSE) \
@@ -800,7 +821,6 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     main_data = exclude_idiosyncratic_responses(main_data)
 
     add_predictor_column_production_proportion(main_data)
-    # TODO: strange to have model_type in here...?
     add_rpf_column(main_data, model_type)
     add_rmr_column(main_data)
 
