@@ -30,12 +30,12 @@ def main(sensorimotor: bool):
     if sensorimotor:
         logger.info("Sensorimotor")
         distance_type = DistanceType.Minkowski3
-        length_factor = 1589
+        length_factor = 162
         max_sphere_radius = 1.5
         edgelist_filename = f"sensorimotor for testing only {distance_type.name} distance length {length_factor} pruned {max_sphere_radius}.edgelist"
     else:
         logger.info("Linguistic")
-        length_factor = 100
+        length_factor = 10
         words = 40_000
         edgelist_filename = f"PPMI n-gram (BBC), r=5 {words} words length {length_factor}.edgelist"
 
@@ -54,8 +54,8 @@ def main(sensorimotor: bool):
             max_edges.append(edge)
             continue
 
-    logger.info(f"Minimum: {min_edges}: {min_length}")
-    logger.info(f"Maximum: {max_edges}: {max_length}")
+    logger.info(f"Minimum: {min_length}")
+    logger.info(f"Maximum: {max_length}")
 
 
 if __name__ == '__main__':
