@@ -63,4 +63,4 @@ class Job_0_3(Job):
 if __name__ == '__main__':
     Job_0_3(
         JobSpec_0_3(distance_type=DistanceType.Minkowski3, use_breng_translation=True, length_factor=162)
-    ).submit()
+    ).run_locally()
