@@ -730,7 +730,7 @@ def frac_within_sd_of_hitrate_mean(df: DataFrame, test_column: str, only_before_
             (df["Hitrate Mean"] <= df["Hitrate SD"])
             # .cumsum() starts at 0 and increments when above is true, so will be > 0 after the first time it's true
             .cumsum() <= 0]
-        logger.info(f"fraction calculated in region [0, {df.shape[0]}]")
+        logger.info(f"fraction calculated in region [1, {df.shape[0]}]")
     # When the test hitrate is within one SD of the hitrate mean
     within = Series(
         (df[test_column] > df["Hitrate Mean"] - df["Hitrate SD"])
