@@ -56,7 +56,7 @@ def main(input_results_dir: str,
         add_ttfa_column(main_data, ttfas=ttfas, model_type=model_type)
         add_model_hit_column(main_data)
 
-        process_one_model_output(main_data, model_type, model_output_dir, min_first_rank_freq, None)
+        process_one_model_output(main_data, model_type, model_output_dir, min_first_rank_freq)
 
 
 if __name__ == '__main__':

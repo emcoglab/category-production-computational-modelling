@@ -1,5 +1,5 @@
--r cognitive_model/requirements.txt
--r category_production/requirements.txt
+-r framework/cognitive_model/requirements.txt
+-r framework/category_production/requirements.txt
 colorama
 matplotlib
 pyyaml

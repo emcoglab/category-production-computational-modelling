@@ -43,7 +43,7 @@ if __name__ == '__main__':
     jobs = [
         Job_2_5(s)
         for s in LinguisticOneHopJobSpec.load_multiple(
-            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml"))
+            Path(Path(__file__).parent, "job_specifications/job_journal_paper_linguistic.yaml"))
     ]
     for job in jobs:
         job.run_locally(extra_arguments=[])

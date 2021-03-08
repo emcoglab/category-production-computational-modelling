@@ -56,8 +56,7 @@ TTFA_COMBINED            = f"{TTFA} combined"
 
 def main(input_results_dir_sensorimotor: str,
          input_results_dir_linguistic: str,
-         manual_cut_off: Optional[int] = None,
-         linguistic_cat: Optional[int] = None):
+         manual_cut_off: Optional[int] = None):
     """
     :param manual_cut_off:
         If supplied and not None, cuts of models at the specified tick
@@ -72,13 +71,6 @@ def main(input_results_dir_sensorimotor: str,
 
     # region Process args
 
-    if linguistic_cat is None:
-        ft = get_firing_threshold_from_path_linguistic(input_results_dir_linguistic)
-        logger.info(f"No CAT provided, using FT instead ({ft})")
-        this_linguistic_cat = ft
-    else:
-        this_linguistic_cat = linguistic_cat
-
     input_results_dir_linguistic   = Path(input_results_dir_linguistic)
     input_results_dir_sensorimotor = Path(input_results_dir_sensorimotor)
     # Organise by linguistic and sensorimotor model names
@@ -92,7 +84,7 @@ def main(input_results_dir_sensorimotor: str,
     makedirs(figures_dir, exist_ok=True)
     model_identifier = MODEL_TYPE.name
 
-    file_suffix = f"({model_identifier}) CAT={this_linguistic_cat}"
+    file_suffix = f"({model_identifier})"
 
     # endregion -------------------
 
@@ -104,7 +96,7 @@ def main(input_results_dir_sensorimotor: str,
     # Linguistic TTFAs
     n_words = get_n_words_from_path_linguistic(input_results_dir_linguistic)
     linguistic_ttfas = {
-        category: get_model_ttfas_for_category_linguistic(category, input_results_dir_linguistic, n_words, this_linguistic_cat)
+        category: get_model_ttfas_for_category_linguistic(category, input_results_dir_linguistic, n_words, get_firing_threshold_from_path_linguistic(input_results_dir_linguistic))
         for category in CP.category_labels
     }
     add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
@@ -337,10 +329,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Compare spreading activation results with Category Production data.")
     parser.add_argument("--linguistic_path", type=str, help="The path in which to find the linguistic results.")
     parser.add_argument("--sensorimotor_path", type=str, help="The path in which to find the sensorimotor results.")
-    parser.add_argument("--cat", type=float, default=None, help="The conscious-access threshold. Omit to use CAT = firing threshold.")
     parser.add_argument("--manual-cut-off", type=int, default=None)
     args = parser.parse_args()
 
-    main(args.sensorimotor_path, args.linguistic_path, args.manual_cut_off, args.cat)
+    main(args.sensorimotor_path, args.linguistic_path, args.manual_cut_off)
 
     logger.info("Done!")

@@ -87,13 +87,13 @@ if __name__ == '__main__':
     sm_specs = jobs = [
         s
         for s in BufferedSensorimotorPropagationJobSpec.load_multiple(
-            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_sensorimotor.yaml"))
+            Path(Path(__file__).parent, "job_specifications/job_journal_paper_sensorimotor.yaml"))
     ]
 
     ling_specs = [
         s
         for s in LinguisticPropagationJobSpec.load_multiple(
-            Path(Path(__file__).parent, "job_specifications/job_cognition_paper_linguistic.yaml"))
+            Path(Path(__file__).parent, "job_specifications/job_journal_paper_linguistic.yaml"))
     ]
 
     threads = [

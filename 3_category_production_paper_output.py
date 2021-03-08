@@ -25,7 +25,7 @@ from typing import Optional, Dict
 
 from matplotlib import pyplot
 from numpy import ceil, savetxt, array
-from pandas import DataFrame
+from pandas import DataFrame, to_numeric
 
 from framework.category_production.category_production import ColNames as CPColNames
 from framework.evaluation.category_production import add_ttfa_column, ModelType, get_model_ttfas_for_category_sensorimotor, \
@@ -80,16 +80,13 @@ output_dirs: Dict[ModelType, Path] = {
 
 def prepare_main_dataframe() -> DataFrame:
 
-    # Not using CAT; just use FT
-    this_linguistic_cat = get_firing_threshold_from_path_linguistic(input_dirs[ModelType.linguistic])
-
     # Main dataframe holds category production data and model response data
     main_data: DataFrame = prepare_category_production_data(ModelType.combined_noninteractive)
     # Linguistic TTFAs
     n_words = get_n_words_from_path_linguistic(input_dirs[ModelType.linguistic])
     linguistic_ttfas = {
         category: get_model_ttfas_for_category_linguistic(category, input_dirs[ModelType.linguistic],
-                                                          n_words, this_linguistic_cat)
+                                                          n_words, get_firing_threshold_from_path_linguistic(input_dirs[ModelType.linguistic]))
         for category in CP_INSTANCE.category_labels
     }
     add_ttfa_column(main_data, model_type=ModelType.linguistic, ttfas=linguistic_ttfas)
@@ -102,6 +99,9 @@ def prepare_main_dataframe() -> DataFrame:
     }
     add_ttfa_column(main_data, model_type=ModelType.sensorimotor, ttfas=sensorimotor_ttfas)
     main_data.rename(columns={TTFA: TTFA_SENSORIMOTOR}, inplace=True)
+
+    main_data[TTFA_LINGUISTIC] = to_numeric(main_data[TTFA_LINGUISTIC])
+    main_data[TTFA_SENSORIMOTOR] = to_numeric(main_data[TTFA_SENSORIMOTOR])
 
     return main_data
 
@@ -135,6 +135,7 @@ def apply_coregistration(main_data: DataFrame):
     ratio = mean_ttfa_linguistic / mean_ttfa_sensorimotor
     logger.info(f"Sensorimotor TTFAs *= {ratio:.4f}")
     main_data[TTFA_SENSORIMOTOR_SCALED] = main_data[TTFA_SENSORIMOTOR] * ratio
+    main_data[TTFA_SENSORIMOTOR_SCALED] = to_numeric(main_data[TTFA_SENSORIMOTOR_SCALED])
 
 
 def combine_components(main_data):
@@ -151,7 +152,7 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
         ttfas = {
             category: get_model_ttfas_for_category_linguistic(
                 category, input_dirs[model_type], n_words,
-                conscious_access_threshold=get_firing_threshold_from_path_linguistic(input_dirs[model_type]))
+                firing_threshold=get_firing_threshold_from_path_linguistic(input_dirs[model_type]))
             for category in CP_INSTANCE.category_labels
         }
     elif model_type in {ModelType.sensorimotor, ModelType.sensorimotor_one_hop}:
@@ -169,7 +170,6 @@ def process_original_model_output(data: DataFrame, model_type: ModelType):
                              model_type=model_type,
                              input_results_dir=input_dirs[model_type],
                              min_first_rank_freq=None,
-                             conscious_access_threshold=None,
                              manual_ttfa_cutoff=None,
                              stats_save_path=output_dirs[model_type],
                              figures_save_path=output_dirs[model_type])

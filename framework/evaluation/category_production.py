@@ -158,7 +158,7 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
-        logger.warning(f"Could not find model output file for {category}")
+        logger.warning(f"Could not find model output file for {category} [{model_responses_path}]")
         return (defaultdict(lambda: NA), defaultdict(lambda: NA))
     except PandasParserError as er:
         logger.error(f"Corrupt file at {model_responses_path}")
@@ -170,6 +170,13 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
         relevant_data = relevant_data[relevant_data[ITEM_ENTERED_BUFFER] == True]
     if require_activations_in_component is not None:
         relevant_data = relevant_data[relevant_data[COMPONENT] == require_activations_in_component.name]
+
+    # In case some of the category words are present in the response, they would count as "free" hits on tick 0.
+    # Thus we exclude any such responses here.
+    # Use > 1 here rather than > 0 to keep compatibility with old versions where initial activations weren't
+    # processed until tick 1. This assumes that the shortest edge is > 1, which it is in everything we have or will
+    # test.
+    relevant_data = relevant_data[relevant_data[TICK_ON_WHICH_ACTIVATED] > 1]
 
     ttfas = relevant_data \
         .groupby(RESPONSE) \
@@ -194,7 +201,7 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
 
 
 def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words: int,
-                                            conscious_access_threshold: float) -> DefaultDict[str, int]:
+                                            firing_threshold: float) -> DefaultDict[str, int]:
     """
     Dictionary of
         response -> time to first activation
@@ -205,7 +212,7 @@ def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words:
     :param category:
     :param results_dir:
     :param n_words:
-    :param conscious_access_threshold:
+    :param firing_threshold:
     :return:
     """
 
@@ -215,10 +222,17 @@ def get_model_ttfas_for_category_linguistic(category: str, results_dir, n_words:
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
             model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False)
 
-        consciously_active_data = model_responses[model_responses[ACTIVATION] >= conscious_access_threshold]\
+        activations_which_fired = model_responses[model_responses[ACTIVATION] >= firing_threshold]\
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
 
-        ttfas = consciously_active_data\
+        # In case some of the category words are present in the response, they would count as "free" hits on tick 0.
+        # Thus we exclude any such responses here.
+        # Use > 1 here rather than > 0 to keep compatibility with old versions where initial activations weren't
+        # processed until tick 1. This assumes that the shortest edge is > 1, which it is in everything we have or will
+        # test.
+        activations_which_fired = activations_which_fired[activations_which_fired[TICK_ON_WHICH_ACTIVATED] > 1]
+
+        ttfas = activations_which_fired\
             .groupby(RESPONSE)\
             .first()[[TICK_ON_WHICH_ACTIVATED]]\
             .to_dict('dict')[TICK_ON_WHICH_ACTIVATED]
@@ -259,6 +273,13 @@ def get_model_ttfas_for_category_sensorimotor(category: str, results_dir) -> Dic
 
         in_buffer_data = model_responses[model_responses[ITEM_ENTERED_BUFFER] == True] \
             .sort_values(by=TICK_ON_WHICH_ACTIVATED)
+
+        # In case some of the category words are present in the response, they would count as "free" hits on tick 0.
+        # Thus we exclude any such responses here.
+        # Use > 1 here rather than > 0 to keep compatibility with old versions where initial activations weren't
+        # processed until tick 1. This assumes that the shortest edge is > 1, which it is in everything we have or will
+        # test.
+        in_buffer_data = in_buffer_data[in_buffer_data[TICK_ON_WHICH_ACTIVATED] > 1]
 
         ttfas: Dict = in_buffer_data \
             .groupby(RESPONSE) \
@@ -528,7 +549,6 @@ def process_one_model_output(main_data: DataFrame,
                              model_type: ModelType,
                              input_results_dir,
                              min_first_rank_freq: Optional[int],
-                             conscious_access_threshold: Optional[float],
                              manual_ttfa_cutoff: Optional[int] = None,
                              stats_save_path: Optional = None,
                              figures_save_path: Optional = None,
@@ -539,7 +559,6 @@ def process_one_model_output(main_data: DataFrame,
     :param model_type:
     :param input_results_dir:
     :param min_first_rank_freq:
-    :param conscious_access_threshold:
     :param manual_ttfa_cutoff:
         If specified, applies a TTFA cut-off to the data before processing
     :param stats_save_path:
@@ -559,9 +578,6 @@ def process_one_model_output(main_data: DataFrame,
     model_identifier = f"{input_results_path.parent.name} {input_results_path.name}"
 
     file_suffix = f"({model_identifier})"
-
-    if conscious_access_threshold is not None:
-        file_suffix += f" CAT={conscious_access_threshold}"
 
     if manual_ttfa_cutoff is not None:
         file_suffix += f" cutoff {manual_ttfa_cutoff}"
@@ -591,7 +607,6 @@ def process_one_model_output(main_data: DataFrame,
         hitrate_fit_rpf_hr_head=hitrate_fit_rpf_head,
         hitrate_fit_rmr_hr_head=hitrate_fit_rmr_head,
         model_type=model_type,
-        conscious_access_threshold=conscious_access_threshold,
         output_dir=stats_save_path,
     )
 
@@ -611,22 +626,15 @@ def save_model_performance_stats(main_dataframe,
                                  hitrate_fit_rpf_hr_head,
                                  hitrate_fit_rmr_hr_head,
                                  model_type: ModelType,
-                                 conscious_access_threshold: Optional[float],
                                  output_dir: str = None
                                  ):
-
-    # Build output dir
-    if conscious_access_threshold is not None:
-        filename_suffix = f" CAT={conscious_access_threshold}"
-    else:
-        filename_suffix = ""
     if output_dir is None:
         output_dir = path.join(
             Preferences.evaluation_dir,
             model_type.model_output_dirname)
     overall_stats_output_path = path.join(
         output_dir,
-        f"model_effectiveness_overall ({model_identifier}){filename_suffix}.csv")
+        f"model_effectiveness_overall ({model_identifier}).csv")
 
     df_dict = dict()
 
@@ -644,14 +652,11 @@ def save_model_performance_stats(main_dataframe,
         "Hitrate within SD of HR mean (RMR) head only": hitrate_fit_rmr_hr_head,
     })
 
-    if conscious_access_threshold is not None:
-        df_dict[CAT] = conscious_access_threshold
-
     model_performance_data: DataFrame = DataFrame.from_records([df_dict])
     model_performance_data.to_csv(overall_stats_output_path,
                                   # As of Python 3.7, dictionary keys are ordered by insertion,
                                   # so we should automatically get a consistent order for stacking,
-                                  columns=list(df_dict.keys()) + [CAT],
+                                  columns=list(df_dict.keys()),
                                   index=False)
 
 
@@ -725,7 +730,7 @@ def frac_within_sd_of_hitrate_mean(df: DataFrame, test_column: str, only_before_
             (df["Hitrate Mean"] <= df["Hitrate SD"])
             # .cumsum() starts at 0 and increments when above is true, so will be > 0 after the first time it's true
             .cumsum() <= 0]
-        logger.info(f"fraction calculated in region [0, {df.shape[0]}]")
+        logger.info(f"fraction calculated in region [1, {df.shape[0]}]")
     # When the test hitrate is within one SD of the hitrate mean
     within = Series(
         (df[test_column] > df["Hitrate Mean"] - df["Hitrate SD"])
@@ -816,7 +821,6 @@ def prepare_category_production_data(model_type: ModelType) -> DataFrame:
     main_data = exclude_idiosyncratic_responses(main_data)
 
     add_predictor_column_production_proportion(main_data)
-    # TODO: strange to have model_type in here...?
     add_rpf_column(main_data, model_type)
     add_rmr_column(main_data)
 
