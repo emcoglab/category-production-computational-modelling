@@ -1,10 +1,22 @@
-from framework.category_production.category_production import CategoryProduction
+class Base:
+    def __init__(self, a):
+        self.a = a
+        print(f"Base.__init__({self.a})")
 
-cp = CategoryProduction()
-for c in cp.category_labels:
-    c_words = [w for w in c.split(" ") if w not in cp.ignored_words]
-    for r in cp.responses_for_category(c):
-        r_words = [w for w in r.split(" ") if w not in cp.ignored_words]
-        for r_word in r_words:
-            if r_word in c_words:
-                print(f"{c.upper()} -> {r.lower()}")
+
+class Mix:
+    def __init__(self, *args):
+        self.mixed = 1
+        print(f"Mix.__init__()")
+        super().__init__(*args)
+
+
+class Derived(Mix, Base):
+    def __init__(self):
+        print(f"Derived.__init__()")
+        super().__init__(2)
+
+
+if __name__ == '__main__':
+    d = Derived()
+    print(d.a,  d.mixed)
