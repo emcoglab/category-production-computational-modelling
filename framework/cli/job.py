@@ -602,7 +602,8 @@ class NoninteractiveCombinedJobSpec(CombinedJobSpec):
 class InteractiveCombinedJobSpec(CombinedJobSpec):
     lc_to_smc_delay: int
     smc_to_lc_delay: int
-    inter_component_attenuation: float
+    lc_to_smc_threshold: ActivationValue
+    smc_to_lc_threshold: ActivationValue
     buffer_threshold: ActivationValue
     buffer_capacity_linguistic_items: Optional[int]
     buffer_capacity_sensorimotor_items: Optional[int]
@@ -616,7 +617,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             *self.linguistic_spec.output_location_relative().parts[1:],  # Skip the type name and version number
             f"delay-ls {self.lc_to_smc_delay};"
             f" delay-sl {self.smc_to_lc_delay};"
-            f" ic-attenuation {self.inter_component_attenuation};"
+            f" θ-ls {self.lc_to_smc_threshold};"
+            f" θ-sl {self.smc_to_lc_threshold};"
             f" buff-θ {self.buffer_threshold};"
             f" buff-cap-ling {self.buffer_capacity_linguistic_items};"
             f" buff-cap-sm {self.buffer_capacity_sensorimotor_items};"
@@ -626,15 +628,14 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
 
     @property
     def shorthand(self) -> str:
-        return f"ic_" \
-               f"{self.linguistic_spec.shorthand}_" \
-               f"{self.sensorimotor_spec.shorthand}_" \
-               f"ls{self.lc_to_smc_delay}_" \
-               f"sl{self.smc_to_lc_delay}_" \
-               f"ica{self.inter_component_attenuation}_" \
-               f"b{self.buffer_threshold}_" \
-               f"bcl{self.buffer_capacity_linguistic_items}_" \
-               f"bcs{self.buffer_capacity_sensorimotor_items}"
+        return (f"ic_"
+                f"{self.linguistic_spec.shorthand}_"
+                f"{self.sensorimotor_spec.shorthand}_"
+                f"ls{self.lc_to_smc_delay}-{self.lc_to_smc_threshold}_"
+                f"sl{self.smc_to_lc_delay}-{self.smc_to_lc_threshold}_"
+                f"b{self.buffer_threshold}_"
+                f"bcl{self.buffer_capacity_linguistic_items}_"
+                f"bcs{self.buffer_capacity_sensorimotor_items}")
 
     @property
     def cli_args(self) -> List[str]:
@@ -644,7 +645,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             f"--buffer_capacity_sensorimotor_items {self.buffer_capacity_sensorimotor_items}",
             f"--lc_to_smc_delay {self.lc_to_smc_delay}",
             f"--smc_to_lc_delay {self.smc_to_lc_delay}",
-            f"--inter_component_attenuation {self.inter_component_attenuation}",
+            f"--lc_to_smc_threshold {self.lc_to_smc_threshold}",
+            f"--smc_to_lc_threshold {self.smc_to_lc_threshold}",
             f"--run_for_ticks {self.run_for_ticks}",
         ]
         if self.bailout is not None:
@@ -656,7 +658,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             **super()._to_dict(),
             "Linguistic to sensorimotor delay": str(self.lc_to_smc_delay),
             "Sensorimotor to linguistic delay": str(self.smc_to_lc_delay),
-            "Inter-component attenuation": str(self.inter_component_attenuation),
+            "Linguistic to sensorimotor threshold": str(self.lc_to_smc_threshold),
+            "Sensorimotor to linguistic threshold": str(self.smc_to_lc_threshold),
             "Buffer threshold": str(self.buffer_threshold),
             "Buffer capacity (linguistic items)": str(self.buffer_capacity_linguistic_items),
             "Buffer capacity (sensorimotor items)": str(self.buffer_capacity_sensorimotor_items),
@@ -687,7 +690,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             }),
             lc_to_smc_delay=int(dictionary["Linguistic to sensorimotor delay"]),
             smc_to_lc_delay=int(dictionary["Sensorimotor to linguistic delay"]),
-            inter_component_attenuation=float(dictionary["Inter-component attenuation"]),
+            lc_to_smc_threshold=int(dictionary["Linguistic to sensorimotor threshold"]),
+            smc_to_lc_threshold=int(dictionary["Sensorimotor to linguistic threshold"]),
             buffer_threshold=ActivationValue(dictionary["Buffer threshold"]),
             buffer_capacity_linguistic_items=int(dictionary["Buffer capacity (linguistic items)"]),
             buffer_capacity_sensorimotor_items=int(dictionary["Buffer capacity (sensorimotor items)"]),

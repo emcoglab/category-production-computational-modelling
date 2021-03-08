@@ -74,7 +74,8 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
         linguistic_component=job_spec.linguistic_spec.to_component(LinguisticComponent),
         lc_to_smc_delay=job_spec.lc_to_smc_delay,
         smc_to_lc_delay=job_spec.smc_to_lc_delay,
-        inter_component_attenuation=job_spec.inter_component_attenuation,
+        lc_to_smc_threshold=job_spec.lc_to_smc_threshold,
+        smc_to_lc_threshold=job_spec.smc_to_lc_threshold,
         buffer_threshold=job_spec.buffer_threshold,
         buffer_capacity_linguistic_items=job_spec.buffer_capacity_linguistic_items,
         buffer_capacity_sensorimotor_items=job_spec.buffer_capacity_sensorimotor_items,
@@ -216,7 +217,8 @@ if __name__ == '__main__':
     parser.add_argument("--buffer_capacity_sensorimotor_items", required=True, type=int)
     parser.add_argument("--lc_to_smc_delay", required=True, type=int)
     parser.add_argument("--smc_to_lc_delay", required=True, type=int)
-    parser.add_argument("--inter_component_attenuation", required=True, type=float)
+    parser.add_argument("--lc_to_smc_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--smc_to_lc_threshold", required=True, type=ActivationValue)
     parser.add_argument("--bailout", required=False, default=0, type=int)
     parser.add_argument("--run_for_ticks", required=True, type=int)
 
@@ -262,7 +264,8 @@ if __name__ == '__main__':
             buffer_capacity_sensorimotor_items=args.buffer_capacity_sensorimotor_items,
             lc_to_smc_delay=args.lc_to_smc_delay,
             smc_to_lc_delay=args.smc_to_lc_delay,
-            inter_component_attenuation=args.inter_component_attenuation,
+            lc_to_smc_threshold=args.lc_to_smc_threshold,
+            smc_to_lc_threshold=args.smc_to_lc_threshold,
             run_for_ticks=args.run_for_ticks,
             bailout=args.bailout,
         ),
