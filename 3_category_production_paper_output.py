@@ -289,8 +289,8 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
 
     # Process separate and one-hop models
     for model_type in [
-        ModelType.sensorimotor,
-        ModelType.linguistic,
+        # ModelType.sensorimotor,
+        # ModelType.linguistic,
         ModelType.sensorimotor_one_hop,
         ModelType.linguistic_one_hop
     ]:
