@@ -70,7 +70,7 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
 
 
 def save_participant_hitrates(data):
-    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(data, ModelType.combined_noninteractive)
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(data)
     for head_only in [True, False]:
         head_message = "head only" if head_only else "whole graph"
         participant_hitrates_rmr: array = array([
@@ -94,7 +94,7 @@ def save_participant_hitrates(data):
 def process_model_output(data: DataFrame, model_type: ModelType, cutoff: int, output_dir):
     cutoff_data = apply_ttfa_cutoff(data, ttfa_column=TTFA, ttfa_cutoff=cutoff)
 
-    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data, model_type)
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data)
     save_hitrate_summary_tables(hrs_rmr, hrs_rpf, model_type,
                                 file_suffix=f"{model_type.name} coregistered cutoff={cutoff}",
                                 output_dir=output_dir)
@@ -118,7 +118,7 @@ def explore_ttfa_cutoffs(main_data, output_dir):
     for ttfa_cutoff in range(max_ttfa + 1):
         logger.info(f"Testing cutoff at {ttfa_cutoff}")
         cutoff_data_rpf = apply_ttfa_cutoff(main_data, TTFA, ttfa_cutoff)
-        hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data_rpf, ModelType.combined_noninteractive)
+        hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data_rpf)
         combined_hitrates_rmr.append(
             frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True))
         combined_hitrates_rpf.append(
@@ -145,14 +145,12 @@ def explore_ttfa_cutoffs(main_data, output_dir):
 
     # Combined (rmr-optimal)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(
-        apply_ttfa_cutoff(main_data, TTFA, combined_rmr_ttfa_cutoff),
-        ModelType.combined_noninteractive)
+        apply_ttfa_cutoff(main_data, TTFA, combined_rmr_ttfa_cutoff))
     logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
     logger.info(f"rmr-optimal ({combined_rmr_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
     # Combined (rpf-optimal)
     hrs_rpf, hrs_rmr = get_hitrate_summary_tables(
-        apply_ttfa_cutoff(main_data, TTFA, combined_rpf_ttfa_cutoff),
-        ModelType.combined_noninteractive)
+        apply_ttfa_cutoff(main_data, TTFA, combined_rpf_ttfa_cutoff))
     logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
     logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
 

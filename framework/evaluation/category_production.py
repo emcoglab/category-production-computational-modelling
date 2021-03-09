@@ -487,12 +487,13 @@ def save_hitrate_summary_figure(summary_table, x_selector, fig_name, figures_dir
     pyplot.close()
 
 
-def get_hitrate_summary_tables(main_data: DataFrame, model_type: ModelType):
+def get_hitrate_summary_tables(main_data: DataFrame):
 
     hitrates_per_rpf = get_summary_table(main_data, RANKED_PRODUCTION_FREQUENCY)
 
     # For RPF we will truncate the table at mean + 2SD (over categories) items
-    category_column, response_column = category_response_col_names_for_model_type(model_type)
+    # We use the same column selectors (i.e. linguistic) in all cases
+    category_column, response_column = category_response_col_names_for_model_type(ModelType.linguistic)
     n_items_mean = (
         main_data[[category_column, response_column]]
         .groupby(category_column)
@@ -586,7 +587,7 @@ def process_one_model_output(main_data: DataFrame,
     item_level_path = path.join(stats_save_path, f"item-level data {file_suffix}.csv")
     save_item_level_data(main_data, item_level_path)
 
-    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data, model_type)
+    hitrates_per_rpf, hitrates_per_rmr = get_hitrate_summary_tables(main_data)
     save_hitrate_summary_tables(hitrates_per_rmr, hitrates_per_rpf, model_type, file_suffix, output_dir=stats_save_path)
 
     # Compute hitrate fits
@@ -754,8 +755,8 @@ def get_summary_table(main_dataframe, groupby_column):
             / CATEGORIES_PER_PARTICIPANT)
 
     # Participant summary columns: hitrate
-    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].mean(axis=1)
-    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].std(axis=1)
+    df['Hitrate Mean'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].mean(axis=1, skipna=True)
+    df['Hitrate SD'] = df[[PARTICIPANT_HITRATE_All_f.format(p) for p in CP_INSTANCE.participants]].std(axis=1, skipna=True)
 
     # Model columns
     df[MODEL_HITRATE] = (
@@ -765,8 +766,7 @@ def get_summary_table(main_dataframe, groupby_column):
         / TOTAL_CATEGORIES
     )
 
-    # Forget rows with nans
-    df = df.dropna().reset_index()
+    df = df.reset_index()
 
     return df
 
