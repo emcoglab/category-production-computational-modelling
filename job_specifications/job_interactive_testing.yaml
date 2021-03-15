@@ -135,7 +135,7 @@
   (Sensorimotor) Attenuation statistic: 'Prevalence'
   (Linguistic) Words: 40000
   (Linguistic) Firing threshold: 0.45
-  (Linguistic) Accessible set threshold: 0.45
+  (Linguistic) Accessible set threshold: 0.3  # <-- reduced here
   (Linguistic) Accessible set capacity: 3000
   (Linguistic) Length factor: 10
   (Linguistic) Model name: 'ppmi_ngram'
