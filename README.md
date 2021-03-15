@@ -15,7 +15,7 @@ python 3_category_production_paper_output.py
 to initially compute the optimal cut-off point.  Then run:
 
 ```shell script
-python 3_category_production_paper_output.py --manual-cut-off 303
+python 3_category_production_paper_output.py --manual-cut-off 305
 ```
 
 to apply that cut-off to the model output.
