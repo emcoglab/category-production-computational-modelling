@@ -42,7 +42,6 @@ logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 
 # Paths
 root_input_dir = Path("/Volumes/Big Data/spreading activation model/Model output/Category production")
-root_output_dir = Path("/Volumes/Big Data/spreading activation model/Evaluation/Interactive")
 
 
 def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
@@ -59,7 +58,7 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
             category=category,
             results_dir=Path(root_input_dir, spec.output_location_relative()),
             require_buffer_entry=True,
-            require_activations_in_component=None,#Component.linguistic,
+            require_activations_in_component=Component.linguistic,
         )
 
         ttfa_dict[category] = ttfas
@@ -179,16 +178,16 @@ def main(spec: InteractiveCombinedJobSpec):
 
     main_data = prepare_main_dataframe(spec=spec)
 
-    output_dir = Path(root_output_dir, spec.shorthand)
-    output_dir.mkdir(exist_ok=True)
+    evaluation_output_dir = Path(root_input_dir, spec.output_location_relative(), " Evaluation")
+    evaluation_output_dir.mkdir(exist_ok=True)
 
     # Process separate and one-hop models
     # process_model_output(main_data, model_type=ModelType.combined_interactive, cutoff=)
 
-    explore_ttfa_cutoffs(main_data, output_dir)
+    explore_ttfa_cutoffs(main_data, evaluation_output_dir)
 
     # Save final main dataframe
-    with open(Path(output_dir, f"main model data.csv"), mode="w", encoding="utf-8") as main_data_output_file:
+    with open(Path(evaluation_output_dir, f"main model data.csv"), mode="w", encoding="utf-8") as main_data_output_file:
         main_data[[
             # Select only relevant columns for output
             CPColNames.Category,
@@ -212,8 +211,8 @@ if __name__ == '__main__':
     basicConfig(format=logger_format, datefmt=logger_dateformat, level=INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
-    for spec in InteractiveCombinedJobSpec.load_multiple(Path(Path(__file__).parent,
-                                                              "job_specifications/job_interactive_testing.yaml")):
+    for spec in InteractiveCombinedJobSpec.load_multiple(Path(Path(__file__).parent, "job_specifications",
+                                                              "2021-03-15 interactive testing batch.yaml")):
         main(spec=spec)
 
     logger.info("Done!")
