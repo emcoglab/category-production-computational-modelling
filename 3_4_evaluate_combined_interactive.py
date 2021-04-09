@@ -211,8 +211,8 @@ if __name__ == '__main__':
     basicConfig(format=logger_format, datefmt=logger_dateformat, level=INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
-    for spec in InteractiveCombinedJobSpec.load_multiple(Path(Path(__file__).parent, "job_specifications",
-                                                              "2021-03-15 interactive testing batch.yaml")):
+    for i, spec in enumerate(InteractiveCombinedJobSpec.load_multiple(Path(
+            Path(__file__).parent, "job_specifications", "2021-03-29 interactive testing batch.yaml"))):
         main(spec=spec)
 
     logger.info("Done!")

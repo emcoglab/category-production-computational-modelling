@@ -153,8 +153,13 @@ def get_model_ttfas_and_components_for_category_combined_interactive(category: s
     model_responses_path = path.join(results_dir, f"responses_{category}.csv")
     try:
         with open(model_responses_path, mode="r", encoding="utf-8") as model_responses_file:
-            model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False,
-                                                  dtype={TICK_ON_WHICH_ACTIVATED: int})
+            try:
+                model_responses: DataFrame = read_csv(model_responses_file, header=0, comment="#", index_col=False,
+                                                      dtype={TICK_ON_WHICH_ACTIVATED: int})
+            # Attempt to track down ftp-corrupted files so they can be re-downloaded
+            except ValueError as error:
+                logger.error(f"ValueError encountered for {category} in {results_dir}")
+                raise error
 
     # If the category wasn't found, there are no TTFAs
     except FileNotFoundError:
