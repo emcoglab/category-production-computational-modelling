@@ -1,5 +1,5 @@
 # Original example, plus bigger thresholds
-- (Sensorimotor) Activation threshold: 0.15
+- (Sensorimotor) Activation threshold: 0.15  # <-- Note after running these: this appears to not be a real setting. Removed in future jobs.
   (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0

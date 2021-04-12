@@ -605,6 +605,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
     lc_to_smc_threshold: ActivationValue
     smc_to_lc_threshold: ActivationValue
     buffer_threshold: ActivationValue
+    cross_component_attenuation: float
     buffer_capacity_linguistic_items: Optional[int]
     buffer_capacity_sensorimotor_items: Optional[int]
     run_for_ticks: int
@@ -619,6 +620,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             f" delay-sl {self.smc_to_lc_delay};"
             f" θ-ls {self.lc_to_smc_threshold};"
             f" θ-sl {self.smc_to_lc_threshold};"
+            f" cca {self.cross_component_attenuation};"
             f" buff-θ {self.buffer_threshold};"
             f" buff-cap-ling {self.buffer_capacity_linguistic_items};"
             f" buff-cap-sm {self.buffer_capacity_sensorimotor_items};"
@@ -633,6 +635,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
                 f"{self.sensorimotor_spec.shorthand}_"
                 f"ls{self.lc_to_smc_delay}-{self.lc_to_smc_threshold}_"
                 f"sl{self.smc_to_lc_delay}-{self.smc_to_lc_threshold}_"
+                f"cca{self.cross_component_attenuation}_"
                 f"b{self.buffer_threshold}_"
                 f"bcl{self.buffer_capacity_linguistic_items}_"
                 f"bcs{self.buffer_capacity_sensorimotor_items}")
@@ -647,6 +650,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             f"--smc_to_lc_delay {self.smc_to_lc_delay}",
             f"--lc_to_smc_threshold {self.lc_to_smc_threshold}",
             f"--smc_to_lc_threshold {self.smc_to_lc_threshold}",
+            f"--cross_component_attenuation {self.cross_component_attenuation}",
             f"--run_for_ticks {self.run_for_ticks}",
         ]
         if self.bailout is not None:
@@ -660,6 +664,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             "Sensorimotor to linguistic delay": str(self.smc_to_lc_delay),
             "Linguistic to sensorimotor threshold": str(self.lc_to_smc_threshold),
             "Sensorimotor to linguistic threshold": str(self.smc_to_lc_threshold),
+            "Cross-component attenuation": str(self.cross_component_attenuation),
             "Buffer threshold": str(self.buffer_threshold),
             "Buffer capacity (linguistic items)": str(self.buffer_capacity_linguistic_items),
             "Buffer capacity (sensorimotor items)": str(self.buffer_capacity_sensorimotor_items),
@@ -692,6 +697,7 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             smc_to_lc_delay=int(dictionary["Sensorimotor to linguistic delay"]),
             lc_to_smc_threshold=ActivationValue(dictionary["Linguistic to sensorimotor threshold"]),
             smc_to_lc_threshold=ActivationValue(dictionary["Sensorimotor to linguistic threshold"]),
+            cross_component_attenuation=float(dictionary["Cross-component attenuation"]),
             buffer_threshold=ActivationValue(dictionary["Buffer threshold"]),
             buffer_capacity_linguistic_items=int(dictionary["Buffer capacity (linguistic items)"]),
             buffer_capacity_sensorimotor_items=int(dictionary["Buffer capacity (sensorimotor items)"]),
