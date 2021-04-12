@@ -41,6 +41,7 @@ from framework.cognitive_model.events import ItemActivatedEvent, ItemEnteredBuff
 from framework.cognitive_model.linguistic_components import LinguisticComponent
 from framework.cognitive_model.sensorimotor_components import SensorimotorComponent
 from framework.cognitive_model.attenuation_statistic import AttenuationStatistic
+from framework.cognitive_model.utils.file import comment_line_from_str
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.version import VERSION
 from framework.cognitive_model.preferences.preferences import Preferences
@@ -53,6 +54,8 @@ COMPONENT = "Component"
 ACTIVATION = "Activation"
 TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
 ENTERED_BUFFER = "Item entered WM buffer"
+ENTERED_ACCESSIBLE_SET = "Item entered AS"
+CORRECT_RESPONSE = "Correct response"
 
 
 def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
@@ -76,6 +79,7 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
         smc_to_lc_delay=job_spec.smc_to_lc_delay,
         lc_to_smc_threshold=job_spec.lc_to_smc_threshold,
         smc_to_lc_threshold=job_spec.smc_to_lc_threshold,
+        cross_component_attenuation=job_spec.cross_component_attenuation,
         buffer_threshold=job_spec.buffer_threshold,
         buffer_capacity_linguistic_items=job_spec.buffer_capacity_linguistic_items,
         buffer_capacity_sensorimotor_items=job_spec.buffer_capacity_sensorimotor_items,
@@ -140,13 +144,23 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                          if activation_event.item.component == Component.sensorimotor
                          else model.linguistic_component
                          ).propagator.idx2label[activation_event.item.idx]
+                entered_accessible_set = (
+                    activation_event.activation >= (
+                        model.sensorimotor_component.accessible_set.threshold
+                        if activation_event.item.component == Component.sensorimotor
+                        else model.linguistic_component.accessible_set.threshold
+                    ))
+                entered_buffer = isinstance(activation_event, ItemEnteredBufferEvent)
+                correct_response = label in cp.responses_for_category(category_label)
                 model_response_entries.append((
-                    label,                                                 # RESPONSE
-                    activation_event.item.idx,                             # ITEM_ID
-                    activation_event.item.component.name,                  # COMPONENT
-                    activation_event.activation,                           # ACTIVATION
-                    activation_event.time,                                 # TICK_ON_WHICH_ACTIVATED
-                    isinstance(activation_event, ItemEnteredBufferEvent),  # ENTERED_BUFFER
+                    label,                                 # RESPONSE
+                    activation_event.item.idx,             # ITEM_ID
+                    activation_event.item.component.name,  # COMPONENT
+                    activation_event.activation,           # ACTIVATION
+                    activation_event.time,                 # TICK_ON_WHICH_ACTIVATED
+                    entered_accessible_set,                # ENTERED_ACCESSIBLE_SET
+                    entered_buffer,                        # ENTERED_BUFFER
+                    correct_response,                      # CORRECT_RESPONSE
                 ))
 
             if job_spec.bailout is not None and (
@@ -169,11 +183,17 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
             COMPONENT,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
+            ENTERED_ACCESSIBLE_SET,
             ENTERED_BUFFER,
+            CORRECT_RESPONSE,
         ]).sort_values([TICK_ON_WHICH_ACTIVATED, COMPONENT, ITEM_ID])
 
         # Record model output
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
+            # Write comments
+            for comment in csv_comments:
+                output_file.write(comment_line_from_str(comment))
+            # Write data
             model_response_df.to_csv(output_file, index=False)
 
         # Record accessible set size
@@ -219,6 +239,7 @@ if __name__ == '__main__':
     parser.add_argument("--smc_to_lc_delay", required=True, type=int)
     parser.add_argument("--lc_to_smc_threshold", required=True, type=ActivationValue)
     parser.add_argument("--smc_to_lc_threshold", required=True, type=ActivationValue)
+    parser.add_argument("--cross_component_attenuation", required=True, type=float)
     parser.add_argument("--bailout", required=False, default=0, type=int)
     parser.add_argument("--run_for_ticks", required=True, type=int)
 
@@ -262,6 +283,7 @@ if __name__ == '__main__':
             buffer_threshold=args.buffer_threshold,
             buffer_capacity_linguistic_items=args.buffer_capacity_linguistic_items,
             buffer_capacity_sensorimotor_items=args.buffer_capacity_sensorimotor_items,
+            cross_component_attenuation=args.cross_component_attenuation,
             lc_to_smc_delay=args.lc_to_smc_delay,
             smc_to_lc_delay=args.smc_to_lc_delay,
             lc_to_smc_threshold=args.lc_to_smc_threshold,
