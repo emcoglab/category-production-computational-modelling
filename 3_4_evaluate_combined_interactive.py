@@ -20,6 +20,7 @@ caiwingfield.net
 import sys
 from logging import getLogger, basicConfig, INFO
 from pathlib import Path
+from typing import Optional
 
 from matplotlib import pyplot
 from numpy import savetxt, array
@@ -154,6 +155,16 @@ def explore_ttfa_cutoffs(main_data, output_dir):
     logger.info(f"rpf-optimal ({combined_rpf_ttfa_cutoff}) rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
 
 
+def fit_data_at_cutoff(main_data, output_dir, manual_cut_off: int):
+
+    logger.info(f"Testing cutoff at {manual_cut_off}")
+
+    cutoff_data = apply_ttfa_cutoff(main_data, TTFA, manual_cut_off)
+    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data)
+
+    save_hitrate_graphs(hrs_rpf, hrs_rmr, file_suffix=f"({manual_cut_off})", figures_dir=output_dir)
+
+
 def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf, output_dir):
     cutoff_graph_data = DataFrame()
     cutoff_graph_data["MR"] = combined_hitrates_rmr
@@ -174,17 +185,17 @@ def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf, output_dir
     pyplot.close()
 
 
-def main(spec: InteractiveCombinedJobSpec):
+def main(spec: InteractiveCombinedJobSpec, manual_cut_off: Optional[int] = None):
 
     main_data = prepare_main_dataframe(spec=spec)
 
     evaluation_output_dir = Path(root_input_dir, spec.output_location_relative(), " Evaluation")
     evaluation_output_dir.mkdir(exist_ok=True)
 
-    # Process separate and one-hop models
-    # process_model_output(main_data, model_type=ModelType.combined_interactive, cutoff=)
-
-    explore_ttfa_cutoffs(main_data, evaluation_output_dir)
+    if manual_cut_off is None:
+        explore_ttfa_cutoffs(main_data, evaluation_output_dir)
+    else:
+        fit_data_at_cutoff(main_data, evaluation_output_dir, manual_cut_off)
 
     # Save final main dataframe
     with open(Path(evaluation_output_dir, f"main model data.csv"), mode="w", encoding="utf-8") as main_data_output_file:

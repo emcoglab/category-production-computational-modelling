@@ -28,8 +28,8 @@
   Sensorimotor to linguistic threshold: 0
   Cross-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
-# All activation through high thresholds
+  Run for ticks: 1000
+# Allow activation through high thresholds
 - (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
@@ -59,7 +59,7 @@
   Sensorimotor to linguistic threshold: 0.9
   Cross-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 1000
 - (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
@@ -89,7 +89,7 @@
   Sensorimotor to linguistic threshold: 0.8
   Cross-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 1000
 - (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
@@ -119,7 +119,7 @@
   Sensorimotor to linguistic threshold: 0.7
   Cross-component attenuation: 1.0
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 1000
 # Allow activation through attenuation
 - (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
@@ -150,7 +150,7 @@
   Sensorimotor to linguistic threshold: 0.15
   Cross-component attenuation: 0.5
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 1000
 - (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
@@ -180,7 +180,7 @@
   Sensorimotor to linguistic threshold: 0.15
   Cross-component attenuation: 0.4
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 1000
 - (Sensorimotor) Accessible set threshold: 0.15
   (Sensorimotor) Accessible set capacity: 3000
   (Sensorimotor) Activation cap: 1.0
@@ -210,4 +210,35 @@
   Sensorimotor to linguistic threshold: 0.15
   Cross-component attenuation: 0.1
   Bailout: 20000
-  Run for ticks: 2000
+  Run for ticks: 1000
+# Wildcard
+- (Sensorimotor) Accessible set threshold: 0.3
+  (Sensorimotor) Accessible set capacity: 3000
+  (Sensorimotor) Activation cap: 1.0
+  (Sensorimotor) Length factor: 162
+  (Sensorimotor) Distance type: 'Minkowski-3'
+  (Sensorimotor) Log-normal median: 3.0
+  (Sensorimotor) Log-normal sigma: 0.9
+  (Sensorimotor) Max radius: 1.5
+  (Sensorimotor) Attenuation statistic: 'Prevalence'
+  (Linguistic) Words: 40000
+  (Linguistic) Firing threshold: 0.4
+  (Linguistic) Accessible set threshold: 0.4
+  (Linguistic) Accessible set capacity: 4000
+  (Linguistic) Length factor: 10
+  (Linguistic) Model name: 'ppmi_ngram'
+  (Linguistic) Model radius: 5
+  (Linguistic) Corpus name: 'bbc'
+  (Linguistic) Node decay: 0.99
+  (Linguistic) Edge decay SD: 15.0
+  (Linguistic) Impulse pruning threshold: 0.05
+  Buffer threshold: 0.45
+  Buffer capacity (linguistic items): 12
+  Buffer capacity (sensorimotor items): 9
+  Linguistic to sensorimotor delay: 21
+  Sensorimotor to linguistic delay: 56
+  Linguistic to sensorimotor threshold: 0.0
+  Sensorimotor to linguistic threshold: 0.0
+  Cross-component attenuation: 0.5
+  Bailout: 20000
+  Run for ticks: 1000
