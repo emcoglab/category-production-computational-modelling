@@ -24,10 +24,14 @@ from pathlib import Path
 from typing import Optional, Dict
 
 from matplotlib import pyplot
-from numpy import ceil, savetxt, array
+from numpy import ceil, savetxt, array, log
 from pandas import DataFrame, to_numeric
 
 from framework.category_production.category_production import ColNames as CPColNames
+from framework.cognitive_model.ldm.preferences.preferences import Preferences as LDMPreferences
+from framework.cognitive_model.ldm.corpus.indexing import FreqDist
+from framework.cognitive_model.ldm.corpus.tokenising import modified_word_tokenize
+from framework.cognitive_model.ldm.utils.logging import print_progress
 from framework.evaluation.category_production import add_ttfa_column, ModelType, get_model_ttfas_for_category_sensorimotor, \
     get_hitrate_summary_tables, get_model_ttfas_for_category_linguistic, get_n_words_from_path_linguistic, \
     frac_within_sd_of_hitrate_mean, get_firing_threshold_from_path_linguistic, prepare_category_production_data, \
@@ -279,7 +283,7 @@ def save_participant_hitrates(data):
         logger.info(f"Mean participant hitrate % (RPF) {participant_hitrates_rpf.mean()} (sd {participant_hitrates_rpf.std()}; range {participant_hitrates_rpf.min()}–{participant_hitrates_rpf.max()}) {head_message}")
 
 
-def main(manual_ttfa_cutoff: Optional[int] = None):
+def analyse_model_output(manual_ttfa_cutoff: Optional[int] = None):
 
     main_data = prepare_main_dataframe()
 
@@ -333,6 +337,40 @@ def main(manual_ttfa_cutoff: Optional[int] = None):
         ]].to_csv(main_data_output_file, index=False)
 
 
+def save_term_frequencies():
+    """Compute frequencies of categories and responses in the subtitles corpus."""
+    freq_dist = FreqDist.load(LDMPreferences.source_corpus_metas.bbc.freq_dist_path)
+    most_common = freq_dist.most_common()
+    frequencies = []
+    for item_set, type_name in [(CP_INSTANCE.category_labels, "Category"), (CP_INSTANCE.response_labels, "Response")]:
+        logger.info(f"Counting frequencies for {type_name.lower()} items")
+        for i, item in enumerate(item_set):
+            # In case of multi-word items we look up each constituent word separately
+            if " " in item:
+                item_words = [
+                    w
+                    for w in modified_word_tokenize(item)
+                    if w not in CP_INSTANCE.ignored_words
+                ]
+            else:
+                item_words = [item]
+
+            for word in item_words:
+                frequency = freq_dist[word]
+                # freq_dist.rank() causes a sorted(), which is slow. so we've done the slow work above
+                try:
+                    rank = most_common.index((word, frequency))
+                except ValueError:
+                    rank = -1
+                frequencies.append((word, item, type_name, frequency, log(frequency + 1), rank, 0 <= rank < 40_000))  # ranks are 0-based
+            print_progress(i + 1, len(item_set))
+
+    with Path(root_output_dir, "word_frequencies.csv").open("w") as word_frequencies_file:
+        DataFrame.from_records(frequencies,
+                               columns=("Word", "From item", "Category/Response", "Frequency", "Log frequency (Laplaced)", "Frequency rank", "Is in top 40_000")
+                               ).to_csv(word_frequencies_file, index=False)
+
+
 if __name__ == '__main__':
     basicConfig(format=logger_format, datefmt=logger_dateformat, level=INFO)
     logger.info("Running %s" % " ".join(sys.argv))
@@ -341,6 +379,8 @@ if __name__ == '__main__':
     parser.add_argument("--manual-cut-off", type=int, default=None)
     args = parser.parse_args()
 
-    main(args.manual_cut_off)
+    analyse_model_output(args.manual_cut_off)
+    
+    save_term_frequencies()
 
     logger.info("Done!")
