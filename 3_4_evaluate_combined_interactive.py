@@ -185,11 +185,14 @@ def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf, output_dir
     pyplot.close()
 
 
-def main(spec: InteractiveCombinedJobSpec, manual_cut_off: Optional[int] = None):
+def main(spec: InteractiveCombinedJobSpec, manual_cut_off: Optional[int] = None, filter_events: Optional[str] = None):
 
     main_data = prepare_main_dataframe(spec=spec)
 
-    evaluation_output_dir = Path(root_input_dir, spec.output_location_relative(), " Evaluation")
+    model_output_dir = Path(root_input_dir, spec.output_location_relative())
+    if filter_events is not None:
+        model_output_dir = Path(model_output_dir.parent, model_output_dir.name + f" only {filter_events}")
+    evaluation_output_dir = Path(model_output_dir, " Evaluation")
     evaluation_output_dir.mkdir(exist_ok=True)
 
     if manual_cut_off is None:
@@ -223,7 +226,7 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     for i, spec in enumerate(InteractiveCombinedJobSpec.load_multiple(Path(
-            Path(__file__).parent, "job_specifications", "2021-04-12 interactive testing batch.yaml"))):
-        main(spec=spec)
+            Path(__file__).parent, "job_specifications", "2021-04-19 interactive testing batch.yaml"))):
+        main(spec=spec, filter_events=None)
 
     logger.info("Done!")

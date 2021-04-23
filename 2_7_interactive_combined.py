@@ -19,6 +19,7 @@ caiwingfield.net
 from sys import argv
 from argparse import ArgumentParser
 from pathlib import Path
+from typing import Optional
 
 from numpy import nan
 from pandas import DataFrame
@@ -57,12 +58,21 @@ ENTERED_BUFFER = "Item entered WM buffer"
 ENTERED_ACCESSIBLE_SET = "Item entered AS"
 CORRECT_RESPONSE = "Correct response"
 
+# arg choices: filter_events
+ACCESSIBLE_SET = "acccessible_set"
+BUFFER         = "buffer"
 
-def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
+
+def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool, filter_events: Optional[str]):
 
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
                               job_spec.output_location_relative())
+    if filter_events is not None:
+        response_dir = Path(
+            response_dir.parent,
+            response_dir.name + f" only {filter_events}"
+        )
 
     if not response_dir.is_dir():
         logger.warning(f"{response_dir} directory does not exist; making it.")
@@ -105,6 +115,8 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
 
         csv_comments = [f"Running sensorimotor spreading activation (v{VERSION}) using parameters:"]
         csv_comments.extend(job_spec.csv_comments())
+        if filter_events is not None:
+            csv_comments.append(f"Recording only {filter_events} events")
 
         # Activate linguistic item(s) ONLY, since stimuli were presented as words
         if category_label in model.linguistic_component.available_labels:
@@ -152,16 +164,27 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool):
                     ))
                 entered_buffer = isinstance(activation_event, ItemEnteredBufferEvent)
                 correct_response = label in cp.responses_for_category(category_label)
-                model_response_entries.append((
-                    label,                                 # RESPONSE
-                    activation_event.item.idx,             # ITEM_ID
-                    activation_event.item.component.name,  # COMPONENT
-                    activation_event.activation,           # ACTIVATION
-                    activation_event.time,                 # TICK_ON_WHICH_ACTIVATED
-                    entered_accessible_set,                # ENTERED_ACCESSIBLE_SET
-                    entered_buffer,                        # ENTERED_BUFFER
-                    correct_response,                      # CORRECT_RESPONSE
-                ))
+
+                # Record this event only if required
+                if filter_events is None:
+                    record_event = True
+                elif filter_events == ACCESSIBLE_SET and entered_accessible_set:
+                    record_event = True
+                elif filter_events == BUFFER and entered_buffer:
+                    record_event = True
+                else:
+                    record_event = False
+                if record_event:
+                    model_response_entries.append((
+                        label,                                 # RESPONSE
+                        activation_event.item.idx,             # ITEM_ID
+                        activation_event.item.component.name,  # COMPONENT
+                        activation_event.activation,           # ACTIVATION
+                        activation_event.time,                 # TICK_ON_WHICH_ACTIVATED
+                        entered_accessible_set,                # ENTERED_ACCESSIBLE_SET
+                        entered_buffer,                        # ENTERED_BUFFER
+                        correct_response,                      # CORRECT_RESPONSE
+                    ))
 
             if job_spec.bailout is not None and (
                     len(model.linguistic_component.accessible_set) > job_spec.bailout
@@ -243,6 +266,8 @@ if __name__ == '__main__':
     parser.add_argument("--bailout", required=False, default=0, type=int)
     parser.add_argument("--run_for_ticks", required=True, type=int)
 
+    parser.add_argument("--filter_events", type=str, choices=[BUFFER, ACCESSIBLE_SET], default=None)
+
     args = parser.parse_args()
 
     if not args.sensorimotor_use_breng_translation:
@@ -291,6 +316,8 @@ if __name__ == '__main__':
             run_for_ticks=args.run_for_ticks,
             bailout=args.bailout,
         ),
-        use_prepruned=args.sensorimotor_use_prepruned)
+        use_prepruned=args.sensorimotor_use_prepruned,
+        filter_events=args.filter_events,
+    )
 
     logger.info("Done!")
