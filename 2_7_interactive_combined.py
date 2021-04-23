@@ -43,7 +43,7 @@ from framework.evaluation.column_names import COMPONENT, ACTIVATION, TICK_ON_WHI
 from framework.cli.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
 # arg choices: filter_events
-ARG_ACCESSIBLE_SET = "acccessible_set"
+ARG_ACCESSIBLE_SET = "accessible_set"
 ARG_BUFFER         = "buffer"
 
 
