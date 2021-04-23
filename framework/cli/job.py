@@ -622,8 +622,8 @@ class InteractiveCombinedJobSpec(CombinedJobSpec):
             f" θ-sl {self.smc_to_lc_threshold};"
             f" cca {self.cross_component_attenuation};"
             f" buff-θ {self.buffer_threshold};"
-            f" buff-cap-ling {self.buffer_capacity_linguistic_items};"
-            f" buff-cap-sm {self.buffer_capacity_sensorimotor_items};"
+            f" buff-cap-l {self.buffer_capacity_linguistic_items};"
+            f" buff-cap-s {self.buffer_capacity_sensorimotor_items};"
             f" run-for {self.run_for_ticks};"
             f" bail {self.bailout}"
         )
