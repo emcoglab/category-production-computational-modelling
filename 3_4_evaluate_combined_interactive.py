@@ -31,9 +31,8 @@ from framework.cli.job import InteractiveCombinedJobSpec
 from framework.cognitive_model.utils.maths import cm_to_inches
 from framework.evaluation.category_production import add_ttfa_column, ModelType, \
     get_hitrate_summary_tables, frac_within_sd_of_hitrate_mean, prepare_category_production_data, \
-    get_hitrate_variance, save_hitrate_graphs, apply_ttfa_cutoff, \
-    CP_INSTANCE, save_hitrate_summary_tables, get_model_ttfas_and_components_for_category_combined_interactive, \
-    add_component_column
+    save_hitrate_graphs, apply_ttfa_cutoff, CP_INSTANCE,\
+    get_model_ttfas_and_components_for_category_combined_interactive, add_component_column
 from framework.evaluation.column_names import TTFA, MODEL_HITRATE, PARTICIPANT_HITRATE_All_f, PRODUCTION_PROPORTION, \
     RANKED_PRODUCTION_FREQUENCY, ROUNDED_MEAN_RANK, COMPONENT
 
@@ -45,7 +44,7 @@ logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 root_input_dir = Path("/Volumes/Big Data/spreading activation model/Model output/Category production")
 
 
-def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
+def prepare_main_dataframe(spec: InteractiveCombinedJobSpec, accessible_set_hits: bool) -> DataFrame:
     from framework.cognitive_model.basic_types import Component
 
     # Main dataframe holds category production data and model response data
@@ -58,7 +57,7 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec) -> DataFrame:
         ttfas, components = get_model_ttfas_and_components_for_category_combined_interactive(
             category=category,
             results_dir=Path(root_input_dir, spec.output_location_relative()),
-            require_buffer_entry=True,
+            require_buffer_entry=not accessible_set_hits,
             require_activations_in_component=Component.linguistic,
         )
 
@@ -89,25 +88,6 @@ def save_participant_hitrates(data):
         logger.info(
             f"Mean participant hitrate % (RPF) {participant_hitrates_rpf.mean()} (sd {participant_hitrates_rpf.std()}; "
             f"range {participant_hitrates_rpf.min()}–{participant_hitrates_rpf.max()}) {head_message}")
-
-
-def process_model_output(data: DataFrame, model_type: ModelType, cutoff: int, output_dir):
-    cutoff_data = apply_ttfa_cutoff(data, ttfa_column=TTFA, ttfa_cutoff=cutoff)
-
-    hrs_rpf, hrs_rmr = get_hitrate_summary_tables(cutoff_data)
-    save_hitrate_summary_tables(hrs_rmr, hrs_rpf, model_type,
-                                file_suffix=f"{model_type.name} coregistered cutoff={cutoff}",
-                                output_dir=output_dir)
-    save_hitrate_graphs(hrs_rpf, hrs_rmr,
-                        file_suffix=f" {model_type.name} cutoff={cutoff}",
-                        figures_dir=output_dir)
-    logger.info(f"Hitrate fits for {model_type.name} model")
-    logger.info(f"cutoff={cutoff} rmr fit: {frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rmr, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
-    logger.info(f"cutoff={cutoff} rpf fit: {frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=True)} head only ({frac_within_sd_of_hitrate_mean(hrs_rpf, test_column=MODEL_HITRATE, only_before_sd_includes_0=False)} whole graph)")
-    get_hitrate_variance(cutoff_data).to_csv(Path(output_dir, f"{model_type.name} hitrate variance.csv"),
-                                             na_rep="")
-    logger.info("Computing participant hitrates")
-    save_participant_hitrates(cutoff_data)
 
 
 def explore_ttfa_cutoffs(main_data, output_dir):
@@ -185,14 +165,18 @@ def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf, output_dir
     pyplot.close()
 
 
-def main(spec: InteractiveCombinedJobSpec, manual_cut_off: Optional[int] = None, filter_events: Optional[str] = None):
+def main(spec: InteractiveCombinedJobSpec, manual_cut_off: Optional[int] = None, filter_events: Optional[str] = None,
+         accessible_set_hits: bool = False):
 
-    main_data = prepare_main_dataframe(spec=spec)
+    main_data = prepare_main_dataframe(spec=spec, accessible_set_hits=accessible_set_hits)
 
     model_output_dir = Path(root_input_dir, spec.output_location_relative())
     if filter_events is not None:
         model_output_dir = Path(model_output_dir.parent, model_output_dir.name + f" only {filter_events}")
-    evaluation_output_dir = Path(model_output_dir, " Evaluation")
+    if accessible_set_hits:
+        evaluation_output_dir = Path(model_output_dir, " Evaluation (accessible set hits)")
+    else:
+        evaluation_output_dir = Path(model_output_dir, " Evaluation")
     evaluation_output_dir.mkdir(exist_ok=True)
 
     if manual_cut_off is None:
@@ -227,6 +211,6 @@ if __name__ == '__main__':
 
     for i, spec in enumerate(InteractiveCombinedJobSpec.load_multiple(Path(
             Path(__file__).parent, "job_specifications", "2021-04-19 interactive testing batch.yaml"))):
-        main(spec=spec, filter_events=None)
+        main(spec=spec, filter_events=None, accessible_set_hits=True)
 
     logger.info("Done!")
