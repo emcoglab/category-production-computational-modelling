@@ -64,4 +64,4 @@ if __name__ == '__main__':
             Path(Path(__file__).parent, "job_specifications/job_interactive_testing.yaml"))
     ]
     for job in jobs:
-        job.run_locally()
+        job.run_locally(extra_arguments=["--filter_events accessible_set"])
