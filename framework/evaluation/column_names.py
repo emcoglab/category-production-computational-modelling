@@ -31,11 +31,15 @@ PARTICIPANT_RESPONSE_HIT_f  = "Participant {0} response hit"
 PARTICIPANT_HITRATE_All_f   = "Participant {0} hitrate"
 PARTICIPANT_HITRATE_PER_CATEGORY_f = "Participant {0} hitrate per category"
 
+ITEM_ID                     = "Item ID"
 TTFA                        = "TTFA"
 TICK_ON_WHICH_ACTIVATED     = "Tick on which activated"
 COMPONENT                   = "Component"
 
 ITEM_ENTERED_BUFFER         = "Item entered WM buffer"
+ITEM_ENTERED_ACCESSIBLE_SET = "Item entered AS"
 
 RESPONSE                    = "Response"
 ACTIVATION                  = "Activation"
+
+CORRECT_RESPONSE            = "Correct response"

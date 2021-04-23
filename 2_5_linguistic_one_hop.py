@@ -37,13 +37,7 @@ from framework.cognitive_model.utils.file import comment_line_from_str
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.preferences.preferences import Preferences
 from framework.cli.job import LinguisticOneHopJobSpec
-
-
-# Results DataFrame column names
-RESPONSE = "Response"
-NODE_ID = "Node ID"
-ACTIVATION = "Activation"
-TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
+from framework.evaluation.column_names import ITEM_ID, RESPONSE, ACTIVATION, TICK_ON_WHICH_ACTIVATED
 
 
 def main(n_words: int,
@@ -171,10 +165,10 @@ def main(n_words: int,
 
         model_responses_df = DataFrame(model_response_entries, columns=[
             RESPONSE,
-            NODE_ID,
+            ITEM_ID,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
-        ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
+        ]).sort_values([TICK_ON_WHICH_ACTIVATED, ITEM_ID])
 
         # Output results
 

@@ -38,21 +38,13 @@ from framework.cognitive_model.utils.file import comment_line_from_str
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.version import VERSION
 from framework.cognitive_model.preferences.preferences import Preferences
+from framework.evaluation.column_names import COMPONENT, ACTIVATION, TICK_ON_WHICH_ACTIVATED, \
+    ITEM_ENTERED_ACCESSIBLE_SET, ITEM_ENTERED_BUFFER, ITEM_ID, CORRECT_RESPONSE, RESPONSE
 from framework.cli.job import InteractiveCombinedJobSpec, LinguisticPropagationJobSpec, SensorimotorPropagationJobSpec
 
-# Results DataFrame column names
-RESPONSE = "Response"
-ITEM_ID = "Item ID"
-COMPONENT = "Component"
-ACTIVATION = "Activation"
-TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-ENTERED_BUFFER = "Item entered WM buffer"
-ENTERED_ACCESSIBLE_SET = "Item entered AS"
-CORRECT_RESPONSE = "Correct response"
-
 # arg choices: filter_events
-ACCESSIBLE_SET = "acccessible_set"
-BUFFER         = "buffer"
+ARG_ACCESSIBLE_SET = "acccessible_set"
+ARG_BUFFER         = "buffer"
 
 
 def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool, filter_events: Optional[str]):
@@ -160,9 +152,9 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool, filter_event
                 # Record this event only if required
                 if filter_events is None:
                     record_event = True
-                elif filter_events == ACCESSIBLE_SET and entered_accessible_set:
+                elif filter_events == ARG_ACCESSIBLE_SET and entered_accessible_set:
                     record_event = True
-                elif filter_events == BUFFER and entered_buffer:
+                elif filter_events == ARG_BUFFER and entered_buffer:
                     record_event = True
                 else:
                     record_event = False
@@ -198,8 +190,8 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool, filter_event
             COMPONENT,
             ACTIVATION,
             TICK_ON_WHICH_ACTIVATED,
-            ENTERED_ACCESSIBLE_SET,
-            ENTERED_BUFFER,
+            ITEM_ENTERED_ACCESSIBLE_SET,
+            ITEM_ENTERED_BUFFER,
             CORRECT_RESPONSE,
         ]).sort_values([TICK_ON_WHICH_ACTIVATED, COMPONENT, ITEM_ID])
 
@@ -258,7 +250,7 @@ if __name__ == '__main__':
     parser.add_argument("--bailout", required=False, default=0, type=int)
     parser.add_argument("--run_for_ticks", required=True, type=int)
 
-    parser.add_argument("--filter_events", type=str, choices=[BUFFER, ACCESSIBLE_SET], default=None)
+    parser.add_argument("--filter_events", type=str, choices=[ARG_BUFFER, ARG_ACCESSIBLE_SET], default=None)
 
     args = parser.parse_args()
 

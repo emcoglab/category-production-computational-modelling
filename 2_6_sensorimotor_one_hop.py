@@ -37,13 +37,7 @@ from framework.cognitive_model.version import VERSION
 from framework.cognitive_model.utils.logging import logger
 from framework.cognitive_model.preferences.preferences import Preferences
 from framework.cli.job import BufferedSensorimotorOneHopJobSpec
-
-# Results DataFrame column names
-RESPONSE = "Response"
-NODE_ID = "Node ID"
-ACTIVATION = "Activation"
-TICK_ON_WHICH_ACTIVATED = "Tick on which activated"
-ENTERED_BUFFER = "Item entered WM buffer"
+from framework.evaluation.column_names import RESPONSE, ACTIVATION, TICK_ON_WHICH_ACTIVATED, ITEM_ID
 
 
 def main(distance_type_name: str,
@@ -173,11 +167,11 @@ def main(distance_type_name: str,
             model_response_entries,
             columns=[
                 RESPONSE,
-                NODE_ID,
+                ITEM_ID,
                 ACTIVATION,
                 TICK_ON_WHICH_ACTIVATED,
                 ENTERED_BUFFER,
-            ]).sort_values([TICK_ON_WHICH_ACTIVATED, NODE_ID])
+            ]).sort_values([TICK_ON_WHICH_ACTIVATED, ITEM_ID])
 
         # Output results
         with open(model_responses_path, mode="w", encoding="utf-8") as output_file:
