@@ -44,7 +44,7 @@ logger_dateformat = "1%Y-%m-%d %H:%M:%S"
 root_input_dir = Path("/Volumes/Big Data/spreading activation model/Model output/Category production")
 
 
-def prepare_main_dataframe(spec: InteractiveCombinedJobSpec, accessible_set_hits: bool) -> DataFrame:
+def prepare_main_dataframe(spec: InteractiveCombinedJobSpec, filter_events: Optional[str], accessible_set_hits: bool) -> DataFrame:
     from framework.cognitive_model.basic_types import Component
 
     # Main dataframe holds category production data and model response data
@@ -54,9 +54,12 @@ def prepare_main_dataframe(spec: InteractiveCombinedJobSpec, accessible_set_hits
     ttfa_dict = dict()
     components_dict = dict()
     for category in CP_INSTANCE.category_labels:
+        results_dir = Path(root_input_dir, spec.output_location_relative())
+        if filter_events is not None:
+            results_dir = Path(results_dir.parent, results_dir.name + f" only {filter_events}")
         ttfas, components = get_model_ttfas_and_components_for_category_combined_interactive(
             category=category,
-            results_dir=Path(root_input_dir, spec.output_location_relative()),
+            results_dir=results_dir,
             require_buffer_entry=not accessible_set_hits,
             require_activations_in_component=Component.linguistic,
         )
@@ -168,7 +171,7 @@ def graph_cutoff_by_fit(combined_hitrates_rmr, combined_hitrates_rpf, output_dir
 def main(spec: InteractiveCombinedJobSpec, manual_cut_off: Optional[int] = None, filter_events: Optional[str] = None,
          accessible_set_hits: bool = False):
 
-    main_data = prepare_main_dataframe(spec=spec, accessible_set_hits=accessible_set_hits)
+    main_data = prepare_main_dataframe(spec=spec, filter_events=filter_events, accessible_set_hits=accessible_set_hits)
 
     model_output_dir = Path(root_input_dir, spec.output_location_relative())
     if filter_events is not None:
@@ -210,7 +213,7 @@ if __name__ == '__main__':
     logger.info("Running %s" % " ".join(sys.argv))
 
     for i, spec in enumerate(InteractiveCombinedJobSpec.load_multiple(Path(
-            Path(__file__).parent, "job_specifications", "2021-04-19 interactive testing batch.yaml"))):
-        main(spec=spec, filter_events=None, accessible_set_hits=True)
+            Path(__file__).parent, "job_specifications", "2021-04-23 interactive testing batch.yaml"))[5:]):
+        main(spec=spec, filter_events="accessible_set", accessible_set_hits=False)
 
     logger.info("Done!")
