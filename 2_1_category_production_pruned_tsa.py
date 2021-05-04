@@ -68,6 +68,7 @@ def main(n_words: int,
         impulse_pruning_threshold=impulse_pruning_threshold,
         run_for_ticks=run_for_ticks, bailout=bailout,
         accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
+        use_activation_cap=False,
     )
 
     response_dir: Path = Path(Preferences.output_dir,

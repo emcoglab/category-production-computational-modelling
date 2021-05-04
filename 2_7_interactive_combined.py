@@ -217,6 +217,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--linguistic_accessible_set_threshold", required=True, type=ActivationValue)
     parser.add_argument("--linguistic_accessible_set_capacity", required=False, type=int)
+    parser.add_argument("--linguistic_use_activation_cap", action="store_true")
     parser.add_argument("--linguistic_corpus_name", required=True, type=str)
     parser.add_argument("--linguistic_firing_threshold", required=True, type=ActivationValue)
     parser.add_argument("--linguistic_impulse_pruning_threshold", required=True, type=ActivationValue)
@@ -229,6 +230,7 @@ if __name__ == '__main__':
 
     parser.add_argument("--sensorimotor_accessible_set_threshold", required=True, type=ActivationValue)
     parser.add_argument("--sensorimotor_accessible_set_capacity", required=False, type=int)
+    parser.add_argument("--sensorimotor_use_activation_cap", action="store_true")
     parser.add_argument("--sensorimotor_distance_type", required=True, type=str)
     parser.add_argument("--sensorimotor_length_factor", required=True, type=Length)
     parser.add_argument("--sensorimotor_node_decay_median", required=True, type=float)
@@ -262,6 +264,7 @@ if __name__ == '__main__':
             linguistic_spec=LinguisticPropagationJobSpec(
                 accessible_set_threshold=args.linguistic_accessible_set_threshold,
                 accessible_set_capacity=args.linguistic_accessible_set_capacity,
+                use_activation_cap=args.linguistic_use_activation_cap,
                 corpus_name=args.linguistic_corpus_name,
                 firing_threshold=args.linguistic_firing_threshold,
                 impulse_pruning_threshold=args.linguistic_impulse_pruning_threshold,
@@ -274,11 +277,12 @@ if __name__ == '__main__':
                 pruning=None,
                 pruning_type=None,
                 bailout=args.bailout,
-                run_for_ticks=args.run_for_ticks
+                run_for_ticks=args.run_for_ticks,
             ),
             sensorimotor_spec=SensorimotorPropagationJobSpec(
                 accessible_set_threshold=args.sensorimotor_accessible_set_threshold,
                 accessible_set_capacity=args.sensorimotor_accessible_set_capacity,
+                use_activation_cap=args.sensorimotor_use_activation_cap,
                 distance_type=DistanceType.from_name(args.sensorimotor_distance_type),
                 length_factor=args.sensorimotor_length_factor,
                 node_decay_median=args.sensorimotor_node_decay_median,

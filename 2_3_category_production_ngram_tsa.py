@@ -59,6 +59,7 @@ def main(n_words: int,
         pruning_type=None, pruning=None,
         node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd,
         accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
+        use_activation_cap=False,
         impulse_pruning_threshold=impulse_pruning_threshold,
         run_for_ticks=run_for_ticks, bailout=bailout,
     )

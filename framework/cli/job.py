@@ -175,6 +175,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
     accessible_set_threshold: float
     accessible_set_capacity: Optional[int]
     attenuation_statistic: AttenuationStatistic
+    use_activation_cap: bool
     use_breng_translation: bool
 
     @property
@@ -187,10 +188,13 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             f"--node_decay_median {self.node_decay_median}",
             f"--node_decay_sigma {self.node_decay_sigma}",
             f"--attenuation {self.attenuation_statistic.name}",
-            f"--use_breng_translation" if self.use_breng_translation else "",
         ]
         if self.accessible_set_capacity is not None:
             args.append(f"--accessible_set_capacity {self.accessible_set_capacity}")
+        if self.use_breng_translation:
+            args.append(f"--use_breng_translation")
+        if self.use_activation_cap:
+            args.append(f"--use_activation_cap")
         return args
 
     @property
@@ -206,10 +210,13 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             shorthand += f"ac{self.accessible_set_capacity}"
         else:
             shorthand += f"ac-"
+        if self.use_activation_cap:
+            shorthand += f"cap_"
         return shorthand
 
     def output_location_relative(self) -> Path:
         breng_string = " BrEng" if self.use_breng_translation else ""
+        cap_string   = " capped;" if self.use_activation_cap else ""
         return Path(
             f"Sensorimotor {VERSION}{breng_string}",
             f"{self.distance_type.name} length {self.length_factor} att {self.attenuation_statistic.name};"
@@ -218,6 +225,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             f" n-decay-σ {self.node_decay_sigma};"
             f" as-θ {self.accessible_set_threshold};"
             f" as-cap {self.accessible_set_capacity:,};"
+            f"{cap_string}"
             f" run-for {self.run_for_ticks};"
             f" bail {self.bailout}"
         )
@@ -233,7 +241,8 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             "Accessible set threshold": str(self.accessible_set_threshold),
             "Accessible set capacity": str(self.accessible_set_capacity),
             "Attenuation statistic": self.attenuation_statistic.name,
-            "Use BrEng translation": self.use_breng_translation,
+            "Use BrEng translation": str(self.use_breng_translation),
+            "Use activation cap": str(self.use_activation_cap),
         })
         return d
 
@@ -250,7 +259,8 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             accessible_set_threshold=ActivationValue(dictionary["Accessible set threshold"]),
             distance_type           =DistanceType.from_name(dictionary["Distance type"]),
             attenuation_statistic   =AttenuationStatistic.from_slug(dictionary["Attenuation statistic"]),
-            use_breng_translation   =bool(dictionary["Use BrEng translation"]),
+            use_breng_translation   =bool(dictionary["Use BrEng translation"]) if "Use BrEng translation" in dictionary else False,
+            use_activation_cap      =bool(dictionary["Use activation cap"]) if "Use activation cap" in dictionary else False,
         )
 
     def _to_component(self, component_class, use_prepruned: bool) -> SensorimotorComponent:
@@ -267,7 +277,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             accessible_set_threshold=self.accessible_set_threshold,
             accessible_set_capacity=self.accessible_set_capacity,
             attenuation_statistic=self.attenuation_statistic,
-            activation_cap=FULL_ACTIVATION,
+            activation_cap=FULL_ACTIVATION if self.use_activation_cap else None,
             use_breng_translation=self.use_breng_translation,
         )
 
@@ -298,6 +308,7 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
 
     def output_location_relative(self) -> Path:
         breng_string = " BrEng" if self.use_breng_translation else ""
+        cap_string   = " capped;" if self.use_activation_cap else ""
         return Path(
             f"Sensorimotor {VERSION}{breng_string}",
             f"{self.distance_type.name} length {self.length_factor} attenuate {self.attenuation_statistic.name};"
@@ -308,6 +319,7 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             f" as-cap {self.accessible_set_capacity:,};"
             f" buff-θ {self.buffer_threshold};"
             f" buff-cap {self.buffer_capacity};"
+            f"{cap_string}"
             f" run-for {self.run_for_ticks};"
             f" bail {self.bailout}",
         )
@@ -335,7 +347,8 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             accessible_set_threshold=ActivationValue(dictionary["Accessible set threshold"]),
             distance_type           =DistanceType.from_name(dictionary["Distance type"]),
             attenuation_statistic   =AttenuationStatistic.from_slug(dictionary["Attenuation statistic"]),
-            use_breng_translation   =bool(dictionary["Use BrEng translation"]),
+            use_breng_translation   =bool(dictionary["Use BrEng translation"]) if "Use BrEng translation" in dictionary else False,
+            use_activation_cap      =bool(dictionary["Use activation cap"]) if "Use activation cap" in dictionary else False,
         )
 
     def _to_component(self, component_class, use_prepruned: bool) -> BufferedSensorimotorComponent:
@@ -352,7 +365,7 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             accessible_set_threshold=self.accessible_set_threshold,
             accessible_set_capacity=self.accessible_set_capacity,
             attenuation_statistic=self.attenuation_statistic,
-            activation_cap=FULL_ACTIVATION,
+            activation_cap=FULL_ACTIVATION if self.use_activation_cap else None,
             buffer_capacity=self.buffer_capacity,
             buffer_threshold=self.buffer_threshold,
             use_breng_translation=self.use_breng_translation,
@@ -370,6 +383,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
     node_decay_factor: float
     accessible_set_threshold: float
     accessible_set_capacity: Optional[int]
+    use_activation_cap: bool
     impulse_pruning_threshold: ActivationValue
     pruning_type: Optional[EdgePruningType]
     pruning: Optional[int]
@@ -390,6 +404,8 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
         ]
         if self.accessible_set_capacity is not None:
             args.append(f"--accessible_set_capacity {self.accessible_set_capacity}")
+        if self.use_activation_cap:
+            args.append(f"--use_activation_cap")
         if self.pruning is not None:
             if self.pruning_type == EdgePruningType.Importance:
                 args.append(f"--prune_importance {self.pruning}")
@@ -413,6 +429,8 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             shorthand += f"ac{self.accessible_set_capacity}_"
         else:
             shorthand += f"ac-_"
+        if self.use_activation_cap:
+            shorthand += f"cap_"
         shorthand += f"{self.model_name}_" \
                      f"pr{self.pruning}"
         return shorthand
@@ -435,6 +453,8 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             model_name = (f"{self.model_name}"
                               f" {self.n_words:,} words, length {self.length_factor}{pruning_suffix}")
 
+        cap_string = " capped;" if self.use_activation_cap else ""
+
         return Path(
             f"Linguistic {VERSION}",
             f"{model_name};"
@@ -443,6 +463,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             f" e-decay-sd {self.edge_decay_sd};"
             f" as-θ {self.accessible_set_threshold};"
             f" as-cap {self.accessible_set_capacity};"
+            f"{cap_string}"
             f" imp-prune-θ {self.impulse_pruning_threshold};"
             f" run-for {self.run_for_ticks};"
             f" bail {self.bailout}",
@@ -462,6 +483,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             "Accessible set capacity": str(self.accessible_set_capacity),
             "Firing threshold": str(self.firing_threshold),
             "Impulse pruning threshold": str(self.impulse_pruning_threshold),
+            "Use activation cap": str(self.use_activation_cap)
         })
         if self.distance_type is not None:
             d.update({
@@ -493,6 +515,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             impulse_pruning_threshold=ActivationValue(dictionary["Impulse pruning threshold"]),
             pruning_type             =EdgePruningType.from_name(dictionary["Pruning type"]) if "Pruning type" in dictionary else None,
             pruning                  =int(dictionary["Pruning"]) if "Pruning" in dictionary else None,
+            use_activation_cap       =bool(dictionary["Use activation cap"]) if "Use activation cap" in dictionary else False,
         )
 
     def to_component(self, component_class) -> LinguisticComponent:
@@ -514,6 +537,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
             accessible_set_threshold=self.accessible_set_threshold,
             accessible_set_capacity=self.accessible_set_capacity,
             firing_threshold=self.firing_threshold,
+            activation_cap=FULL_ACTIVATION if self.use_activation_cap else None,
         )
 
 
