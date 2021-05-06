@@ -58,15 +58,16 @@ def main(n_words: int,
     distributional_model: DistributionalSemanticModel = get_model_from_params(corpus, freq_dist, model_name, radius)
 
     job_spec = LinguisticOneHopJobSpec(
-      model_name=distributional_model.name, model_radius=radius,
-      corpus_name=distributional_model.corpus_meta.name,
-      distance_type=None, n_words=n_words,
-      firing_threshold=firing_threshold, length_factor=length_factor,
-      pruning_type=None, pruning=None,
-      node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd,
-      accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
-      impulse_pruning_threshold=impulse_pruning_threshold,
-      run_for_ticks=None, bailout=None,
+        model_name=distributional_model.name, model_radius=radius,
+        corpus_name=distributional_model.corpus_meta.name,
+        distance_type=None, n_words=n_words,
+        firing_threshold=firing_threshold, length_factor=length_factor,
+        pruning_type=None, pruning=None,
+        node_decay_factor=node_decay_factor, edge_decay_sd=edge_decay_sd,
+        accessible_set_threshold=accessible_set_threshold, accessible_set_capacity=accessible_set_capacity,
+        use_activation_cap=False,
+        impulse_pruning_threshold=impulse_pruning_threshold,
+        run_for_ticks=None, bailout=None,
     )
 
     response_dir: Path = Path(Preferences.output_dir,
@@ -92,6 +93,7 @@ def main(n_words: int,
             edge_pruning_type=None,
         ),
         firing_threshold=firing_threshold,
+        activation_cap=None,
         accessible_set_threshold=accessible_set_threshold,
         accessible_set_capacity=accessible_set_capacity,
     )

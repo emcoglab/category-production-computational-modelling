@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 from typing import Dict
 
@@ -58,10 +59,17 @@ class Job_2_7(InteractiveCombinedJob):
 
 if __name__ == '__main__':
 
-    jobs = [
-        Job_2_7(s)
-        for s in InteractiveCombinedJobSpec.load_multiple(
-            Path(Path(__file__).parent, "job_specifications/job_interactive_testing.yaml"))
-    ]
+    # Testing everything with a range of CCAs
+    ccas = [0, .5, 1]
+
+    jobs = []
+    s: InteractiveCombinedJobSpec
+    for s in InteractiveCombinedJobSpec.load_multiple(
+            Path(Path(__file__).parent, "job_specifications/job_interactive_testing.yaml")):
+        for cca in ccas:
+            spec = deepcopy(s)
+            spec.cross_component_attenuation = cca
+            jobs.append(Job_2_7(spec))
+
     for job in jobs:
         job.submit(extra_arguments=["--filter_events accessible_set"])
