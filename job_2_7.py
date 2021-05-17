@@ -73,3 +73,5 @@ if __name__ == '__main__':
 
     for job in jobs:
         job.run_locally(extra_arguments=["--filter_events accessible_set"])
+
+    print(f"Submitted {len(jobs)} jobs.")
