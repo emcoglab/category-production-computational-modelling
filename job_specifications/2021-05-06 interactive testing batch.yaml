@@ -97,6 +97,7 @@
   Buffer threshold: 0.4
   Linguistic to sensorimotor threshold: 0.4
   Sensorimotor to linguistic threshold: 0.4
+# This turned out to be an interesting one
 - Bailout: 20000
   Run for ticks: 1000
   (Sensorimotor) Accessible set capacity: 3000
