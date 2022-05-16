@@ -18,6 +18,7 @@ caiwingfield.net
 """
 
 import sys
+from copy import deepcopy
 from logging import getLogger, basicConfig, INFO
 from pathlib import Path
 from typing import Optional
@@ -212,8 +213,24 @@ if __name__ == '__main__':
     basicConfig(format=logger_format, datefmt=logger_dateformat, level=INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
-    for spec in InteractiveCombinedJobSpec.load_multiple(Path(Path(__file__).parent, "job_specifications",
-                                                              "2021-04-26 interactive testing batch.yaml")):
+    loaded_specs = InteractiveCombinedJobSpec.load_multiple(
+        Path(Path(__file__).parent,
+             "job_specifications/2022-05-16 interactive testing batch.yaml"))
+    systematic_cca_test = False
+
+    if systematic_cca_test:
+        ccas = [0.0, 0.5, 1.0]
+        specs = []
+        s: InteractiveCombinedJobSpec
+        for s in loaded_specs:
+            for cca in ccas:
+                spec = deepcopy(s)
+                spec.cross_component_attenuation = cca
+                specs.append(spec)
+    else:
+        specs = loaded_specs
+
+    for spec in specs:
         main(spec=spec, filter_events="accessible_set", accessible_set_hits=False)
 
     logger.info("Done!")
