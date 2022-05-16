@@ -27,7 +27,7 @@ import yaml
 from framework.cli.lookups import get_model_from_params, get_corpus_from_name
 from framework.cognitive_model.components import ModelComponent, FULL_ACTIVATION
 from framework.cognitive_model.ldm.corpus.indexing import FreqDist
-from framework.cognitive_model.ldm.model.base import DistributionalSemanticModel
+from framework.cognitive_model.ldm.model.base import LinguisticDistributionalModel
 from framework.cognitive_model.linguistic_components import LinguisticComponent
 from framework.cognitive_model.linguistic_propagator import LinguisticPropagator
 from framework.cognitive_model.sensorimotor_components import SensorimotorComponent, BufferedSensorimotorComponent
@@ -263,7 +263,7 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             use_activation_cap      =bool(dictionary["Use activation cap"]) if "Use activation cap" in dictionary else False,
         )
 
-    def _to_component(self, component_class, use_prepruned: bool) -> SensorimotorComponent:
+    def to_component(self, component_class) -> SensorimotorComponent:
         return component_class(
             propagator=SensorimotorPropagator(
                 distance_type=self.distance_type,
@@ -271,8 +271,8 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
                 max_sphere_radius=self.max_radius,
                 node_decay_lognormal_median=self.node_decay_median,
                 node_decay_lognormal_sigma=self.node_decay_sigma,
-                use_prepruned=use_prepruned,
                 use_breng_translation=self.use_breng_translation,
+                shelf_life=self.run_for_ticks,
             ),
             accessible_set_threshold=self.accessible_set_threshold,
             accessible_set_capacity=self.accessible_set_capacity,
@@ -280,12 +280,6 @@ class SensorimotorPropagationJobSpec(PropagationJobSpec):
             activation_cap=FULL_ACTIVATION if self.use_activation_cap else None,
             use_breng_translation=self.use_breng_translation,
         )
-
-    def to_component(self, component_class):
-        return self._to_component(component_class, False)
-
-    def to_component_prepruned(self, component_class):
-        return self._to_component(component_class, True)
 
 
 @dataclass
@@ -351,7 +345,7 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
             use_activation_cap      =bool(dictionary["Use activation cap"]) if "Use activation cap" in dictionary else False,
         )
 
-    def _to_component(self, component_class, use_prepruned: bool) -> BufferedSensorimotorComponent:
+    def to_component(self, component_class) -> BufferedSensorimotorComponent:
         return component_class(
             propagator=SensorimotorPropagator(
                 distance_type=self.distance_type,
@@ -359,7 +353,6 @@ class BufferedSensorimotorPropagationJobSpec(SensorimotorPropagationJobSpec):
                 max_sphere_radius=self.max_radius,
                 node_decay_lognormal_median=self.node_decay_median,
                 node_decay_lognormal_sigma=self.node_decay_sigma,
-                use_prepruned=use_prepruned,
                 use_breng_translation=self.use_breng_translation,
             ),
             accessible_set_threshold=self.accessible_set_threshold,
@@ -521,7 +514,7 @@ class LinguisticPropagationJobSpec(PropagationJobSpec):
     def to_component(self, component_class) -> LinguisticComponent:
         corpus = get_corpus_from_name(self.corpus_name)
         freq_dist = FreqDist.load(corpus.freq_dist_path)
-        distributional_model: DistributionalSemanticModel = get_model_from_params(
+        distributional_model: LinguisticDistributionalModel = get_model_from_params(
             corpus, freq_dist, self.model_name, self.model_radius)
         return component_class(
             propagator=LinguisticPropagator(
