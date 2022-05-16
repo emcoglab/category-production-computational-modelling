@@ -65,7 +65,7 @@ if __name__ == '__main__':
     jobs = []
     s: InteractiveCombinedJobSpec
     for s in InteractiveCombinedJobSpec.load_multiple(
-            Path(Path(__file__).parent, "job_specifications/job_interactive_testing.yaml")):
+            Path(Path(__file__).parent, "job_specifications/2022-05-16 interactive testing batch.yaml")):
         for cca in ccas:
             spec = deepcopy(s)
             spec.cross_component_attenuation = cca

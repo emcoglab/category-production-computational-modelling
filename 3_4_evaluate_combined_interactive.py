@@ -213,10 +213,10 @@ if __name__ == '__main__':
     basicConfig(format=logger_format, datefmt=logger_dateformat, level=INFO)
     logger.info("Running %s" % " ".join(sys.argv))
 
-    loaded_specs = InteractiveCombinedJobSpec.load_multiple(Path(Path(__file__).parent,
-                                                                 "job_specifications",
-                                                                 "2021-05-06 interactive testing batch.yaml"))
-    systematic_cca_test = True
+    loaded_specs = InteractiveCombinedJobSpec.load_multiple(
+        Path(Path(__file__).parent,
+             "job_specifications/2022-05-16 interactive testing batch.yaml"))
+    systematic_cca_test = False
 
     if systematic_cca_test:
         ccas = [0.0, 0.5, 1.0]
