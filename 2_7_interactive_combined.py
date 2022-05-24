@@ -47,7 +47,7 @@ ARG_ACCESSIBLE_SET = "accessible_set"
 ARG_BUFFER         = "buffer"
 
 
-def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool, filter_events: Optional[str]):
+def main(job_spec: InteractiveCombinedJobSpec, filter_events: Optional[str]):
 
     response_dir: Path = Path(Preferences.output_dir,
                               "Category production",
@@ -65,9 +65,7 @@ def main(job_spec: InteractiveCombinedJobSpec, use_prepruned: bool, filter_event
     job_spec.save(in_location=response_dir)
 
     model = InteractiveCombinedCognitiveModel(
-        sensorimotor_component=(job_spec.sensorimotor_spec.to_component_prepruned(SensorimotorComponent)
-                                if use_prepruned
-                                else job_spec.sensorimotor_spec.to_component(SensorimotorComponent)),
+        sensorimotor_component=(job_spec.sensorimotor_spec.to_component(SensorimotorComponent)),
         linguistic_component=job_spec.linguistic_spec.to_component(LinguisticComponent),
         lc_to_smc_delay=job_spec.lc_to_smc_delay,
         smc_to_lc_delay=job_spec.smc_to_lc_delay,
@@ -236,7 +234,6 @@ if __name__ == '__main__':
     parser.add_argument("--sensorimotor_node_decay_median", required=True, type=float)
     parser.add_argument("--sensorimotor_node_decay_sigma", required=True, type=float)
     parser.add_argument("--sensorimotor_max_sphere_radius", required=True, type=float)
-    parser.add_argument("--sensorimotor_use_prepruned", action="store_true")
     parser.add_argument("--sensorimotor_attenuation", required=True, type=str, choices=[n.name for n in AttenuationStatistic])
     # We have to add this argument to make the interface compatible, but we always use the BrEng translation
     parser.add_argument("--sensorimotor_use_breng_translation", action="store_true")
@@ -304,7 +301,6 @@ if __name__ == '__main__':
             run_for_ticks=args.run_for_ticks,
             bailout=args.bailout,
         ),
-        use_prepruned=args.sensorimotor_use_prepruned,
         filter_events=args.filter_events,
     )
 

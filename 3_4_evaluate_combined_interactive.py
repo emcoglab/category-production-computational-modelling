@@ -215,11 +215,11 @@ if __name__ == '__main__':
 
     loaded_specs = InteractiveCombinedJobSpec.load_multiple(
         Path(Path(__file__).parent,
-             "job_specifications/2022-05-16 interactive testing batch.yaml"))
-    systematic_cca_test = False
+             "job_specifications/2022-05-24 longer runs more ccas.yaml"))
+    systematic_cca_test = True
 
     if systematic_cca_test:
-        ccas = [0.0, 0.5, 1.0]
+        ccas = [0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1]
         specs = []
         s: InteractiveCombinedJobSpec
         for s in loaded_specs:
